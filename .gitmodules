@@ -1,0 +1,7 @@
+[submodule "V-pipe-stable"]
+	path = V-pipe-stable
+	url = https://github.com/cbg-ethz/V-pipe
+
+[submodule "V-pipe-dev"]
+	path = V-pipe-dev
+	url = https://github.com/cbg-ethz/V-pipe
