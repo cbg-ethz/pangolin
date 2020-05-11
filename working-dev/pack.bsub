@@ -1,6 +1,6 @@
 #!/bin/bash
 #BSUB -L /bin/bash
-#BSUB -J "COVID-vpipe-pack[0-2]"
+#BSUB -J "COVID-vpipe-pack[1-4]"
 #BSUB -u "ivan.topolsky@bsse.ethz.ch"
 #BSUB -N
 #BSUB -n 1
@@ -8,19 +8,28 @@
 #BSUB -W 4 
 
 
+SUBDIRS=('' visualization references SNVs alignments)
+subdir=@SUBDIR@
 
-SUBDIRS=(visualization references SNVs alignments)
-if [[ -z "$LSB_JOBINDEX" ]]; then
-	subdir="${SUBDIRS[$NUM]}"
-else
+if (( $LSB_JOBINDEX )); then
+	echo JobIdx $LSB_JOBINDEX
 	subdir="${SUBDIRS[$LSB_JOBINDEX]}"
+
+	# check if dir name is ok
+	if [[ -z "${subdir}" ]]; then
+		echo "wrong job index ${LSB_JOBINDEX}"
+		exit 1;
+	fi
 fi
 
 # check if dir name is ok
-if [[ -z "${subdir}" ]]; then
-	echo "wrong job index ${LSB_JOBINDEX}"
+if [[ -n "${subdir}" && " ${SUBDIRS[@]} " =~ " ${subdir} " ]]; then
+	echo "Packing <${subdir}>"
+else
+	echo "wrong directory <${subdir}>"
 	exit 1;
 fi
+
 
 if [[ -n "${TERM}" ]]; then
 	echo "Got a term: $TERM"
@@ -30,12 +39,11 @@ else
 	verbose=v
 fi
 
-echo ${subdir}
 case ${subdir} in
 	SNVs)
-		tar cvf - samples/*/*/variants/${subdir}/snvs.* 
+		tar cvf - samples/*/*/variants/${subdir}/snvs.*
 	;;
 	*)
-		tar cvf - samples/100*/*/${subdir}/ 
+		tar cvf - samples/1*/*/${subdir}/
 	;;
 esac | /usr/bin/time xz -z9e${verbose} > samples_${subdir}.tar.xz

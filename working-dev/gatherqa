@@ -325,4 +325,4 @@ while read subject sublvl len; do
 		printf '%s,' ${qadata[$k]}
 	done
 	echo
-done < samples.tsv
+done < samples.tsv > qa.csv

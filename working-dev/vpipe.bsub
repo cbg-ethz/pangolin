@@ -9,6 +9,6 @@
 
 #cluster='bsub -M {params.mem} -n {threads} -W {params.time} -e {log.errfile} -o {log.outfile}'
 #cluster='bsub -M {params.mem} -n {threads} -W {params.time} -R "rusage [mem={params.mem},scratch={params.scratch}]" -e {log.errfile} -o {log.outfile}'
-cluster='bsub -J COVID-vpipe-dev-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -e {log.errfile} -o {log.outfile}'
+cluster='bsub -J COVID-vpipe-dev-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
 
 exec ./vpipe --cluster "$cluster" -j 120 --use-conda
