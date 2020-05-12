@@ -69,6 +69,7 @@ qacolumn=( 'sample' 'level' 'empty' 'groundtruth'
 'shorah_snv' 'shorah_filtered' 'shorah_majority'
 )
 declare -A qadata
+{
 printf '%s,' "${qacolumn[@]}"
 echo
 ### With:
@@ -86,6 +87,7 @@ echo
 
 filecounter=0
 while read subject sublvl len; do
+	qadata=( )
 	echo -ne "\r$((++filecounter))\t${subject}\e[K\t" 1>&2
 	sample=samples/${subject}/${sublvl}
 	qadata['sample']=$subject
@@ -265,7 +267,7 @@ while read subject sublvl len; do
 	# 3. consensus
 
 	# 3.1 counts
-	qadata['consensus_N']=$(tail -n +2 ${sample}/references/ref_majority_dels.fasta | tr -cd 'N' | wc -c)
+	qadata['consensus_N']=$(tail -n +2 ${sample}/references/ref_majority_dels.fasta | tr -cd 'Nn' | wc -c)
 	qadata['consensus_lower']=$(tail -n +2 ${sample}/references/ref_majority_dels.fasta | tr -cd 'atcg' | wc -c)
 
 	# 3.2 pair-wise alignments
@@ -325,4 +327,5 @@ while read subject sublvl len; do
 		printf '%s,' ${qadata[$k]}
 	done
 	echo
-done < samples.tsv > qa.csv
+done < samples.tsv 
+} > qa.csv
