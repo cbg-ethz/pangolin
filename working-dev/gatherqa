@@ -66,7 +66,7 @@ qacolumn=( 'sample' 'level' 'empty' 'groundtruth'
 'input_r1' 'input_r2' 'mlen_r1' 'mlen_r2' 'goodpairs' 'alnreads' 'bwaFF' 'bwaFR' 'bwaRF' 'bwaRR' 'bwadir' 'bwa_insert_mean' 'bwa_insert_min' 'bwa_insert_max'
 'consensus_N' 'consensus_lower' 
 "${matchkeys[@]/#/match_}"
-'shorah_snv' 'shorah_filtered' 'shorah_majority'
+'shorah_snv' 'shorah_filtered' 'shorah_majority' 'shorah_absmaj'
 )
 declare -A qadata
 {
@@ -306,21 +306,45 @@ while read subject sublvl len; do
 	shorah=( $(gawk -vscore=.8 -vfreq=.5 '
 		BEGIN{
 			phred=(-10*(log(1-score)/log(10)))
+			lastposition=-1
+			original_fraction=3;
+			max_fraction=0;
+			multi=0;
 		};
 		/^[^#]/{
-			SNV++
+			++SNV;
 		};
 		/^[^#]/&&($6>=phred){
 			filter++;
+			if ($1 != lastposition) {
+				if (max_fraction > original_fraction) {
+					++majority;
+				}
+				if (multi>=2) {
+					print " double at " lastposition "\n" > /dev/stderr
+				}
+				original_fraction=3;
+				max_fraction=0;
+				multi=0;
+				lastposition=$2;
+			}
 			match($8,/Freq1=([[:digit:].]+);Freq2=([[:digit:].]+);Freq3=([[:digit:].]+);/,F);
-			if((F[1]+F[2]+F[3])>=(3*freq)) majority++
+			sum=(F[1]+F[2]+F[3]);
+			original_fraction-=sum;
+			if(sum>max_fraction) max_fraction=sum;
+			if(sum>=(3*freq)) ++abs_majority;
+			++multi;
 		};
 		END{
-			printf("%u\n%u\n%u\n", SNV, filter, majority)
+			if (max_fraction > original_fraction) {
+				++majority;
+			}
+			printf("%u\n%u\n%u\n%u\n", SNV, filter, majority, abs_majority)
 		}'  ${sample}/variants/SNVs/snvs.vcf) )
 	qadata['shorah_snv']=${shorah[0]}
 	qadata['shorah_filtered']=${shorah[1]}
 	qadata['shorah_majority']=${shorah[2]}
+	qadata['shorah_absmaj']=${shorah[3]}
 
 	# X. data line
 	for k in "${qacolumn[@]}"; do
