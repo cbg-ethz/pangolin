@@ -288,7 +288,7 @@ while read subject sublvl len; do
 	# 
 	#
 	#=======================================
-	if [[ -e ${sample}/references/ref_majority_dels.matcher || ${sample}/references/ref_majority_dels.fasta -ot ${sample}/references/ref_majority_dels.matcher ]]; then
+	if [[ -e ${sample}/references/ref_majority_dels.matcher && ${sample}/references/ref_majority_dels.fasta -ot ${sample}/references/ref_majority_dels.matcher ]]; then
 		: # reuse the file
 	else
 		matcher -asequence references/cohort_consensus.fasta -bsequence ${sample}/references/ref_majority_dels.fasta -outfile ${sample}/references/ref_majority_dels.matcher 1>&2
