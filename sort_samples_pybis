@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+
+from sys import exit
+from pybis import Openbis
+from dateutil import parser
+import netrc
+import re
+import io
+import os
+import sys
+
+# TODO config yaml
+fileserver='bs-openbis04.ethz.ch' # name of the _SFTP_ server, as used when fetching data files (i.e.: same name as in netrc file)
+apiurl='https://openbis-dsu.ethz.ch/openbis/' # address of the _Web_ server whose API we are calling
+expname='/BSSE_STADLER_COVID/STADLER_COVID/COVID_V' # experiment name
+samtype='ILLUMINA_FLOW_LANE' # the type for which need to search the experiment thourgh
+sampleset='sampleset'
+download='openbis-downloads'
+suffix='_MM_1' # mismatch one ?
+link='--link'
+
+rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251'
+rxcell=re.compile('(?<=/)(?P<seq>\w+-(?P<cell>\w+)(?:\:\d+)?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1'
+rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
+
+# create sampleset directory if missing
+if not os.path.isdir(sampleset):
+	try:
+		os.mkdir(sampleset, mode=0o770)
+	except FileExistsError:
+		pass
+
+# we use ~/.netrc to obtain credentials 
+# (we need that config file anyway to download the data files from openbis' fileserver)
+username,password=netrc.netrc().authenticators(fileserver)[0::2];
+
+## console interactive
+#import getpass
+#username='ivan.topolsky@bsse.ethz.ch'
+#password=getpass.getpass()
+
+o=Openbis(apiurl, verify_certificates=True)
+o.login(username, password, save_token=True)   # save the session token in ~/.pybis/example.com.token
+
+# file with all moving instructions inside
+sh=open(os.path.join(sampleset,'movedatafiles.sh'), 'wt')
+print(r'''
+link='%(link)s'
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+	exit 1
+}
+
+# sanity checks
+[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
+[[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
+''' % {'link':link,'download':download,'sampleset':sampleset}, file=sh)
+
+
+#o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
+samples=(o.get_experiment(code=expname)
+	.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'}))
+
+# NOTE iterating over `samples` is problematic, use pandas dataframe instead
+#  - in jupyter, it crashes with "TypeError: argument of type 'int' is not iterable"
+#  - in plain python3, it takes ages (probably making server request on each constructor).
+#for sa in samples:
+	#print("%s\t%s\t%s" % (sa.permId, sa.identifier, sa.p.data_transferred))
+
+# iterate thourgh samples, i.e.: through flow cell lanes
+for sa in samples.df.itertuples(name='Sample'):
+	# parse the container properties for run type and read cycles count
+	m=rxrun.search(sa.CONTAINER_PROPERTIES).groupdict()
+	# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched groups throws an exception instead, that's my contrived way to get around.
+	rlen=int(m['len'])-1 if 'len' in m else ''
+	rtype=m['type'] if 'type' in m else ''
+	print(sa.permId, sa.identifier, sa.DATA_TRANSFERRED, rtype, rlen, sep='\t')
+
+	# only process data which was transfered, we don't have access permission for the rest yet
+	if sa.DATA_TRANSFERRED: 
+		try:
+			# get the sequencing name, and the flow cell name	original/000000000_CTTKK_1
+			m=rxcell.search(sa.identifier)
+			cell=m.group('cell')
+			seq=rxclean.sub('_',m.group('seq')) # clean-up seqname from unfriendly caracters
+		except:
+			# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched group throws an exception instead, that's my contrived way to get around.
+			cell=seq=''
+		batch=parser.parse(sa.DATA_TRANSFERRED).strftime('%Y%m%d_'+cell) # batch: date + flow cell, e.g.: '20200426-J3JCY'
+		tsv=open(os.path.join(sampleset,'samples.' + batch + '.tsv'), 'wt')
+		fastqc=None
+		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2', 'PLATE'}).df
+		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
+		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
+		for ds in datasets.sort_values(by=['type','sname'],ascending=[True,True]).itertuples(name='DataSets'):
+			print('\t', ds.permId, ds.type, ds.status, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, ds.PLATE, sep='\t')
+			# skip unavailable data files
+			if ds.status == 'AVAILABLE':
+				# look for FASTQ files (skip undetermined indexes)
+				if ds.type == 'FASTQ_GZ' and ds.EXTERNAL_SAMPLE_NAME:
+					if fastqc is None:
+						print("No FASTQC", file=sys.stderr)
+					print(ds.sname, batch, rlen, sep='\t', file=tsv)
+					# 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz	
+					print(r'''
+[[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s'
+fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L*_R[1-2]_*%(mm)s.fastq.gz )
+[[ "${fastq[*]}" =~ \* ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
+(( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[@]}"
+mkdir -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
+for file in "${fastq[@]}"; do
+	filename="${file##*/}"
+	[[ $file =~ _L[[:digit:]]+_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
+	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"
+	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
+	[[ $destname =~ _L[[:digit:]]+_(R[[:digit:]]).fastq.gz$ ]]
+	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seq)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
+done
+''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc}, file=sh)
+				# look for FASTQC holder directory
+				elif ds.type == 'FASTQC':
+					# 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
+					fastqc=ds.permId # keep the reference
