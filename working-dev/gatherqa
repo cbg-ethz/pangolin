@@ -60,7 +60,7 @@ matchsearch=(
 )
 
 # header and data
-qacolumn=( 'sample' 'level' 'empty' 'groundtruth' 
+qacolumn=( 'sample' 'batch' 'empty' 'groundtruth'
 "${fqckeys[@]/#/fastqc_r1_}"
 "${fqckeys[@]/#/fastqc_r2_}"
 'input_r1' 'input_r2' 'mlen_r1' 'mlen_r2' 'goodpairs' 'alnreads' 'bwaFF' 'bwaFR' 'bwaRF' 'bwaRR' 'bwadir' 'bwa_insert_mean' 'bwa_insert_min' 'bwa_insert_max'
@@ -74,7 +74,7 @@ printf '%s,' "${qacolumn[@]}"
 echo
 ### With:
 ### - sample:	sample name
-### - level:	second level
+### - batch:	batch
 ### - empty:	true if this sample should contain nothing (e.g.: only water),  -ofalse if it should contain viral RNA
 ### - groundtruth:	(we actually know the ground trurth. E.g.: synthetic RNA should match reference strains, empty should match "N" (or lower case until Susie updates her code)
 ### - input_r{1,2}:	the raw_data R1 and R2 at the input of the pipeline
@@ -91,7 +91,7 @@ while read subject sublvl len; do
 	echo -ne "\r$((++filecounter))\t${subject}\e[K\t" 1>&2
 	sample=samples/${subject}/${sublvl}
 	qadata['sample']=$subject
-	qadata['level']=$sublvl
+	qadata['batch']=$sublvl
 
 	# 0 Flags
 	if [[ $subject =~ ^[[:digit:]]{6}_ ]]; then
@@ -109,7 +109,8 @@ while read subject sublvl len; do
 
 
 	# 1 FastQC
-	fastqc_files=( ../openbis-downloads/202*/original/*/*_${subject}_*_R[12]_*_fastqc.html )
+	#fastqc_files=( ../openbis-downloads/202*/original/*/*_${subject}_*_R[12]_*_fastqc.html )
+	fastqc_files=( ${sample}/extracted_data/R[12]_fastqc.html )
 	if (( ${#fastqc_files[@]} != 2 )); then
 		oops "Didn't find a pair of FastQC files for ${subject}"
 	else
@@ -293,58 +294,69 @@ while read subject sublvl len; do
 	else
 		matcher -asequence references/cohort_consensus.fasta -bsequence ${sample}/references/ref_majority_dels.fasta -outfile ${sample}/references/ref_majority_dels.matcher 1>&2
 	fi
-	match=$(<${sample}/references/ref_majority_dels.matcher)
-	for k in ${matchkeys[@]}; do
-		S=${matchsearch[${k}]}
-		rex="# $S: +([[:digit:]]+)" 
-		[[ $match =~ $rex ]] && qadata["match_$k"]=${BASH_REMATCH[1]} || oops "cannot extract ${S}"
-	done
+	if [[ -s ${sample}/references/ref_majority_dels.matcher ]]; then
+		# "nnnnnnnnnnnnnn" files generate empty files
+		match=$(<${sample}/references/ref_majority_dels.matcher)
+		for k in ${matchkeys[@]}; do
+			S=${matchsearch[${k}]}
+			rex="# $S: +([[:digit:]]+)"
+			[[ $match =~ $rex ]] && qadata["match_$k"]=${BASH_REMATCH[1]} || oops "cannot extract ${S}"
+		done
+	else
+		oops "(empty match: probably pure 'nnnn...' crap consensus)"
+	fi
 
 	# 4 ShoRAH
-#	qadata['shorah_snv']=$(grep -c '^[^#]' ${sample}/variants/SNVs/snvs.vcf)
-#	qadata['shorah_filtered']=$(gawk -vscore=.8 'BEGIN{phred=-10*(log(1-score)/log(10))};/^[^#]/&&($6>=phred){n++};END{print n}' ${sample}/variants/SNVs/snvs.vcf)
-	shorah=( $(gawk -vscore=.8 -vfreq=.5 '
-		BEGIN{
-			phred=(-10*(log(1-score)/log(10)))
-			lastposition=-1
-			original_fraction=3;
-			max_fraction=0;
-			multi=0;
-		};
-		/^[^#]/{
-			++SNV;
-		};
-		/^[^#]/&&($6>=phred){
-			filter++;
-			if ($1 != lastposition) {
-				if (max_fraction > original_fraction) {
-					++majority;
-				}
-				if (multi>=2) {
-					print " double at " lastposition "\n" > /dev/stderr
-				}
+	if [[ -s ${sample}/variants/SNVs/snvs.vcf ]]; then
+#		qadata['shorah_snv']=$(grep -c '^[^#]' ${sample}/variants/SNVs/snvs.vcf)
+#		qadata['shorah_filtered']=$(gawk -vscore=.8 'BEGIN{phred=-10*(log(1-score)/log(10))};/^[^#]/&&($6>=phred){n++};END{print n}' ${sample}/variants/SNVs/snvs.vcf)
+		shorah=( $(gawk -vscore=.8 -vfreq=.5 '
+			BEGIN{
+				phred=(-10*(log(1-score)/log(10)))
+				lastposition=-1
 				original_fraction=3;
 				max_fraction=0;
 				multi=0;
-				lastposition=$2;
-			}
-			match($8,/Freq1=([[:digit:].]+);Freq2=([[:digit:].]+);Freq3=([[:digit:].]+);/,F);
-			sum=(F[1]+F[2]+F[3]);
-			original_fraction-=sum;
-			if(sum>max_fraction) max_fraction=sum;
-			if(sum>=(3*freq)) ++abs_majority;
-			++multi;
-		};
-		END{
-			if (max_fraction > original_fraction) {
-				++majority;
-			}
-			printf("%u\n%u\n%u\n%u\n", SNV, filter, majority, abs_majority)
-		}'  ${sample}/variants/SNVs/snvs.vcf) )
-	qadata['shorah_snv']=${shorah[0]}
-	qadata['shorah_filtered']=${shorah[1]}
-	qadata['shorah_majority']=${shorah[2]}
-	qadata['shorah_absmaj']=${shorah[3]}
+			};
+			/^[^#]/{
+				++SNV;
+			};
+			/^[^#]/&&($6>=phred){
+				filter++;
+				if ($1 != lastposition) {
+					if (max_fraction > original_fraction) {
+						++majority;
+					}
+					if (multi>=2) {
+						print " double at " lastposition "\n" > /dev/stderr
+					}
+					original_fraction=3;
+					max_fraction=0;
+					multi=0;
+					lastposition=$2;
+				}
+				match($8,/Freq1=([[:digit:].]+);Freq2=([[:digit:].]+);Freq3=([[:digit:].]+);/,F);
+				sum=(F[1]+F[2]+F[3]);
+				original_fraction-=sum;
+				if(sum>max_fraction) max_fraction=sum;
+				if(sum>=(3*freq)) ++abs_majority;
+				++multi;
+			};
+			END{
+				if (max_fraction > original_fraction) {
+					++majority;
+				}
+				printf("%u\n%u\n%u\n%u\n", SNV, filter, majority, abs_majority)
+			}'  ${sample}/variants/SNVs/snvs.vcf) )
+		qadata['shorah_snv']=${shorah[0]}
+		qadata['shorah_filtered']=${shorah[1]}
+		qadata['shorah_majority']=${shorah[2]}
+		qadata['shorah_absmaj']=${shorah[3]}
+	elif [[ -f ${sample}/variants/SNVs/snvs.vcf ]]; then
+		: # empty SNVs files : no reads in region (negative control)
+	else
+		oops 'no SNVs ShoRAH not ran yet'
+	fi
 
 	# X. data line
 	for k in "${qacolumn[@]}"; do
