@@ -1,0 +1,22 @@
+name: pybis
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python 
+  - pandas
+  - numpy
+  - pip 
+  - pytest 
+  - texttable 
+  - tabulate 
+  - requests 
+  - click 
+  - zope.interface 
+  - urllib3 
+  - certifi 
+  - chardet 
+  #- ipykernel
+  - pip:
+    - pybis

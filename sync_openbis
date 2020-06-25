@@ -1,11 +1,17 @@
 #!/bin/bash
 
+. server.conf
 
-if [[ $(hostname) =~ ^euler-ft-0[34]$ ]]; then
-	: # we are on the correct machine. Proceed.
+: ${fileserver:?}
+: ${expname:?}
+: ${basedir:=$(pwd)}
+: ${download:?}
+
+if [[ $( < ~/.netrc ) =~ machine[[:space:]]+${fileserver}.*?login[[:space:]]+([^[:space:]]+) ]]; then
+	username="${BASH_REMATCH[1]}"
 else
-	echo "currently running on $HOSTNAME, should be euler-ft-03 or -04" 2>&1
-	exit 1;
+	echo "cannot find login for machine ${fileserver} in ~/.netrc" >&2
+	exit 1
 fi
 
-exec lftp -c 'mirror --continue --no-perms --no-umask --parallel=16 --loop sftp://ivan.topolsky@bsse.ethz.ch@bs-openbis04.ethz.ch/BSSE_STADLER_COVID/STADLER_COVID/COVID_V/ /cluster/work/bewi/pangolin/openbis-downloads'
+exec lftp -c "mirror --continue --no-perms --no-umask --parallel=16 --loop sftp://${username}@${fileserver}/${expname}/ ${basedir}/${download}"

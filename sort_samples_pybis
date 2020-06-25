@@ -1,32 +1,60 @@
 #!/usr/bin/env python3
 
-from sys import exit
+import io
+import sys
+import os
+import re
+import netrc
+import configparser
 from pybis import Openbis
 from dateutil import parser
-import netrc
-import re
-import io
-import os
-import sys
 
-# TODO config yaml
-fileserver='bs-openbis04.ethz.ch' # name of the _SFTP_ server, as used when fetching data files (i.e.: same name as in netrc file)
-apiurl='https://openbis-dsu.ethz.ch/openbis/' # address of the _Web_ server whose API we are calling
-expname='/BSSE_STADLER_COVID/STADLER_COVID/COVID_V' # experiment name
-samtype='ILLUMINA_FLOW_LANE' # the type for which need to search the experiment thourgh
-sampleset='sampleset'
-download='openbis-downloads'
-suffix='_MM_1' # mismatch one ?
-link='--link'
+# Load defaults from config file
+config = configparser.ConfigParser(strict=False) # non-strict: support repeated section headers
+config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in section headers
+with open('server.conf') as f: config.read_string(f"""
+[DEFAULT]
+samtype=ILLUMINA_FLOW_LANE
+basedir={os.getcwd()}
+sampleset=sampleset
+download=openbis-downloads
+suffix=
+link=--link
+[_]
+""" + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
 
+fileserver=config['_']['fileserver'].strip("\"'")
+'''name of the _SFTP_ server, as used when fetching data files (i.e.: same name as in netrc file)'''
+apiurl=config['_']['apiurl'].strip("\"'")
+'''address of the _Web_ server whose API we are calling'''
+expname=config['_']['expname'].strip("\"'")
+'''experiment name in OpenBIS'''
+samtype=config['_']['samtype'].strip("\"'")
+'''the type for which need to search the experiment thourgh'''
+basedir=config['_']['basedir'].strip("\"'")
+'''base dircetory'''
+download=config['_']['download'].strip("\"'")
+'''sub-directory to hold the unsorted downloaded datasets'''
+sampleset=config['_']['sampleset'].strip("\"'")
+'''sub-directory to hold the sorted samples set'''
+suffix=config['_']['suffix'].strip("\"'")
+'''extra suffix - e.g.: "_MM_1" for mismatches one'''
+link=config['_']['link'].strip("\"'")
+'''
+linking instead of copying ?
+ --reflink for CoW filesystems (ZFS, BTRFS)
+ --hardlink for most unix-like filesystems
+'''
+
+# RegEx to parse some specific string
 rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251'
 rxcell=re.compile('(?<=/)(?P<seq>\w+-(?P<cell>\w+)(?:\:\d+)?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1'
 rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
 
 # create sampleset directory if missing
-if not os.path.isdir(sampleset):
+if not os.path.isdir(os.path.join(basedir,sampleset)):
 	try:
-		os.mkdir(sampleset, mode=0o770)
+		os.mkdir(os.path.join(basedir,sampleset), mode=0o770)
 	except FileExistsError:
 		pass
 
@@ -42,8 +70,8 @@ username,password=netrc.netrc().authenticators(fileserver)[0::2];
 o=Openbis(apiurl, verify_certificates=True)
 o.login(username, password, save_token=True)   # save the session token in ~/.pybis/example.com.token
 
-# file with all moving instructions inside
-sh=open(os.path.join(sampleset,'movedatafiles.sh'), 'wt')
+# shell script file with all moving instructions inside
+sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
 print(r'''
 link='%(link)s'
 
@@ -54,10 +82,12 @@ fail() {
 	exit 1
 }
 
+cd %(basedir)s
+
 # sanity checks
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-''' % {'link':link,'download':download,'sampleset':sampleset}, file=sh)
+''' % {'link':link,'basedir':basedir,'download':download,'sampleset':sampleset}, file=sh)
 
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
@@ -70,7 +100,7 @@ samples=(o.get_experiment(code=expname)
 #for sa in samples:
 	#print("%s\t%s\t%s" % (sa.permId, sa.identifier, sa.p.data_transferred))
 
-# iterate thourgh samples, i.e.: through flow cell lanes
+# iterate through samples, i.e.: through flow cell lanes
 for sa in samples.df.itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
 	m=rxrun.search(sa.CONTAINER_PROPERTIES).groupdict()
@@ -95,6 +125,9 @@ for sa in samples.df.itertuples(name='Sample'):
 	except:
 		print("\t(not accessible yet)")
 	else:
+		if len(datasets) < 3 or not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
+			print("\t(not accessible yet)")
+			continue
 		tsv=None
 		fastqc=None
 		batch=':nobatch'
