@@ -1,0 +1,20 @@
+name: qa_report
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python 
+  - pandas
+  - numpy
+  - matplotlib 
+  - seaborn 
+  - plotly 
+  - ipykernel 
+  - ipywidgets
+
+# don't forget to run:
+# ```
+# conda activate qa_report
+# python -m ipykernel install --user --name=conda-qa_report
+# ```
