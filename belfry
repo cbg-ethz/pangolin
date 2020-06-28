@@ -1,0 +1,140 @@
+#!/bin/bash
+
+. server.conf
+
+scriptdir=$(dirname $0)
+
+if [[ $scriptdir != $basedir ]]; then
+	echo "$scriptdir vs $basedir"
+fi
+
+baseconda=$HOME/
+
+#
+# Input validator
+#
+validateBatchDate() {
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9])$ ]]; then
+		return;
+	else
+		echo "bad batchdate ${1}"
+		exit 1;
+	fi
+}
+
+callpushrsync() {
+	. server.conf
+
+	arglist=( )
+	if (( ${#@} )); then
+		arglist=( "${@/#/${basedir}/${sampleset}/}" )
+	else
+		arglist=( "${basedir}/${sampleset}/" )
+	fi
+	exec rsync	--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+		-izrltH --fuzzy --fuzzy --inplace	\
+		-p --chmod=Dg+s,ug+rw,o-rwx	\
+		-g --chown=:'bsse-covid19-pangolin-euler'	\
+		"${arglist[@]}"	\
+		bellfry@euler.ethz.ch::${sampleset}/
+}
+export -f callpushrsync
+
+
+callpullrsync() {
+	. server.conf
+
+	arglist=( )
+	if (( ${#@} )); then
+		arglist=( "${@/#/bellfry@euler.ethz.ch::${working}/samples/}" )
+	else
+		arglist=( "bellfry@euler.ethz.ch::${working}/samples/" )
+	fi
+	exec rsync	--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+		-izrltH --fuzzy --fuzzy --inplace	\
+		-p --chmod=Dg+s,ug+rw,o-rwx	\
+		-g --chown=:"${storgrp}"	\
+		--link-dest=${basedir}/${sampleset}/	\
+		"${arglist[@]}"	\
+		--exclude='raw_data/*_R[12].fastq.gz'	\
+		--exclude='extracted_data/R[12]_fastqc.html'	\
+		--exclude 'variants/SNVs/REGION_*/reads.fas'	\
+		--exclude 'variants/SNVs/REGION_*/raw_reads/w-*.reads.fas.gz'	\
+		${basedir}/${working}/samples/
+}
+export -f callpullrsync
+
+
+case "$1" in
+	syncopenbis)
+		# Total: 10654 directories, 11687 files, 0 symlink
+		# New: 605 files, 0 symlinks
+		# 7674153291 bytes transferred
+		if [[ "$(/usr/bin/time ${scriptdir}/sync_openbis|tee /dev/stderr)" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
+			echo "Newfiles downloaded"
+		else
+			echo "Same old shit"
+		fi
+	;;
+	sortsamples)
+		. $baseconda/miniconda3/bin/activate pybis
+		cd $basedir
+		${scriptdir}/sort_samples_pybis && bash ${basedir}/${sampleset}/movedatafiles.sh
+		conda deactivate
+		# TODO check multiple same cells
+		# TODO date openbis-downloads/20200626184717383-60699344 vs sampleset/samples.20200626_J49RD.tsv
+	;;
+	fixopenbisrights)
+		validateBatchDate "$2"
+
+		dir=( ${basedir}/${download}/${2}* )
+		if (( ${#dir[@]} > 1 )); then
+			echo "${#dir[@]} directories"
+			echo 'mode directories'
+			find "${dir[@]}" -type d -print0 | xargs -0 chmod u+rwx,g+rwXs,o-rwx
+			echo 'mode files'
+			find "${dir[@]}" -type f -print0 | xargs -0 chmod 0660
+			echo 'group'
+			chgrp -R "${storgrp}" "${dir[@]}"
+		fi
+	;;
+	pushsampleset)
+		rsync	--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:'bsse-covid19-pangolin-euler'	\
+			${basedir}/${sampleset}/samples.*.tsv	\
+			bellfry@euler.ethz.ch::${sampleset}/
+		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
+			gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+			xargs -0 -P $parallel -I '{@LIST@}' --	\
+				bash -c "callpushrsync {@LIST@} " || echo "Error on some rsync jobs"
+	;;
+	listsamples)
+		rsync	--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+			-iPzrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
+			--list-only	\
+			bellfry@euler.ethz.ch::${working}/samples/
+	;;
+	pullsamples)
+		rsync	--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
+			--relative	\
+			bellfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
+			${basedir}/${working}/
+		echo "samples:"
+		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
+			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+			xargs -0 -P $parallel -I '{@LIST@}' --	\
+				bash -c "callpullrsync {@LIST@} " || echo "Error on some rsync jobs"
+	;;
+esac

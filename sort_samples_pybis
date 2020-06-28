@@ -82,6 +82,11 @@ fail() {
 	exit 1
 }
 
+ALLOK=1
+X() {
+	ALLOK=0
+}
+
 cd %(basedir)s
 
 # sanity checks
@@ -151,14 +156,14 @@ for sa in samples.df.itertuples(name='Sample'):
 fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L*_R[1-2]_*%(mm)s.fastq.gz )
 [[ "${fastq[*]}" =~ \* ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
 (( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[@]}"
-mkdir -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
+mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
 	[[ $file =~ _L[[:digit:]]+_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
-	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"
+	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
 	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
 	[[ $destname =~ _L[[:digit:]]+_(R[[:digit:]]).fastq.gz$ ]]
-	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seq)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
+	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seq)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
 ''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc}, file=sh)
 				# look for FASTQC holder directory
@@ -171,3 +176,11 @@ done
 						tsv=open(os.path.join(sampleset,'samples.' + batch + '.tsv'), 'wt')
 					elif batch != batch2:
 						print('\t!!! Batch mismatch: <%(b1)s> vs <%(b2)s>' % { 'b1':batch, 'b2':batch2 })
+
+print("""
+if (( ALLOK )); then
+	echo All Ok
+else
+	echo Some errors
+fi;
+""", file=sh)
