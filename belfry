@@ -1,12 +1,19 @@
 #!/bin/bash
 
-. server.conf
+scriptdir="$(dirname $(which $0))"
 
-scriptdir=$(dirname $0)
+. ${scriptdir}/server.conf
 
 if [[ $scriptdir != $basedir ]]; then
 	echo "$scriptdir vs $basedir"
 fi
+
+cd ${basedir}
+
+umask 0002
+
+statusdir="${basedir}/status"
+mkdir -m 0770 -p ${statusdir}
 
 baseconda=$HOME/
 
@@ -97,16 +104,22 @@ case "$1" in
 		# Total: 10654 directories, 11687 files, 0 symlink
 		# New: 605 files, 0 symlinks
 		# 7674153291 bytes transferred
+		. $baseconda/miniconda3/bin/activate ""
 		if [[ "$(/usr/bin/time ${scriptdir}/sync_openbis|tee /dev/stderr)" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
 			echo "Newfiles downloaded"
+			echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${statusdir}/syncopenbis_last
+			flock -x -o ${statusdir}/syncopenbis_last -c "sleep 1"
+			echo "${BASH_REMATCH[3]}" > ${statusdir}/syncopenbis_new
 		else
 			echo "Same old shit"
-		fi
+			touch ${statusdir}/syncopenbis_last
+		fi 2>&1
+		conda deactivate
 	;;
 	sortsamples)
 		. $baseconda/miniconda3/bin/activate pybis
 		cd $basedir
-		${scriptdir}/sort_samples_pybis && bash ${basedir}/${sampleset}/movedatafiles.sh
+		${scriptdir}/sort_samples_pybis && bash ${basedir}/${sampleset}/movedatafiles.sh && touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate
 		# TODO check multiple same cells
 		# TODO date openbis-downloads/20200626184717383-60699344 vs sampleset/samples.20200626_J49RD.tsv
@@ -126,17 +139,24 @@ case "$1" in
 		fi
 	;;
 	pushsampleset)
+		err=0
 		rsync	--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${basedir}/${sampleset}/samples.*.tsv	\
-			bellfry@euler.ethz.ch::${sampleset}/
+			bellfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
 		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
 			gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
-				bash -c "callpushrsync {@LIST@} " || echo "Error on some rsync jobs"
+				bash -c "callpushrsync {@LIST@} " || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync job(s) failed"
+			touch ${statusdir}/pushsampleset_fail
+		else
+			touch ${statusdir}/pushsampleset_success
+		fi
 	;;
 	listsamples)
 		rsync	--password-file ~/rsync.pass.euler	\
@@ -148,6 +168,7 @@ case "$1" in
 			bellfry@euler.ethz.ch::${working}/samples/
 	;;
 	pullsamples_noshorah)
+		err=0
 		rsync	--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
@@ -155,14 +176,21 @@ case "$1" in
 			-g --chown=:"${storgrp}"	\
 			--relative	\
 			bellfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
-			${basedir}/${working}/
+			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
 			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
-				bash -c "callpullrsync_noshorah {@LIST@} " || echo "Error on some rsync jobs"
+				bash -c "callpullrsync_noshorah {@LIST@} " || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync job(s) failed"
+			touch ${statusdir}/pullsamples_noshorah_fail
+		else
+			touch ${statusdir}/pullsamples_noshorah_success
+		fi
 	;;
 	pullsamples)
+		err=0
 		rsync	--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
@@ -170,17 +198,23 @@ case "$1" in
 			-g --chown=:"${storgrp}"	\
 			--relative	\
 			bellfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
-			${basedir}/${working}/
+			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
 			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
-				bash -c "callpullrsync {@LIST@} " || echo "Error on some rsync jobs"
+				bash -c "callpullrsync {@LIST@} " || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync job(s) failed"
+			touch ${statusdir}/pullsamples_fail
+		else
+			touch ${statusdir}/pullsamples_success
+		fi
 	;;
 	qa_report)
 		. $baseconda/miniconda3/bin/activate qa_report
 		cd ${basedir}/${working}/
-		jupyter nbconvert --execute --no-input qa_report.ipynb
+		jupyter nbconvert --execute --no-input qa_report.ipynb && touch ${statusdir}/qa_report_success || touch ${statusdir}/qa_report_fail 
 		conda deactivate
 	;;
 	pushseq)
@@ -197,6 +231,10 @@ case "$1" in
 			-g --chown=:"${storgrp}"	\
 			--relative	\
 			${basedir}/${working}/./{qa*.html,qa*.csv,samples/{[[:digit:]]*_[[:digit:]]*_[[:upper:]][[:digit:]]*,[[:upper:]][[:digit:]]*_[[:digit:]]*}/[[:digit:]]*_*/references/}	\
-			${pushdir}
+			${pushdir} && touch ${statusdir}/pushseq_success || touch ${statusdir}/pushseq_fail
+	;;
+	*)
+		echo "Unkown sub-command ${1}" > /dev/stderr
+		exit 2
 	;;
 esac

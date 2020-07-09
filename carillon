@@ -1,0 +1,211 @@
+#!/bin/bash
+
+scriptdir="$(dirname $(which $0))"
+
+. ${scriptdir}/server.conf
+
+if [[ $scriptdir != $basedir ]]; then
+	echo "$scriptdir vs $basedir"
+fi
+
+cd ${basedir}
+
+umask 0002
+
+statusdir="${basedir}/status"
+mkdir -m 0770 -p ${statusdir}
+
+remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman euler.ethz.ch --"
+
+
+if false; then # HACK skip
+#
+# Phase 1: periodic data sync
+#
+
+echo '========='
+echo 'Data sync'
+echo '========='
+
+${scriptdir}/belfry syncopenbis
+${scriptdir}/belfry sortsamples
+
+echo '---------'
+if [[ !  ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]]; then
+	echo "Data was copied: $(<${statusdir}/syncopenbis_new)"
+	limit=$(date --date='1 week ago' '+%Y%m%d')
+	echo "Fixing perms back until $limit:"
+	for d in $(echo ${basedir}/${download}/20* | grep -oP "(?<=/${download}/)(20[0-9][0-9][0-1][0-9][0-3][0-9])" | sort -r -u); do
+		if [[ "$d" < "$limit" ]]; then
+			echo '...done'
+			break
+		else
+			echo "...${d}..."
+		fi
+		${scriptdir}/belfry fixopenbisrights "${d}"
+	done
+fi
+
+fi # HACK skipper
+
+
+
+echo "================="
+echo "Check current run"
+echo "================="
+
+if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) || ( ${statusdir}/vpipe_started -nt ${statusdir}/vpipe_ended ) ) ]]; then
+	stillrunning=0
+	while read j id; do
+		# skip missing
+		if [[ -z "${id}" ]]; then
+			echo "$j : (not started)"
+			continue
+		fi
+
+		# skip already finished
+		if [[ ( -e ${statusdir}/vpipe_${j}_ended ) && ( ${statusdir}/vpipe_${j}_ended -nt ${statusdir}/vpipe_started ) ]]; then
+			old="$(<${statusdir}/vpipe_${j}_ended)"
+			if [[ "${id}" == "${old}" ]]; then
+				echo "$j : $id already finished"
+			else
+				echo "$j : mismatch $id vs $old"
+			fi
+			continue
+		fi
+
+		# cluster status
+		stat=$(${remote_batman} job "${id}")
+		if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
+			# running
+			echo "$j : $id : $stat"
+			(( ++stillrunning ))
+			sleep 1
+			continue
+		fi
+
+		# not running
+		echo "$j : $id finishing"
+
+		case "$j" in
+			seqqa)
+				${scriptdir}/belfry pullsamples_noshorah
+				if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
+					echo "pulling data failed"
+					(( ++stillrunning ))
+					continue
+				fi
+			;;
+		esac
+
+		echo "${id}" > ${statusdir}/vpipe_${j}_ended
+	done < ${statusdir}/vpipe_started
+
+	if (( stillrunning == 0 )); then
+		${scriptdir}/belfry pullsamples
+		if [[ ( ! -e ${statusdir}/pullsamples_fail ) || ( ${statusdir}/pullsamples_success -nt ${statusdir}/pullsamples_fail ) ]]; then
+			echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
+		else
+			echo "pulling data failed"
+		fi
+	fi
+else
+	echo 'No current run.'
+fi
+
+echo "================"
+echo "Results handling"
+echo "================"
+
+if [[ ( -e ${statusdir}/pullsamples_noshorah_success || ${statusdir}/pullsamples_success ) && ( ( ! -e ${statusdir}/qa_report_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/qa_report_success ) || (  ${statusdir}/pullsamples_success -nt ${statusdir}/qa_report_success ) ) ]]; then
+	${scriptdir}/belfry qa_report
+else
+	echo 'no newer results'
+fi
+
+if [[ ( -e ${statusdir}/qa_report_success ) && ( ( ! -e ${statusdir}/pushseq_success ) || ( ${statusdir}/qa_report_success -nt ${statusdir}/pushseq_success ) ) ]]; then
+	echo 'do pushseq'
+	#${scriptdir}/belfry pushseq
+else
+	echo 'no upload needed'
+fi
+
+echo "============="
+echo "Start new run"
+echo "============="
+
+if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
+	mustrun=0
+	declare -A flowcell
+	ref=$(date --reference="${statusdir}/vpipe_ended" '+%Y%m%d')
+	now=$(date '+%Y%m%d')
+	echo "Check batch against ${ref}:"
+	for t in ${basedir}/${sampleset}/samples.*.tsv; do
+		if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}).tsv$ ]]; then
+			echo "oops: Can't parse <${t}> ?!" > /dev/stderr
+		fi
+
+		# check Duplicates
+		b="${BASH_REMATCH[1]}"
+		f="${BASH_REMATCH[2]}"
+		if [[ -n "${flowcell[$f]}" ]]; then
+			echo "error: Duplicate flowcell $f : ${flowcell[$f]} vs $b" > /dev/stderr
+			exit 2
+		else
+			flowcell[$f]=$b
+		fi
+
+		# check dates
+		if [[ "$ref" < "$b" ]]; then
+			echo "!$b:$f"
+			(( ++mustrun ))
+		else
+			echo"($b:$f)"
+		fi
+		# sanity check
+		if [[ "$now" < "$b" ]]; then
+			echo "oops: in the future $b vs $now"
+		fi
+	done
+
+	# start jobs ?
+	if (( mustrun )); then
+		echo 'Will start new job'
+
+		# Sanity check
+		if [[ ( -e ${statusdir}/sortsamples_fail ) && ( ${statusdir}/sortsamples_fail -nt  ${statusdir}/sortsamples_success ) ]]; then
+			echo 'error: sampleset data not successfully fetched yet' > /dev/stderr
+			exit 1
+		fi
+		if [[ ( ! -e ${statusdir}/syncopenbis_new ) || ( ( -e ${statusdir}/vpipe_started ) && ( ${statusdir}/vpipe_started -nt ${statusdir}/syncopenbis_new ) ) ]]; then
+			echo 'oops: something fishy: no downloaded data newer than last run ?' > /dev/stderr
+		fi
+		if [[ -e ${statusdir}/vpipe_ended ]]; then
+			lastrun=${statusdir}/vpipe_ended
+		elif [[ -e   ${statusdir}/syncopenbis_new ]]; then
+			lastrun=${statusdir}/syncopenbis_new
+		else
+			lastrun=${statusdir}/sortsamples_success
+		fi
+
+		# push sampleset data
+		if [[ ( ! -e ${statusdir}/pushsampleset_success ) || ( ${lastrun} -nt ${statusdir}/pushsampleset_success ) ]]; then
+			${scriptdir}/belfry pushsampleset
+		else
+			echo 'oops: Sampleset already pushed' > /dev/stderr
+		fi
+
+		# must run
+		if [[ ( -e ${statusdir}/pushsampleset_fail ) && ( ${statusdir}/pushsampleset_fail -nt ${statusdir}/pushsampleset_success ) ]]; then
+			echo 'error: Pushing sampleset did not succeed' > /dev/stderr
+		else
+			echo 'starting jobs'
+			${remote_batman} addsamples
+			${remote_batman} vpipe > ${statusdir}/vpipe.${now}
+			ln -sf vpipe.${now} ${statusdir}/vpipe_started
+			cat ${statusdir}/vpipe_started
+		fi
+	fi
+else
+	echo 'There is already run going on'
+fi
