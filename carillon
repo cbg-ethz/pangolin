@@ -14,11 +14,43 @@ umask 0002
 
 statusdir="${basedir}/status"
 mkdir -m 0770 -p ${statusdir}
+lockfile=${statusdir}/carillon_lock
 
 remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman euler.ethz.ch --"
+remote_belfry="ssh -ni ${HOME}/.ssh/id_ed25519_belfry bs-bewi09.ethz.ch --"
 
 
-if false; then # HACK skip
+
+if false; then
+#
+# Avoid re-entry
+#
+
+if lockfile -2 -r 1 "${lockfile}"; then
+	# save the PID in the lockfile
+	chmod u+w "${lockfile}"
+	echo "$$" > "${lockfile}"
+	chmod 0444 "${lockfile}"
+else
+	PID=$(<"${lockfile}")
+
+	echo -e "Previous run still running (PID=${pid})\n"
+
+	if [ -d "/proc/${pid}" ]; then
+		ps --forest -o 'pid,ppid,sess,user,stime,time,%cpu,ni,args' --pid "${pid}" --ppid "${pid}" -g "$(ps -o 'sid=' --pid "${pid}" --ppid "${pid}"|uniq)"
+	else
+		echo "*CANNOT FIND PID ${pid}*"
+		echo "perhaps process has crashed"
+		echo "to force restart, manually delete lock file :"
+		echo -e "\trm ${lockfile}"
+		exit 2;
+	fi
+	exit 1;
+fi
+fi
+
+
+
 #
 # Phase 1: periodic data sync
 #
@@ -46,9 +78,11 @@ if [[ !  ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]]; then
 	done
 fi
 
-fi # HACK skipper
 
 
+#
+# Phase 2: update status of current run and trigger backups
+#
 
 echo "================="
 echo "Check current run"
@@ -113,22 +147,34 @@ else
 	echo 'No current run.'
 fi
 
+
+
+#
+# Phase 3: Reports and sequences
+#
+
 echo "================"
 echo "Results handling"
 echo "================"
 
-if [[ ( -e ${statusdir}/pullsamples_noshorah_success || ${statusdir}/pullsamples_success ) && ( ( ! -e ${statusdir}/qa_report_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/qa_report_success ) || (  ${statusdir}/pullsamples_success -nt ${statusdir}/qa_report_success ) ) ]]; then
+if [[ ( -e ${statusdir}/pullsamples_noshorah_success || -e ${statusdir}/pullsamples_success ) && ( ( ! -e ${statusdir}/qa_report_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/qa_report_success ) || (  ${statusdir}/pullsamples_success -nt ${statusdir}/qa_report_success ) ) ]]; then
 	${scriptdir}/belfry qa_report
 else
 	echo 'no newer results'
 fi
 
 if [[ ( -e ${statusdir}/qa_report_success ) && ( ( ! -e ${statusdir}/pushseq_success ) || ( ${statusdir}/qa_report_success -nt ${statusdir}/pushseq_success ) ) ]]; then
-	echo 'do pushseq'
-	#${scriptdir}/belfry pushseq
+	${scriptdir}/belfry pushseq
+	${scriptdir}/belfry gitaddseq
 else
 	echo 'no upload needed'
 fi
+
+
+
+#
+# Phase 4: restar runs if new data
+#
 
 echo "============="
 echo "Start new run"
@@ -160,7 +206,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 			echo "!$b:$f"
 			(( ++mustrun ))
 		else
-			echo"($b:$f)"
+			echo "($b:$f)"
 		fi
 		# sanity check
 		if [[ "$now" < "$b" ]]; then

@@ -38,13 +38,14 @@ callpushrsync() {
 	else
 		arglist=( "${basedir}/${sampleset}/" )
 	fi
-	exec rsync	--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+	exec rsync	--timeout=${rsynctimeout}	\
+		--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
-		-p --chmod=Dg+s,ug+rw,o-rwx	\
+		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:'bsse-covid19-pangolin-euler'	\
 		"${arglist[@]}"	\
-		bellfry@euler.ethz.ch::${sampleset}/
+		belfry@euler.ethz.ch::${sampleset}/
 }
 export -f callpushrsync
 
@@ -54,21 +55,23 @@ callpullrsync() {
 
 	arglist=( )
 	if (( ${#@} )); then
-		arglist=( "${@/#/bellfry@euler.ethz.ch::${working}/samples/}" )
+		arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
 	else
-		arglist=( "bellfry@euler.ethz.ch::${working}/samples/" )
+		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 	fi
-	exec rsync	--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+	exec rsync	--timeout=${rsynctimeout}	\
+		--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
-		-p --chmod=Dg+s,ug+rw,o-rwx	\
+		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:"${storgrp}"	\
 		--link-dest=${basedir}/${sampleset}/	\
 		"${arglist[@]}"	\
 		--exclude='raw_data/*_R[12].fastq.gz'	\
 		--exclude='extracted_data/R[12]_fastqc.html'	\
-		--exclude 'variants/SNVs/REGION_*/reads.fas'	\
-		--exclude 'variants/SNVs/REGION_*/raw_reads/w-*.reads.fas.gz'	\
+		--exclude='variants/SNVs/REGION_*/reads.fas'	\
+		--exclude='variants/SNVs/REGION_*/w-*.reads.fas'	\
+		--exclude='variants/SNVs/REGION_*/raw_reads/w-*.reads.fas.gz'	\
 		${basedir}/${working}/samples/
 }
 export -f callpullrsync
@@ -79,21 +82,22 @@ callpullrsync_noshorah() {
 
 	arglist=( )
 	if (( ${#@} )); then
-		arglist=( "${@/#/bellfry@euler.ethz.ch::${working}/samples/}" )
+		arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
 	else
-		arglist=( "bellfry@euler.ethz.ch::${working}/samples/" )
+		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 	fi
-	exec rsync	--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+	exec rsync	--timeout=${rsynctimeout}	\
+		--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
-		-p --chmod=Dg+s,ug+rw,o-rwx	\
+		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:"${storgrp}"	\
 		--link-dest=${basedir}/${sampleset}/	\
 		"${arglist[@]}"	\
 		--exclude='raw_data/*_R[12].fastq.gz'	\
 		--exclude='extracted_data/R[12]_fastqc.html'	\
-		--exclude 'variants/'	\
-		--exclude 'visualization/'	\
+		--exclude='variants/'	\
+		--exclude='visualization/'	\
 		${basedir}/${working}/samples/
 }
 export -f callpullrsync_noshorah
@@ -140,13 +144,14 @@ case "$1" in
 	;;
 	pushsampleset)
 		err=0
-		rsync	--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+		rsync	--timeout=${rsynctimeout}	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${basedir}/${sampleset}/samples.*.tsv	\
-			bellfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
+			belfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
 		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
 			gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
@@ -159,23 +164,25 @@ case "$1" in
 		fi
 	;;
 	listsamples)
-		rsync	--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+		rsync	--timeout=${rsynctimeout}	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 			-iPzrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
 			--list-only	\
-			bellfry@euler.ethz.ch::${working}/samples/
+			belfry@euler.ethz.ch::${working}/samples/
 	;;
 	pullsamples_noshorah)
 		err=0
-		rsync	--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+		rsync	--timeout=${rsynctimeout}	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
-			bellfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
+			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
@@ -191,13 +198,14 @@ case "$1" in
 	;;
 	pullsamples)
 		err=0
-		rsync	--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_bellfry -l ${USER%%@*}"	\
+		rsync	--timeout=${rsynctimeout}	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
-			bellfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
+			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
@@ -218,20 +226,21 @@ case "$1" in
 		conda deactivate
 	;;
 	pushseq)
-		# TODO a git repo
-		if [[ ${2} =~ ^(batch_[[:digit:]]+)$ ]]; then
-			pushdir="$(realpath "$basedir/../pangolin/consensus_data/${2}")"
-		else
-			echo "Bad push target ${2}"
-			exit 1
-		fi
-
 		rsync -irltH  --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
 			${basedir}/${working}/./{qa*.html,qa*.csv,samples/{[[:digit:]]*_[[:digit:]]*_[[:upper:]][[:digit:]]*,[[:upper:]][[:digit:]]*_[[:digit:]]*}/[[:digit:]]*_*/references/}	\
-			${pushdir} && touch ${statusdir}/pushseq_success || touch ${statusdir}/pushseq_fail
+			--exclude '*.matcher'	\
+			--exclude '*.log'	\
+			--exclude '*.json'	\
+			${releasedir} && touch ${statusdir}/pushseq_success || touch ${statusdir}/pushseq_fail
+	;;
+	gitaddseq)
+		. $baseconda/miniconda3/bin/activate ""
+		cd ${releasedir}
+		git add qa* samples/*/*/references/*.fasta
+		conda deactivate
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
