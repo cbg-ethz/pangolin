@@ -47,7 +47,7 @@ linking instead of copying ?
 '''
 
 # RegEx to parse some specific string
-rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251'
+rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_\w*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT'
 rxcell=re.compile('(?<=/)(?P<seq>\w+-(?P<cell>\w+)(?:\:\d+)?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1'
 rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
 
@@ -112,7 +112,8 @@ for sa in samples.df.itertuples(name='Sample'):
 	# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched groups throws an exception instead, that's my contrived way to get around.
 	rlen=int(m['len'])-1 if 'len' in m else ''
 	rtype=m['type'] if 'type' in m else ''
-	print(sa.permId, sa.identifier, sa.DATA_TRANSFERRED, rtype, rlen, sep='\t')
+	rundate=f"20{m['date']}" if 'date' in m else None # NOTE runfolders are yymmdd, not yyyymmdd
+	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, (m['run'] if 'run' in m else ''), sep='\t')
 
 	cell=seq=''
 	try:
@@ -123,6 +124,15 @@ for sa in samples.df.itertuples(name='Sample'):
 	except:
 		# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched group throws an exception instead, that's my contrived way to get around.
 		pass
+
+	# batch: date + flow cell, e.g.: '20200426-J3JCY'
+	regdate=parser.parse(sa.registrationDate).strftime('%Y%m%d')
+	if rundate is None: # fall back: registrationDate
+		batch=f"{regdate}_{cell}"
+	else:  # ideally, the run folder's date (first six digits)
+		if regdate != rundate:
+			print(f"\t!!! Batch mismatch: {rundate} vs {regdate}")
+		batch=f"{rundate}_{cell}"
 
 	# only process data which was transfered, we don't have access permission for the rest yet
 	try:
@@ -135,10 +145,8 @@ for sa in samples.df.itertuples(name='Sample'):
 			continue
 		tsv=None
 		fastqc=None
-		batch=':nobatch'
-		if sa.DATA_TRANSFERRED:
-			batch=parser.parse(sa.DATA_TRANSFERRED).strftime('%Y%m%d_'+cell) # batch: date + flow cell, e.g.: '20200426-J3JCY'
-			tsv=open(os.path.join(sampleset,'samples.' + batch + '.tsv'), 'wt')
+
+		tsv=open(os.path.join(sampleset,'samples.' + batch + '.tsv'), 'wt')
 		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
 		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
 		for ds in datasets.sort_values(by=['type','sname'],ascending=[True,True]).itertuples(name='DataSets'):
@@ -170,12 +178,6 @@ done
 				elif ds.type == 'FASTQC':
 					# 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
 					fastqc=ds.permId # keep the reference
-					batch2=parser.parse(ds.registrationDate).strftime('%Y%m%d_'+cell)
-					if tsv is None:
-						batch=batch2
-						tsv=open(os.path.join(sampleset,'samples.' + batch + '.tsv'), 'wt')
-					elif batch != batch2:
-						print('\t!!! Batch mismatch: <%(b1)s> vs <%(b2)s>' % { 'b1':batch, 'b2':batch2 })
 
 print("""
 if (( ALLOK )); then

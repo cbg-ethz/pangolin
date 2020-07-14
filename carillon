@@ -109,7 +109,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 		fi
 
 		# cluster status
-		stat=$(${remote_batman} job "${id}")
+		stat=$(${remote_batman} job "${id}" || echo "(no answer)")
 		if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
 			# running
 			echo "$j : $id : $stat"
@@ -246,10 +246,12 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 			echo 'error: Pushing sampleset did not succeed' > /dev/stderr
 		else
 			echo 'starting jobs'
-			${remote_batman} addsamples
-			${remote_batman} vpipe > ${statusdir}/vpipe.${now}
-			ln -sf vpipe.${now} ${statusdir}/vpipe_started
-			cat ${statusdir}/vpipe_started
+			${remote_batman} addsamples	&& \
+			${remote_batman} vpipe > ${statusdir}/vpipe.${now}	&&	\
+			if [[ -s ${statusdir}/vpipe.${now} ]]; then
+				ln -sf vpipe.${now} ${statusdir}/vpipe_started
+				cat ${statusdir}/vpipe_started
+			fi
 		fi
 	fi
 else

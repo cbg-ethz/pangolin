@@ -38,9 +38,10 @@ callpushrsync() {
 	else
 		arglist=( "${basedir}/${sampleset}/" )
 	fi
-	exec rsync	--timeout=${rsynctimeout}	\
+	exec	timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		rsync	--timeout=${rsynctimeout}	\
 		--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:'bsse-covid19-pangolin-euler'	\
@@ -59,9 +60,10 @@ callpullrsync() {
 	else
 		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 	fi
-	exec rsync	--timeout=${rsynctimeout}	\
+	exec	timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		rsync	--timeout=${rsynctimeout}	\
 		--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:"${storgrp}"	\
@@ -86,9 +88,10 @@ callpullrsync_noshorah() {
 	else
 		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 	fi
-	exec rsync	--timeout=${rsynctimeout}	\
+	exec	timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		rsync	--timeout=${rsynctimeout}	\
 		--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:"${storgrp}"	\
@@ -144,9 +147,10 @@ case "$1" in
 	;;
 	pushsampleset)
 		err=0
-		rsync	--timeout=${rsynctimeout}	\
+		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
@@ -164,9 +168,10 @@ case "$1" in
 		fi
 	;;
 	listsamples)
-		rsync	--timeout=${rsynctimeout}	\
+		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-iPzrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
@@ -175,9 +180,10 @@ case "$1" in
 	;;
 	pullsamples_noshorah)
 		err=0
-		rsync	--timeout=${rsynctimeout}	\
+		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
@@ -198,9 +204,10 @@ case "$1" in
 	;;
 	pullsamples)
 		err=0
-		rsync	--timeout=${rsynctimeout}	\
+		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
