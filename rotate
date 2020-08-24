@@ -1,0 +1,2 @@
+#!/bin/sh
+logrotate --state ~/log/rotate.state ~/log/rotate.conf "$@"

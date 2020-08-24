@@ -1,0 +1,17 @@
+#!/bin/bash
+#BSUB -L /bin/bash
+#BSUB -J COVID-vpipe-dev
+#BSUB -u "pedro.ferreira@bsse.ethz.ch ivan.topolsky@bsse.ethz.ch kim.jablonski@bsse.ethz.ch"
+#BSUB -N
+#BSUB -R light
+##### -q light.5d
+#BSUB -W 96:0
+
+#cluster='bsub -M {params.mem} -n {threads} -W {params.time} -e {log.errfile} -o {log.outfile}'
+#cluster='bsub -M {params.mem} -n {threads} -W {params.time} -R "rusage [mem={params.mem},scratch={params.scratch}]" -e {log.errfile} -o {log.outfile}'
+cluster='bsub -J COVID-vpipe-dev-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
+
+exec ./vpipe --cluster "$cluster" -j 120 --keep-going --use-conda
+#!/usr/bin/env bash
+. ../miniconda3/bin/activate 'base'
+exec -a "$0" snakemake -s "../V-pipe-dev/vpipe.snake" --conda-prefix "../snake-envs" --use-conda "$@"

@@ -5,7 +5,7 @@
 #BSUB -N
 #BSUB -n 1
 #BSUB -R rusage[mem=10000] 
-#BSUB -W 4 
+#BSUB -W 40
 
 
 SUBDIRS=('' visualization references SNVs alignments)

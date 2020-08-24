@@ -6,13 +6,25 @@ import os
 import re
 import netrc
 import configparser
+import argparse
 from pybis import Openbis
 from dateutil import parser
+
+
+# parse command line
+argparser = argparse.ArgumentParser(description="Fetch metadata from OpenBIS server using PyBIS APIs")
+argparser.add_argument('-c', '--config', metavar='CONF', required=False,
+	default='server.conf',
+	type=str, dest='config', help="configuration file to load")
+argparser.add_argument('-s', '--summary', required=False,
+	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
+args = argparser.parse_args()
+
 
 # Load defaults from config file
 config = configparser.ConfigParser(strict=False) # non-strict: support repeated section headers
 config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in section headers
-with open('server.conf') as f: config.read_string(f"""
+with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
 samtype=ILLUMINA_FLOW_LANE
 basedir={os.getcwd()}
@@ -47,7 +59,7 @@ linking instead of copying ?
 '''
 
 # RegEx to parse some specific string
-rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_\w*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT'
+rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_[-\w]*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT'
 rxcell=re.compile('(?<=/)(?P<seq>\w+-(?P<cell>\w+)(?:\:\d+)?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1'
 rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
 
@@ -105,6 +117,7 @@ samples=(o.get_experiment(code=expname)
 #for sa in samples:
 	#print("%s\t%s\t%s" % (sa.permId, sa.identifier, sa.p.data_transferred))
 
+status=0
 # iterate through samples, i.e.: through flow cell lanes
 for sa in samples.df.itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
@@ -146,17 +159,19 @@ for sa in samples.df.itertuples(name='Sample'):
 		tsv=None
 		fastqc=None
 
-		tsv=open(os.path.join(sampleset,'samples.' + batch + '.tsv'), 'wt')
+		tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
 		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
 		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
 		for ds in datasets.sort_values(by=['type','sname'],ascending=[True,True]).itertuples(name='DataSets'):
-			print('\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, sep='\t')
+			if not args.summary:
+				print('\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, sep='\t')
 			# skip unavailable data files
 			if ds.status == 'AVAILABLE':
 				# look for FASTQ files (skip undetermined indexes)
 				if ds.type == 'FASTQ_GZ' and ds.EXTERNAL_SAMPLE_NAME:
 					if fastqc is None:
 						print("No FASTQC", file=sys.stderr)
+						status |= 1
 					print(ds.sname, batch, rlen, sep='\t', file=tsv)
 					# 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz	
 					print(r'''
@@ -186,3 +201,6 @@ else
 	echo Some errors
 fi;
 """, file=sh)
+
+if status == 1:
+	sys.exit('Some FastQC files still missing')

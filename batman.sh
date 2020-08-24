@@ -1,7 +1,7 @@
 #!/bin/bash
 
-clusterdir=/cluster/work/bewi/pangolin
-working=working-dev
+clusterdir=/cluster/project/pangolin
+working=working
 sampleset=sampleset
 
 RXJOB='Job <([[:digit:]]+)> is submitted'
@@ -13,7 +13,12 @@ case "$1" in
 		# rsync daemon : see ${SSH_ORIGINAL_COMMAND}
 		rsync --server --daemon .
 	;;
+	logrotate)
+		# rotate logs
+		~/log/rotate
+	;;
 	addsamples)
+		mkdir -p --mode=2770 ${clusterdir}/${working}/samples/
 		cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
 		sort ${clusterdir}/${sampleset}/samples.*.tsv > ${clusterdir}/${working}/samples.tsv
 	;;
@@ -28,15 +33,15 @@ case "$1" in
 			# schedule a gatherqa no mater what happens
 			[[ "$(bsub -w "ended(${job['seq']})"  < gatherqa)" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
 			# if no fail schedule a full job with snv
-			if [[ "$(bsub -w "done(${job['seq']})" -ti < test.bsub)"  =~ ${RXJOB} ]]; then
+			if [[ "$(bsub -w "done(${job['seq']})" -ti < vpipe.bsub)"  =~ ${RXJOB} ]]; then
 				job['snv']=${BASH_REMATCH[1]}
-				# schedulte a gatherqa no matter what happens
-				[[ "$(bsub -w "ended(${job['snv']})"  < gatherqa)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
+				# schedule a gatherqa no matter what happens to snv
+				[[ "$(bsub -w "done(${job['seq']})&&ended(${job['snv']})"  < gatherqa)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
 				# schedule a hugemem job if snvjob failed
-# 				if [[ "$(bsub -w "exited(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
+# 				if [[ "$(bsub -w "done(${job['seq']})&&exited(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
 # 					job['hugemem']=${BASH_REMATCH[1]}
 # 					# schedule a qa afterward
-# 					[[ "$(bsub -w "exited(${job['snv']})&&ended(${job['hugemem']})" -ti  < gatherqa)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
+# 					[[ "$(bsub -w "exited(done(${job['seq']})&&${job['snv']})&&ended(${job['hugemem']})" -ti  < gatherqa)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
 # 				fi
 			fi
 		fi >&2

@@ -4,7 +4,7 @@ scriptdir="$(dirname $(which $0))"
 
 . ${scriptdir}/server.conf
 
-if [[ $scriptdir != $basedir ]]; then
+if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
 fi
 
@@ -60,7 +60,7 @@ echo 'Data sync'
 echo '========='
 
 ${scriptdir}/belfry syncopenbis
-${scriptdir}/belfry sortsamples
+${scriptdir}/belfry sortsamples $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 
 echo '---------'
 if [[ !  ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]]; then
@@ -183,7 +183,7 @@ echo "============="
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
 	mustrun=0
 	declare -A flowcell
-	ref=$(date --reference="${statusdir}/vpipe_ended" '+%Y%m%d')
+	ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
 	now=$(date '+%Y%m%d')
 	echo "Check batch against ${ref}:"
 	for t in ${basedir}/${sampleset}/samples.*.tsv; do
@@ -202,7 +202,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		fi
 
 		# check dates
-		if [[ "$ref" < "$b" ]]; then
+		if [[ "$ref" < "$b" || "$ref" == "$b" ]]; then
 			echo "!$b:$f"
 			(( ++mustrun ))
 		else

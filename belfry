@@ -4,7 +4,7 @@ scriptdir="$(dirname $(which $0))"
 
 . ${scriptdir}/server.conf
 
-if [[ $scriptdir != $basedir ]]; then
+if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
 fi
 
@@ -16,6 +16,8 @@ statusdir="${basedir}/status"
 mkdir -m 0770 -p ${statusdir}
 
 baseconda=$HOME/
+timeoutforeground=
+#--foreground
 
 #
 # Input validator
@@ -38,7 +40,7 @@ callpushrsync() {
 	else
 		arglist=( "${basedir}/${sampleset}/" )
 	fi
-	exec	timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${rsynctimeout}	\
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -60,7 +62,7 @@ callpullrsync() {
 	else
 		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 	fi
-	exec	timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${rsynctimeout}	\
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -88,7 +90,7 @@ callpullrsync_noshorah() {
 	else
 		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 	fi
-	exec	timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${rsynctimeout}	\
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -126,7 +128,7 @@ case "$1" in
 	sortsamples)
 		. $baseconda/miniconda3/bin/activate pybis
 		cd $basedir
-		${scriptdir}/sort_samples_pybis && bash ${basedir}/${sampleset}/movedatafiles.sh && touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
+		${scriptdir}/sort_samples_pybis ${2:+--summary} && bash ${basedir}/${sampleset}/movedatafiles.sh && touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate
 		# TODO check multiple same cells
 		# TODO date openbis-downloads/20200626184717383-60699344 vs sampleset/samples.20200626_J49RD.tsv
@@ -147,7 +149,7 @@ case "$1" in
 	;;
 	pushsampleset)
 		err=0
-		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -168,7 +170,7 @@ case "$1" in
 		fi
 	;;
 	listsamples)
-		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -180,7 +182,7 @@ case "$1" in
 	;;
 	pullsamples_noshorah)
 		err=0
-		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -204,7 +206,7 @@ case "$1" in
 	;;
 	pullsamples)
 		err=0
-		timeout --foreground --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
@@ -237,7 +239,7 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
-			${basedir}/${working}/./{qa*.html,qa*.csv,samples/{[[:digit:]]*_[[:digit:]]*_[[:upper:]][[:digit:]]*,[[:upper:]][[:digit:]]*_[[:digit:]]*}/[[:digit:]]*_*/references/}	\
+			${basedir}/${working}/./{qa*.html,qa*.csv,samples/{[[:digit:]]*_[[:digit:]]*_[[:upper:]][[:digit:]]*,[[:upper:]][[:digit:]]_[[:digit:]]*}/[[:digit:]]*_*/references/}	\
 			--exclude '*.matcher'	\
 			--exclude '*.log'	\
 			--exclude '*.json'	\
