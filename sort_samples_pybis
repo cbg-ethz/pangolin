@@ -119,7 +119,7 @@ samples=(o.get_experiment(code=expname)
 
 status=0
 # iterate through samples, i.e.: through flow cell lanes
-for sa in samples.df.itertuples(name='Sample'):
+for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
 	m=rxrun.search(sa.CONTAINER_PROPERTIES).groupdict()
 	# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched groups throws an exception instead, that's my contrived way to get around.
@@ -153,7 +153,12 @@ for sa in samples.df.itertuples(name='Sample'):
 	except:
 		print("\t(not accessible yet)")
 	else:
-		if len(datasets) < 3 or not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
+		# we at least expect to see:
+		# - BCL2FASTQ_BASECALLSTATS stats
+		# - FASTQC
+		# - FASTQ_GZ for unindexed
+		# - at least several FASTQ_GZ for indexed samples
+		if len(datasets) <= 3 or not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
 			print("\t(not accessible yet)")
 			continue
 		tsv=None

@@ -231,7 +231,7 @@ case "$1" in
 	qa_report)
 		. $baseconda/miniconda3/bin/activate qa_report
 		cd ${basedir}/${working}/
-		jupyter nbconvert --execute --no-input qa_report.ipynb && touch ${statusdir}/qa_report_success || touch ${statusdir}/qa_report_fail 
+		jupyter nbconvert --ExecutePreprocessor.timeout=180 --execute --no-input qa_report.ipynb && touch ${statusdir}/qa_report_success || touch ${statusdir}/qa_report_fail 
 		conda deactivate
 	;;
 	pushseq)

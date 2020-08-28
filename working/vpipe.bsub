@@ -7,6 +7,9 @@
 ##### -q light.5d
 #BSUB -W 23:0
 
+# config: normal SNV settings (64 threads shorah)
+sed -ri.old '/^\[snv\]$/,/^\[[^\]]*\]$/{s@^(time=).*@\1240@;s@^(mem=).*@\11024@;s@^(threads=).*@\164@}' vpipe.config
+
 #cluster='bsub -M {params.mem} -n {threads} -W {params.time} -e {log.errfile} -o {log.outfile}'
 #cluster='bsub -M {params.mem} -n {threads} -W {params.time} -R "rusage [mem={params.mem},scratch={params.scratch}]" -e {log.errfile} -o {log.outfile}'
 cluster='bsub -J COVID-vpipe-dev-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
