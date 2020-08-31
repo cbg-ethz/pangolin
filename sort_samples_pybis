@@ -151,15 +151,18 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 	try:
 		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2'}).df
 	except:
-		print("\t(not accessible yet)")
+		print("\t(not accessible yet - cannot open)")
 	else:
 		# we at least expect to see:
 		# - BCL2FASTQ_BASECALLSTATS stats
-		# - FASTQC
 		# - FASTQ_GZ for unindexed
 		# - at least several FASTQ_GZ for indexed samples
-		if len(datasets) <= 3 or not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
-			print("\t(not accessible yet)")
+		# - FASTQC
+		# the last two are required, we don't use the first two.
+		if not 'EXTERNAL_SAMPLE_NAME' in datasets.columns or (	# we need a samplename column
+			not (datasets['type']=='FASTQC').any()) or (	# we need FASTQC to be present
+			((datasets['type']=='FASTQ_GZ') & (datasets['EXTERNAL_SAMPLE_NAME']!='')).sum() < 1): # we need at least 1 named sample
+			print("\t(not usable yet - missing data)")
 			continue
 		tsv=None
 		fastqc=None
@@ -202,8 +205,10 @@ done
 print("""
 if (( ALLOK )); then
 	echo All Ok
+	exit 0
 else
 	echo Some errors
+	exit 1
 fi;
 """, file=sh)
 
