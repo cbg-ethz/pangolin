@@ -38,11 +38,11 @@ case "$1" in
 				# schedule a gatherqa no matter what happens to snv
 				[[ "$(bsub -w "done(${job['seq']})&&ended(${job['snv']})"  < gatherqa)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
 				# schedule a hugemem job if snvjob failed
-# 				if [[ "$(bsub -w "done(${job['seq']})&&exited(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
-# 					job['hugemem']=${BASH_REMATCH[1]}
-# 					# schedule a qa afterward
-# 					[[ "$(bsub -w "exited(done(${job['seq']})&&${job['snv']})&&ended(${job['hugemem']})" -ti  < gatherqa)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
-# 				fi
+ 				if [[ "$(bsub -w "done(${job['seq']})&&exited(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
+ 					job['hugemem']=${BASH_REMATCH[1]}
+ 					# schedule a qa afterward
+ 					[[ "$(bsub -w "exited(done(${job['seq']})&&${job['snv']})&&ended(${job['hugemem']})" -ti  < gatherqa)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
+ 				fi
 			fi
 		fi >&2
 		# write job chain list
