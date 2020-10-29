@@ -2,6 +2,7 @@
 
 import io
 import sys
+import atexit
 import os
 import re
 import netrc
@@ -81,6 +82,7 @@ username,password=netrc.netrc().authenticators(fileserver)[0::2];
 
 o=Openbis(apiurl, verify_certificates=True)
 o.login(username, password, save_token=True)   # save the session token in ~/.pybis/example.com.token
+atexit.register(o.logout)
 
 # shell script file with all moving instructions inside
 sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
@@ -121,7 +123,11 @@ status=0
 # iterate through samples, i.e.: through flow cell lanes
 for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
-	m=rxrun.search(sa.CONTAINER_PROPERTIES).groupdict()
+	try:
+		m=rxrun.search(sa.CONTAINER_PROPERTIES).groupdict()
+	except:
+		print(f"cannot parse: {sa.CONTAINER_PROPERTIES}\n{list(map(lambda x: '%x' % ord(x), sa.CONTAINER_PROPERTIES[0:4]))}")
+		m={}
 	# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched groups throws an exception instead, that's my contrived way to get around.
 	rlen=int(m['len'])-1 if 'len' in m else ''
 	rtype=m['type'] if 'type' in m else ''
@@ -159,27 +165,48 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 		# - at least several FASTQ_GZ for indexed samples
 		# - FASTQC
 		# the last two are required, we don't use the first two.
-		if not 'EXTERNAL_SAMPLE_NAME' in datasets.columns or (	# we need a samplename column
-			not (datasets['type']=='FASTQC').any()) or (	# we need FASTQC to be present
-			((datasets['type']=='FASTQ_GZ') & (datasets['EXTERNAL_SAMPLE_NAME']!='')).sum() < 1): # we need at least 1 named sample
-			print("\t(not usable yet - missing data)")
+		skip=False
+		if not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
+			print("\t(missing samplenames)", end='')
+			skip=True
+		else:
+			numsam = ((datasets['type']=='FASTQ_GZ') & (datasets['EXTERNAL_SAMPLE_NAME']!='')).sum()
+			if numsam < 1: # we need at least 1 named sample
+				print(f"\t(nsamples: {numsam})", end='')
+				skip=True
+		if not (datasets['type']=='FASTQC').any(): # we need FASTQC to be present
+			#print(datasets['type']=='FASTQC')
+			print("\t(missing fastqc)", end='')
+			skip=True
+		if skip:
+			print("\t(not usable yet - skipping)")
 			continue
+
 		tsv=None
 		fastqc=None
 
 		tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
 		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
+		seensname={ }
 		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
-		for ds in datasets.sort_values(by=['type','sname'],ascending=[True,True]).itertuples(name='DataSets'):
+		for ds in datasets.sort_values(by=['type','sname','permId'],ascending=[True,True,False]).itertuples(name='DataSets'):
 			if not args.summary:
 				print('\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, sep='\t')
 			# skip unavailable data files
 			if ds.status == 'AVAILABLE':
 				# look for FASTQ files (skip undetermined indexes)
 				if ds.type == 'FASTQ_GZ' and ds.EXTERNAL_SAMPLE_NAME:
+					# check that we actually have a FastQC
 					if fastqc is None:
 						print("No FASTQC", file=sys.stderr)
 						status |= 1
+					# upload error: duplicate samples.
+					if ds.sname in seensname:
+						# TODO sanity checks if it is indeed the same sample
+						print(f"\t\tduplicate {ds.sname} already in {seensname[ds.sname]}", file=sys.stderr)
+						continue
+					seensname[ds.sname] = ds.permId
+
 					print(ds.sname, batch, rlen, sep='\t', file=tsv)
 					# 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz	
 					print(r'''
@@ -199,6 +226,10 @@ done
 ''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc}, file=sh)
 				# look for FASTQC holder directory
 				elif ds.type == 'FASTQC':
+					# upload error: duplicate samples.
+					if fastqc is not None:
+						print(f"\t\tduplicate FastQC already in {fastqc}", file=sys.stderr)
+						continue
 					# 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
 					fastqc=ds.permId # keep the reference
 
