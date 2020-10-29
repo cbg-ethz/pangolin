@@ -21,7 +21,7 @@ remote_belfry="ssh -ni ${HOME}/.ssh/id_ed25519_belfry bs-bewi09.ethz.ch --"
 
 
 
-if false; then
+if false; then # disable block
 #
 # Avoid re-entry
 #
@@ -47,7 +47,7 @@ else
 	fi
 	exit 1;
 fi
-fi
+fi # disable block
 
 
 
@@ -59,7 +59,7 @@ echo '========='
 echo 'Data sync'
 echo '========='
 
-${scriptdir}/belfry syncopenbis
+${scriptdir}/belfry syncopenbis --recent
 ${scriptdir}/belfry sortsamples $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 
 echo '---------'
@@ -173,18 +173,38 @@ fi
 
 
 #
-# Phase 4: restar runs if new data
+# Phase 4: restart runs if new data
 #
 
 echo "============="
 echo "Start new run"
 echo "============="
 
+# TODO support a yaml with regex
+rxsample='^[[:digit:]]{6}_[[:digit:]]{3,}_[A-Z][[:digit:]]{2}'
+
+scanmissingsamples() {
+	while read sample batch other; do 
+		# look for only guaranteed samples
+		[[ $sample =~ $rxsample ]] || continue
+		# check the presence of fasta on each sample
+		if [[ -e ${basedir}/${working}/samples/${sample}/${batch}/references/ref_majority.fasta ]]; then 
+			echo -n '.'
+		else 
+			echo -e "\r+${batch/_/:}\t!${sample}\e[K"
+			true
+			return 0
+		fi; 
+	done < $1
+	false
+}
+
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
 	mustrun=0
 	declare -A flowcell
 	ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
 	now=$(date '+%Y%m%d')
+	limit=$(date --date='2 weeks ago' '+%Y%m%d')
 	echo "Check batch against ${ref}:"
 	for t in ${basedir}/${sampleset}/samples.*.tsv; do
 		if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}).tsv$ ]]; then
@@ -205,8 +225,10 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		if [[ "$ref" < "$b" || "$ref" == "$b" ]]; then
 			echo "!$b:$f"
 			(( ++mustrun ))
+		elif [[ "$limit" < "$b"  ]] && scanmissingsamples $t; then 
+			(( ++mustrun ))
 		else
-			echo "($b:$f)"
+			echo -e "\r($b:$f)\e[K"
 		fi
 		# sanity check
 		if [[ "$now" < "$b" ]]; then

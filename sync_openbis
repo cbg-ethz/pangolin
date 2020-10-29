@@ -14,4 +14,11 @@ else
 	exit 1
 fi
 
-exec lftp -c "mirror --continue --no-perms --no-umask --parallel=16 --loop sftp://${username}@${fileserver}/${expname}/ ${basedir}/${download}"
+if (( ${#@} )); then
+	dir=( "${@/#/ --directory=${expname}/}" )
+	source="${dir[*]}"
+else
+	source="--directory=${expname}/*"
+fi
+
+exec lftp -c "set cmd:move-background false; connect sftp://${username}@${fileserver}; mirror --continue --no-perms --no-umask --parallel=16 --loop --target-directory=${basedir}/${download} ${source}"

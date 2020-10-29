@@ -114,7 +114,14 @@ case "$1" in
 		# New: 605 files, 0 symlinks
 		# 7674153291 bytes transferred
 		. $baseconda/miniconda3/bin/activate ""
-		if [[ "$(/usr/bin/time ${scriptdir}/sync_openbis|tee /dev/stderr)" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
+		if [[ "${2}" = "--recent" ]]; then 
+			param=( $(date '+%Y%m*' --date='-1 month') $(date '+%Y%m*') )
+			echo "syncing recent: ${param[*]}"
+		else
+			param=( )
+		fi
+		syncoutput="$(/usr/bin/time ${scriptdir}/sync_openbis "${param[@]}"|tee /dev/stderr)"
+		if [[ "$syncoutput" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
 			echo "Newfiles downloaded"
 			echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${statusdir}/syncopenbis_last
 			flock -x -o ${statusdir}/syncopenbis_last -c "sleep 1"
@@ -143,8 +150,8 @@ case "$1" in
 			find "${dir[@]}" -type d -print0 | xargs -0 chmod u+rwx,g+rwXs,o-rwx
 			echo 'mode files'
 			find "${dir[@]}" -type f -print0 | xargs -0 chmod 0660
-			echo 'group'
-			chgrp -R "${storgrp}" "${dir[@]}"
+			#echo 'group'
+			#chgrp -R "${storgrp}" "${dir[@]}"
 		fi
 	;;
 	pushsampleset)
