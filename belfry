@@ -19,6 +19,9 @@ baseconda=$HOME/
 timeoutforeground=
 #--foreground
 
+lastmonth=$(date '+%Y%m' --date='-1 month')
+thismonth=$(date '+%Y%m')
+
 #
 # Input validator
 #
@@ -38,7 +41,9 @@ callpushrsync() {
 	if (( ${#@} )); then
 		arglist=( "${@/#/${basedir}/${sampleset}/}" )
 	else
-		arglist=( "${basedir}/${sampleset}/" )
+		#arglist=( "${basedir}/${sampleset}/" )
+		echo "rsync job didn't receive list"
+		exit 1;
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${rsynctimeout}	\
@@ -60,7 +65,9 @@ callpullrsync() {
 	if (( ${#@} )); then
 		arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
 	else
-		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+		echo "rsync job didn't receive list"
+		exit 1;
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${rsynctimeout}	\
@@ -88,7 +95,9 @@ callpullrsync_noshorah() {
 	if (( ${#@} )); then
 		arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
 	else
-		arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+		echo "rsync job didn't receive list"
+		exit 1;
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${rsynctimeout}	\
@@ -115,7 +124,7 @@ case "$1" in
 		# 7674153291 bytes transferred
 		. $baseconda/miniconda3/bin/activate ""
 		if [[ "${2}" = "--recent" ]]; then 
-			param=( $(date '+%Y%m*' --date='-1 month') $(date '+%Y%m*') )
+			param=( "${lastmonth}*" "${thismonth}*" )
 			echo "syncing recent: ${param[*]}"
 		else
 			param=( )
@@ -135,7 +144,24 @@ case "$1" in
 	sortsamples)
 		. $baseconda/miniconda3/bin/activate pybis
 		cd $basedir
-		${scriptdir}/sort_samples_pybis ${2:+--summary} && bash ${basedir}/${sampleset}/movedatafiles.sh && touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
+		summary=""
+		recent=""
+		while [[ -n $2 ]]; do
+			case "$2" in
+				--summary)
+					summary='--summary'
+				;;
+				--recent)
+					recent="--recent=${lastmonth}"
+				;;
+				*)
+					echo "Unkown parameter ${2}" > /dev/stderr
+					exit 2
+				;;
+			esac
+			shift
+		done
+		${scriptdir}/sort_samples_pybis ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh && touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate
 		# TODO check multiple same cells
 		# TODO date openbis-downloads/20200626184717383-60699344 vs sampleset/samples.20200626_J49RD.tsv
@@ -155,6 +181,13 @@ case "$1" in
 		fi
 	;;
 	pushsampleset)
+		if [[ "${2}" = "--recent" ]]; then
+			sheets=( ${basedir}/${sampleset}/samples.${lastmonth}*.tsv ${basedir}/${sampleset}/samples.${thismonth}*.tsv )
+			# BUG: will generate non-globed pattern if months are missing
+			echo "pushing recent: ${param[*]##/}"
+		else
+			sheets=( ${basedir}/${sampleset}/samples.*.tsv )
+		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
@@ -165,7 +198,7 @@ case "$1" in
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${basedir}/${sampleset}/samples.*.tsv	\
 			belfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
-		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
+		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
 			gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
 				bash -c "callpushrsync {@LIST@} " || (( ++err ))
@@ -188,6 +221,28 @@ case "$1" in
 			belfry@euler.ethz.ch::${working}/samples/
 	;;
 	pullsamples_noshorah)
+		# fetch remote sheets
+		mkdir -p /tmp/belfrysheets/
+		if [[ "${2}" = "--recent" ]]; then
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
+		else
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.*.tsv" )
+		fi
+		rsync	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
+			-g --chown=:'bsse-covid19-pangolin-euler'	\
+			"${sheets[@]}"	\
+			/tmp/belfrysheets/
+		if [[ "${2}" = "--recent" ]]; then
+			sheets=( /tmp/belfrysheets/samples.${lastmonth}*.tsv /tmp/belfrysheets/samples.${thismonth}*.tsv )
+			# BUG: will generate non-globed pattern if months are missing
+			echo "pulling recent: ${param[*]##/}"
+		else
+			sheets=( /tmp/belfrysheets/samples.*.tsv )
+		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
@@ -200,7 +255,7 @@ case "$1" in
 			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
-		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
+		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
 			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
 				bash -c "callpullrsync_noshorah {@LIST@} " || (( ++err ))
@@ -212,6 +267,28 @@ case "$1" in
 		fi
 	;;
 	pullsamples)
+		# fetch remote sheets
+		mkdir -p /tmp/belfrysheets/
+		if [[ "${2}" = "--recent" ]]; then
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
+		else
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.*.tsv" )
+		fi
+		rsync	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
+			-g --chown=:'bsse-covid19-pangolin-euler'	\
+			"${sheets[@]}"	\
+			/tmp/belfrysheets/
+		if [[ "${2}" = "--recent" ]]; then
+			sheets=( /tmp/belfrysheets/samples.${lastmonth}*.tsv /tmp/belfrysheets/samples.${thismonth}*.tsv )
+			# BUG: will generate non-globed pattern if months are missing
+			echo "pulling recent: ${param[*]##/}"
+		else
+			sheets=( /tmp/belfrysheets/samples.*.tsv )
+		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${rsynctimeout}	\
@@ -224,7 +301,7 @@ case "$1" in
 			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
-		cut -s --fields=1 ${basedir}/${sampleset}/samples.*.tsv|sort -u|	\
+		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
 			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
 			xargs -0 -P $parallel -I '{@LIST@}' --	\
 				bash -c "callpullrsync {@LIST@} " || (( ++err ))

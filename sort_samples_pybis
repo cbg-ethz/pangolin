@@ -19,6 +19,8 @@ argparser.add_argument('-c', '--config', metavar='CONF', required=False,
 	type=str, dest='config', help="configuration file to load")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
+argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
+	dest='recent', help="Only process datasets (runs) whose date-based ID is posterior to the argument")
 args = argparser.parse_args()
 
 
@@ -134,7 +136,13 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 	rlen=int(m['len'])-1 if 'len' in m else ''
 	rtype=m['type'] if 'type' in m else ''
 	rundate=f"20{m['date']}" if 'date' in m else None # NOTE runfolders are yymmdd, not yyyymmdd
-	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, (m['run'] if 'run' in m else ''), sep='\t')
+	skip=False
+	if args.recent:
+		if sa.permId < args.recent:
+			skip=True
+	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, (m['run'] if 'run' in m else ''), ('skip' if skip else ''), sep='\t')
+	if skip:
+		continue
 
 	lane=cell=seq=''
 	try:
