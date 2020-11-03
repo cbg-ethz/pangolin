@@ -60,8 +60,8 @@ linking instead of copying ?
 '''
 
 # RegEx to parse some specific string
-rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_[-\w]*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT'
-rxcell=re.compile('(?<=/)(?P<seq>\w+-(?P<cell>\w+)(?:\:\d+)?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1'
+rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_[-\w]*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT' or {...}'folder: 201023_A00730_0259_BHTVCCDRXX'
+rxcell=re.compile('(?<=/)(?P<seq>(?:\w+-)?(?P<cell>\w+)(?:\:(?P<lane>\d+))?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1' or '/BSSE_STADLER_COVID/HTVCCDRXX:2'
 rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
 
 # create sampleset directory if missing
@@ -120,6 +120,8 @@ samples=(o.get_experiment(code=expname)
 	#print("%s\t%s\t%s" % (sa.permId, sa.identifier, sa.p.data_transferred))
 
 status=0
+batchtsv={} # dictionary to hold output files per batches
+batchlanes={} # dictionary to count lanes used in each batch
 # iterate through samples, i.e.: through flow cell lanes
 for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
@@ -134,15 +136,16 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 	rundate=f"20{m['date']}" if 'date' in m else None # NOTE runfolders are yymmdd, not yyyymmdd
 	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, (m['run'] if 'run' in m else ''), sep='\t')
 
-	cell=seq=''
+	lane=cell=seq=''
 	try:
-		# get the sequencing name, and the flow cell name	original/000000000_CTTKK_1
+		# get the sequencing name, and the flow cell name	original/000000000_CTTKK_1 or HTVCCDRXX_2
 		m=rxcell.search(sa.identifier)
 		cell=m.group('cell')
 		seq=rxclean.sub('_',m.group('seq')) # clean-up seqname from unfriendly caracters
+		lane=int(m.group('lane'))
 	except:
-		# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched group throws an exception instead, that's my contrived way to get around.
-		pass
+		print("!!! rx matching failed, cannot detect cell and lane")
+		continue
 
 	# batch: date + flow cell, e.g.: '20200426-J3JCY'
 	regdate=parser.parse(sa.registrationDate).strftime('%Y%m%d')
@@ -185,7 +188,17 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 		tsv=None
 		fastqc=None
 
-		tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
+		if batch in batchtsv:
+			if lane in batchlanes[batch]:
+				print(f"\t!!! duplicate lane {lane} already seen in {batchlanes[batch][lane]}")
+			else:
+				batchlanes[batch][lane]=sa.permId
+
+			tsv=batchtsv[batch]
+		else:
+			batchtsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
+			batchlanes[batch]={lane: sa.permId}
+
 		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
 		seensname={ }
 		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
@@ -211,19 +224,19 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 					# 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz	
 					print(r'''
 [[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s'
-fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L*_R[1-2]_*%(mm)s.fastq.gz )
+fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L%(lane)03u_R[1-2]_*%(mm)s.fastq.gz )
 [[ "${fastq[*]}" =~ \* ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
 (( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[@]}"
 mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
-	[[ $file =~ _L[[:digit:]]+_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
+	[[ $file =~ _L%(lane)03u_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
 	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
 	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
-	[[ $destname =~ _L[[:digit:]]+_(R[[:digit:]]).fastq.gz$ ]]
+	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]
 	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seq)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
-''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc}, file=sh)
+''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc,'lane':lane}, file=sh)
 				# look for FASTQC holder directory
 				elif ds.type == 'FASTQC':
 					# upload error: duplicate samples.
