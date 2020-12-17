@@ -5,11 +5,18 @@ import sys
 import atexit
 import os
 import re
+import math
 import netrc
 import configparser
 import argparse
+import yaml
 from pybis import Openbis
 from dateutil import parser
+
+# progress bar unicode
+def bar(v, m=128):
+	f=v&7
+	return ('\u2588' * (v >> 3))+(chr(0x2590 - f) if f else '')+('\u00b7' * ((m-v) >> 3))
 
 
 # parse command line
@@ -112,8 +119,8 @@ cd %(basedir)s
 
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
-samples=(o.get_experiment(code=expname)
-	.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'}))
+ex=o.get_experiment(code=expname)
+samples=ex.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'})
 
 # NOTE iterating over `samples` is problematic, use pandas dataframe instead
 #  - in jupyter, it crashes with "TypeError: argument of type 'int' is not iterable"
@@ -121,11 +128,14 @@ samples=(o.get_experiment(code=expname)
 #for sa in samples:
 	#print("%s\t%s\t%s" % (sa.permId, sa.identifier, sa.p.data_transferred))
 
+dataframe=samples.df
+prgrs=0
+prgmax=len(dataframe)
 status=0
 batchtsv={} # dictionary to hold output files per batches
 batchlanes={} # dictionary to count lanes used in each batch
 # iterate through samples, i.e.: through flow cell lanes
-for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itertuples(name='Sample'):
+for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
 	try:
 		m=rxrun.search(sa.CONTAINER_PROPERTIES).groupdict()
@@ -141,6 +151,13 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 		if sa.permId < args.recent:
 			skip=True
 	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, (m['run'] if 'run' in m else ''), ('skip' if skip else ''), sep='\t')
+
+	# progress bar
+	barstr=bar(math.floor(prgrs*128/prgmax))
+	print (f"\r[{barstr}] {prgrs}/{prgmax}", end=('\r' if args.summary else '\n'))
+	print (f"echo -ne '\\r[{barstr}] {prgrs}/{prgmax}\\r'", file=sh)
+	prgrs+=1
+
 	if skip:
 		continue
 
@@ -150,6 +167,8 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 		m=rxcell.search(sa.identifier)
 		cell=m.group('cell')
 		seq=rxclean.sub('_',m.group('seq')) # clean-up seqname from unfriendly caracters
+		# HACK original/000000000_CTTKK_1 or /000000000-JDWB9_1 depending on versions so we wildcard it
+		seqdir=m.group('seq').replace(':','_') if sa.permId >= '20201209' or sa.permId == '20201123091827016-60728674' else seq
 		lane=int(m.group('lane'))
 	except:
 		print("!!! rx matching failed, cannot detect cell and lane")
@@ -161,14 +180,14 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 		batch=f"{regdate}_{cell}"
 	else:  # ideally, the run folder's date (first six digits)
 		if regdate != rundate:
-			print(f"\t!!! Batch mismatch: {rundate} vs {regdate}")
+			print(f"\u001b[K\t!!! Batch mismatch: {rundate} vs {regdate}")
 		batch=f"{rundate}_{cell}"
 
 	# only process data which was transfered, we don't have access permission for the rest yet
 	try:
 		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2'}).df
 	except:
-		print("\t(not accessible yet - cannot open)")
+		print("\u001b[K\t(not accessible yet - cannot open)")
 	else:
 		# we at least expect to see:
 		# - BCL2FASTQ_BASECALLSTATS stats
@@ -178,16 +197,16 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 		# the last two are required, we don't use the first two.
 		skip=False
 		if not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
-			print("\t(missing samplenames)", end='')
+			print("\u001b[K\t(missing samplenames)", end='')
 			skip=True
 		else:
 			numsam = ((datasets['type']=='FASTQ_GZ') & (datasets['EXTERNAL_SAMPLE_NAME']!='')).sum()
 			if numsam < 1: # we need at least 1 named sample
-				print(f"\t(nsamples: {numsam})", end='')
+				print(f"\u001b[K\t(nsamples: {numsam})", end='')
 				skip=True
 		if not (datasets['type']=='FASTQC').any(): # we need FASTQC to be present
 			#print(datasets['type']=='FASTQC')
-			print("\t(missing fastqc)", end='')
+			print("\u001b[K\t(missing fastqc)", end='')
 			skip=True
 		if skip:
 			print("\t(not usable yet - skipping)")
@@ -198,21 +217,33 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 
 		if batch in batchtsv:
 			if lane in batchlanes[batch]:
-				print(f"\t!!! duplicate lane {lane} already seen in {batchlanes[batch][lane]}")
+				print(f"\u001b[K\t!!! duplicate lane {lane} already seen in {batchlanes[batch][lane]}")
 			else:
 				batchlanes[batch][lane]=sa.permId
 
 			tsv=batchtsv[batch]
 		else:
+			# batch TSV sample list
 			batchtsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
 			batchlanes[batch]={lane: sa.permId}
+
+			# batch YAML file with info
+			# HACK this not the canonical way. we should be getting the parrent of the current sa.permId, but every attempt thus far crashes
+			# get the (non-empty) first sample fastq code among the datasets
+			samcode=next(c for c in datasets['FASTQ_SAMPLE_CODE'] if c).replace('_', '-')
+			libkit = ex.get_samples(code=samcode, props={'KIT'}).df.KIT[0]
+			if not args.summary:
+				print('\t', samcode, libkit, sep='\t')
+			with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
+				print(yaml.dump({'type':'openbis', 'url':apiurl,'libkit':libkit,'properties':sa.CONTAINER_PROPERTIES}), file=yml)
+
 
 		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
 		seensname={ }
 		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
 		for ds in datasets.sort_values(by=['type','sname','permId'],ascending=[True,True,False]).itertuples(name='DataSets'):
 			if not args.summary:
-				print('\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, sep='\t')
+				print('\u001b[K\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, sep='\t')
 			# skip unavailable data files
 			if ds.status == 'AVAILABLE':
 				# look for FASTQ files (skip undetermined indexes)
@@ -224,7 +255,7 @@ for sa in samples.df.sort_values(by=['registrationDate'],ascending=[True]).itert
 					# upload error: duplicate samples.
 					if ds.sname in seensname:
 						# TODO sanity checks if it is indeed the same sample
-						print(f"\t\tduplicate {ds.sname} already in {seensname[ds.sname]}", file=sys.stderr)
+						print(f"\u001b[K\t\tduplicate {ds.sname} already in {seensname[ds.sname]}", file=sys.stderr)
 						continue
 					seensname[ds.sname] = ds.permId
 
@@ -242,19 +273,20 @@ for file in "${fastq[@]}"; do
 	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
 	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
 	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]
-	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seq)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
+	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
-''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc,'lane':lane}, file=sh)
+''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'seqdir':seqdir,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc,'lane':lane}, file=sh)
 				# look for FASTQC holder directory
 				elif ds.type == 'FASTQC':
 					# upload error: duplicate samples.
 					if fastqc is not None:
-						print(f"\t\tduplicate FastQC already in {fastqc}", file=sys.stderr)
+						print(f"\u001b[K\t\tduplicate FastQC already in {fastqc}", file=sys.stderr)
 						continue
 					# 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
 					fastqc=ds.permId # keep the reference
 
-print("""
+print(f"""
+echo -e '\\r\\e[K[{bar(128)}] done.'
 if (( ALLOK )); then
 	echo All Ok
 	exit 0
