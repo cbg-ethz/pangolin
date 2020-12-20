@@ -323,6 +323,7 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
+			${basedir}/${sampleset}/./batch.*.yaml	\
 			${basedir}/${working}/./{qa*.html,qa*.csv,samples/{[[:digit:]]*_[[:digit:]]*_[[:upper:]][[:digit:]]*,[[:upper:]][[:digit:]]_[[:digit:]]*}/[[:digit:]]*_*/references/}	\
 			--exclude '*.matcher'	\
 			--exclude '*.log'	\
