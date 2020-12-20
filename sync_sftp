@@ -1,0 +1,49 @@
+#!/bin/bash
+
+configfile=server.conf
+
+usage() { echo "Usage: $0 [-c <configfile>] [filter [...]]" 1>&2; exit $1; }
+
+while getopts "c:h" o; do
+	case "${o}" in
+		c)	configfile=${OPTARG}
+			if [[ ! -r ${configfile} ]]; then
+				echo "Cannot read ${configfile}" 1>&2
+				usage 1
+			fi
+			;;
+		h)	usage 0	;;
+		*)	usage 1	;;
+	esac
+done
+shift $((OPTIND-1))
+
+
+. ${configfile}
+
+: ${fileserver:?}
+# ${srvport}
+: ${expname:?}
+: ${basedir:=$(pwd)}
+: ${download:?}
+: ${parallel:=16}
+: ${contimeout:=300}
+: ${retries:=10}
+: ${iotimeout:=300}
+
+if [[ $( < ~/.netrc ) =~ machine[[:space:]]+${fileserver}[[:space:]]?login[[:space:]]+([^[:space:]]+) ]]; then
+	username="${BASH_REMATCH[1]}"
+else
+	echo "cannot find login for machine ${fileserver} in ~/.netrc" >&2
+	exit 1
+fi
+
+if (( ${#@} )); then
+	dir=( "${@/#/ --directory=${expname}/}" )
+	source="${dir[*]}"
+else
+	source="--directory=${expname}/*"
+fi
+
+
+exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=16 --loop --target-directory=${basedir}/${download} ${source}"

@@ -4,6 +4,17 @@ scriptdir="$(dirname $(which $0))"
 
 . ${scriptdir}/server.conf
 
+: ${basedir:=$(pwd)}
+: ${download:?}
+: ${sampleset:=sampleset}
+: ${working:=working}
+: ${releasedir:?}
+: ${storgrp:?}
+: ${parallel:=16}
+: ${contimeout:=300}
+: ${retries:=10}
+: ${iotimeout:=300}
+
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
 fi
@@ -46,7 +57,7 @@ callpushrsync() {
 		exit 1;
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-		rsync	--timeout=${rsynctimeout}	\
+		rsync	--timeout=${iotimeout}	\
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
@@ -70,7 +81,7 @@ callpullrsync() {
 		exit 1;
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-		rsync	--timeout=${rsynctimeout}	\
+		rsync	--timeout=${iotimeout}	\
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
@@ -100,7 +111,7 @@ callpullrsync_noshorah() {
 		exit 1;
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-		rsync	--timeout=${rsynctimeout}	\
+		rsync	--timeout=${iotimeout}	\
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
@@ -129,7 +140,7 @@ case "$1" in
 		else
 			param=( )
 		fi
-		syncoutput="$(/usr/bin/time ${scriptdir}/sync_openbis "${param[@]}"|tee /dev/stderr)"
+		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp "${param[@]}"|tee /dev/stderr)"
 		if [[ "$syncoutput" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
 			echo "Newfiles downloaded"
 			echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${statusdir}/syncopenbis_last
@@ -190,7 +201,7 @@ case "$1" in
 		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-			rsync	--timeout=${rsynctimeout}	\
+			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
@@ -211,7 +222,7 @@ case "$1" in
 	;;
 	listsamples)
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-			rsync	--timeout=${rsynctimeout}	\
+			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-iPzrltH --fuzzy --fuzzy --inplace	\
@@ -245,7 +256,7 @@ case "$1" in
 		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-			rsync	--timeout=${rsynctimeout}	\
+			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
@@ -291,7 +302,7 @@ case "$1" in
 		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-			rsync	--timeout=${rsynctimeout}	\
+			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
