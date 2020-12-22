@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -L /bin/bash
 #BSUB -J COVID-qa
-#BSUB -u "ivan.topolsky@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch"
+#BSUB -u "ivan.topolsky@bsse.ethz.ch" # sarah.nadeau@bsse.ethz.ch"
 #BSUB -N
 #BSUB -n 1
 #BSUB -M 4096
@@ -71,8 +71,19 @@ matchsearch=(
 	['score']='Score'
 )
 
+# labs
+# hard-coded HACK
+# TODO use the YAML file and the regex
+declare -A labs
+for l in 20200423_J3JCY 20200425_CTT3D 20200430_J3JCT 20200508_J3GT6 20200527_CTTKK 20200605_J67B4 20200612_J6NRK 20200624_J49RD 20200703_J795H 20200710_J79N2 20200724_J74NY 20200729_J7FJ5 20200803_J8HTM 20200807_J8HGC 20200817_J8YRP 20200821_J92FM 20200908_JB335 20200911_CW477 20200914_JB26N 20200918_JB3H6 20200925_J8WPL 20201002_J9279 20201023_HTVCCDRXX 20201030_JBJ3L 20201106_J9254 20201113_JDJ2P 20201120_JD735 20201127_JDCF7 20201208_JDY9B 20201211_JDWB9 20201218_JDH92; do
+	labs[${l}]='gfb'
+done
+for l in 20201120_JDNB4 20201124_JDNBP 20201209_JG62G 20201211_JG6BB 20201218_JFNWL ; do
+	labs[${l}]='fgcz'
+done
+
 # header and data
-qacolumn=( 'sample' 'batch' 'empty' 'groundtruth'
+qacolumn=( 'sample' 'batch' 'lab'
 "${fqckeys[@]/#/fastqc_r1_}"
 "${fqckeys[@]/#/fastqc_r2_}"
 'input_r1' 'input_r2' 'mlen_r1' 'mlen_r2' 'goodpairs'
@@ -108,18 +119,23 @@ while read subject sublvl len; do
 	qadata['batch']=$sublvl
 
 	# 0 Flags
-	if [[ $subject =~ ^[[:digit:]]{6}_ ]]; then
-		qadata['empty']=0
-		qadata['groundtruth']=0
-	elif [[ $subject =~ ^pos_ ]]; then
-		qadata['empty']=0
-		qadata['groundtruth']=1
-	elif [[ $subject =~ ^(neg|H2O|EMPTY)_ ]]; then
-		qadata['empty']=1
-		qadata['groundtruth']=1
+	if [ -z "${labs[${sublvl}]}" ]; then
+		oops "lab missing for ${sublvl}"
 	else
-		oops "cannot understand name $subject"
+		qadata['lab']="${labs[${sublvl}]}"
 	fi
+# 	if [[ $subject =~ ^[[:digit:]]{6}_ ]]; then
+# 		qadata['empty']=0
+# 		qadata['groundtruth']=0
+# 	elif [[ $subject =~ ^pos_ ]]; then
+# 		qadata['empty']=0
+# 		qadata['groundtruth']=1
+# 	elif [[ $subject =~ ^(neg|H2O|EMPTY)_ ]]; then
+# 		qadata['empty']=1
+# 		qadata['groundtruth']=1
+# 	else
+# 		oops "cannot understand name $subject"
+# 	fi
 
 
 	# 1 FastQC
