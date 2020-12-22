@@ -2,6 +2,7 @@ quick_install.sh
 Miniconda3-latest-Linux-x86_64.sh
 miniconda3
 openbis-downloads
+bfabric-downloads
 snake-envs
 samples*
 working/samples
