@@ -1,13 +1,14 @@
 #!/bin/bash
 #BSUB -L /bin/bash
 #BSUB -J COVID-qa
-#BSUB -u "pedro.ferreira@bsse.ethz.ch ivan.topolsky@bsse.ethz.ch kim.jablonski@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch"
+#BSUB -u "ivan.topolsky@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch"
 #BSUB -N
 #BSUB -n 1
-#BSUB -R rusage[mem=1000]
-#BSUB -W 1:00
+#BSUB -M 4096
+#BSUB -R rusage[mem=4096]
+#BSUB -W 4:00
 
-. ../miniconda3/bin/activate 'qa'
+#. ../miniconda3/bin/activate 'qa'
 # channels:
 #   - conda-forge
 #   - bioconda
@@ -30,6 +31,9 @@ oops() {
 	printf '\e[33;1mOops:\t%s\e[0m\n'	"$1"	 1>&2
 }
 
+info() {
+	printf '\e[36;1mInfo:\t%s\e[0m\n'	"$1"	 1>&2
+}
 
 
 # fastqc search strings
@@ -48,6 +52,14 @@ fqcsearch=(
 	['adapt']='Adapter Content'
 	['kmer']='Kmer Content'
 )
+# load REF_aln_stats YAML
+alnkeys=('alnreads' 'coverage_3q' 'coverage_mean' )
+declare -A alnsearch
+alnsearch=(
+	['alnreads']='reads'
+	['coverage_3q']='75%'
+	['coverage_mean']='mean'
+)
 # matcher search strings
 matchkeys=( 'len' 'id' 'simil' 'gaps' 'score' )
 declare -A matchsearch
@@ -63,7 +75,9 @@ matchsearch=(
 qacolumn=( 'sample' 'batch' 'empty' 'groundtruth'
 "${fqckeys[@]/#/fastqc_r1_}"
 "${fqckeys[@]/#/fastqc_r2_}"
-'input_r1' 'input_r2' 'mlen_r1' 'mlen_r2' 'goodpairs' 'alnreads' 'bwaFF' 'bwaFR' 'bwaRF' 'bwaRR' 'bwadir' 'bwa_insert_mean' 'bwa_insert_min' 'bwa_insert_max'
+'input_r1' 'input_r2' 'mlen_r1' 'mlen_r2' 'goodpairs'
+"${alnkeys[@]}"
+'bwaFF' 'bwaFR' 'bwaRF' 'bwaRR' 'bwadir' 'bwa_insert_mean' 'bwa_insert_min' 'bwa_insert_max'
 'consensus_N' 'consensus_lower' 
 "${matchkeys[@]/#/match_}"
 'shorah_snv' 'shorah_filtered' 'shorah_majority' 'shorah_absmaj'
@@ -167,7 +181,13 @@ while read subject sublvl len; do
 	[[ $prinseq =~ Good\ sequences\ \(pairs\):\ ([[:digit:],]+) ]]	&& qadata['goodpairs']="${BASH_REMATCH[1]//,/}"	|| oops "missing good pairs"
 
 	# 2.2 count bamfile
-	qadata['alnreads']=$(${samtools} view -c ${sample}/alignments/REF_aln.bam)
+	#qadata['alnreads']=$(${samtools} view -c ${sample}/alignments/REF_aln.bam)
+	alnstat=$(<${sample}//alignments/REF_aln_stats.yaml)
+	for k in ${alnkeys[@]}; do
+		S="${alnsearch[${k}]}"
+		rex="${S}: ([[:digit:].]+)"
+		[[ $alnstat =~ $rex ]] && qadata["$k"]=${BASH_REMATCH[1]} || oops "cannot extract ${S} for ${k}"
+	done
 
 	# 2.3 alignement
 	# [M::bwa_idx_load_from_disk] read 0 ALT contigs
@@ -292,7 +312,8 @@ while read subject sublvl len; do
 	if [[ -e ${sample}/references/ref_majority_dels.matcher && ${sample}/references/ref_majority_dels.fasta -ot ${sample}/references/ref_majority_dels.matcher ]]; then
 		: # reuse the file
 	else
-		matcher -asequence references/cohort_consensus.fasta -bsequence ${sample}/references/ref_majority_dels.fasta -outfile ${sample}/references/ref_majority_dels.matcher 1>&2
+		#matcher -asequence references/cohort_consensus.fasta -bsequence ${sample}/references/ref_majority_dels.fasta -outfile ${sample}/references/ref_majority_dels.matcher 1>&2
+		oops "(match missing)"
 	fi
 	if [[ -s ${sample}/references/ref_majority_dels.matcher ]]; then
 		# "nnnnnnnnnnnnnn" files generate empty files
@@ -365,3 +386,4 @@ while read subject sublvl len; do
 	echo
 done < samples.tsv 
 } > qa.csv
+info 'Done.'
