@@ -105,6 +105,11 @@ fail() {
 	exit 1
 }
 
+warn() {
+	printf '\e[33;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+}
+
 ALLOK=1
 X() {
 	ALLOK=0
@@ -264,8 +269,8 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 					print(r'''
 [[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s'
 fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L%(lane)03u_R[1-2]_*%(mm)s.fastq.gz )
-[[ "${fastq[*]}" =~ \* ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
-(( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[@]}"
+[[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
+(( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[*]}"
 mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
