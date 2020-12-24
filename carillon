@@ -60,6 +60,7 @@ echo 'Data sync'
 echo '========='
 
 ${scriptdir}/belfry syncopenbis --recent
+${scriptdir}/belfry syncfgcz
 ${scriptdir}/belfry sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 
 echo '---------'

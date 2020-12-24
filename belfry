@@ -130,11 +130,12 @@ export -f callpullrsync_noshorah
 
 case "$1" in
 	syncopenbis)
+		echo "Sync GFB - OpenBIS..."
 		# Total: 10654 directories, 11687 files, 0 symlink
 		# New: 605 files, 0 symlinks
 		# 7674153291 bytes transferred
 		. $baseconda/miniconda3/bin/activate ""
-		if [[ "${2}" = "--recent" ]]; then 
+		if [[ "${2}" = "--recent" ]]; then
 			param=( "${lastmonth}*" "${thismonth}*" )
 			echo "syncing recent: ${param[*]}"
 		else
@@ -149,6 +150,28 @@ case "$1" in
 		else
 			echo "Same old shit"
 			touch ${statusdir}/syncopenbis_last
+		fi 2>&1
+		conda deactivate
+	;;
+	syncfgcz)
+		echo "Sync FGCZ - bfabric"
+		. $baseconda/miniconda3/bin/activate ""
+		if [[ "${2}" = "--recent" ]]; then
+		 :
+# 			param=( "${lastmonth}*" "${thismonth}*" )
+# 			echo "syncing recent: ${param[*]}"
+		else
+			param=( )
+		fi
+		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c fgcz.conf "${param[@]}"|tee /dev/stderr)"
+		if [[ "$syncoutput" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
+			echo "Newfiles downloaded"
+			echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${statusdir}/syncopenbis_last
+			flock -x -o ${statusdir}/syncopenbis_last -c "sleep 1"
+			echo "${BASH_REMATCH[3]}" > ${statusdir}/syncfgcz_new
+		else
+			echo "Same old shit"
+			touch ${statusdir}/syncfgcz_last
 		fi 2>&1
 		conda deactivate
 	;;
@@ -172,10 +195,11 @@ case "$1" in
 			esac
 			shift
 		done
-		${scriptdir}/sort_samples_pybis ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh && touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
+		fail=0
+		${scriptdir}/sort_samples_pybis ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+		${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+		(( fail == 0 )) &&  touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate
-		# TODO check multiple same cells
-		# TODO date openbis-downloads/20200626184717383-60699344 vs sampleset/samples.20200626_J49RD.tsv
 	;;
 	fixopenbisrights)
 		validateBatchDate "$2"
