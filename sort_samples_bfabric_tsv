@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import glob
+import io 
+import re
+import configparser
+import argparse
+import csv
+import json
+import yaml
+import hashlib
+import math
+
+# progress bar unicode
+def bar(v, m=128):
+	f=v&7
+	return ('\u2588' * (v >> 3))+(chr(0x2590 - f) if f else '')+('\u00b7' * ((m-v) >> 3))
+
+
+# parse command line
+argparser = argparse.ArgumentParser(description="Fetch metadata from OpenBIS server using PyBIS APIs")
+argparser.add_argument('-c', '--config', metavar='CONF', required=False,
+	default='server.conf',
+	type=str, dest='config', help="configuration file to load")
+argparser.add_argument('-s', '--summary', required=False,
+	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
+#argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
+	#dest='recent', help="Only process datasets (runs) whose date-based ID is posterior to the argument")
+args = argparser.parse_args()
+
+
+# Load defaults from config file
+config = configparser.ConfigParser(strict=False) # non-strict: support repeated section headers
+config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in section headers
+with open(args.config) as f: config.read_string(f"""
+[DEFAULT]
+basedir={os.getcwd()}
+sampleset=sampleset
+download=bfabric-downloads
+link=--link
+[_]
+""" + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
+
+basedir=config['_']['basedir'].strip("\"'")
+'''base dircetory'''
+download=config['_']['download'].strip("\"'")
+'''sub-directory to hold the unsorted downloaded datasets'''
+sampleset=config['_']['sampleset'].strip("\"'")
+'''sub-directory to hold the sorted samples set'''
+link=config['_']['link'].strip("\"'")
+'''
+linking instead of copying ?
+ --reflink for CoW filesystems (ZFS, BTRFS)
+ --hardlink for most unix-like filesystems
+'''
+
+# RegEx to parse some specific string
+rxorder=re.compile('_(?P<order>o\d+)') # e.g.: MS556_COV19_o23657
+rxrun=re.compile('^(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?:(?:0+-)|[AB])(?P<cell>\w+)$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX
+rxcell=re.compile('(?:\w+-)?(?P<cell>\w+)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX'
+rxsuffix=re.compile('(?:_S\d+)?(?:_L\d+)?$') # e.g.: ..._Plate_2_011120EG27_A4_S5_L001
+rxfqext=re.compile('\.fastq\.gz$') 
+
+
+
+################################
+#                              #
+#   Phase 1: Gather the data   #
+#                              #
+################################
+
+# look for dataset files
+
+# FastQC
+fastqc={}
+for d in glob.glob(os.path.join(basedir,download,'Fastqc_*')):
+	t = os.path.join(d,'input_dataset.tsv'); 
+	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
+	if not (os.path.isdir(os.path.join(d,'FastQC_Result')) and 
+			os.path.isfile(t)):
+		continue
+
+	f = os.path.join(d.split(os.sep)[-1],'FastQC_Result')	# Holds the _fastqc.html files
+	with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
+		r = next(csv.DictReader(tf, dialect='excel-tab'))
+		if 'Order Id [B-Fabric]' in r:
+			# match by Order Id, but not all have it
+			fastqc[r['Order Id [B-Fabric]']]=f
+			continue
+
+	# match by (input_) dataset.tsv content
+	md5_hash = hashlib.md5(usedforsecurity=False)
+	with open(t,'rb') as tf:
+		md5_hash.update(tf.read())
+	fastqc[md5_hash.digest()]=f
+    
+# Samples
+totsam=0
+batches={}
+for j in glob.glob(os.path.join(basedir,download,'*','Stats', 'Stats.json')):
+	pathparts = j.split(os.sep)[:-2]
+	path = os.sep.join(pathparts)
+	name = pathparts[-1]
+
+	try:
+		m=rxorder.search(name).groupdict()
+		order=m['order']
+	except:
+		print(f"can't parse {name}")
+		continue
+
+	########################################
+	#                                      #
+	#   Parse the Demultiplex stats JSON   #
+	#                                      #
+	########################################
+	with open(j, 'rt') as f:
+		stats = json.loads(f.read());
+
+	# parse flowcell
+	try:
+		m=rxcell.search(stats['Flowcell']).groupdict()
+		flowcell=m['cell']
+	except:
+		print(f"{name} cannot parse: {stats['Flowcell']}")
+		continue
+
+	# parse run folder
+	runfolder=stats['RunId']
+	try:
+		m=rxrun.search(runfolder).groupdict()
+		rundate=f"20{m['date']}" # NOTE runfolders are yymmdd, not yyyymmdd
+		if flowcell != m['cell']:
+			print(f"{name} Warning: cell missmatch: {flowcell} vs {m['cell']}")
+	except:
+		print(f"{name} cannot parse: {runfolder}")
+		continue
+
+	# parse information about reads
+	lane={}
+	for l in stats['ReadInfosForLanes']: # lane
+		lanenum=l['LaneNumber']
+		ends=rlen=0
+		for r in l['ReadInfos']: # read phases (indexes, reads)
+			if r['IsIndexedRead']: continue 
+
+			# sanity check
+			if rlen and rlen != r['NumCycles']:
+				print(f"{name} Warning: read lenght changes from {rlen} to {r['NumCycles']} we currently only support symetric read lenghts")
+
+			# gather info
+			ends+=1
+			if rlen < r['NumCycles']: rlen=r['NumCycles']
+		
+		# sanity check
+		if ends < 1 or ends > 2:
+			print(f"{name} Error: we currently only support single or paired ends, but found {ends} reads")
+
+		lane[lanenum]={'ends': ends, 'rlen': rlen-1}
+
+	# parse info about samples
+	samples={}
+	badyield=0
+	for l in stats['ConversionResults']: # lane
+		lanenum=l['LaneNumber']
+		ends=lane[lanenum]['ends']
+		rlen=lane[lanenum]['rlen']
+
+		for s in l['DemuxResults']: # sample in lane
+			samname=s['SampleName']
+
+			# filter out fastq files with zero reads
+			if s['NumberReads'] == 0:
+				badyield+=1;
+				continue
+
+			samples[samname]={'ends': ends, 'rlen': rlen}
+			totsam+=1
+
+	# Check readcounts
+	if badyield:
+		print(name, f"\x1b[33;1m{badyield} samples with bad yield !\x1b[0m", sep='\t')
+
+	# Need multiple samples
+	if len(samples) < 2:
+		print(name, f"\x1b[31;1mOnly {len(samples)}!\x1b[0m", sep='\t')
+		continue
+
+
+	#
+	#   Build per batch / samples data
+	#
+
+	if order in batches:
+		batches[order]['dupe']=True
+		print(f"{name} is dupe of order {order}")
+		# TODO fused handling
+		continue
+
+	t=os.path.join(path,'dataset.tsv') 
+	b={'name':name, 'path':path, 'dataset':t, 'flowcell': flowcell, 'runfolder': runfolder,'rundate':rundate,'samples':samples,'badyield':badyield}
+
+	with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
+		r = next(csv.DictReader(tf, dialect='excel-tab'))
+		if 'Order Id [B-Fabric]' in r:
+			if r['Order Id [B-Fabric]'] in fastqc:
+				b['fastqc']=fastqc[r['Order Id [B-Fabric]']]
+			batches[order]=b
+			continue
+
+	# match by (input_) dataset.tsv content
+	md5_hash = hashlib.md5(usedforsecurity=False)
+	with open(t,'rb') as tf:
+		md5_hash.update(tf.read())
+	md5=md5_hash.digest()
+	if md5 in fastqc:
+		b['fastqc']=fastqc[md5]
+	batches[order]=b
+
+
+################################
+#                              #
+#   Phase 2: Output the thing  #
+#                              #
+################################
+
+# create sampleset directory if missing
+if not os.path.isdir(os.path.join(basedir,sampleset)):
+	try:
+		os.mkdir(os.path.join(basedir,sampleset), mode=0o770)
+	except FileExistsError:
+		pass
+
+
+# shell script file with all moving instructions inside
+sh=open(os.path.join(sampleset,'movedatafiles.sh'), 'wt')
+
+# generic header: only for stand-alone files.
+print(r'''
+link='%(link)s'
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+	exit 1
+}
+
+warn() {
+	printf '\e[33;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+}
+
+ALLOK=1
+X() {
+	ALLOK=0
+}
+
+# sanity checks
+[[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
+[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
+''' % {'link':link,'sampleset':sampleset,'download':download}, file=sh)
+
+lastbar=-1
+cursam=0
+for b in batches:
+	# TODO fused handling
+	if 'dupe' in batches[b]:
+		continue
+
+	name=batches[b]['name']
+	rundate=batches[b]['rundate']
+	flowcell=batches[b]['flowcell']
+	batch=f"{rundate}_{flowcell}"
+	print(r"[[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s'" % {'download':download,'id':name}, file=sh)
+	qcdir=None
+	if 'fastqc' in batches[b]:
+		qcdir=batches[b]['fastqc']
+		print(r"[[ -d '%(download)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(qc)s'" % {'download':download,'qc': qcdir}, file=sh)
+
+	with open(os.path.join(sampleset,f'samples.{batch}.tsv'), 'wt') as tsv:
+		with open(batches[b]['dataset'],'rt',encoding='utf-8') as tf:
+			for r in csv.DictReader(tf, dialect='excel-tab'):
+				# progress
+				prgbar=math.floor(cursam*128/totsam)
+				if lastbar != prgbar:
+					print(f"echo -ne '\\r[{bar(prgbar)}]\\r'", file=sh)
+					lastbar=prgbar
+				cursam+=1
+
+				# match read TSV to known samples
+				fulname=samname=r['Name']
+				if samname not in batches[b]['samples']:
+					samname=rxsuffix.sub('', samname)
+					if samname not in batches[b]['samples']:
+						print(f"{batches[b]['name']} Can't match {samname}")
+						continue
+
+				# files
+				ends=batches[b]['samples'][samname]['ends']
+				rlen=batches[b]['samples'][samname]['rlen']
+				r1=r['Read1 [File]'].split(os.sep)[-1]
+				if ends==2:
+					r2=r['Read2 [File]'].split(os.sep)[-1]
+
+				# tsv line
+				print(samname, batch, rlen, sep='\t', file=tsv)
+
+				# move script
+				print(r'''
+mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
+cp -v ${link} '%(download)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'download':download,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
+				if ends==2:
+					print(r"cp -v ${link} '%(download)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'download':download,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
+				if qcdir:
+					fqc=rxfqext.sub('_fastqc.html',r1)
+					print(r"cp -v ${link} '%(download)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'download':download,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+				if qcdir and  ends==2:
+					fqc=rxfqext.sub('_fastqc.html',r2)
+					print(r"cp -v ${link} '%(download)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'download':download,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+
+print(f"""
+echo -e '\\r\\e[K[{bar(128)}] done.'
+if (( ALLOK )); then
+	echo All Ok
+	exit 0
+else
+	echo Some errors
+	exit 1
+fi;
+""", file=sh)
+
+# fuse
+# bfabric-downloads/MS547_COV19_o23391			! bfabric-downloads/Fastqc_52261MS547_COV19_o23391_2020-11-30--17-19-17
+# bfabric-downloads/MS547_COV19_o23391_copy
+
+#./sort_samples_demultiplexstats -nso samplset-test/ -S bfabric-downloads/MS554_COV19_o23569 -q bfabric-downloads/Fastqc_52853_2020-12-14--19-12-00/FastQC_Result	&&	\
+#bash samplset-test/movedatafiles.sh	&&	\
+#./sort_samples_demultiplexstats -nso samplset-test/ -S bfabric-downloads/MS556_COV19_o23657 -q bfabric-downloads/Fastqc_52993_2020-12-21--11-19-11/FastQC_Result	&&	\
+#bash samplset-test/movedatafiles.sh	&&	\
+#./sort_samples_demultiplexstats -nso samplset-test/ -S bfabric-downloads/MS551_COV19_o23478 -q bfabric-downloads/Fastqc_52848_2020-12-14--18-48-06/FastQC_Result	&&	\
+#bash samplset-test/movedatafiles.sh	&&	\
+#./sort_samples_demultiplexstats -nso samplset-test/ -S bfabric-downloads/MS545_o23316/ -q bfabric-downloads/Fastqc_52190_MS545_o23316_2020-11-27--18-30-23/FastQC_Result	&&	\
+#bash samplset-test/movedatafiles.sh	&&	\
+#./sort_samples_demultiplexstats -nso samplset-test/ -S bfabric-downloads/MS542_copy_o23248/ -q bfabric-downloads/Fastqc_51945MS542_copy_o23248_2020-11-23--12-45-27/FastQC_Result	&&	\
+#bash samplset-test/movedatafiles.sh
+
+
+#exit 0
+
+#bfabric-downloads/MS542_copy_o23248	bfabric-downloads/Fastqc_51945MS542_copy_o23248_2020-11-23--12-45-27/FastQC_Result
+#bfabric-downloads/MS545_o23316	bfabric-downloads/Fastqc_52190_MS545_o23316_2020-11-27--18-30-23/FastQC_Result
+
+
+#bfabric-downloads/MS551_COV19_o23478	bfabric-downloads/Fastqc_52848_2020-12-14--18-48-06/FastQC_Result
+#bfabric-downloads/MS554_COV19_o23569	bfabric-downloads/Fastqc_52853_2020-12-14--19-12-00/FastQC_Result
+#bfabric-downloads/MS556_COV19_o23657	bfabric-downloads/Fastqc_52993_2020-12-21--11-19-11/FastQC_Result
