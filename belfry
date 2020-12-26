@@ -371,6 +371,9 @@ case "$1" in
 		git add qa* samples/*/*/references/*.fasta
 		conda deactivate
 	;;
+	df)
+		df ${basedir}
+	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
 		exit 2

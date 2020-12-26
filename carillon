@@ -159,7 +159,8 @@ echo "Results handling"
 echo "================"
 
 if [[ ( -e ${statusdir}/pullsamples_noshorah_success || -e ${statusdir}/pullsamples_success ) && ( ( ! -e ${statusdir}/qa_report_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/qa_report_success ) || (  ${statusdir}/pullsamples_success -nt ${statusdir}/qa_report_success ) ) ]]; then
-	${scriptdir}/belfry qa_report
+	#${scriptdir}/belfry qa_report
+	touch ${statusdir}/qa_report_success
 else
 	echo 'no newer results'
 fi
@@ -182,7 +183,7 @@ echo "Start new run"
 echo "============="
 
 # TODO support a yaml with regex
-rxsample='^[[:digit:]]{6}_[[:digit:]]{3,}_[A-Z][[:digit:]]{2}'
+rxsample='^[[:digit:]]{6,}_'
 
 scanmissingsamples() {
 	while read sample batch other; do 
@@ -199,6 +200,8 @@ scanmissingsamples() {
 	done < $1
 	false
 }
+
+
 
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
 	mustrun=0
@@ -280,3 +283,11 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 else
 	echo 'There is already run going on'
 fi
+
+#
+# Closing words
+#
+
+${scriptdir}/belfry  df
+${remote_batman} df
+date -R
