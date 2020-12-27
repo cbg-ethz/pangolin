@@ -183,7 +183,7 @@ echo "Start new run"
 echo "============="
 
 # TODO support a yaml with regex
-rxsample='^[[:digit:]]{6,}_'
+rxsample='(^[[:digit:]]{6,}_)|([[:digit:]]{2}_20[[:digit:]]{2}_[01]?[[:digit:]]_[0-3]?)'
 
 scanmissingsamples() {
 	while read sample batch other; do 

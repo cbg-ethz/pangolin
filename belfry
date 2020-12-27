@@ -156,13 +156,14 @@ case "$1" in
 	syncfgcz)
 		echo "Sync FGCZ - bfabric"
 		. $baseconda/miniconda3/bin/activate ""
-		if [[ "${2}" = "--recent" ]]; then
-		 :
-# 			param=( "${lastmonth}*" "${thismonth}*" )
-# 			echo "syncing recent: ${param[*]}"
-		else
-			param=( )
-		fi
+# 		if [[ "${2}" = "--recent" ]]; then
+# 		 :
+# # 			param=( "${lastmonth}*" "${thismonth}*" )
+# # 			echo "syncing recent: ${param[*]}"
+# 		else
+# 			param=( )
+# 		fi
+		param=( 'p23224' 'p23212' )
 		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c fgcz.conf "${param[@]}"|tee /dev/stderr)"
 		if [[ "$syncoutput" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
 			echo "Newfiles downloaded"
