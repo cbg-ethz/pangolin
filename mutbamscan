@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+import numpy as np
+import pandas as pd
+import sys
+import os
+#import re
+import pysam
+import gzip
+import csv
+import json
+import yaml
+
+
+
+def test_read(read, mut_dict):
+	"""
+	test if mutations listed in mut_dict are present in the pysam read
+	
+	returns a list with:
+		found_site:	list of site present in the read (no matter content)
+		found_mut:	list of those position which have the mutations variant
+	"""
+
+	# 1. check which mutation' sites are in range of that read 
+	found_site = [p for p in mut_dict.keys() if read.reference_start <= p < read.reference_end]
+	if not len(found_site):
+		return (None, None) # sites aren't present no point checking variants
+
+	# 2. of those sites, check which content mutations' variants
+	read_dict = dict(zip(read.get_reference_positions(), read.get_forward_sequence()))
+	found_mut = []
+	for p in found_site:
+		# base present ?
+		if p in read_dict:
+			# check if it's the expected mutation
+			if read_dict[p] == mut_dict[p]:
+				found_mut.append(p)
+		else:
+			# check if we're hunting for a deletion (-)
+			if '-' == mut_dict[p]:
+				found_mut.append(p)
+
+	if len(found_mut): # found mutation as sites
+		return (found_site, found_mut)
+	else: # sites present, but no mutation found
+		return (found_site, None)
+
+# scan an amplicon for a specific set of mutations
+def scanamplicon(read_iter, mut_dict):
+	# TODO inefficient, could be streamed (with an accumulator for pairs)
+	read_dict = dict()
+	for read in read_iter:
+		name=str(read.query_name)
+		R='R1' if read.is_read1 else 'R2'
+		if name in read_dict:
+			read_dict[name][R] = read
+		else:
+			read_dict[name] = { R: read }
+
+	print("amplion:", len(read_dict))
+
+
+	# tally the mutation sites and the presence of variant in there accross all reads
+	# TODO merge with above
+	all_muts=[]
+	all_sites=[]
+	for rds in read_dict:
+		val=read_dict[rds]
+		site_out = []
+		mut_out = []
+		for s in val:
+			R=val[s]
+			(t_pos, t_read) = test_read(R, mut_dict)
+			if t_pos is not None:
+				site_out.extend(t_pos)
+			if t_read is not None:
+				mut_out.extend(t_read)
+		if (len(site_out)):
+			all_sites.append(site_out)
+			if (len(mut_out)):
+				all_muts.append(mut_out)
+
+	sites_cnt=np.unique([len(set(mut)) for mut in all_sites], return_counts=True)
+	print("sites:",	len(all_sites),	sites_cnt)
+	muts_cnt=np.unique([len(set(sit)) for sit in all_muts], return_counts=True)
+	print("muts:",	len(all_muts),	muts_cnt)
+
+	# look at last column only
+	sites_cnt_l=len(sites_cnt[0])-1
+	muts_cnt_l=len(muts_cnt[0])-1
+	return {
+		"sites": f"{sites_cnt[1][sites_cnt_l]} (best: {sites_cnt[0][sites_cnt_l]})" if sites_cnt_l >= 0 else 'N/A',
+		"muts": f"{muts_cnt[1][muts_cnt_l]} (best: {muts_cnt[0][muts_cnt_l]})" if muts_cnt_l >= 0 else 'N/A',
+		"prc%": (muts_cnt[1][muts_cnt_l]/sites_cnt[1][sites_cnt_l]) if muts_cnt_l >= 0 and sites_cnt_l >= 0 else 'N/A',
+	}
+
+
+# hardcode
+amplicons={
+ #'72_UK': [21718,
+  #21988,
+  #{21765: '-',
+   #21766: '-',
+   #21767: '-',
+   #21768: '-',
+   #21769: '-',
+   #21770: '-',
+   #21991: '-',
+   #21992: '-',
+   #21993: '-'}],
+ '78_UK': [23502, 23810, {23604: 'A', 23709: 'T'}],
+ '92_UK': [27827, 28102, {27972: 'T', 28048: 'T', 28111: 'G'}],
+# '93_UK': [28147, 28414, {28111: 'G', 28280: 'C', 28281: 'T', 28282: 'A'}],
+ '76_SA': [22879, 23142, {23012: 'A', 23063: 'T'}],
+# '76_UK': [22879, 23142, {23063: 'T',23271: 'A'}],
+}
+
+
+rq_chr='NC_045512.2'
+t='ww.tsv'
+
+i=0
+table={}
+with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
+	for r in csv.DictReader(tf, dialect='excel-tab'):
+		i+=1
+		#if (i==3):
+			#break;
+
+		print(r['sample'])
+
+		alnfname=f"working/samples/{r['sample']}/{r['batch']}/alignments/REF_aln.bam"
+		amp_results={}
+		with pysam.AlignmentFile(alnfname, "rb") as alnfile:
+			for amp_name,amp in amplicons.items():
+				(rq_b,rq_e,mut_dict)=amp
+
+				# we need at least 2 to compute co-occurence
+				if len(mut_dict) < 2:
+					continue
+
+				print(f"amplicon_{amp_name}", rq_b, rq_e, mut_dict, sep='\t', end='\t')
+
+				amplicon_iter = alnfile.fetch(rq_chr, rq_b, rq_e)
+				amp_results[f'amplicon_{amp_name}'] = scanamplicon(amplicon_iter, mut_dict)
+
+		table[r['sample']]=amp_results
+
+print(table)
+print(pd.DataFrame(data=table))
