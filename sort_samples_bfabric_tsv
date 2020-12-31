@@ -20,7 +20,7 @@ def bar(v, m=128):
 
 
 # parse command line
-argparser = argparse.ArgumentParser(description="Fetch metadata from OpenBIS server using PyBIS APIs")
+argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
 argparser.add_argument('-c', '--config', metavar='CONF', required=False,
 	default='server.conf',
 	type=str, dest='config', help="configuration file to load")
@@ -86,8 +86,8 @@ rxfqext=re.compile('\.fastq\.gz$')
 # look for dataset files
 
 # FastQC
-fastqc={}
-fastqc_samples={}
+fastqc={} # maps orders to FastQC directories (or in the absence of order number: checksum of the input_dataset)
+fastqc_samples={} # maps which samples are present in which FastQC directory (some might be missing)
 for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	t = os.path.join(d,'input_dataset.tsv'); 
 	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
