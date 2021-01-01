@@ -87,6 +87,7 @@ rxfqext=re.compile('\.fastq\.gz$')
 
 # FastQC
 fastqc={}
+fastqc_samples={}
 for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	t = os.path.join(d,'input_dataset.tsv'); 
 	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
@@ -96,10 +97,16 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 
 	f = os.path.join(d.split(os.sep)[-1],'FastQC_Result')	# Holds the _fastqc.html files
 	with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
-		r = next(csv.DictReader(tf, dialect='excel-tab'))
-		if 'Order Id [B-Fabric]' in r:
+		o=None	# keep tracking of the order -> FastQC mapping
+		fastqc_samples[f]={}	# list of files (some files didn't get their respective FastQF
+		for r in csv.DictReader(tf, dialect='excel-tab'):
+			fastqc_samples[f][r['Name']] = True
+			if (not o) and ('Order Id [B-Fabric]' in r):
+				o = r['Order Id [B-Fabric]']
+
+		if o:
 			# match by Order Id, but not all have it
-			fastqc[r['Order Id [B-Fabric]']]=f
+			fastqc[o]=f
 			continue
 
 	# match by (input_) dataset.tsv content
@@ -375,12 +382,12 @@ mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_dat
 cp -v ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
 			if ends==2:
 				print(r"cp -v ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
-			if qcdir:
+			if qcdir and fulname in fastqc_samples[qcdir]:
 				fqc=rxfqext.sub('_fastqc.html',r1)
 				print(r"cp -v ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
-			if qcdir and  ends==2:
-				fqc=rxfqext.sub('_fastqc.html',r2)
-				print(r"cp -v ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+				if ends==2:
+					fqc=rxfqext.sub('_fastqc.html',r2)
+					print(r"cp -v ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
 
 print(f"""
 echo -e '\\r\\e[K[{bar(128)}] done.'
