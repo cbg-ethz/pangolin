@@ -91,12 +91,9 @@ def scanamplicon(read_iter, mut_dict):
 	print("muts:",	len(all_muts),	muts_cnt)
 
 	# look at last column only
-	sites_cnt_l=len(sites_cnt[0])-1
-	muts_cnt_l=len(muts_cnt[0])-1
 	return {
-		"sites": f"{sites_cnt[1][sites_cnt_l]} ({sites_cnt[0][sites_cnt_l]})" if sites_cnt_l >= 0 else 'N/A',
-		"muts": f"{muts_cnt[1][muts_cnt_l]} ({muts_cnt[0][muts_cnt_l]})" if muts_cnt_l >= 0 else 'N/A',
-		"prc%": f"{100*(muts_cnt[1][muts_cnt_l]/sites_cnt[1][sites_cnt_l]) :.2f}%" if muts_cnt_l >= 0 and sites_cnt_l >= 0 else 'N/A',
+		"sites": dict(zip(sites_cnt[0].tolist(),sites_cnt[1].tolist())) if len(all_sites) else {},
+		"muts":  dict(zip(muts_cnt[0].tolist(),muts_cnt[1].tolist())) if len(all_muts) else {}
 	}
 
 
@@ -115,7 +112,7 @@ def scanbam(sample, batch, amplicons):
 			print(f"amplicon_{amp_name}", rq_b, rq_e, mut_dict, sep='\t', end='\t')
 
 			amplicon_iter = alnfile.fetch(rq_chr, rq_b, rq_e)
-			amp_results[f'amplicon_{amp_name}'] = scanamplicon(amplicon_iter, mut_dict)
+			amp_results[amp_name] = scanamplicon(amplicon_iter, mut_dict)
 	return amp_results
 
 
@@ -130,35 +127,104 @@ amplicons={
 # '76_UK': [22879, 23142, {23063: 'T',23271: 'A'}],
  '77_EU': [23194, 23464, {23403: 'G'}],
 }
- #'72_UK\n21765-21770Δ,21991-21993Δ': [21718, 21988, {21765: '------', 21991: '---'}],
- #'78_UK\n23604A,23709T': [23502, 23810, {23604: 'A', 23709: 'T'}],
- #'92_UK\n27972T,28048T,28111G': [27827, 28102, {27972: 'T', 28048: 'T', 28111: 'G'}],
- #'93_UK\n28111G,28280-28280->CTA': [28147, 28414, {28111: 'G', 28280: 'CTA'}],
- #'76_SA\n23012A,23063T': [22879, 23142, {23012: 'A', 23063: 'T'}],
- #'77_EU\n23403G': [23194, 23464, {23403: 'G'}],
-
+amplicon_nfo={
+ '72_UK': '21765-21770Δ,21991-21993Δ',
+ '78_UK': '23604A,23709T',
+ '92_UK': '27972T,28048T,28111G',
+ '93_UK': '28111G,28280-28280->CTA',
+ '76_SA': '23012A,23063T',
+ '77_EU': '23403G',
+}
 rq_chr='NC_045512.2'
-#t='ww.tsv'
-t='ww-short.tsv'
+t='ww.tsv'
+#t='ww-short.tsv'
 
 i=0
 table={}
 # TODO real jobs instead of a loop
 with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
 	for r in csv.DictReader(tf, dialect='excel-tab'):
-		i+=1
-		#if (i==5):
+		#i+=1
+		#if (i==3):
 			#break;
 
 		print(r['sample'])
 		table[r['sample']]=scanbam(r['sample'],r['batch'],amplicons)
 
+
+#
+# dumps, for being able to take it from here
+#
 print(table)
+with open('scanned_mut.json', 'wt') as jf:
+	json.dump(obj=table, fp=jf)
 with open('scanned_mut.yaml', 'wt') as yf:
 	print(yaml.dump(table), file=yf)
-	
-table_df=pd.DataFrame.from_dict(data={i: {(j,k): table[i][j][k] for j in table[i] for k in table[i][j]} for i in table},
-	orient='index')
-with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
-	print(table_df)
-table_df.to_csv('scanned_mut.csv', sep="\t", compression={'method':'infer'})
+
+# raw data into pands.DataFrame
+raw_table_df=pd.DataFrame.from_dict(data={i: {(j,k): table[i][j][k] for j in table[i] for k in table[i][j]} for i in table},
+	 orient='index')
+#with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
+	#print(raw_table_df)
+raw_table_df.to_csv('scanned_mut_raw.csv', sep="\t", compression={'method':'infer'})
+
+
+#
+# pretty output
+#
+
+# save to pandas.DataFrame
+df_dict={}
+
+# pretty print
+l=max(len(k) for k in table)
+print(f"{'':<{l}} ", end='')
+for a in amplicons: print(f" {a :<26}", end='')
+print(f"\n{'':<{l}} ", end='')
+for a in amplicons: print(f" {amplicon_nfo[a] :<26}", end='')
+print(f"\n{'sample:':<{l}} ", end='')
+for a in amplicons: print(f"{'cov:' :>9}{'mut:' :>9}{'frq/%:' :>9}", end='')
+print()
+
+for sam,amplicons in table.items():
+	df_dict[sam]={}
+	print(f"{sam :>{l}} ", end='')
+
+	for ampname,amp in amplicons.items():
+		# get topmost
+		sites_cnt_l=-1
+		sites_cnt=0
+		if amp['sites']: # empty ?
+			(sites_cnt_l,sites_cnt)=list(amp['sites'].items())[-1]
+		muts_cnt_l=-1
+		muts_cnt=0
+		if amp['muts']: # empty ?
+			(muts_cnt_l,muts_cnt)=list(amp['muts'].items())[-1]
+
+		# pack into dict for pandas
+		df_dict[sam].update({
+			(ampname,'sites'): sites_cnt if sites_cnt else 'NA',
+			(ampname,'muts'): muts_cnt if muts_cnt else 'NA',
+			(ampname,'res'): (f"{100*muts_cnt/sites_cnt :.2f}%" if muts_cnt_l == sites_cnt_l else  f"({muts_cnt_l}/{sites_cnt_l})") if sites_cnt and muts_cnt else 'NA',
+		})
+
+		# pretty print
+		if sites_cnt:
+			print(f"{sites_cnt :>9}",end='')
+			if muts_cnt:
+				if muts_cnt_l != sites_cnt_l:
+					print(f"\x1b[33;1m{muts_cnt :>9}{f'({muts_cnt_l}/{sites_cnt_l})' :>9}\x1b[0m",end='')
+				else:
+					print(f"\x1b[32;1m{muts_cnt :>9}{100*muts_cnt/sites_cnt :8.2f}%\x1b[0m",end='')
+			else:
+				print(f"\x1b[31;1m{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
+		else:
+			print(f"\x1b[31;1m{'N/A' :>9}{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
+
+	print()
+
+# pretty into pands.DataFrame
+pretty_table_df=pd.DataFrame.from_dict(data=df_dict, orient='index')
+#with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
+	#print(pretty_table_df)
+pretty_table_df.to_csv('scanned_mut_pretty.csv', sep="\t", compression={'method':'infer'})
