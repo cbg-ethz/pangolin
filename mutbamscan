@@ -24,7 +24,7 @@ def test_read(read, mut_dict):
 	# WARNING pysam is 0-based! (see here: https://pysam.readthedocs.io/en/latest/faq.html#pysam-coordinates-are-wrong )
 
 	# 1. check which mutation' sites are in range of that read 
-	found_site = [p for p in mut_dict.keys() if read.reference_start <= (p-1) < read.reference_end]
+	found_site = [p for p,m in mut_dict.items() if read.reference_start <= (p-1) <= (read.reference_end-len(m))]
 	if not len(found_site):
 		return (None, None) # sites aren't present no point checking variants
 
@@ -33,15 +33,18 @@ def test_read(read, mut_dict):
 
 	found_mut = []
 	for p in found_site:
+		l=len(mut_dict[p]) #lenght
 		# base present ?
-		if (p-1) in read_dict:
-			# check if it's the expected mutation
-			if read_dict[p-1] == mut_dict[p]:
+		srch=[(p-1+i) in read_dict for i in range(l)]
+		if all(srch): # all positions found!
+			# check if it's the expected mutation(s)
+			if all([read_dict[p-1+i] == mut_dict[p][i] for i in range(l)]):
 				found_mut.append(p)
-		else:
-			# check if we're hunting for a deletion (-)
-			if '-' == mut_dict[p]:
+		elif not any(srch): # none position found! (entire deletion)
+			# check if we're hunting for a string of deletions (-)
+			if '-' * l == mut_dict[p]:
 				found_mut.append(p)
+		# TODO give some thoughs about partial deletions
 
 	if len(found_mut): # found mutation as sites
 		return (found_site, found_mut)
@@ -119,27 +122,24 @@ def scanbam(sample, batch, amplicons):
 # hardcode
 # TODO compute from mutations
 amplicons={
- #'72_UK': [21718,
-  #21988,
-  #{21765: '-',
-   #21766: '-',
-   #21767: '-',
-   #21768: '-',
-   #21769: '-',
-   #21770: '-',
-   #21991: '-',
-   #21992: '-',
-   #21993: '-'}],
+ '72_UK': [21718, 21988, {21765: '------', 21991: '---'}],
  '78_UK': [23502, 23810, {23604: 'A', 23709: 'T'}],
  '92_UK': [27827, 28102, {27972: 'T', 28048: 'T', 28111: 'G'}],
-# '93_UK': [28147, 28414, {28111: 'G', 28280: 'C', 28281: 'T', 28282: 'A'}],
+ '93_UK': [28147, 28414, {28111: 'G', 28280: 'CTA'}],
  '76_SA': [22879, 23142, {23012: 'A', 23063: 'T'}],
 # '76_UK': [22879, 23142, {23063: 'T',23271: 'A'}],
  '77_EU': [23194, 23464, {23403: 'G'}],
 }
+ #'72_UK\n21765-21770Δ,21991-21993Δ': [21718, 21988, {21765: '------', 21991: '---'}],
+ #'78_UK\n23604A,23709T': [23502, 23810, {23604: 'A', 23709: 'T'}],
+ #'92_UK\n27972T,28048T,28111G': [27827, 28102, {27972: 'T', 28048: 'T', 28111: 'G'}],
+ #'93_UK\n28111G,28280-28280->CTA': [28147, 28414, {28111: 'G', 28280: 'CTA'}],
+ #'76_SA\n23012A,23063T': [22879, 23142, {23012: 'A', 23063: 'T'}],
+ #'77_EU\n23403G': [23194, 23464, {23403: 'G'}],
 
 rq_chr='NC_045512.2'
-t='ww.tsv'
+#t='ww.tsv'
+t='ww-short.tsv'
 
 i=0
 table={}
@@ -147,7 +147,7 @@ table={}
 with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
 	for r in csv.DictReader(tf, dialect='excel-tab'):
 		i+=1
-		#if (i==3):
+		#if (i==5):
 			#break;
 
 		print(r['sample'])
