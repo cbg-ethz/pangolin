@@ -51,24 +51,23 @@ def test_read(read, mut_dict):
 # scan an amplicon for a specific set of mutations
 def scanamplicon(read_iter, mut_dict):
 	# TODO inefficient, could be streamed (with an accumulator for pairs)
-	read_dict = dict()
+	reads = dict()
 	for read in read_iter:
 		name=str(read.query_name)
 		R='R1' if read.is_read1 else 'R2'
-		if name in read_dict:
-			read_dict[name][R] = read
+		if name in reads:
+			reads[name][R] = read
 		else:
-			read_dict[name] = { R: read }
+			reads[name] = { R: read }
 
-	print("amplion:", len(read_dict))
-
+	print("amplion:", len(reads))
 
 	# tally the mutation sites and the presence of variant in there accross all reads
 	# TODO merge with above
 	all_muts=[]
 	all_sites=[]
-	for rds in read_dict:
-		val=read_dict[rds]
+	for rds in reads:
+		val=reads[rds]
 		site_out = []
 		mut_out = []
 		for s in val:
@@ -92,13 +91,33 @@ def scanamplicon(read_iter, mut_dict):
 	sites_cnt_l=len(sites_cnt[0])-1
 	muts_cnt_l=len(muts_cnt[0])-1
 	return {
-		"sites": f"{sites_cnt[1][sites_cnt_l]} (best: {sites_cnt[0][sites_cnt_l]})" if sites_cnt_l >= 0 else 'N/A',
-		"muts": f"{muts_cnt[1][muts_cnt_l]} (best: {muts_cnt[0][muts_cnt_l]})" if muts_cnt_l >= 0 else 'N/A',
-		"prc%": (muts_cnt[1][muts_cnt_l]/sites_cnt[1][sites_cnt_l]) if muts_cnt_l >= 0 and sites_cnt_l >= 0 else 'N/A',
+		"sites": f"{sites_cnt[1][sites_cnt_l]} ({sites_cnt[0][sites_cnt_l]})" if sites_cnt_l >= 0 else 'N/A',
+		"muts": f"{muts_cnt[1][muts_cnt_l]} ({muts_cnt[0][muts_cnt_l]})" if muts_cnt_l >= 0 else 'N/A',
+		"prc%": f"{100*(muts_cnt[1][muts_cnt_l]/sites_cnt[1][sites_cnt_l]) :.2f}%" if muts_cnt_l >= 0 and sites_cnt_l >= 0 else 'N/A',
 	}
 
 
+# TODO better naming
+def scanbam(sample, batch, amplicons):
+	alnfname=f"working/samples/{sample}/{batch}/alignments/REF_aln.bam"
+	amp_results={}
+	with pysam.AlignmentFile(alnfname, "rb") as alnfile:
+		for amp_name,amp in amplicons.items():
+			(rq_b,rq_e,mut_dict)=amp
+
+			# we need at least 2 to compute co-occurence
+			if len(mut_dict) < 1: # HACK 2:
+				continue
+
+			print(f"amplicon_{amp_name}", rq_b, rq_e, mut_dict, sep='\t', end='\t')
+
+			amplicon_iter = alnfile.fetch(rq_chr, rq_b, rq_e)
+			amp_results[f'amplicon_{amp_name}'] = scanamplicon(amplicon_iter, mut_dict)
+	return amp_results
+
+
 # hardcode
+# TODO compute from mutations
 amplicons={
  #'72_UK': [21718,
   #21988,
@@ -116,14 +135,15 @@ amplicons={
 # '93_UK': [28147, 28414, {28111: 'G', 28280: 'C', 28281: 'T', 28282: 'A'}],
  '76_SA': [22879, 23142, {23012: 'A', 23063: 'T'}],
 # '76_UK': [22879, 23142, {23063: 'T',23271: 'A'}],
+ '77_EU': [23194, 23464, {23403: 'G'}],
 }
-
 
 rq_chr='NC_045512.2'
 t='ww.tsv'
 
 i=0
 table={}
+# TODO real jobs instead of a loop
 with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
 	for r in csv.DictReader(tf, dialect='excel-tab'):
 		i+=1
@@ -131,23 +151,14 @@ with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as th
 			#break;
 
 		print(r['sample'])
-
-		alnfname=f"working/samples/{r['sample']}/{r['batch']}/alignments/REF_aln.bam"
-		amp_results={}
-		with pysam.AlignmentFile(alnfname, "rb") as alnfile:
-			for amp_name,amp in amplicons.items():
-				(rq_b,rq_e,mut_dict)=amp
-
-				# we need at least 2 to compute co-occurence
-				if len(mut_dict) < 2:
-					continue
-
-				print(f"amplicon_{amp_name}", rq_b, rq_e, mut_dict, sep='\t', end='\t')
-
-				amplicon_iter = alnfile.fetch(rq_chr, rq_b, rq_e)
-				amp_results[f'amplicon_{amp_name}'] = scanamplicon(amplicon_iter, mut_dict)
-
-		table[r['sample']]=amp_results
+		table[r['sample']]=scanbam(r['sample'],r['batch'],amplicons)
 
 print(table)
-print(pd.DataFrame(data=table))
+with open('scanned_mut.yaml', 'wt') as yf:
+	print(yaml.dump(table), file=yf)
+	
+table_df=pd.DataFrame.from_dict(data={i: {(j,k): table[i][j][k] for j in table[i] for k in table[i][j]} for i in table},
+	orient='index')
+with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
+	print(table_df)
+table_df.to_csv('scanned_mut.csv', sep="\t", compression={'method':'infer'})
