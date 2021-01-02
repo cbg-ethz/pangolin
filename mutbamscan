@@ -21,19 +21,22 @@ def test_read(read, mut_dict):
 		found_mut:	list of those position which have the mutations variant
 	"""
 
+	# WARNING pysam is 0-based! (see here: https://pysam.readthedocs.io/en/latest/faq.html#pysam-coordinates-are-wrong )
+
 	# 1. check which mutation' sites are in range of that read 
-	found_site = [p for p in mut_dict.keys() if read.reference_start <= p < read.reference_end]
+	found_site = [p for p in mut_dict.keys() if read.reference_start <= (p-1) < read.reference_end]
 	if not len(found_site):
 		return (None, None) # sites aren't present no point checking variants
 
 	# 2. of those sites, check which content mutations' variants
-	read_dict = dict(zip(read.get_reference_positions(), read.get_forward_sequence()))
+	read_dict = dict(zip(read.get_reference_positions(full_length=True), read.query_sequence))
+
 	found_mut = []
 	for p in found_site:
 		# base present ?
-		if p in read_dict:
+		if (p-1) in read_dict:
 			# check if it's the expected mutation
-			if read_dict[p] == mut_dict[p]:
+			if read_dict[p-1] == mut_dict[p]:
 				found_mut.append(p)
 		else:
 			# check if we're hunting for a deletion (-)
