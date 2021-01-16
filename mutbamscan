@@ -4,12 +4,27 @@ import pandas as pd
 import sys
 import os
 #import re
-import pysam
-import gzip
+import argparse
 import csv
 import json
 import yaml
+import gzip
+import pysam
 
+
+# parse command line
+argparser = argparse.ArgumentParser(description="scan amplicon (covered by long read pairs) for mutation cooccurence")
+argparser.add_argument('-s', '--samples', metavar='TSV', required=True,
+	type=str, dest='samples', help="samples list")
+argparser.add_argument('-j', '--json', metavar='JSON', required=False, default=None,
+	type=str, dest='json', help="output results to as JSON file")
+argparser.add_argument('-y', '--yaml', metavar='YAML', required=False, default=None,
+	type=str, dest='yaml', help="output results to as yaml file")
+argparser.add_argument('-t', '--tsv', metavar='TSV', required=False, default=None,
+	type=str, dest='tsv', help="output results to as (raw) tsv file")
+args = argparser.parse_args()
+
+assert os.path.isfile(args.samples), f"cannot find sample file {args.samples}"
 
 
 def test_read(read, mut_dict):
@@ -128,6 +143,12 @@ amplicons={
  '77_EU': [23194, 23464, {23403: 'G'}],
 }
 amplicon_nfo={
+ '71x' : 'neighbour',
+ '73x' : 'neighbour',
+ '77x' : 'neighbour',
+ '79x' : 'neighbour',
+ '91x' : 'neighbour',
+ '94x' : 'neighbour',
  '72_UK': '21765-21770Δ,21991-21993Δ',
  '78_UK': '23604A,23709T',
  '92_UK': '27972T,28048T,28111G',
@@ -136,37 +157,39 @@ amplicon_nfo={
  '77_EU': '23403G',
 }
 rq_chr='NC_045512.2'
-t='ww.tsv'
-#t='ww-short.tsv'
+
 
 i=0
 table={}
 # TODO real jobs instead of a loop
-with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
-	for r in csv.DictReader(tf, dialect='excel-tab'):
+with open(args.samples,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
+	for r in csv.reader(tf, delimiter='\t'): #dialect='excel-tab'):
+		sample,batch=r[:2]
 		#i+=1
 		#if (i==3):
 			#break;
-
-		print(r['sample'])
-		table[r['sample']]=scanbam(r['sample'],r['batch'],amplicons)
+		print(sample)
+		table[sample]=scanbam(sample,batch,amplicons)
 
 
 #
 # dumps, for being able to take it from here
 #
 print(table)
-with open('scanned_mut.json', 'wt') as jf:
-	json.dump(obj=table, fp=jf)
-with open('scanned_mut.yaml', 'wt') as yf:
-	print(yaml.dump(table), file=yf)
+if args.json:
+	with open(args.json, 'wt') as jf:
+		json.dump(obj=table, fp=jf)
+if args.yaml:
+	with open(args.yaml, 'wt') as yf:
+		print(yaml.dump(table), file=yf)
 
 # raw data into pands.DataFrame
-raw_table_df=pd.DataFrame.from_dict(data={i: {(j,k): table[i][j][k] for j in table[i] for k in table[i][j]} for i in table},
-	 orient='index')
-#with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
-	#print(raw_table_df)
-raw_table_df.to_csv('scanned_mut_raw.csv', sep="\t", compression={'method':'infer'})
+if args.tsv:
+	raw_table_df=pd.DataFrame.from_dict(data={i: {(j,k): table[i][j][k] for j in table[i] for k in table[i][j]} for i in table},
+		orient='index')
+	#with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
+		#print(raw_table_df)
+	raw_table_df.to_csv(args.tsv, sep="\t", compression={'method':'infer'})
 
 
 #
@@ -215,11 +238,11 @@ for sam,amplicons in table.items():
 				if muts_cnt_l != sites_cnt_l:
 					print(f"\x1b[33;1m{muts_cnt :>9}{f'({muts_cnt_l}/{sites_cnt_l})' :>9}\x1b[0m",end='')
 				else:
-					print(f"\x1b[32;1m{muts_cnt :>9}{100*muts_cnt/sites_cnt :8.2f}%\x1b[0m",end='')
+					print(f"\x1b[32;1m{muts_cnt :>9}{100*muts_cnt/sites_cnt :7.2f}%{sites_cnt_l}\x1b[0m",end='')
 			else:
 				print(f"\x1b[31;1m{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
 		else:
-			print(f"\x1b[31;1m{'N/A' :>9}{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
+			print(f"\x1b[35;1m{'N/A' :>9}{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
 
 	print()
 
@@ -227,4 +250,4 @@ for sam,amplicons in table.items():
 pretty_table_df=pd.DataFrame.from_dict(data=df_dict, orient='index')
 #with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
 	#print(pretty_table_df)
-pretty_table_df.to_csv('scanned_mut_pretty.csv', sep="\t", compression={'method':'infer'})
+#pretty_table_df.to_csv('all_scanned_mut_pretty.csv', sep="\t", compression={'method':'infer'})
