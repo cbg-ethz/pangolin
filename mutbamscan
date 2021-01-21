@@ -226,9 +226,9 @@ for sam,amplicons in table.items():
 
 		# pack into dict for pandas
 		df_dict[sam].update({
-			(ampname,'sites'): sites_cnt if sites_cnt else 'NA',
-			(ampname,'muts'): muts_cnt if muts_cnt else 'NA',
-			(ampname,'res'): (f"{100*muts_cnt/sites_cnt :.2f}%" if muts_cnt_l == sites_cnt_l else  f"({muts_cnt_l}/{sites_cnt_l})") if sites_cnt and muts_cnt else 'NA',
+			(ampname,'sites'): sites_cnt if sites_cnt else "0",
+			(ampname,'muts'): muts_cnt if muts_cnt else "0",
+			(ampname,'res'): (f"{100*muts_cnt/sites_cnt :.2f}%" if muts_cnt_l == sites_cnt_l else  f"({muts_cnt_l}/{sites_cnt_l})") if sites_cnt else 'NA',
 		})
 
 		# pretty print
