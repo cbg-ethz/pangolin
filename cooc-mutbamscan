@@ -22,6 +22,8 @@ argparser.add_argument('-y', '--yaml', metavar='YAML', required=False, default=N
 	type=str, dest='yaml', help="output results to as yaml file")
 argparser.add_argument('-t', '--tsv', metavar='TSV', required=False, default=None,
 	type=str, dest='tsv', help="output results to as (raw) tsv file")
+argparser.add_argument('-d', '--dump',
+	action="store_true", dest='dump', help = "dump the python object to the terminal")
 args = argparser.parse_args()
 
 assert os.path.isfile(args.samples), f"cannot find sample file {args.samples}"
@@ -142,20 +144,6 @@ amplicons={
 # '76_UK': [22879, 23142, {23063: 'T',23271: 'A'}],
  '77_EU': [23194, 23464, {23403: 'G'}],
 }
-amplicon_nfo={
- '71x' : 'neighbour',
- '73x' : 'neighbour',
- '77x' : 'neighbour',
- '79x' : 'neighbour',
- '91x' : 'neighbour',
- '94x' : 'neighbour',
- '72_UK': '21765-21770Δ,21991-21993Δ',
- '78_UK': '23604A,23709T',
- '92_UK': '27972T,28048T,28111G',
- '93_UK': '28111G,28280-28280->CTA',
- '76_SA': '23012A,23063T',
- '77_EU': '23403G',
-}
 rq_chr='NC_045512.2'
 
 
@@ -175,13 +163,14 @@ with open(args.samples,'rt',encoding='utf-8', newline='') as tf:	# this file has
 #
 # dumps, for being able to take it from here
 #
-print(table)
+if (args.dump) or (not (args.json or args.yaml)):
+    print(table)
 if args.json:
 	with open(args.json, 'wt') as jf:
 		json.dump(obj=table, fp=jf)
 if args.yaml:
 	with open(args.yaml, 'wt') as yf:
-		print(yaml.dump(table), file=yf)
+		print(yaml.dump(table, sort_keys=False), file=yf)
 
 # raw data into pands.DataFrame
 if args.tsv:
@@ -190,64 +179,3 @@ if args.tsv:
 	#with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
 		#print(raw_table_df)
 	raw_table_df.to_csv(args.tsv, sep="\t", compression={'method':'infer'})
-
-
-#
-# pretty output
-#
-
-# save to pandas.DataFrame
-df_dict={}
-
-# pretty print
-l=max(len(k) for k in table)
-print(f"{'':<{l}} ", end='')
-for a in amplicons: print(f" {a :<26}", end='')
-print(f"\n{'':<{l}} ", end='')
-for a in amplicons: print(f" {amplicon_nfo[a] :<26}", end='')
-print(f"\n{'sample:':<{l}} ", end='')
-for a in amplicons: print(f"{'cov:' :>9}{'mut:' :>9}{'frq/%:' :>9}", end='')
-print()
-
-for sam,amplicons in table.items():
-	df_dict[sam]={}
-	print(f"{sam :>{l}} ", end='')
-
-	for ampname,amp in amplicons.items():
-		# get topmost
-		sites_cnt_l=-1
-		sites_cnt=0
-		if amp['sites']: # empty ?
-			(sites_cnt_l,sites_cnt)=list(amp['sites'].items())[-1]
-		muts_cnt_l=-1
-		muts_cnt=0
-		if amp['muts']: # empty ?
-			(muts_cnt_l,muts_cnt)=list(amp['muts'].items())[-1]
-
-		# pack into dict for pandas
-		df_dict[sam].update({
-			(ampname,'sites'): sites_cnt if sites_cnt else 'NA',
-			(ampname,'muts'): muts_cnt if muts_cnt else 'NA',
-			(ampname,'res'): (f"{100*muts_cnt/sites_cnt :.2f}%" if muts_cnt_l == sites_cnt_l else  f"({muts_cnt_l}/{sites_cnt_l})") if sites_cnt and muts_cnt else 'NA',
-		})
-
-		# pretty print
-		if sites_cnt:
-			print(f"{sites_cnt :>9}",end='')
-			if muts_cnt:
-				if muts_cnt_l != sites_cnt_l:
-					print(f"\x1b[33;1m{muts_cnt :>9}{f'({muts_cnt_l}/{sites_cnt_l})' :>9}\x1b[0m",end='')
-				else:
-					print(f"\x1b[32;1m{muts_cnt :>9}{100*muts_cnt/sites_cnt :7.2f}%{sites_cnt_l}\x1b[0m",end='')
-			else:
-				print(f"\x1b[31;1m{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
-		else:
-			print(f"\x1b[35;1m{'N/A' :>9}{'N/A' :>9}{'N/A' :>9}\x1b[0m", end='')
-
-	print()
-
-# pretty into pands.DataFrame
-pretty_table_df=pd.DataFrame.from_dict(data=df_dict, orient='index')
-#with pd.option_context('display.max_rows', None): #, 'display.max_columns', None):
-	#print(pretty_table_df)
-#pretty_table_df.to_csv('all_scanned_mut_pretty.csv', sep="\t", compression={'method':'infer'})
