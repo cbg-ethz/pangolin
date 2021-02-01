@@ -14,8 +14,11 @@ import pysam
 
 # parse command line
 argparser = argparse.ArgumentParser(description="scan amplicon (covered by long read pairs) for mutation cooccurence")
-argparser.add_argument('-s', '--samples', metavar='TSV', required=True,
-	type=str, dest='samples', help="samples list")
+inputgroup = argparser.add_mutually_exclusive_group(required=True)
+inputgroup.add_argument('-s', '--samples', metavar='TSV',
+	type=str, dest='samples', help="samples list tsv")
+inputgroup.add_argument('-a', '--alignments', metavar='BAM/CRAM', nargs='+',
+	dest='alignments', help="alignment files")
 argparser.add_argument('-j', '--json', metavar='JSON', required=False, default=None,
 	type=str, dest='json', help="output results to as JSON file")
 argparser.add_argument('-y', '--yaml', metavar='YAML', required=False, default=None,
