@@ -29,7 +29,12 @@ argparser.add_argument('-d', '--dump',
 	action="store_true", dest='dump', help = "dump the python object to the terminal")
 args = argparser.parse_args()
 
-assert os.path.isfile(args.samples), f"cannot find sample file {args.samples}"
+
+if args.samples is  not None:
+	assert os.path.isfile(args.samples), f"cannot find sample file {args.samples}"
+else:
+	for align in args.alignments:
+		assert os.path.isfile(align), f"cannot find alginment file {align}"
 
 
 def test_read(read, mut_dict):
@@ -118,6 +123,15 @@ def scanamplicon(read_iter, mut_dict):
 
 
 # TODO better naming
+def findbam(prefix, batch, sample):
+	'''function to find bam from prefix, batch and sample'''
+	alnfname=f"{prefix}/{sample}/{batch}/alignments/REF_aln.bam"
+	#TODO: assertion?
+	return alnfnames
+
+
+
+
 def scanbam(sample, batch, amplicons):
 	alnfname=f"working/samples/{sample}/{batch}/alignments/REF_aln.bam"
 	amp_results={}
