@@ -184,6 +184,7 @@ else:
 	i=0
 	table={}
 	for alnfname in args.alignments:
+		sample = alnfname # Is that right?
 		table[sample]=scanbam(alnfname, amplicons)
 
 
