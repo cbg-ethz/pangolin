@@ -19,6 +19,8 @@ inputgroup.add_argument('-s', '--samples', metavar='TSV',
 	type=str, dest='samples', help="samples list tsv")
 inputgroup.add_argument('-a', '--alignments', metavar='BAM/CRAM', nargs='+',
 	dest='alignments', help="alignment files")
+argparser.add_argument('-p', '--prefix', metavar='PATH', required=False, default="working/samples",
+	type=str, dest='prefix', help="prefix for where to look at align files when using TSV samples list")
 argparser.add_argument('-j', '--json', metavar='JSON', required=False, default=None,
 	type=str, dest='json', help="output results to as JSON file")
 argparser.add_argument('-y', '--yaml', metavar='YAML', required=False, default=None,
@@ -127,13 +129,11 @@ def findbam(prefix, batch, sample):
 	'''function to find bam from prefix, batch and sample'''
 	alnfname=f"{prefix}/{sample}/{batch}/alignments/REF_aln.bam"
 	#TODO: assertion?
-	return alnfnames
+	return alnfname
 
 
-
-
-def scanbam(sample, batch, amplicons):
-	alnfname=f"working/samples/{sample}/{batch}/alignments/REF_aln.bam"
+def scanbam(alnfname, amplicons):
+	'''scan a bamfile found at alnfname'''
 	amp_results={}
 	with pysam.AlignmentFile(alnfname, "rb") as alnfile:
 		for amp_name,amp in amplicons.items():
@@ -164,17 +164,27 @@ amplicons={
 rq_chr='NC_045512.2'
 
 
-i=0
-table={}
-# TODO real jobs instead of a loop
-with open(args.samples,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
-	for r in csv.reader(tf, delimiter='\t'): #dialect='excel-tab'):
-		sample,batch=r[:2]
-		#i+=1
-		#if (i==3):
-			#break;
-		print(sample)
-		table[sample]=scanbam(sample,batch,amplicons)
+# loop for if samples are given through the TSV list
+if args.samples is not None:
+	i=0
+	table={}
+	# TODO real jobs instead of a loop
+	with open(args.samples,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
+		for r in csv.reader(tf, delimiter='\t'): #dialect='excel-tab'):
+			sample,batch=r[:2]
+			#i+=1
+			#if (i==3):
+				#break;
+			print(sample)
+			alnfname = findbam(args.prefix, batch, sample)
+			table[sample]=scanbam(alnfname, amplicons)
+
+# loop for if samples are given through -a option
+else:
+	i=0
+	table={}
+	for alnfname in args.alignments:
+		table[sample]=scanbam(alnfname, amplicons)
 
 
 #
