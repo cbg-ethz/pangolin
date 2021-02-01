@@ -369,7 +369,8 @@ case "$1" in
 	gitaddseq)
 		. $baseconda/miniconda3/bin/activate ""
 		cd ${releasedir}
-		git add qa* samples/*/*/references/*.fasta
+		git add qa*
+		find samples -name '*.fasta' -type f -print0 | xargs -0 git add
 		conda deactivate
 	;;
 	df)

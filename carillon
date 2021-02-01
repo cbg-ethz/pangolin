@@ -113,8 +113,14 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 		stat=$(${remote_batman} job "${id}" || echo "(no answer)")
 		if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
 			# running
-			echo "$j : $id : $stat"
+			echo -n "$j : $id : $stat"
 			(( ++stillrunning ))
+			if [[ "${stat}" == 'RUN' && ( ! "$j" =~ qa$ ) ]]; then
+				echo -ne '\t'
+				${remote_batman} completion "${id}" | tail -n 1
+			else
+				echo ''
+			fi
 			sleep 1
 			continue
 		fi
@@ -183,8 +189,13 @@ echo "Start new run"
 echo "============="
 
 # TODO support a yaml with regex
+<<<<<<< HEAD
 #rxsample='(^[[:digit:]]{6,}_)|([[:digit:]]{2}_20[[:digit:]]{2}_[01]?[[:digit:]]_[0-3]?[[:digit:]])'
 rxsample='^[[:digit:]]{6,}_'
+=======
+rxsample='(^[[:digit:]]{6,}_)|([[:digit:]]{2}_20[[:digit:]]{2}_[01]?[[:digit:]]_[0-3]?[[:digit:]])'
+#rxsample='^[[:digit:]]{6,}_'
+>>>>>>> upstream/master
 
 scanmissingsamples() {
 	while read sample batch other; do 
