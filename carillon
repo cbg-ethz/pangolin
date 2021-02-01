@@ -113,8 +113,14 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 		stat=$(${remote_batman} job "${id}" || echo "(no answer)")
 		if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
 			# running
-			echo "$j : $id : $stat"
+			echo -n "$j : $id : $stat"
 			(( ++stillrunning ))
+			if [[ "${stat}" == 'RUN' && ( ! "$j" =~ qa$ ) ]]; then
+				echo -ne '\t'
+				${remote_batman} completion "${id}" | tail -n 1
+			else
+				echo ''
+			fi
 			sleep 1
 			continue
 		fi

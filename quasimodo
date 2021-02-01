@@ -3,7 +3,7 @@
 
 usage() { echo "Usage: $0 -s
 	-s : singleshot - stops at the first loop if it fails
-	-o : output directory" 1>&2; exit $1; }
+	-h : this help" 1>&2; exit $1; }
 
 singleshot=0
 while getopts "sh" o; do
@@ -15,8 +15,16 @@ while getopts "sh" o; do
 done
 
 ring_carillon() {
-    # run the carrillon script
-	timeout -k 5 -s INT 2700 ./carillon
+	# kill any remaining rsync
+	if killall -3 rsync; then
+		sleep 10
+		if killall rsync; then
+			sleep 10
+			killall -9 rsync
+		fi
+	fi
+	# run the carrillon script
+	timeout -k 5 -s INT 3000 ./carillon
 	return 0
 }
 
@@ -24,9 +32,9 @@ echo 'First run...'
 ring_carillon || (( singleshot == 0 )) || exit 1
 
 while sleep 1200; do 
-    echo 'loop...'
-    /usr/bin/kinit -l 10h -k -t $HOME/$USER.keytab ${USER%@*}@D.ETHZ.CH; 
-    ring_carillon
-    date -R; 
-    klist; 
+	echo 'loop...'
+	/usr/bin/kinit -l 10h -k -t $HOME/$USER.keytab ${USER%@*}@D.ETHZ.CH;
+	ring_carillon
+	date -R;
+	klist;
 done

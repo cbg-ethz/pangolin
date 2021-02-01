@@ -57,8 +57,15 @@ case "$1" in
 			bjobs
 		fi
 	;;
+	completion)
+		if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
+			bpeek $2 | gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:]]+%\) done$/{print $0 "\t" date}'
+		fi
+	;;
 	df)
-		df ${clusterdir}
+		#df ${clusterdir} ${SCRATCH}
+		lquota -2 ${clusterdir}
+		lquota -2 ${SCRATCH}
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
