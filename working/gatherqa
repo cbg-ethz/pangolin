@@ -37,7 +37,6 @@ info() {
 
 
 # fastqc search strings
-fqckeys=( 'basequal' 'tilequal' 'seqqual' 'basecont' 'gc' 'n' 'len' 'dup' 'over' 'adapt' 'kmer')
 declare -A fqcsearch
 fqcsearch=( 
 	['basequal']='Per base sequence quality'
@@ -52,16 +51,18 @@ fqcsearch=(
 	['adapt']='Adapter Content'
 	['kmer']='Kmer Content'
 )
+fqckeys=( "${!fqcsearch[@]}" ) # keep all findings
 # load REF_aln_stats YAML
-alnkeys=('alnreads' 'coverage_3q' 'coverage_mean' )
 declare -A alnsearch
 alnsearch=(
-	['alnreads']='reads'
-	['coverage_3q']='75%'
-	['coverage_mean']='mean'
+	['alnreads']=' reads'
+	['coverage_1q']=' 25%'
+	['coverage_median']=' 50%'
+	['coverage_3q']=' 75%'
+	['coverage_mean']=' mean'
 )
+alnkeys=( "${!alnsearch[@]}" ) # keep all findings
 # matcher search strings
-matchkeys=( 'len' 'id' 'simil' 'gaps' 'score' )
 declare -A matchsearch
 matchsearch=( 
 	['len']='Length'
@@ -70,16 +71,16 @@ matchsearch=(
 	['gaps']='Gaps'
 	['score']='Score'
 )
+matchkeys=( "${!matchsearch[@]}" ) # keep all findings
 
 # labs
-# hard-coded HACK
-# TODO use the YAML file and the regex
 declare -A labs
-for l in 20200423_J3JCY 20200425_CTT3D 20200430_J3JCT 20200508_J3GT6 20200527_CTTKK 20200605_J67B4 20200612_J6NRK 20200624_J49RD 20200703_J795H 20200710_J79N2 20200724_J74NY 20200729_J7FJ5 20200803_J8HTM 20200807_J8HGC 20200817_J8YRP 20200821_J92FM 20200908_JB335 20200911_CW477 20200914_JB26N 20200918_JB3H6 20200925_J8WPL 20201002_J9279 20201023_HTVCCDRXX 20201030_JBJ3L 20201106_J9254 20201113_JDJ2P 20201120_JD735 20201127_JDCF7 20201208_JDY9B 20201211_JDWB9 20201218_JDH92; do
-	labs[${l}]='gfb'
-done
-for l in 20201120_JDNB4 20201124_JDNBP 20201209_JG62G 20201211_JG6BB 20201218_JFNWL ; do
-	labs[${l}]='fgcz'
+for b in ../sampleset/batch.*.yaml; do
+	[[ ${b} =~ batch\.([[:digit:]]{8}_[[:alnum:]]+)\.yaml$ ]]
+	batch="${BASH_REMATCH[1]}"
+
+	[[ "$(<${b})" =~ lab\ *:\ *([[:alnum:]]+)\ * ]]
+	labs[${batch}]="${BASH_REMATCH[1]}"
 done
 
 # header and data

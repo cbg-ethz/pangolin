@@ -24,10 +24,12 @@ argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric rel
 argparser.add_argument('-c', '--config', metavar='CONF', required=False,
 	default='server.conf',
 	type=str, dest='config', help="configuration file to load")
+argparser.add_argument('-f', '--force', required=False,
+	action='store_true', dest='force', help="Force overwriting any existing file when moving")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
-#argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
-	#dest='recent', help="Only process datasets (runs) whose date-based ID is posterior to the argument")
+argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
+	dest='recent', help="Only process batches whose date is posterior to the argument")
 args = argparser.parse_args()
 
 
@@ -36,13 +38,17 @@ config = configparser.ConfigParser(strict=False) # non-strict: support repeated 
 config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in section headers
 with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
+lab={os.path.splitext(os.path.basename(args.config))[0]}
 basedir={os.getcwd()}
 sampleset=sampleset
 download=bfabric-downloads
 link=--link
+badlist=
 [_]
 """ + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
 
+lab=config['_']['lab'].strip("\"'")
+'''name of the lab, to put in the batch YAML'''
 basedir=config['_']['basedir'].strip("\"'")
 '''base dircetory'''
 expname=config['_']['expname'].strip("\"'")
@@ -57,6 +63,7 @@ linking instead of copying ?
  --reflink for CoW filesystems (ZFS, BTRFS)
  --hardlink for most unix-like filesystems
 '''
+badlist=(config['_']['badlist'].strip("\"'").split(',')) if len(config['_']['badlist']) else list()
 
 # glob all projects
 if re.search('/p\d+/?$', expname):
@@ -89,6 +96,11 @@ rxfqext=re.compile('\.fastq\.gz$')
 fastqc={} # maps orders to FastQC directories (or in the absence of order number: checksum of the input_dataset)
 fastqc_samples={} # maps which samples are present in which FastQC directory (some might be missing)
 for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
+	name = d.split(os.sep)[-1]
+	if name in badlist:
+		print(f"skipping {name} in bad list")
+		continue
+
 	t = os.path.join(d,'input_dataset.tsv'); 
 	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
 	if not (os.path.isdir(os.path.join(d,'FastQC_Result')) and 
@@ -123,6 +135,10 @@ for j in glob.glob(os.path.join(basedir,download,projects,'*','Stats', 'Stats.js
 	path = os.sep.join(pathparts)
 	name = pathparts[-1]
 	prj = pathparts[-2] if extrapath else ''
+
+	if name in badlist:
+		print(f"skipping {name} in bad list")
+		continue
 
 	try:
 		m=rxorder.search(name).groupdict()
@@ -259,7 +275,7 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 
 
 # shell script file with all moving instructions inside
-sh=open(os.path.join(sampleset,'movedatafiles.sh'), 'wt')
+sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
 
 # generic header: only for stand-alone files.
 print(r'''
@@ -296,6 +312,13 @@ for b in batches:
 	rundate=batches[b]['rundate']
 	flowcell=batches[b]['flowcell']
 
+	# skip older
+	if args.recent:
+		if rundate < args.recent:
+			totsam -= len(batches[b]['samples'])
+			#print(f"Skipping {rundate} {order} {flowcell}")
+			continue
+
 	# either classic '20201120_JDNB4' or merged '20201124_o23391'
 	dupe=False
 	if 'dupe' in batches[b]:
@@ -317,10 +340,16 @@ for b in batches:
 		qcdir=batches[b]['fastqc']
 		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
 
+	# batch TSV file and info YAML
+	runfolder=None
 	if batch not in otsv:
-		otsv[batch]=tsv=open(os.path.join(sampleset,f'samples.{batch}.tsv'), 'wt')
+		otsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
+		runfolder=batches[b]['runfolder']
 	else:
 		tsv=otsv[batch]
+		runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
+	with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
+		print(yaml.dump({'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,'runfolder':runfolder}, sort_keys=False), file=yml)
 
 	with open(batches[b]['dataset'],'rt',encoding='utf-8') as tf:
 		for r in csv.DictReader(tf, dialect='excel-tab'):
@@ -379,15 +408,15 @@ for b in batches:
 			# move script
 			print(r'''
 mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
-cp -v ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
+cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
 			if ends==2:
-				print(r"cp -v ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
 			if qcdir and fulname in fastqc_samples[qcdir]:
 				fqc=rxfqext.sub('_fastqc.html',r1)
-				print(r"cp -v ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
 				if ends==2:
 					fqc=rxfqext.sub('_fastqc.html',r2)
-					print(r"cp -v ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
 
 print(f"""
 echo -e '\\r\\e[K[{bar(128)}] done.'

@@ -25,16 +25,20 @@ usage() { echo "Usage: $0 -f <DIR> -b <BATCH> [-l <LEN>] [-L {''|--link|--reflin
 	-f : directory containing .fastq.gz files
 	-b : batch name to use for 2nd level (e.g.: date)
 	-l : read lenght (default: autodetect)
-	-L : link parameter to pass to cp when copzing (default: --link)
+	-L : link parameter to pass to cp when copying (default: --link)
 	-t : tsv file (default: samples.<BATCH>.tsv)
 	-T : do not truncate (empty) the file before starting
+	-p : prefix to prepend to fastq files (e.g.: for fusing runs)
+	-s : suffix to append to fastq files (e.g.: for fusing runs)
 	-o : output directory" 1>&2; exit $1; }
 # TODO support FastQC files
 
 link=--link
 read_len=
 truncate=1
-while getopts "f:b:l:L:o:t:Th" o; do
+prefix=''
+suffix=''
+while getopts "f:b:l:L:p:s:o:t:Th" o; do
 	case "${o}" in
 		f)	fastq_dir="${OPTARG}"
 			l=( ${fastq_dir} )
@@ -49,6 +53,8 @@ while getopts "f:b:l:L:o:t:Th" o; do
 		L)	link="${OPTARG}"
 			[[ -z "${OPTARG}" || "${OPTARG}" == '--link' || "${OPTARG}" == '--reflink' ]]	|| fail "Invalid link parameter <${OPTARG}>"
 			;;
+		p)	prefix="${OPTARG}"	;;
+		s)	suffix="${OPTARG}"	;;
 		o)	out_dir="${OPTARG}"	;;
 		t)	tsv="${OPTARG}"	;;
 		T)	truncate=0	;;
@@ -179,16 +185,16 @@ while read -d $'\0' f; do
 	fi
 
 	mkdir -m 0770 -p "${out_dir}/${samname}/${batch_name}/"{raw_data,extracted_data}
-	cp ${link} "${f}" "${out_dir}/${samname}/${batch_name}/raw_data/${rawname}_${read}.${ext}"
+	cp ${link} "${f}" "${out_dir}/${samname}/${batch_name}/raw_data/${prefix}${rawname}${suffix}_${read}.${ext}"
 # scanning with find
 done < <(find ${bsdextregex} ${fastq_dir} -type f ${gnuextregex} -iregex ".*${rxextentsion}" -print0)
 
 # final words
-if (( pair )); then
-	if (( pair == numsam )); then
-		info "${pair} pair end samples"
+if (( paired )); then
+	if (( paired == numsam )); then
+		info "${paired} pair end samples"
 	else
-		warn "${numsam} samples, of which ${pair} paired"
+		warn "${numsam} samples, of which ${paired} paired"
 	fi
 else
 	info "${numsam} single end samples"

@@ -2,6 +2,7 @@
 
 scriptdir="$(dirname $(which $0))"
 
+declare -A lab
 . ${scriptdir}/server.conf
 
 : ${basedir:=$(pwd)}
@@ -141,7 +142,7 @@ case "$1" in
 		else
 			param=( )
 		fi
-		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp "${param[@]}"|tee /dev/stderr)"
+		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c gfb.conf "${param[@]}"|tee /dev/stderr)"
 		if [[ "$syncoutput" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
 			echo "Newfiles downloaded"
 			echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${statusdir}/syncopenbis_last
@@ -181,10 +182,14 @@ case "$1" in
 		cd $basedir
 		summary=""
 		recent=""
+		force="${sort_force}"
 		while [[ -n $2 ]]; do
 			case "$2" in
 				--summary)
 					summary='--summary'
+				;;
+				--force)
+					force='--force'
 				;;
 				--recent)
 					recent="--recent=${lastmonth}"
@@ -197,8 +202,16 @@ case "$1" in
 			shift
 		done
 		fail=0
-		${scriptdir}/sort_samples_pybis ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
-		${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+		if  (( ${lab[gfb]} )); then
+			${scriptdir}/sort_samples_pybis -c gfb.conf ${force} ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+		else
+			echo "Skipping gfb"
+		fi
+		if  (( ${lab[fgcz]} )); then
+			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+		else
+			echo "Skipping fgcz"
+		fi
 		(( fail == 0 )) &&  touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate
 	;;
@@ -233,6 +246,7 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${basedir}/${sampleset}/samples.*.tsv	\
+			${basedir}/${sampleset}/batch.*.yaml	\
 			belfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
 		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
 			gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\

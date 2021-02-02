@@ -24,6 +24,8 @@ argparser = argparse.ArgumentParser(description="Fetch metadata from OpenBIS ser
 argparser.add_argument('-c', '--config', metavar='CONF', required=False,
 	default='server.conf',
 	type=str, dest='config', help="configuration file to load")
+argparser.add_argument('-f', '--force', required=False,
+	action='store_true', dest='force', help="Force overwriting any existing file when moving")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
 argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
@@ -36,15 +38,17 @@ config = configparser.ConfigParser(strict=False) # non-strict: support repeated 
 config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in section headers
 with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
+lab={os.path.splitext(os.path.basename(args.config))[0]}
 samtype=ILLUMINA_FLOW_LANE
 basedir={os.getcwd()}
 sampleset=sampleset
 download=openbis-downloads
-suffix=
 link=--link
 [_]
 """ + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
 
+lab=config['_']['lab'].strip("\"'")
+'''name of the lab, to put in the batch YAML'''
 fileserver=config['_']['fileserver'].strip("\"'")
 '''name of the _SFTP_ server, as used when fetching data files (i.e.: same name as in netrc file)'''
 apiurl=config['_']['apiurl'].strip("\"'")
@@ -59,14 +63,15 @@ download=config['_']['download'].strip("\"'")
 '''sub-directory to hold the unsorted downloaded datasets'''
 sampleset=config['_']['sampleset'].strip("\"'")
 '''sub-directory to hold the sorted samples set'''
-suffix=config['_']['suffix'].strip("\"'")
-'''extra suffix - e.g.: "_MM_1" for mismatches one'''
 link=config['_']['link'].strip("\"'")
 '''
 linking instead of copying ?
  --reflink for CoW filesystems (ZFS, BTRFS)
  --hardlink for most unix-like filesystems
 '''
+
+# Hardcoded tables
+suffix={'ONE':'_MM_1','NONE':''}
 
 # RegEx to parse some specific string
 rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_[-\w]*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT' or {...}'folder: 201023_A00730_0259_BHTVCCDRXX'
@@ -139,6 +144,7 @@ prgmax=len(dataframe)
 status=0
 batchtsv={} # dictionary to hold output files per batches
 batchlanes={} # dictionary to count lanes used in each batch
+batchseensname={} # dictionary to check when samples are replicated accross lanes
 # iterate through samples, i.e.: through flow cell lanes
 for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertuples(name='Sample'):
 	# parse the container properties for run type and read cycles count
@@ -148,6 +154,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 		print(f"cannot parse: {sa.CONTAINER_PROPERTIES}\n{list(map(lambda x: '%x' % ord(x), sa.CONTAINER_PROPERTIES[0:4]))}")
 		m={}
 	# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched groups throws an exception instead, that's my contrived way to get around.
+	runfolder=m['run'] if 'run' in m else ''
 	rlen=int(m['len'])-1 if 'len' in m else ''
 	rtype=m['type'] if 'type' in m else ''
 	rundate=f"20{m['date']}" if 'date' in m else None # NOTE runfolders are yymmdd, not yyyymmdd
@@ -155,15 +162,17 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 	if args.recent:
 		if sa.permId < args.recent:
 			skip=True
-	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, (m['run'] if 'run' in m else ''), ('skip' if skip else ''), sep='\t')
+	print(sa.permId, sa.identifier, sa.registrationDate, sa.DATA_TRANSFERRED, rtype, rlen, runfolder, ('skip' if skip else ''), sep='\t')
 
 	# progress bar
 	barstr=bar(math.floor(prgrs*128/prgmax))
 	print (f"\r[{barstr}] {prgrs}/{prgmax}", end=('\r' if args.summary else '\n'))
-	print (f"echo -ne '\\r[{barstr}] {prgrs}/{prgmax}\\r'", file=sh)
+	print (f"echo -ne '\\r[{barstr}] {prgrs}/{prgmax} \\r'", file=sh)
 	prgrs+=1
 
 	if skip:
+		prgmax-=1
+		prgrs-=1
 		continue
 
 	lane=cell=seq=''
@@ -190,7 +199,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 
 	# only process data which was transfered, we don't have access permission for the rest yet
 	try:
-		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2'}).df
+		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2','MISMATCH_IN_INDEX'}).df
 	except:
 		print("\u001b[K\t(not accessible yet - cannot open)")
 	else:
@@ -219,7 +228,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 
 		tsv=None
 		fastqc=None
-
+		dupecount=0
 		if batch in batchtsv:
 			if lane in batchlanes[batch]:
 				print(f"\u001b[K\t!!! duplicate lane {lane} already seen in {batchlanes[batch][lane]}")
@@ -231,6 +240,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 			# batch TSV sample list
 			batchtsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
 			batchlanes[batch]={lane: sa.permId}
+			batchseensname[batch]={ } # check for duplicate samples in different lane (i.e.: fused samples)
 
 			# batch YAML file with info
 			# HACK this not the canonical way. we should be getting the parrent of the current sa.permId, but every attempt thus far crashes
@@ -240,15 +250,15 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 			if not args.summary:
 				print('\t', samcode, libkit, sep='\t')
 			with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
-				print(yaml.dump({'type':'openbis', 'url':apiurl,'libkit':libkit,'properties':sa.CONTAINER_PROPERTIES}), file=yml)
+				print(yaml.dump({'type':'openbis','lab':lab,'url':apiurl,'libkit':libkit,'runfolder':runfolder,'properties':sa.CONTAINER_PROPERTIES},sort_keys=False), file=yml)
 
 
 		datasets['sname']=datasets.apply(lambda ds: rxclean.sub('_',ds['EXTERNAL_SAMPLE_NAME']), axis=1) # clean-up samplename from un friendly caracter
-		seensname={ }
+		seensname={ } # check for duplicate name in same lane (some crashes of OpenBIS cause this)
 		# samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ 
 		for ds in datasets.sort_values(by=['type','sname','permId'],ascending=[True,True,False]).itertuples(name='DataSets'):
 			if not args.summary:
-				print('\u001b[K\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, sep='\t')
+				print('\u001b[K\t', ds.permId, ds.type, ds.status, ds.registrationDate, ds.sname, ds.EXTERNAL_SAMPLE_NAME,ds.FASTQ_SAMPLE_CODE, ds.BARCODE, ds.INDEX2, ds.MISMATCH_IN_INDEX, sep='\t')
 			# skip unavailable data files
 			if ds.status == 'AVAILABLE':
 				# look for FASTQ files (skip undetermined indexes)
@@ -257,17 +267,25 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 					if fastqc is None:
 						print("No FASTQC", file=sys.stderr)
 						status |= 1
-					# upload error: duplicate samples.
+					# upload error: duplicate samples (a typoe of OpenBIS crash).
 					if ds.sname in seensname:
 						# TODO sanity checks if it is indeed the same sample
 						print(f"\u001b[K\t\tduplicate {ds.sname} already in {seensname[ds.sname]}", file=sys.stderr)
 						continue
 					seensname[ds.sname] = ds.permId
 
-					print(ds.sname, batch, rlen, sep='\t', file=tsv)
+					# fusing multiple samples replicated in lanes
+					fusedupe=False
+					if ds.sname in batchseensname[batch]:
+						dupecount+=1
+						#print(f"{ds.sname} duplicate in lanes {lane} and {batchseensname[batch][ds.sname]}\n")
+						fusedupe=True
+					else:
+						print(ds.sname, batch, rlen, sep='\t', file=tsv)
+						batchseensname[batch][ds.sname]=lane
 					# 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz	
 					print(r'''
-[[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s'
+[[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s (for %(sname)s)'
 fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L%(lane)03u_R[1-2]_*%(mm)s.fastq.gz )
 [[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
 (( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[*]}"
@@ -275,20 +293,30 @@ mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_dat
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
 	[[ $file =~ _L%(lane)03u_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
-	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
+	cp -v%(force)s ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
 	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
-	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]
-	cp -v ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
+	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]''' % {'force': ('f' if args.force else ''),'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':(suffix[ds.MISMATCH_IN_INDEX] if ds.MISMATCH_IN_INDEX in suffix else ''),'idx1':ds.BARCODE,'idx2':ds.INDEX2,'lane':lane}, file=sh)
+					# copy FastQC only for none-dupes
+					if not fusedupe:
+						# HACK at this point, we might not know it's a fusedupe yet and do a copy we shouldn't
+						print(r'''	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
-''' % {'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'seqdir':seqdir,'mm':suffix,'idx1':ds.BARCODE,'idx2':ds.INDEX2,'fastqc':fastqc,'lane':lane}, file=sh)
+''' % {'force': ('-f' if args.force else ''),'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'fastqc':fastqc,'seqdir':seqdir}, file=sh)
+					else:
+						# HACK remove any left over FastQC from the other copy
+						print(r'''	rm -f "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
+done
+''' % {'sampleset':sampleset,'sname':ds.sname,'batch':batch}, file=sh)
 				# look for FASTQC holder directory
 				elif ds.type == 'FASTQC':
-					# upload error: duplicate samples.
+					# upload error: duplicate samples (a typoe of OpenBIS crash).
 					if fastqc is not None:
 						print(f"\u001b[K\t\tduplicate FastQC already in {fastqc}", file=sys.stderr)
 						continue
 					# 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
 					fastqc=ds.permId # keep the reference
+		if dupecount:
+			print(f"\u001b[K\t\t{dupecount} samples were duplicate from previous lane")
 
 print(f"""
 echo -e '\\r\\e[K[{bar(128)}] done.'
