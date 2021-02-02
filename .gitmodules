@@ -5,3 +5,6 @@
 [submodule "V-pipe-test"]
 	path = V-pipe-test
 	url = https://github.com/cbg-ethz/V-pipe
+[submodule "cojac"]
+	path = cojac
+	url = https://github.com/cbg-ethz/cojac.git
