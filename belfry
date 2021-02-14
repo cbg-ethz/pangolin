@@ -251,6 +251,12 @@ case "$1" in
 		else
 			echo "Skipping fgcz"
 		fi
+		if  (( ${lab[h2030]} )) && [[ -e ${statusdir}/synch2030_ended && -e ${statusdir}/synch2030_started && ${statusdir}/synch2030_ended -nt ${statusdir}/synch2030_started ]]; then
+			# NOTE always recent/based on last sync), no support for --force, move done immediately/no separate movedatafiles.sh
+			${scriptdir}/sort_h2030 -c h2030.conf $(< ${statusdir}/synch2030_started ) || fail=1
+		else
+			echo "Skipping h2030"
+		fi
 		(( fail == 0 )) &&  touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate
 	;;

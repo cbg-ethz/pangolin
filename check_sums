@@ -55,9 +55,11 @@ for d in "${@}"; do
 	if [[ ! -d "${basedir}/${download}/${d}" ]]; then
 		echo "No ${d}" 1>&2
 		success=0
+		continue
 	elif [[ ! -r "${basedir}/${download}/${d}/${sumfile}" ]]; then
 		echo "No ${sumfile} in ${d}" 1>&2
 		success=0
+		continue
 	else
 		checkfiles+=( "${basedir}/${download}/${d}/${sumfile}.check" )
 		echo -ne "\r\e[Kchecksum ${d}/${sumfile}\r"

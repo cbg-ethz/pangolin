@@ -38,7 +38,8 @@ read_len=
 truncate=1
 prefix=''
 suffix=''
-while getopts "f:b:l:L:p:s:o:t:Th" o; do
+quiet=0
+while getopts "f:b:l:L:p:s:o:t:Tqh" o; do
 	case "${o}" in
 		f)	fastq_dir="${OPTARG}"
 			l=( ${fastq_dir} )
@@ -58,6 +59,7 @@ while getopts "f:b:l:L:p:s:o:t:Th" o; do
 		o)	out_dir="${OPTARG}"	;;
 		t)	tsv="${OPTARG}"	;;
 		T)	truncate=0	;;
+		q)	quiet=1	;;
 		h)	usage 0	;;
 		*)	usage 1	;;
 	esac
@@ -161,13 +163,13 @@ while read -d $'\0' f; do
 	[[ "${samname}" =~ ^(.*)${rxsnum}$ ]] && samname=${BASH_REMATCH[1]}
 	[[ "${f##*/}" =~ ${rxpairsuffix} ]] && read=${BASH_REMATCH[1]}
 	[[ "${f##*/}" =~ ${rxextentsion} ]] && ext=${BASH_REMATCH[1]}
-	echo -ne "$samname\t$read\t"
+	(( quiet )) || echo -ne "$samname\t$read\t"
 
 	# check seen
 	if seen "${samname}"; then
 		# check number of reads
 		if testnumreads "${samname}" $read; then
-			echo "pair"
+			(( quiet )) || echo "pair"
 			(( paired ++ ))
 		fi
 	else
@@ -179,7 +181,7 @@ while read -d $'\0' f; do
 		else
 			rlen=${read_len}
 		fi
-		echo "${rlen}"
+		(( quiet )) || echo "${rlen}"
 		echo -e "${samname}\t${batch_name}\t${rlen}" >> "${tsv}"
 		(( numsam++ ))
 	fi
