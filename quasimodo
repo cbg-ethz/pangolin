@@ -23,6 +23,19 @@ ring_carillon() {
 			killall -9 rsync
 		fi
 	fi
+	# check if inode limitation "No spoace left on device" is still going on
+	if touch b0rk && [[ -f b0rk ]]; then
+		rm b0rk
+	else
+		echo "Aargh: problem writing on storage !!!"
+		# TODO use carillon phases
+		scriptdir="$(dirname $(which $0))"
+		${scriptdir}/belfry  df
+		remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman euler.ethz.ch --"
+		${remote_batman} df
+		date -R
+		return 1
+	fi
 	# run the carrillon script
 	timeout -k 5 -s INT 3000 ./carillon
 	return 0

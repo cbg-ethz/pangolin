@@ -389,6 +389,7 @@ case "$1" in
 	;;
 	df)
 		df ${basedir}
+		df --inode ${basedir}
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
