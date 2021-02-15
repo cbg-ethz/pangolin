@@ -212,6 +212,7 @@ scanmissingsamples() {
 
 
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
+	clearline=0
 	mustrun=0
 	declare -A flowcell
 	ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
@@ -234,13 +235,22 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		fi
 
 		# check dates
+		if (( clearline )) && [[ "$limit" < "$b"  ]]; then
+			echo -ne "\n"
+			clearline=0
+		fi
 		if [[ "$ref" < "$b" || "$ref" == "$b" ]]; then
 			echo "!$b:$f"
 			(( ++mustrun ))
 		elif [[ "$limit" < "$b"  ]] && scanmissingsamples $t; then 
 			(( ++mustrun ))
 		else
-			echo -e "\r($b:$f)\e[K"
+			if  [[ "$limit" < "$b"  ]]; then
+				echo -e "\r($b:$f)\e[K"
+			else
+				echo -ne "($b:$f)\t"
+				clearline=1
+			fi
 		fi
 		# sanity check
 		if [[ "$now" < "$b" ]]; then
