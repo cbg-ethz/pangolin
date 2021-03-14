@@ -12,6 +12,7 @@ import json
 import yaml
 import hashlib
 import math
+import datetime
 
 # progress bar unicode
 def bar(v, m=128):
@@ -44,6 +45,7 @@ sampleset=sampleset
 download=bfabric-downloads
 link=--link
 badlist=
+fusedays=30
 [_]
 """ + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
 
@@ -64,6 +66,11 @@ linking instead of copying ?
  --hardlink for most unix-like filesystems
 '''
 badlist=(config['_']['badlist'].strip("\"'").split(',')) if len(config['_']['badlist']) else list()
+'''folders to skip'''
+forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_']['forcelist']) else list()
+'''folders to use even with missing order'''
+fusedays=int(config['_']['fusedays'].strip("\"'"))
+'''delay after which orders aren't considered for merging anymore'''
 
 # glob all projects
 if re.search('/p\d+/?$', expname):
@@ -144,15 +151,28 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	prj = pathparts[-2] if extrapath else ''
 
 	if name in badlist:
-		print(f"skipping {name} in bad list")
+		print(f"\x1b[35;1mskipping {name} in bad list\x1b[0m")
 		continue
 
+	order=name # default for corner cases when we don't have an actual order
 	try:
 		m=rxorder.search(name).groupdict()
 		order=m['order']
 	except:
-		print(f"can't parse {name}")
-		continue
+		if name in forcelist:
+			# no order but force processing
+			print(f"\x1b[35;1m({name} in force list) \x1b[0m", end='')
+			# search the dataset TSV in case we got a real order number
+			with open(os.path.join(path,'dataset.tsv'),'rt',encoding='utf-8') as tf:
+				r = next(csv.DictReader(tf, dialect='excel-tab'), None)
+				if 'Order Id [B-Fabric]' in r:
+					order = f"o{r['Order Id [B-Fabric]']}"
+					print(order, end='')
+			# otherwise we leave the above default (name)
+			print()
+		else:
+			print(f"\x1b[31;1mcan't parse {name}\x1b[0m")
+			continue
 
 	########################################
 	#                                      #
@@ -241,25 +261,38 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	t=os.path.join(path,'dataset.tsv')
 	b={'name':name, 'prj': prj, 'path':path, 'dataset':t, 'flowcell': flowcell, 'runfolder': runfolder,'rundate':rundate,'samples':samples,'badyield':badyield,'badsamples':badsamples}
 
+	# handle duplicate orders and fuse them if (close in time)
 	if order in batches:
-		batches[order]['dupe']=True
-		print(f"{name} is dupe of order {order}")
-		# TODO fused handling
 		key=f"{order}:{name}"
-		b['appendto']=order
+
+		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
+		if days <= fusedays:
+			print(name, f"\x1b[36;1m is dupe of order {order}\x1b[0m")
+			batches[order]['dupe']=True
+			b['appendto']=order
+		else:
+			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: {days} days appart is more than {fusedays}\x1b[0m")
 	else:
 		key=order
 
+	# Now, link with FastQC, based on dataset.tsv and...
 
+	# ...based on order column if present ?
 	with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
 		r = next(csv.DictReader(tf, dialect='excel-tab'))
 		if 'Order Id [B-Fabric]' in r:
-			if r['Order Id [B-Fabric]'] in fastqc:
-				b['fastqc']=fastqc[r['Order Id [B-Fabric]']]
+			to = r['Order Id [B-Fabric]']
+			# sanity check: is the folder the same?
+			if to in fastqc:
+				b['fastqc']=fastqc[to]
+				if to[0] != 'o':
+					to = f"o{to}"
+				if to != order:
+					print(name, f"\x1b[31;1mFolder order {order} vs dataset.tsv order {to}\x1b[0m")
 			batches[key]=b
 			continue
 
-	# match by (input_) dataset.tsv content
+	# ...match by (input_) dataset.tsv content
 	md5_hash = hashlib.md5(usedforsecurity=False)
 	with open(t,'rb') as tf:
 		md5_hash.update(tf.read())
