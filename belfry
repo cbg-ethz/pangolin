@@ -175,14 +175,14 @@ case "$1" in
 	syncfgcz)
 		echo "Sync FGCZ - bfabric"
 		. $baseconda/miniconda3/bin/activate ""
-# 		if [[ "${2}" = "--recent" ]]; then
-# 		 :
-# # 			param=( "${lastmonth}*" "${thismonth}*" )
-# # 			echo "syncing recent: ${param[*]}"
-# 		else
+		if [[ "${2}" = "--recent" ]]; then
+			limitlast='6 weeks ago'
+		echo "syncing recent: ${limitlast}"
 			param=( 'p23224' 'p23212' )
-# 		fi
-		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c fgcz.conf "${param[@]}"|tee /dev/stderr)"
+		else
+			param=( 'p23224' 'p23212' )
+		fi
+		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
 		checksyncoutput "fgcz" "$syncoutput"
 		conda deactivate
 	;;

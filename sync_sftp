@@ -4,7 +4,7 @@ configfile=server.conf
 
 usage() { echo "Usage: $0 [-c <configfile>] [filter [...]]" 1>&2; exit $1; }
 
-while getopts "c:h" o; do
+while getopts "N:c:h" o; do
 	case "${o}" in
 		c)	configfile=${OPTARG}
 			if [[ ! -r ${configfile} ]]; then
@@ -12,12 +12,12 @@ while getopts "c:h" o; do
 				usage 1
 			fi
 			;;
+		N)	newerthan="${OPTARG}"	;;
 		h)	usage 0	;;
 		*)	usage 1	;;
 	esac
 done
 shift $((OPTIND-1))
-
 
 . ${configfile}
 
@@ -46,4 +46,4 @@ else
 fi
 
 
-exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=16 --loop --target-directory=${basedir}/${download} ${source}"
+exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=${parallel} --loop --target-directory=${basedir}/${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}"
