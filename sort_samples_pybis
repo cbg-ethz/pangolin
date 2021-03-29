@@ -24,6 +24,8 @@ argparser = argparse.ArgumentParser(description="Fetch metadata from OpenBIS ser
 argparser.add_argument('-c', '--config', metavar='CONF', required=False,
 	default='server.conf',
 	type=str, dest='config', help="configuration file to load")
+argparser.add_argument('-q', '--skipqc', required=False,
+	action='store_true', dest='skipqc', help="Do not require presence of FastQC files")
 argparser.add_argument('-f', '--force', required=False,
 	action='store_true', dest='force', help="Force overwriting any existing file when moving")
 argparser.add_argument('-s', '--summary', required=False,
@@ -221,7 +223,8 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 		if not (datasets['type']=='FASTQC').any(): # we need FASTQC to be present
 			#print(datasets['type']=='FASTQC')
 			print("\u001b[K\t(missing fastqc)", end='')
-			skip=True
+			if not args.skipqc:
+				skip=True
 		if skip:
 			print("\t(not usable yet - skipping)")
 			continue
@@ -264,7 +267,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 				# look for FASTQ files (skip undetermined indexes)
 				if ds.type == 'FASTQ_GZ' and ds.EXTERNAL_SAMPLE_NAME:
 					# check that we actually have a FastQC
-					if fastqc is None:
+					if (fastqc is None) and (not args.skipqc):
 						print("No FASTQC", file=sys.stderr)
 						status |= 1
 					# upload error: duplicate samples (a typoe of OpenBIS crash).
@@ -299,7 +302,8 @@ for file in "${fastq[@]}"; do
 					# copy FastQC only for none-dupes
 					if not fusedupe:
 						# HACK at this point, we might not know it's a fusedupe yet and do a copy we shouldn't
-						print(r'''	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
+						if fastqc is not None:
+							print(r'''	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
 ''' % {'force': ('-f' if args.force else ''),'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'fastqc':fastqc,'seqdir':seqdir}, file=sh)
 					else:
