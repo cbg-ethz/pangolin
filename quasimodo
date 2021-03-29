@@ -41,6 +41,13 @@ ring_carillon() {
 	return 0
 }
 
+
+# remove previous abort file
+if [[ -e "${stopfile}" ]]; then
+	echo "(removing previous stop file)"
+	rm "${stopfile}"
+fi
+
 echo 'First run...'
 ring_carillon || (( singleshot == 0 )) || exit 1
 
@@ -48,6 +55,14 @@ while sleep 1200; do
 	echo 'loop...'
 	/usr/bin/kinit -l 10h -k -t $HOME/$USER.keytab ${USER%@*}@D.ETHZ.CH;
 	ring_carillon
+
+	# check for abort
+	stopfile="$(dirname $(which $0))/status/stop"
+	if [[ -e "${stopfile}" ]]; then
+		rm "${stopfile}"
+		exit 0
+	fi
+
 	date -R;
 	klist;
 done
