@@ -42,6 +42,8 @@ ring_carillon() {
 }
 
 
+stopfile="$(dirname $(which $0))/status/stop"
+
 # remove previous abort file
 if [[ -e "${stopfile}" ]]; then
 	echo "(removing previous stop file)"
@@ -57,7 +59,6 @@ while sleep 1200; do
 	ring_carillon
 
 	# check for abort
-	stopfile="$(dirname $(which $0))/status/stop"
 	if [[ -e "${stopfile}" ]]; then
 		rm "${stopfile}"
 		exit 0
