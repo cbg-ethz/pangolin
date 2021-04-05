@@ -2,9 +2,9 @@
 
 configfile=server.conf
 
-usage() { echo "Usage: $0 [-c <configfile>] [filter [...]]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-c <configfile>] [ -N <newerthan> ] [ -e <exclude-rx-file> ] [filter [...]]" 1>&2; exit $1; }
 
-while getopts "N:c:h" o; do
+while getopts "c:N:e:h" o; do
 	case "${o}" in
 		c)	configfile=${OPTARG}
 			if [[ ! -r ${configfile} ]]; then
@@ -12,6 +12,7 @@ while getopts "N:c:h" o; do
 				usage 1
 			fi
 			;;
+		e)	exrxfile="${OPTARG}"	;;
 		N)	newerthan="${OPTARG}"	;;
 		h)	usage 0	;;
 		*)	usage 1	;;
@@ -45,5 +46,5 @@ else
 	source="--directory=${expname}/*"
 fi
 
-
-exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=${parallel} --loop --target-directory=${basedir}/${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}"
+#exec echo "${exrxfile:+ --exclude-rx-from="${exrxfile}"}"
+exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=${parallel} --loop --target-directory=${basedir}/${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"

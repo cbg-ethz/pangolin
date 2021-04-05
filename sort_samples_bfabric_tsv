@@ -386,11 +386,13 @@ for b in batches:
 	runfolder=None
 	if batch not in otsv:
 		otsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
+		bfabfolder=batches[b]['name']
 		runfolder=batches[b]['runfolder']
 		fastqcfolder=batches[b]['fastqc'] if 'fastqc' in batches[b] else None
 		badsamples=batches[b]['badsamples']
 	else:
 		tsv=otsv[batch]
+		bfabfolder=[batches[b]['name'],batches[order]['name']]
 		runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
 		fastqcfolder=[]
 		if 'fastqc' in batches[b]:
@@ -401,7 +403,7 @@ for b in batches:
 			fastqcfolder=None
 		badsamples=batches[b]['badsamples'].intersection(batches[order]['badsamples'])
 	with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
-		print(yaml.dump({'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,'runfolder':runfolder,'fastqcfolder':fastqcfolder}, sort_keys=False), file=yml)
+		print(yaml.dump({'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,'runfolder':runfolder,'fastqcfolder':fastqcfolder,'folder':bfabfolder}, sort_keys=False), file=yml)
 	if len(badsamples):
 		with open(os.path.join(basedir,sampleset,f'missing.{batch}.txt'), 'wt') as missing:
 			missing.writelines("%s\n" % bad for bad in badsamples)

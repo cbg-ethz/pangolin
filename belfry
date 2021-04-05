@@ -177,8 +177,10 @@ case "$1" in
 		. $baseconda/miniconda3/bin/activate ""
 		if [[ "${2}" = "--recent" ]]; then
 			limitlast='6 weeks ago'
-		echo "syncing recent: ${limitlast}"
-			param=( 'p23224' 'p23212' )
+			./exclude_list_bfabric -c fgcz.conf -r "${lastmonth}" -o ${statusdir}/fgcz.exclude.lst
+			param=( '-e' "${statusdir}/fgcz.exclude.lst" 'p23224' 'p23212' )
+			echo -ne "syncing recent: ${limitlast}\texcluding: "
+			wc -l ${statusdir}/fgcz.exclude.lst
 		else
 			param=( 'p23224' 'p23212' )
 		fi
