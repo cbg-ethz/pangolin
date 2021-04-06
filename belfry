@@ -249,6 +249,17 @@ case "$1" in
 			echo "Skipping gfb"
 		fi
 		if  (( ${lab[fgcz]} )); then
+# 			# TODO config file
+# 			staging=staging-fcgz
+# 
+# 			# safety check
+# 			if [[ $(realpath ${basedir}/${staging}) == $(realpath ${basedir} )  || $(realpath ${basedir}/${staging}) == $(realpath ${basedir}/${sampleset} ) ]]; then
+# 				echo "bad staging path ${staging}"
+# 				touch ${statusdir}/sortsamples_fail
+# 				exit 2
+# 			fi
+# 
+# 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${staging}/movedatafiles.sh && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping fgcz"
