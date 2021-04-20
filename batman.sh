@@ -57,6 +57,9 @@ case "$1" in
 			bjobs
 		fi
 	;;
+	purgelogs)
+		find ${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm -- 
+	;;
 	completion)
 		if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
 			bpeek $2 | gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:]]+%\) done$/{print $0 "\t" date}'
