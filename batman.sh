@@ -4,6 +4,18 @@ clusterdir=/cluster/project/pangolin
 working=working
 sampleset=sampleset
 
+#
+# Input validator
+#
+validateBatchName() {
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]]{4,})$ ]]; then
+		return;
+	else
+		echo "bad batchdate ${1}"
+		exit 1;
+	fi
+}
+
 RXJOB='Job <([[:digit:]]+)> is submitted'
 # Generic job.
 # Job <129052039> is submitted to queue <light.5d>.
@@ -69,6 +81,17 @@ case "$1" in
 		#df ${clusterdir} ${SCRATCH}
 		lquota -2 ${clusterdir}
 		lquota -2 ${SCRATCH}
+	;;
+	garbage)
+		validateBatchName "$2"
+		cd ${clusterdir}
+
+		for f in ${sampleset}/*/${2}; do 
+			garbage=$(dirname "${f//${sampleset}/garbage}")
+			mkdir --mode=0770 -p "${garbage}"
+			mv -v "${f%/}" "${garbage}/"
+		done
+		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" garbage/ 
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr

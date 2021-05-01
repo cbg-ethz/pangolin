@@ -47,6 +47,16 @@ validateBatchDate() {
 	fi
 }
 
+validateBatchName() {
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]]{4,})$ ]]; then
+		return;
+	else
+		echo "bad batchdate ${1}"
+		exit 1;
+	fi
+}
+
+
 #
 # rsync parallel helpers
 #
@@ -448,6 +458,16 @@ case "$1" in
 	df)
 		df ${basedir}
 		df --inode ${basedir}
+	;;
+	garbage)
+		validateBatchName "$2"
+
+		for f in ${sampleset}/*/${2}; do 
+			garbage=$(dirname "${f//${sampleset}/garbage}")
+			mkdir --mode=0770 -p "${garbage}"
+			mv -v "${f%/}" "${garbage}/"
+		done
+		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" garbage/ 
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
