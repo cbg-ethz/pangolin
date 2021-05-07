@@ -18,6 +18,7 @@ while getopts "c:h" o; do
 done
 shift $((OPTIND-1))
 
+duplicates=1
 
 . ${configfile}
 
@@ -55,11 +56,15 @@ for d in "${@}"; do
 		flowcell="${BASH_REMATCH[5]}"
 		batch="20${BASH_REMATCH[1]}_${flowcell}"
 		quiet=''
+		dupes=''
 		if [[ -r "${sampleset}/samples.${batch}.tsv" ]]; then
 			quiet='-q'
 			echo "${batch} : ${d}"
 		fi
-		./sort_samples_dumb ${quiet} -f ${basedir}/${download}/${d} -b "${batch}" -o "${sampleset}" || success=0
+		if (( duplicates )); then
+			dupes='-D'
+		fi
+		./sort_samples_dumb ${quiet} ${dupes} -f ${basedir}/${download}/${d} -b "${batch}" -o "${sampleset}" || success=0
 		echo "type: h2030
 lab: h2030
 libkit: Illumina_COVIDSeq

@@ -28,6 +28,7 @@ usage() { echo "Usage: $0 -f <DIR> -b <BATCH> [-l <LEN>] [-L {''|--link|--reflin
 	-L : link parameter to pass to cp when copying (default: --link)
 	-t : tsv file (default: samples.<BATCH>.tsv)
 	-T : do not truncate (empty) the file before starting
+	-D : sample have duplicates (e.g.: across lanes)
 	-p : prefix to prepend to fastq files (e.g.: for fusing runs)
 	-s : suffix to append to fastq files (e.g.: for fusing runs)
 	-o : output directory" 1>&2; exit $1; }
@@ -39,7 +40,8 @@ truncate=1
 prefix=''
 suffix=''
 quiet=0
-while getopts "f:b:l:L:p:s:o:t:Tqh" o; do
+duplicates=0
+while getopts "f:b:Dl:L:p:s:o:t:Tqh" o; do
 	case "${o}" in
 		f)	fastq_dir="${OPTARG}"
 			l=( ${fastq_dir} )
@@ -48,6 +50,7 @@ while getopts "f:b:l:L:p:s:o:t:Tqh" o; do
 		b)	batch_name="${OPTARG}"
 			[[ $batch_name =~ ^[[:alnum:]_]+$ ]]	|| fail "Invalid characters <${batch_name//[[:alnum:]_]/}> in <${batch_name}>" 'Please only use alphanumeric and <_> for batch name'
 			;;
+		D)	duplicates=1	;;
 		l)	read_len="${OPTARG}"
 			[[ $read_len =~ ^[[:digit:]]+$ ]]	|| fail  "Non-digit characters <${read_len//[[:digit:]]/}> in <${read_len}>" 'Please only use numbers for read lean'
 			;;
@@ -96,7 +99,6 @@ if declare -A reads; then
 	}
 	testnumreads() {
 		if [[ ${reads[${1}]} =~ $2 ]]; then
-			warn "sample $1 already has a read $2"
 			return 1
 		else
 			reads[${1}]="${reads[${1}]}:$2"
@@ -117,7 +119,6 @@ else
 	testnumreads() {
 		for e in "${reads2[@]}"; do
 			if [[ "$e" == "$1:$2" ]]; then
-				warn "sample $1 already has a read $2"
 				return 1
 			fi;
 		done
@@ -140,6 +141,7 @@ fi
 # scan for fastq files
 paired=0
 numsam=0
+numdup=0
 while read -d $'\0' f; do
 	# sanity check
 	if [[ ! -s "${f}" ]]; then
@@ -171,6 +173,11 @@ while read -d $'\0' f; do
 		if testnumreads "${samname}" $read; then
 			(( quiet )) || echo "pair"
 			(( paired ++ ))
+		elif (( duplicates )); then
+			(( quiet )) || echo "(duplicate $read)"
+			(( numdup ++ ))
+		else
+			warn "sample ${samname} already has a read $read"
 		fi
 	else
 		addread "${samname}" $read
@@ -200,6 +207,13 @@ if (( paired )); then
 	fi
 else
 	info "${numsam} single end samples"
+fi
+if (( numdup )); then
+	if (( 0 == (numdup % ( paired + numsam )) )); then
+		info "${numdup} duplicates ( $((numdup /  ( paired + numsam ) + 1))x )"
+	else
+		warn "$(( paired + numsam )) samples, but only ${numdup} duplicates" "(missing: $((numdup % ( paired + numsam ))) )"
+	fi
 fi
 if (( ALLOK )); then
 	info All Ok
