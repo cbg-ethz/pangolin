@@ -91,6 +91,15 @@ case "$1" in
 			mkdir --mode=0770 -p "${garbage}"
 			mv -v "${f%/}" "${garbage}/"
 		done
+		for f in ${working}/samples/*/${2}/; do 
+			garbage="${f//${working}\/samples/garbage}"
+			mkdir --mode=0770 -p "${garbage%/}/raw_data/"
+			mv -vf "${f%/}/raw_data/"* "${garbage%/}/raw_data/"
+			rm "${f%/}/raw_data/"*.fa*
+			rmdir "${f%/}/raw_data/"
+			mv -vf "${f%/}/"* "${garbage%/}/"
+			rmdir "${f%/}"
+		done
 		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" garbage/ 
 	;;
 	*)
