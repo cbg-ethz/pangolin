@@ -144,8 +144,11 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 	done < ${statusdir}/vpipe_started
 
 	if (( stillrunning == 0 )); then
-		${scriptdir}/belfry pullsamples --recent
-		if [[ ( ! -e ${statusdir}/pullsamples_fail ) || ( ${statusdir}/pullsamples_success -nt ${statusdir}/pullsamples_fail ) ]]; then
+		# HACK temporarily avoid copying over ShoRAH files
+		#${scriptdir}/belfry pullsamples --recent
+		#if [[ ( ! -e ${statusdir}/pullsamples_fail ) || ( ${statusdir}/pullsamples_success -nt ${statusdir}/pullsamples_fail ) ]]; then
+		${scriptdir}/belfry pullsamples_noshorah --recent
+		if [[ ( ! -e ${statusdir}/pullsamples_noshorah_fail ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
 			echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
 		else
 			echo "pulling data failed"
@@ -173,7 +176,8 @@ else
 fi
 
 if [[ ( -e ${statusdir}/qa_report_success ) && ( ( ! -e ${statusdir}/pushseq_success ) || ( ${statusdir}/qa_report_success -nt ${statusdir}/pushseq_success ) ) ]]; then
-	${scriptdir}/belfry pushseq
+	:
+	#${scriptdir}/belfry pushseq
 	#${scriptdir}/belfry gitaddseq
 else
 	echo 'no upload needed'
