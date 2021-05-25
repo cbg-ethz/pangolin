@@ -382,6 +382,14 @@ for b in batches:
 		qcdir=batches[b]['fastqc']
 		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
 
+	# patch file exist ?
+	patchmap = { }
+	patchtsv=os.path.join(basedir,sampleset,f"patch.{prj.removeprefix('p')}.{order.removeprefix('o')}.tsv")
+	if os.path.isfile(patchtsv):
+		print(f"\x1b[32;1mpatching {order} {name} with {patchtsv}\x1b[0m")
+		with open(patchtsv,'rt',encoding='utf-8', newline='') as pf:
+			patchmap = { old:new for (old,new,*r) in csv.reader(pf, delimiter="\t") }
+
 	# batch TSV file and info YAML
 	runfolder=None
 	if batch not in otsv:
@@ -450,6 +458,10 @@ for b in batches:
 						continue
 			if dupe:
 				fulname=f"{fulname}_{flowcell}"
+
+			# use patch map to adjust name
+			if samname in patchmap:
+				samname = patchmap[samname]
 
 			# files
 			ends=batches[b]['samples'][batsamname]['ends']
