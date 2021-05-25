@@ -19,5 +19,10 @@ dependencies:
   - certifi 
   - chardet 
   #- ipykernel
+  # for google sheet:
+  - google-api-python-client
+  - google-auth-httplib2
+  - google-auth-oauthlib
+  # pybis itself
   - pip:
     - pybis

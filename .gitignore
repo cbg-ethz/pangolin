@@ -4,6 +4,8 @@ miniconda3
 openbis-downloads
 bfabric-downloads
 sftp-health2030
+token.pickle
+credentials.json
 snake-envs
 samples*
 working/samples
@@ -17,5 +19,7 @@ working/variants/
 working/qa.csv
 working/qa_report.html
 working/qa_vals.csv
+garbage/
+status/
 ._*
 .snapshot
