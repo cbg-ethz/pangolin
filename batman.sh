@@ -32,7 +32,7 @@ case "$1" in
 	addsamples)
 		mkdir -p --mode=2770 ${clusterdir}/${working}/samples/
 		cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-		sort ${clusterdir}/${sampleset}/samples.*.tsv > ${clusterdir}/${working}/samples.tsv
+		sort -u ${clusterdir}/${sampleset}/samples.*.tsv > ${clusterdir}/${working}/samples.tsv
 	;;
 	vpipe)
 		declare -A job
