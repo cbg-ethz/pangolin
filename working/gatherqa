@@ -155,7 +155,7 @@ while read subject sublvl len; do
 			i=1
 			for k in ${fqckeys[@]}; do
 				S=${fqcsearch[${k}]}
-				rex="<li><img src=\"[^\"]+\" alt=\"\[([^]]+)\]\"/><a href=\"#M${i}\">$S</a></li>" 
+				rex="<li><img src=\"[^\"]+\" alt=\"\[([^]]+)\]\"/><a href=\"#M[[:digit:]]+\">$S</a></li>"
 				[[ $fastqc =~ $rex ]] && qadata["fastqc_r${num}_$k"]=${BASH_REMATCH[1]} || oops "cannot extract ${S}"
 				#echo "$k : $S : ${#BASH_REMATCH[@]} : ${BASH_REMATCH[1]}"
 				(( ++i ))
