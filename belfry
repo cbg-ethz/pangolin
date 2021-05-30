@@ -269,6 +269,7 @@ case "$1" in
 # 				exit 2
 # 			fi
 # 
+			${scriptdir}/google_sheet_patches
 # 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${staging}/movedatafiles.sh && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
 		else
