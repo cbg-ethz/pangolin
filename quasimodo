@@ -14,13 +14,29 @@ while getopts "sh" o; do
 	esac
 done
 
+runtimeout=3600
+
+drop_cache() {
+	echo dropping cache
+	sync
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+}
+
 ring_carillon() {
 	# kill any remaining rsync
 	if killall -3 rsync; then
+		echo killing stuck rsync processes
 		sleep 10
 		if killall rsync; then
 			sleep 10
 			killall -9 rsync
+		fi
+		# drop the cache (in case it help getting rsync processes unstuck
+		drop_cache
+	else
+		if sudo journalctl --since "${runtimeout} sec ago"| grep 'nfs:.* not responding'; then
+			# drop the cache (in case of non-responding server)
+			drop_cache
 		fi
 	fi
 	# check if inode limitation "No spoace left on device" is still going on
@@ -37,7 +53,11 @@ ring_carillon() {
 		return 1
 	fi
 	# run the carrillon script
-	timeout -k 5 -s INT 3600 ./carillon
+	timeout -k 5 -s INT $runtimeout ./carillon
+
+	# report NFS status
+	dmesg -HLef kern| grep -P 'nfs:.*server \S* (OK|not responding)' --colour=always|tail -n 1
+
 	return 0
 }
 
@@ -55,7 +75,7 @@ ring_carillon || (( singleshot == 0 )) || exit 1
 
 while sleep 1200; do 
 	echo 'loop...'
-	/usr/bin/kinit -l 10h -k -t $HOME/$USER.keytab ${USER%@*}@D.ETHZ.CH;
+	/usr/bin/kinit -l 1h -k -t $HOME/$USER.keytab ${USER%@*}@D.ETHZ.CH;
 	ring_carillon
 
 	# check for abort
