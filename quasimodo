@@ -20,6 +20,7 @@ drop_cache() {
 	echo dropping cache
 	sync
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	printf '[%u]\t[%s]\tdrop cache reason:\t%s\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" "${1}" >>drop_cache.log
 }
 
 ring_carillon() {
@@ -32,11 +33,15 @@ ring_carillon() {
 			killall -9 rsync
 		fi
 		# drop the cache (in case it help getting rsync processes unstuck
-		drop_cache
+		drop_cache 'lingering rsync'
 	else
-		if sudo journalctl --since "${runtimeout} sec ago"| grep 'nfs:.* not responding'; then
+		nfsmsg="$(dmesg -Lk | gawk -vT=$(($(date '+%s' --date="-${runtimeout} seconds") - $(date '+%s' --date="$(uptime --since)"))) 'substr($1,2)>=T && $0~/nfs:.*not responding/')"
+		if [[ -n "$nfsmsg" ]]; then
+			echo "Since: $(date  --rfc-3339=seconds --date="-${runtimeout} seconds")"
+			echo "$nfsmsg"
+
 			# drop the cache (in case of non-responding server)
-			drop_cache
+			drop_cache "nfs not responding since ${runtimeout} sec ago"
 		fi
 	fi
 	# check if inode limitation "No spoace left on device" is still going on
@@ -54,11 +59,12 @@ ring_carillon() {
 	fi
 	# run the carrillon script
 	timeout -k 5 -s INT $runtimeout ./carillon
+	local retval=$?
 
 	# report NFS status
-	dmesg -HLef kern| grep -P 'nfs:.*server \S* (OK|not responding)' --colour=always|tail -n 1
+	dmesg -LTk| grep -P 'nfs:.*server \S* (OK|not responding)' --colour=always|tail -n 1
 
-	return 0
+	return $retval
 }
 
 
