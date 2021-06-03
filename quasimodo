@@ -35,7 +35,7 @@ ring_carillon() {
 		# drop the cache (in case it help getting rsync processes unstuck
 		drop_cache 'lingering rsync'
 	else
-		nfsmsg="$(dmesg -Lk | gawk -vT=$(($(date '+%s' --date="-${runtimeout} seconds") - $(date '+%s' --date="$(uptime --since)"))) 'substr($1,2)>=T && $0~/nfs:.*not responding/')"
+		nfsmsg="$(dmesg -Lk | gawk -vT=$(($(date '+%s' --date="-${runtimeout} seconds") - $(date '+%s' --date="$(uptime --since)"))) '(substr($1,2)+0)>=(T+0) && $0~/nfs:.*not responding/')"
 		if [[ -n "$nfsmsg" ]]; then
 			echo "Since: $(date  --rfc-3339=seconds --date="-${runtimeout} seconds")"
 			echo "$nfsmsg"
