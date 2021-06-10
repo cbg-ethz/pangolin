@@ -38,7 +38,7 @@ statsjson=os.path.join(statsdir, 'Stats/Stats.json')
 
 # regex for parsing and/or validating strings
 rxrun=re.compile('^(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?:(?:0+-)|[AB])(?P<cell>\w+)$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX
-rxcell=re.compile('(?:\w+-)?(?P<cell>\w+)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX'
+rxcell=re.compile('(?:\d+-)?(?P<cell>\w+)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX'
 
 
 with open(statsjson, 'rt') as f:

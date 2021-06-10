@@ -234,6 +234,23 @@ case "$1" in
 		fi
 		conda deactivate
 	;;
+	syncviollier)
+		echo "Sync Viollier"
+		. $baseconda/miniconda3/bin/activate ""
+		param=( 'sample_metadata' )
+		if [[ "${2}" = "--recent" ]]; then
+			param+=( "raw_sequences/${lastmonth}*" "raw_sequences/${thismonth}*" )
+			echo "syncing recent: ${param[*]}"
+			echo "NOT SUPPORTED"
+			exit 1
+		else
+			param+=( 'raw_sequences' )
+			echo "syncing all: ${param[*]}"
+		fi
+		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c viollier.conf "${param[@]}"|tee /dev/stderr)"
+		checksyncoutput "viollier" "$syncoutput"
+		conda deactivate
+	;;
 	sortsamples)
 		. $baseconda/miniconda3/bin/activate pybis
 		cd $basedir

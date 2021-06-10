@@ -60,6 +60,7 @@ echo 'Data sync'
 echo '========='
 
 ${scriptdir}/belfry synch2030 # --recent : there are no old archive at Health2030 anyway
+${scriptdir}/belfry syncviollier # --recent : there are no old archive, we're even supposed to perform the deletion
 ${scriptdir}/belfry syncopenbis --recent
 ${scriptdir}/belfry syncfgcz --recent
 ${scriptdir}/belfry sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')

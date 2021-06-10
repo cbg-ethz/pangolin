@@ -34,8 +34,10 @@ shift $((OPTIND-1))
 
 if [[ $( < ~/.netrc ) =~ machine[[:space:]]+${fileserver}[[:space:]]?login[[:space:]]+([^[:space:]]+) ]]; then
 	username="${BASH_REMATCH[1]}"
+elif [[ $( < ~/.ssh/config ) =~ Host[[:space:]]+${fileserver}[[:space:]]+ ]]; then
+	username=
 else
-	echo "cannot find login for machine ${fileserver} in ~/.netrc" >&2
+	echo "cannot find login for machine ${fileserver} in ~/.netrc nor ~/.ssh/config" >&2
 	exit 1
 fi
 
@@ -47,4 +49,4 @@ else
 fi
 
 #exec echo "${exrxfile:+ --exclude-rx-from="${exrxfile}"}"
-exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=${parallel} --loop --target-directory=${basedir}/${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
+exec lftp -c "set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}; connect sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}; mirror --continue --no-perms --no-umask --parallel=${parallel} --loop --target-directory=${basedir}/${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
