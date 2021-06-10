@@ -109,6 +109,9 @@ callpullrsync() {
 		--exclude='variants/SNVs/REGION_*/reads.fas'	\
 		--exclude='variants/SNVs/REGION_*/w-*.reads.fas'	\
 		--exclude='variants/SNVs/REGION_*/raw_reads/w-*.reads.fas.gz'	\
+		--exclude='*.out.log'	\
+		--exclude='*.err.log'	\
+		--exclude='*.benchmark'	\
 		${basedir}/${working}/samples/
 }
 export -f callpullrsync
@@ -138,6 +141,9 @@ callpullrsync_noshorah() {
 		--exclude='extracted_data/R[12]_fastqc.html'	\
 		--exclude='variants/'	\
 		--exclude='visualization/'	\
+		--exclude='*.out.log'	\
+		--exclude='*.err.log'	\
+		--exclude='*.benchmark'	\
 		${basedir}/${working}/samples/
 }
 export -f callpullrsync_noshorah
@@ -372,6 +378,9 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
+			--exclude='*.out.log'	\
+			--exclude='*.err.log'	\
+			--exclude='*.benchmark'	\
 			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
@@ -418,6 +427,9 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
 			--relative	\
+			--exclude='*.out.log'	\
+			--exclude='*.err.log'	\
+			--exclude='*.benchmark'	\
 			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
