@@ -19,6 +19,8 @@ argparser.add_argument('-f', '--fastqdir', metavar='DIR', required=False, defaul
 	type=str, dest='fastqdir', help="directory containing .fastq.gz files if not in 'Fastq' subdirectory")
 argparser.add_argument('-o', '--outdir', metavar='DIR', required=False, default='sampleset',
 	type=str, dest='outdir', help="output directory")
+argparser.add_argument('-b', '--batch', metavar='LAB', required=False, default=None,
+	type=str, dest='batch', help="generate batch descrition")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
 argparser.add_argument('-a', '--append', required=False,
@@ -34,7 +36,7 @@ fastqdir=args.fastqdir if args.fastqdir else os.path.join(statsdir, 'Fastq')
 sampleset=args.outdir
 link='--link'
 append=args.append
-
+lab = args.batch
 
 # regex for parsing and/or validating strings
 rxrun=re.compile('^(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?:(?:0+-)|[AB])(?P<cell>\w+)$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX
@@ -183,10 +185,10 @@ with open(os.path.join(statsdir, 'SampleSheetUsed.csv'),'rt',encoding='utf-8', n
 
 			# info
 			if not args.summary:
-				print(samname, f"{'paired' if ends > 1 else 'single'}-end", rlen, sep='\t')
+				print(fixedname, f"{'paired' if ends > 1 else 'single'}-end", rlen, sep='\t')
 			# output files
 			if tsv:
-				print(samname, batch, rlen, sep='\t', file=tsv)
+				print(fixedname, batch, rlen, sep='\t', file=tsv)
 			if sh:
 				subst={'download':fastqdir,'sampleset':sampleset,'sname':samname,'fname':fixedname,'lglob': ('_L{001..%03u}' % lanes if args.forcelanes else '_L[0-9][0-9][0-9]'),'ends':ends,'batch':batch,'suffix':''}
 				# 'midfix': _S*_L%(lane)03u
@@ -202,6 +204,15 @@ for file in "${fastq[@]}"; do
 	cp -v ${link} "${file}" "%(sampleset)s/%(fname)s/%(batch)s/raw_data/${destname}"||X
 done
 ''' % subst, file=sh)
+
+# YAML file describing batch
+if args.batch:
+	(rem,folder)=os.path.split(statsdir)
+	if folder == '':
+		(rem,folder)=os.path.split(rem)
+
+	with open(os.path.join(sampleset,f'batch.{batch}.yaml'), 'wt') as byml:
+		print(yaml.dump({'type':'jobinfo','lab':lab,'runfolder':runfolder,'date':date,'instrument':instr,'runnum':runnum,'flowcell':flowcell,'lanes':lanes,'library':library,'folder':folder}, sort_keys=False), file=byml)
 
 # coda: return status
 if not append: print(f"""

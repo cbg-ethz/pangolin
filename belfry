@@ -256,6 +256,7 @@ case "$1" in
 		cd $basedir
 		summary=""
 		recent=""
+		shrtrecent=""
 		force="${sort_force}"
 		while [[ -n $2 ]]; do
 			case "$2" in
@@ -267,6 +268,7 @@ case "$1" in
 				;;
 				--recent)
 					recent="--recent=${lastmonth}"
+					shrtrecent="-r ${lastmonth}"
 				;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
@@ -303,6 +305,13 @@ case "$1" in
 			${scriptdir}/sort_h2030 -c h2030.conf $(< ${statusdir}/synch2030_started ) || fail=1
 		else
 			echo "Skipping h2030"
+		fi
+		if  (( ${lab[viollier]} )); then
+			# NOTE always --force, short options only
+			# HACK hardcoded paths due to multiple directories
+			${scriptdir}/sort_viollier -c viollier.conf  ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+		else
+			echo "Skipping viollier"
 		fi
 		(( fail == 0 )) &&  touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
 		conda deactivate

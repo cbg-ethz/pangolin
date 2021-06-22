@@ -1,0 +1,130 @@
+#!/bin/bash
+
+configfile=server.conf
+
+usage() { echo "Usage: $0 [-c <configfile>] [-r <recent>] [ <directories [...]> ]" 1>&2; exit $1; }
+
+while getopts "c:r:h" o; do
+	case "${o}" in
+		c)	configfile=${OPTARG}
+			if [[ ! -r ${configfile} ]]; then
+				echo "Cannot read ${configfile}" 1>&2
+				usage 2
+			fi
+			;;
+		r)	recent=${OPTARG}
+			if [[ ! ${recent} =~ ^20[[:digit:]]{2}([01][[:digit:]]([0-3][[:digit:]])?)?$ ]]; then
+				echo "Wrong format ${recent}" 1>&2
+				usage 2
+			fi
+			;;
+		h)	usage 0	;;
+		*)	usage 2	;;
+	esac
+done
+shift $((OPTIND-1))
+
+duplicates=1
+
+. ${configfile}
+
+: ${lab:?}
+: ${basedir:=$(pwd)}
+: ${download:?}
+: ${sampleset:?}
+
+
+
+if (( ${#@} < 1)); then
+	scan=( ${basedir}/${download}/*/ )
+else
+	scan=( "${@}" )
+fi
+
+rx_folder='^(20[[:digit:]]{2}[01][[:digit:]][0-3][[:digit:]])_([[:alnum:]]+)$'  # e.g.: 20210528_061936
+#            ^-[1]: date                                      ^-[2]: time
+
+cat > ${basedir}/${sampleset}/movedatafiles.sh <<SH_HEAD
+link='--link'
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %%s\e[0m\n'	"\$1"	1>&2
+	[[ -n "\$2" ]] && echo "\$2" 1>&2
+	exit 1
+}
+
+warn() {
+	printf '\e[33;1mArgh: %%s\e[0m\n'	"\$1"	1>&2
+	[[ -n "\$2" ]] && echo "\$2" 1>&2
+}
+
+ALLOK=1
+X() {
+	ALLOK=0
+}
+
+# sanity checks
+[[ -d '${sampleset}' ]] || fail 'No sampleset directory:' '${sampleset}'
+SH_HEAD
+
+success=1
+b=0
+for d in "${scan[@]}"; do
+	# progress bar
+	(( v = b * 128 / ${#scan[@]} ))
+	bar1="$(for ((i=0;i< (v>>3);++i)) do echo -n $'\u2588'; done)"
+	if (( (v&7) > 0 )); then
+		bar2="$(echo -ne "\u$(printf '%04x' $((0x2590 - (v&7) )) )")"
+	else
+		bar2=''
+	fi
+	bar3="$(for ((i=0;i< ( (128-v)>>3);++i)) do echo -n $'\u22C5' ; done)" # normally: \u00b7
+	cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_BAR
+echo -ne '\\r[${bar1}${bar2}${bar3}] ${b}/${#scan[@]}\\r'
+SH_BAR
+	(( ++b ))
+	# findable ?
+	if [[ ! -d "${d}" ]]; then
+		echo "No ${d}" 1>&2
+		success=0
+		continue
+	fi
+	# skip older
+	if [[ -n "${recent}" && "$(basename ${d})" < "${recent}" ]]; then
+		continue
+	fi
+	# folder ?
+	if [[ $(basename ${d}) =~ ${rx_folder} ]]; then
+		patch=
+		if [[ -e "${d%%/}.patchmap.tsv" ]]; then
+			echo "Patchmap found for $(basename ${d})"
+			patchmap="--patchmap=${d%%/}.patchmap.tsv"
+		fi
+		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} --forcelanes --batch ${lab} --append
+	else
+		# ignore mal formed folders
+		echo "Can't parse $(basename ${d})"
+	fi
+done
+
+bar1="$(for ((i=0;i< (128>>3);++i)) do echo -n $'\u2588'; done)"
+cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_FOOT
+echo -e '\\r[${bar1}] done.'
+
+if (( ALLOK )); then
+	echo All Ok
+	exit 0
+else
+	echo Some errors
+	exit 1
+fi;
+SH_FOOT
+
+if (( success )); then
+	echo "All ok"
+	exit 0
+else
+	echo "Some problems"
+	exit 1
+fi
