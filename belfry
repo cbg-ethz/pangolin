@@ -326,6 +326,9 @@ case "$1" in
 			sheets=( ${basedir}/${sampleset}/samples.${lastmonth}*.tsv ${basedir}/${sampleset}/samples.${thismonth}*.tsv )
 			# BUG: will generate non-globed pattern if months are missing
 			echo "pushing recent: ${param[*]##/}"
+		elif [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			sheets=( "${basedir}/${sampleset}/samples.${3}.tsv"  )
 		else
 			sheets=( ${basedir}/${sampleset}/samples.*.tsv )
 		fi
@@ -368,6 +371,9 @@ case "$1" in
 		mkdir -p /tmp/belfrysheets/
 		if [[ "${2}" = "--recent" ]]; then
 			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
+		elif [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
 		else
 			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.*.tsv" )
 		fi
@@ -383,6 +389,9 @@ case "$1" in
 			sheets=( /tmp/belfrysheets/samples.${lastmonth}*.tsv /tmp/belfrysheets/samples.${thismonth}*.tsv )
 			# BUG: will generate non-globed pattern if months are missing
 			echo "pulling recent: ${param[*]##/}"
+		elif [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
 		else
 			sheets=( /tmp/belfrysheets/samples.*.tsv )
 		fi
@@ -417,6 +426,9 @@ case "$1" in
 		mkdir -p /tmp/belfrysheets/
 		if [[ "${2}" = "--recent" ]]; then
 			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
+		elif [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
 		else
 			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.*.tsv" )
 		fi
@@ -432,6 +444,9 @@ case "$1" in
 			sheets=( /tmp/belfrysheets/samples.${lastmonth}*.tsv /tmp/belfrysheets/samples.${thismonth}*.tsv )
 			# BUG: will generate non-globed pattern if months are missing
 			echo "pulling recent: ${param[*]##/}"
+		elif [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
 		else
 			sheets=( /tmp/belfrysheets/samples.*.tsv )
 		fi
