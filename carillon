@@ -302,6 +302,9 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 				cat ${statusdir}/vpipe_started
 			fi
 		fi
+	else
+		echo 'No new jobs to start'
+		${scriptdir}/belfry purgeviollier
 	fi
 else
 	echo 'There is already run going on'

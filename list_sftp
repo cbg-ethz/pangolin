@@ -30,6 +30,8 @@ shift $((OPTIND-1))
 
 if [[ $( < ~/.netrc ) =~ machine[[:space:]]+${fileserver}[[:space:]]?login[[:space:]]+([^[:space:]]+) ]]; then
 	username="${BASH_REMATCH[1]}"
+elif [[ $( < ~/.ssh/config ) =~ Host[[:space:]]+${fileserver}[[:space:]]+ ]]; then
+	username=
 else
 	echo "cannot find login for machine ${fileserver} in ~/.netrc" >&2
 	exit 1
@@ -43,7 +45,7 @@ else
 fi
 
 missing=( )
-for d in $(lftp -c "connect sftp://${username}@${fileserver}${srvport:+:${srvport}}; cls -q1B ${source}"); do
+for d in $(lftp -c "connect sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}; cls -q1B ${source}"); do
 	if [[ ! -d "${basedir}/${download}/${d}" ]]; then
 		missing+=( "${d}" )
 		: #echo "${d} missing"

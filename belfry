@@ -251,6 +251,15 @@ case "$1" in
 		checksyncoutput "viollier" "$syncoutput"
 		conda deactivate
 	;;
+	purgeviollier)
+		echo "Purge Viollier"
+		. $baseconda/miniconda3/bin/activate ""
+		param=( 'raw_sequences' )
+		recent=$(date --date='2 week ago' '+%Y%m%d')
+
+		${scriptdir}/purge_sftp -r "${recent}" -c viollier.conf "${param[@]}"
+		conda deactivate
+	;;
 	sortsamples)
 		. $baseconda/miniconda3/bin/activate pybis
 		cd $basedir
