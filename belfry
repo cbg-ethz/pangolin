@@ -251,6 +251,14 @@ case "$1" in
 		checksyncoutput "viollier" "$syncoutput"
 		conda deactivate
 	;;
+	uploadviollier)
+		echo "Uploading Viollier"
+		. $baseconda/miniconda3/bin/activate ""
+		param=( 'consensus_sequences' 'raw_othercenters' )
+
+		${scriptdir}/upload_sftp -c viollier.conf "${param[@]}"
+		conda deactivate
+	;;
 	purgeviollier)
 		echo "Purge Viollier"
 		. $baseconda/miniconda3/bin/activate ""
