@@ -178,7 +178,7 @@ fi
 
 if [[ ( -e ${statusdir}/qa_report_success ) && ( ( ! -e ${statusdir}/pushseq_success ) || ( ${statusdir}/qa_report_success -nt ${statusdir}/pushseq_success ) ) ]]; then
 	:
-	#${scriptdir}/belfry pushseq
+	${scriptdir}/belfry pushseq
 	#${scriptdir}/belfry gitaddseq
 else
 	echo 'no upload needed'

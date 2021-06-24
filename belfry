@@ -509,16 +509,9 @@ case "$1" in
 		conda deactivate
 	;;
 	pushseq)
-		rsync -irltH  --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
-			-g --chown=:"${storgrp}"	\
-			--relative	\
-			${basedir}/${sampleset}/./batch.*.yaml	\
-			${basedir}/${working}/./{qa*.html,qa*.csv,samples/{[[:digit:]]*_[[:digit:]]*_[[:upper:]][[:digit:]]*,[[:upper:]][[:digit:]]_[[:digit:]]*}/[[:digit:]]*_*/references/}	\
-			--exclude '*.matcher'	\
-			--exclude '*.log'	\
-			--exclude '*.json'	\
-			${releasedir} && touch ${statusdir}/pushseq_success || touch ${statusdir}/pushseq_fail
+		. $baseconda/miniconda3/bin/activate ""
+		./upload_viollier && touch ${statusdir}/pushseq_success || touch ${statusdir}/pushseq_fail
+		conda deactivate
 	;;
 	gitaddseq)
 		. $baseconda/miniconda3/bin/activate ""

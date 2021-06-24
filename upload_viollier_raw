@@ -1,0 +1,81 @@
+#!/bin/bash
+
+configfile=viollier.conf
+
+usage() { echo "Usage: $0 [-c <configfile>] TSVFILE " 1>&2; exit $1; }
+
+while getopts "c:h" o; do
+	case "${o}" in
+		c)	configfile=${OPTARG}
+			if [[ ! -r ${configfile} ]]; then
+				echo "Cannot read ${configfile}" 1>&2
+				usage 1
+			fi
+			;;
+		h)	usage 0	;;
+		*)	usage 1	;;
+	esac
+done
+shift $((OPTIND-1))
+
+
+. ${configfile}
+
+: ${fileserver:?}
+# ${srvport}
+: ${expname:?}
+: ${basedir:=$(pwd)}
+: ${download:?}
+: ${sampleset:?}
+
+
+target=raw_othercenters
+
+(( ${#@} == 0 )) && usage 2
+[[ "${1}" == '-h' || "${1}" == '--help' ]] && usage 0
+
+if [[ ! -d ${basedir}/${download}/ ]]; then
+	echo "missing directory ${download}" >&2
+	exit 1
+elif [[ ! -d ${basedir}/${sampleset}/ ]]; then
+	echo "missing sampleset ${sampleset}" >&2
+	exit 1
+fi
+
+if [[ ! -r "${1}" ]]; then
+	echo "Cannot read file ${1}" >&2
+	exit 2
+fi
+
+mkdir -p ${basedir}/${download}/${target}
+cd ${basedir}
+error=0
+while read auf ethid rest; do
+	# header
+	if [[ ${auf} =~ ^[[:alpha:]_]+$ && ${ethid} =~ ^[[:alpha:]_]+$ ]]; then
+		echo "${ethid} -> ${auf}"
+		continue
+	elif [[ ! ${auf} =~ ^[[:digit:]]{8,} ]]; then
+		echo "cannot parse ${auf}" >&2
+		error=1
+		continue
+	fi
+	aufnum=${BASH_REMATCH[0]}
+
+	if [[ -z ${ethid} ]]; then
+		echo "(missing ${aufnum})"
+		continue
+	elif [[ ! ${ethid} =~ ^[[:digit:]]{6,} ]]; then
+		echo "cannot parse ${ethid}" >&2
+		error=1
+		continue
+	fi
+
+	echo "${ethid} -> ${aufnum}"
+	[[ -d ${download}/${target}/${aufnum}/ ]] && rm -rf ${download}/${target}/${aufnum}/
+	cp --link -vrf ${sampleset}/${ethid}/ ${download}/${target}/${aufnum} || error=1
+done < ${1}
+
+(( error )) && exit 0
+
+exec ./upload_sftp -c ${configfile} ${target}
