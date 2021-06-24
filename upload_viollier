@@ -43,6 +43,7 @@ elif [[ ! -d ${basedir}/${working}/ ]]; then
 fi
 
 lastmonth=$(date '+%Y%m' --date='-1 month')
+month3ago=$(date '+%Y%m%d' --date='-3 month')
 
 mkdir -p ${basedir}/${download}/${target}
 cd ${basedir}
@@ -83,4 +84,4 @@ done
 
 (( error )) && exit 0
 
-exec ./upload_sftp -c ${configfile} ${target}
+./upload_sftp -c ${configfile} ${target} && exec ./purge_sftp_fasta -r ${month3ago} -c ${configfile} ${target}
