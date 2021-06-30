@@ -73,6 +73,7 @@ for f in $(lftp -c "connect sftp://${username:+${username}@}${fileserver}${srvpo
 	else
 		purgelist+=( "${f}" )
 		echo "${b} to be purged"
+		[[ -f "${basedir}/${download}/${f}" ]] && rm "${basedir}/${download}/${f}"
 	fi
 done
 
