@@ -29,6 +29,8 @@ argparser.add_argument('-f', '--force', required=False,
 	action='store_true', dest='force', help="Force overwriting any existing file when moving")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
+argparser.add_argument('-v', '--verbose', required=False,
+	action='store_true', dest='verbose', help="Explicitely list every single parse folder")
 argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
 	dest='recent', help="Only process batches whose date is posterior to the argument")
 args = argparser.parse_args()
@@ -100,6 +102,8 @@ rxfqext=re.compile('\.fastq\.gz$')
 # look for dataset files
 
 # FastQC
+if args.verbose:
+	print("\x1b[37;1mLooking for FastQC folders\x1b[31;0m")
 fastqc={} # maps orders to FastQC directories (or in the absence of order number: checksum of the input_dataset)
 fastqc_samples={} # maps which samples are present in which FastQC directory (some might be missing)
 for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
@@ -112,6 +116,8 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
 	if not (os.path.isdir(os.path.join(d,'FastQC_Result')) and 
 			os.path.isfile(t)):
+		if args.verbose:
+			print(f"{name} no FastQC_Result")
 		continue
 
 	f = os.path.join(d.split(os.sep)[-1],'FastQC_Result')	# Holds the _fastqc.html files
@@ -126,6 +132,8 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 		if o:
 			# match by Order Id, but not all have it
 			fastqc[o]=f
+			if args.verbose:
+				print(f"{name} - order {o}")
 			continue
 
 	# match by (input_) dataset.tsv content
@@ -133,8 +141,12 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	with open(t,'rb') as tf:
 		md5_hash.update(tf.read())
 	fastqc[md5_hash.digest()]=f
+	if args.verbose:
+		print(f"{name} - checksum {md5_hash.digest()}")
     
 # Samples
+if args.verbose:
+	print("\x1b[37;1mLooking for sample folders\x1b[31;0m")
 totsam=0
 batches={}
 for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
@@ -300,6 +312,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	if md5 in fastqc:
 		b['fastqc']=fastqc[md5]
 	batches[key]=b
+	if args.verbose:
+		print(f"{name}: {order} - {runfolder}")
 
 
 ################################
