@@ -24,3 +24,4 @@ garbage/
 status/
 ._*
 .snapshot
+.ipynb_checkpoints
