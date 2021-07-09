@@ -368,6 +368,7 @@ case "$1" in
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${basedir}/${sampleset}/samples.*.tsv	\
 			${basedir}/${sampleset}/batch.*.yaml	\
+			${basedir}/${sampleset}/missing.*.txt	\
 			${basedir}/${sampleset}/patch.*.tsv	\
 			belfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
 		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
