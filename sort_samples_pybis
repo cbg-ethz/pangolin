@@ -96,7 +96,7 @@ username,password=netrc.netrc().authenticators(fileserver)[0::2];
 #username='ivan.topolsky@bsse.ethz.ch'
 #password=getpass.getpass()
 
-o=Openbis(apiurl, verify_certificates=True)
+o=Openbis(apiurl, verify_certificates=True, use_cache=True)
 o.login(username, password, save_token=True)   # save the session token in ~/.pybis/example.com.token
 atexit.register(o.logout)
 
@@ -246,12 +246,21 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 			batchseensname[batch]={ } # check for duplicate samples in different lane (i.e.: fused samples)
 
 			# batch YAML file with info
-			# HACK this not the canonical way. we should be getting the parrent of the current sa.permId, but every attempt thus far crashes
+			# HACK this not the canonical way. we should be getting the parent of the current sa.permId, but every attempt thus far crashes
 			# get the (non-empty) first sample fastq code among the datasets
-			samcode=next(c for c in datasets['FASTQ_SAMPLE_CODE'] if c).replace('_', '-')
-			libkit = ex.get_samples(code=samcode, props={'KIT'}).df.KIT[0]
+			samdf = None
+			for samcode in [c.replace('_', '-') for c in datasets['FASTQ_SAMPLE_CODE'] if c]:
+				samdf =  ex.get_samples(code=samcode, props={'KIT'}).df
+				if not samdf.shape[0]:
+					# move to the next one in succession until we have access
+					print(f"Can't access samplecode {samcode}", file=sys.stderr)
+					continue
+				break
+
+			libkit = samdf.KIT[0]
 			if not args.summary:
 				print('\t', samcode, libkit, sep='\t')
+
 			with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
 				print(yaml.dump({'type':'openbis','lab':lab,'url':apiurl,'libkit':libkit,'runfolder':runfolder,'properties':sa.CONTAINER_PROPERTIES},sort_keys=False), file=yml)
 
@@ -307,8 +316,10 @@ for file in "${fastq[@]}"; do
 done
 ''' % {'force': ('-f' if args.force else ''),'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'fastqc':fastqc,'seqdir':seqdir}, file=sh)
 					else:
-						# HACK remove any left over FastQC from the other copy
+						# HACK remove any left over FastQC from the other copy, keep old dates to avoid re-updating
+						# TODO don't stream out movefile.sh but do proper two-step fusing as in bfabric_tsv
 						print(r'''	rm -f "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
+	touch --reference="%(sampleset)s/%(sname)s/%(batch)s/raw_data" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data"
 done
 ''' % {'sampleset':sampleset,'sname':ds.sname,'batch':batch}, file=sh)
 				# look for FASTQC holder directory
