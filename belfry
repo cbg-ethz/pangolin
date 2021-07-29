@@ -191,14 +191,15 @@ case "$1" in
 	syncfgcz)
 		echo "Sync FGCZ - bfabric"
 		. $baseconda/miniconda3/bin/activate ""
+		. <(grep '^projlist=' fgcz.conf)
 		if [[ "${2}" = "--recent" ]]; then
 			limitlast='6 weeks ago'
 			./exclude_list_bfabric -c fgcz.conf -r "${lastmonth}" -o ${statusdir}/fgcz.exclude.lst
-			param=( '-e' "${statusdir}/fgcz.exclude.lst" 'p23224' 'p23212' 'p24991' )
+			param=( '-e' "${statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
 			echo -ne "syncing recent: ${limitlast}\texcluding: "
 			wc -l ${statusdir}/fgcz.exclude.lst
 		else
-			param=( 'p23224' 'p23212' 'p24991' )
+			param=( "${projlist[@]}" )
 		fi
 		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
 		checksyncoutput "fgcz" "$syncoutput"
