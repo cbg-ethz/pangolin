@@ -2,7 +2,9 @@
 
 configfile=viollier.conf
 
-usage() { echo "Usage: $0 [-c <configfile>] TSVFILE " 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-c <configfile>] [ -s <subdir> ] TSVFILE " 1>&2; exit $1; }
+
+subdir=$(date '+%Y-%m-%d')
 
 while getopts "c:h" o; do
 	case "${o}" in
@@ -12,6 +14,7 @@ while getopts "c:h" o; do
 				usage 1
 			fi
 			;;
+		s)	subdir=${OPTARG} ;;
 		h)	usage 0	;;
 		*)	usage 1	;;
 	esac
@@ -29,7 +32,8 @@ shift $((OPTIND-1))
 : ${sampleset:?}
 
 
-target=raw_othercenters
+target_base=raw_othercenters
+target=${target_base}/${subdir}
 
 (( ${#@} == 0 )) && usage 2
 [[ "${1}" == '-h' || "${1}" == '--help' ]] && usage 0
@@ -63,8 +67,11 @@ while read auf ethid rest; do
 	aufnum=${BASH_REMATCH[0]}
 
 	if [[ -z ${ethid} ]]; then
-		echo "(missing ${aufnum})"
-		continue
+		ethid=$(grep -hoP "^${auf}[^\t]*" ${basedir}/${sampleset}/samples.*.tsv)
+		if [[ -z ${ethid} ]]; then
+			echo "(missing ${aufnum})"
+			continue
+		fi
 	elif [[ ! ${ethid} =~ ^[[:digit:]]{6,} ]]; then
 		echo "cannot parse ${ethid}" >&2
 		error=1
@@ -78,4 +85,4 @@ done < ${1}
 
 (( error )) && exit 0
 
-exec ./upload_sftp -c ${configfile} ${target}
+exec ./upload_sftp -c ${configfile} ${target_base}
