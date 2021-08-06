@@ -39,8 +39,8 @@ append=args.append
 lab = args.batch
 
 # regex for parsing and/or validating strings
-rxrun=re.compile('^(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?:(?:0+-)|[AB])(?P<cell>\w+)$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX
-rxcell=re.compile('(?:\d+-)?(?P<cell>\w+)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX'
+rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
+rxcell=re.compile('(?:0+-)?(?P<cell>\w+(?:-\d+)?)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX' or 'BPA73113-1417'
 rxsection=re.compile('\[(?P<section>\w+)\]') # Ini-style headers in the middle of the samplesheet
 
 # patch file exist ?

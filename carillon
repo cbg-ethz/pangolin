@@ -225,7 +225,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 	limit=$(date --date='2 weeks ago' '+%Y%m%d')
 	echo "Check batch against ${ref}:"
 	for t in ${basedir}/${sampleset}/samples.*.tsv; do
-		if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}).tsv$ ]]; then
+		if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
 			echo "oops: Can't parse <${t}> ?!" > /dev/stderr
 		fi
 

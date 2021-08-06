@@ -47,6 +47,9 @@ sampleset=sampleset
 download=bfabric-downloads
 link=--link
 badlist=
+forcelist=
+nofuselist=
+fuselist=
 fusedays=30
 [_]
 """ + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
@@ -71,6 +74,10 @@ badlist=(config['_']['badlist'].strip("\"'").split(',')) if len(config['_']['bad
 '''folders to skip'''
 forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_']['forcelist']) else list()
 '''folders to use even with missing order'''
+fuselist=(config['_']['fuselist'].strip("\"'").split(',')) if len(config['_']['fuselist']) else list()
+'''folders to always merge'''
+nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_']['nofuselist']) else list()
+'''folders to never merge'''
 fusedays=int(config['_']['fusedays'].strip("\"'"))
 '''delay after which orders aren't considered for merging anymore'''
 
@@ -86,8 +93,8 @@ else:
 
 # RegEx to parse some specific string
 rxorder=re.compile('_(?P<order>o\d+)') # e.g.: MS556_COV19_o23657
-rxrun=re.compile('^(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?:(?:0+-)|[AB])(?P<cell>\w+)$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX
-rxcell=re.compile('(?:\w+-)?(?P<cell>\w+)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX'
+rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
+rxcell=re.compile('(?:0+-)?(?P<cell>\w+(?:-\d+)?)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX' or 'BPA73113-1417'
 rxsuffix=re.compile('(?:_S\d+)?(?:_L\d+)?$') # e.g.: ..._Plate_2_011120EG27_A4_S5_L001
 rxfqext=re.compile('\.fastq\.gz$') 
 
@@ -278,8 +285,14 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		key=f"{order}:{name}"
 
 		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
-		if days <= fusedays:
-			print(name, f"\x1b[36;1m is dupe of order {order}\x1b[0m")
+		if name in nofuselist:
+			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: in nofuselist\x1b[0m")
+		elif days <= fusedays:
+			print(name, f"\x1b[36;1m is dupe of order {order} (reason: {days} days)\x1b[0m")
+			batches[order]['dupe']=True
+			b['appendto']=order
+		elif name in fuselist:
+			print(name, f"\x1b[36;1m is dupe of order {order} (reason: in fuse list)\x1b[0m")
 			batches[order]['dupe']=True
 			b['appendto']=order
 		else:

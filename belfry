@@ -34,6 +34,7 @@ timeoutforeground=
 now=$(date '+%Y%m%d')
 lastmonth=$(date '+%Y%m' --date='-1 month')
 thismonth=$(date '+%Y%m')
+twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
 
 #
 # Input validator
@@ -193,8 +194,8 @@ case "$1" in
 		. $baseconda/miniconda3/bin/activate ""
 		. <(grep '^projlist=' fgcz.conf)
 		if [[ "${2}" = "--recent" ]]; then
-			limitlast='6 weeks ago'
-			./exclude_list_bfabric -c fgcz.conf -r "${lastmonth}" -o ${statusdir}/fgcz.exclude.lst
+			limitlast='3 weeks ago'
+			./exclude_list_bfabric -c fgcz.conf -r "${twoweeksago}" -o ${statusdir}/fgcz.exclude.lst
 			param=( '-e' "${statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
 			echo -ne "syncing recent: ${limitlast}\texcluding: "
 			wc -l ${statusdir}/fgcz.exclude.lst
