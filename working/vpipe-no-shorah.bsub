@@ -18,4 +18,4 @@ umask 0007
 cluster='./bsub_wrap.sh  -J COVID-vpipe-{rule} -M {resources.mem_mb} -n {threads} -W {resources.time_min} -R rusage[mem={resources.mem_mb},scratch={resources.disk_mb}] -R span[hosts=1] -e cluster_logs/{rule}_%J-%I.err.log -o cluster_logs/{rule}_%J-%I.out.log'
 mkdir -p cluster_logs/
 
-exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 60 --keep-going --rerun-incomplete --use-conda coverage all --omit-from snv
+exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 60 --keep-going --rerun-incomplete --use-conda coverage all --omit-from snv consensus_bcftools
