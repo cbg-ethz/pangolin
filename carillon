@@ -219,6 +219,7 @@ scanmissingsamples() {
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
 	clearline=0
 	mustrun=0
+	runreason=( )
 	declare -A flowcell
 	ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
 	now=$(date '+%Y%m%d')
@@ -247,8 +248,10 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		if [[ "$ref" < "$b" || "$ref" == "$b" ]]; then
 			echo "!$b:$f"
 			(( ++mustrun ))
+			runreason+=( "${b}_${f}" )
 		elif [[ "$limit" < "$b"  ]] && scanmissingsamples $t; then 
 			(( ++mustrun ))
+			runreason+=( "${b}_${f}" )
 		else
 			if  [[ "$limit" < "$b"  ]]; then
 				echo -e "\r($b:$f)\e[K"
@@ -300,6 +303,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 			if [[ -s ${statusdir}/vpipe.${now} ]]; then
 				ln -sf vpipe.${now} ${statusdir}/vpipe_started
 				cat ${statusdir}/vpipe_started
+				printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
 			fi
 		fi
 	else
