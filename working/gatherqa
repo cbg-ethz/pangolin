@@ -22,11 +22,19 @@ umask 0007
 searchsamtools=( ../snake-envs/*/bin/samtools )
 samtools=${searchsamtools[0]}
 
+return_fail=0
+
 # Helper
 fail() {
 	printf '\e[31;1mArgh:\t%s\e[0m\n'	"$1"	1>&2
 	[[ -n "$2" ]] && echo "$2" 1>&2
 	exit 1
+}
+
+argh() {
+	printf '\e[31;1mArgh:\t%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+	return_fail=1
 }
 
 oops() {
@@ -78,10 +86,16 @@ matchkeys=( "${!matchsearch[@]}" ) # keep all findings
 # labs
 declare -A labs
 for b in ../sampleset/batch.*.yaml; do
-	[[ ${b} =~ batch\.([[:digit:]]{8}_[[:alnum:]]+)\.yaml$ ]]
+	if [[ ! ${b} =~ batch\.([[:digit:]]{8}_[[:alnum:]-]+)\.yaml$ ]]; then
+		argh "Cannot parse: <${b}>"
+		continue
+	fi
 	batch="${BASH_REMATCH[1]}"
 
-	[[ "$(<${b})" =~ lab\ *:\ *([[:alnum:]]+)\ * ]]
+	if [[ ! "$(<${b})" =~ lab\ *:\ *([[:alnum:]]+)\ * ]]; then
+		argh "Cannot find lab for: <${b}>"
+		continue
+	fi
 	labs[${batch}]="${BASH_REMATCH[1]}"
 done
 
@@ -405,4 +419,7 @@ while read subject sublvl len; do
 	echo
 done < samples.tsv 
 } > qa.csv
+if (( return_fail )); then
+	fail "Critical errors have been found. Output isn't consistent"
+fi
 info 'Done.'
