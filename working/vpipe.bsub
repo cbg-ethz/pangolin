@@ -11,19 +11,8 @@
 
 umask 0007
 
-# config: normal SNV settings (64 threads shorah)
-mem=1024
-#mem=2048
-threads=64
-time=240
-flock -x -o vpipe.config -c "sed -ri.old '/^\[snv\]$/,/^\[[^\]]*\]$/{s@^(time=).*@\1${time}@;s@^(mem=).*@\1${mem}@;s@^(threads=).*@\1${threads}@}' vpipe.config"
-sync
-sleep 5
-flock -x -o vpipe.config -c "echo config unlocked"
-
-
 #cluster='bsub -J COVID-vpipe-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
 cluster='./bsub_wrap.sh -J COVID-vpipe-{rule} -M {resources.mem_mb} -n {threads} -W {resources.time_min} -R rusage[mem={resources.mem_mb},scratch={resources.disk_mb}] -R span[hosts=1] -e cluster_logs/{rule}_%J-%I.err.log -o cluster_logs/{rule}_%J-%I.out.log'
 mkdir -p cluster_logs/
 
-exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 60 --keep-going --use-conda
+exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 60 --keep-going --use-conda --configfile config.snv.yaml

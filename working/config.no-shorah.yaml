@@ -1,0 +1,6 @@
+output:
+  snv: false
+  local: false
+  global: false
+  visualization: false
+  QA: true

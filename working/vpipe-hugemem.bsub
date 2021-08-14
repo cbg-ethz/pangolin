@@ -13,21 +13,10 @@ umask 0007
 
 # unlock if crashed before finishing
 sleep 300
-./vpipe --dryrun --unlock
-
-# config: big ShoRAH run (8 threads only)
-mem=32768
-#threads=8
-#threads=63
-threads=16
-time=1400
-flock -x -o vpipe.config -c "sed -ri.old '/^\[snv\]$/,/^\[[^\]]*\]$/{s@^(time=).*@\1${time}@;s@^(mem=).*@\1${mem}@;s@^(threads=).*@\1${threads}@}' vpipe.config"
-sync
-sleep 5
-flock -x -o vpipe.config -c "echo config unlocked"
+./vpipe --configfile config.unlock.yaml ---dryrun --unlock
 
 #cluster='bsub -J COVID-vpipe-hugemem-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
 cluster='./bsub_wrap.sh -J COVID-vpipe-{rule} -M {resources.mem_mb} -n {threads} -W {resources.time_min} -R rusage[mem={resources.mem_mb},scratch={resources.disk_mb}] -R span[hosts=1] -e cluster_logs/{rule}_%J-%I.err.log -o cluster_logs/{rule}_%J-%I.out.log'
 mkdir -p cluster_logs/
 
-exec ./vpipe --cluster "$cluster" -j 120 --latency-wait 60 --keep-going --use-conda
+exec ./vpipe --cluster "$cluster" -j 120 --latency-wait 60 --keep-going --use-conda --configfile config.hugemem.yaml
