@@ -2,11 +2,12 @@
 
 configfile=viollier.conf
 
-usage() { echo "Usage: $0 [-c <configfile>] [ -s <subdir> ] TSVFILE " 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-c <configfile>] [ -s <subdir> ] [ -q ] TSVFILE " 1>&2; exit $1; }
 
 subdir=$(date '+%Y-%m-%d')
+verbose='v'
 
-while getopts "c:h" o; do
+while getopts "c:s:qh" o; do
 	case "${o}" in
 		c)	configfile=${OPTARG}
 			if [[ ! -r ${configfile} ]]; then
@@ -14,6 +15,7 @@ while getopts "c:h" o; do
 				usage 1
 			fi
 			;;
+		q)	verbose='' ;;
 		s)	subdir=${OPTARG} ;;
 		h)	usage 0	;;
 		*)	usage 1	;;
@@ -54,9 +56,14 @@ fi
 mkdir -p ${basedir}/${download}/${target}
 cd ${basedir}
 error=0
-while read auf ethid rest; do
+while read aufxx ethid rest; do
+	# remove DOS/Windows-style CR+LF line ending
+	auf=${aufxx%%$'\r'}
+	# skip empty lines
+	if [[ -z ${auf} ]]; then
+		continue
 	# header
-	if [[ ${auf} =~ ^[[:alpha:]_]+$ && ${ethid} =~ ^[[:alpha:]_]+$ ]]; then
+	elif [[ ${auf} =~ ^[[:alpha:]_]+$ && ${ethid} =~ ^[[:alpha:]_]+$ ]]; then
 		echo "${ethid} -> ${auf}"
 		continue
 	elif [[ ! ${auf} =~ ^[[:digit:]]{8,} ]]; then
@@ -67,9 +74,18 @@ while read auf ethid rest; do
 	aufnum=${BASH_REMATCH[0]}
 
 	if [[ -z ${ethid} ]]; then
-		ethid=$(grep -hoP "^${auf}[^\t]*" ${basedir}/${sampleset}/samples.*.tsv)
+		rx="^([[:digit:]]*[[:alpha:]]+[[:alnum:]-]+_)?${auf}[^\t]*"
+		ethid=$(grep -hoP "${rx}" ${sampleset}/samples.*.tsv)
 		if [[ -z ${ethid} ]]; then
-			echo "(missing ${aufnum})"
+			ethid=$(grep -hoP "${rx}" ${sampleset}/missing.*.txt)
+			if [[ -z ${ethid} ]]; then
+				echo "(missing ${aufnum})"
+			else
+				echo "(zero yield for ${aufnum} in  ${ethid//$'\n'/ })"
+			fi
+			continue
+		elif [[ ${ethid} == *$'\n'* ]]; then
+			echo "(problem with ${aufnum}: multiple matches: ${ethid//$'\n'/ })"
 			continue
 		fi
 	elif [[ ! ${ethid} =~ ^[[:digit:]]{6,} ]]; then
@@ -80,7 +96,7 @@ while read auf ethid rest; do
 
 	echo "${ethid} -> ${aufnum}"
 	[[ -d ${download}/${target}/${aufnum}/ ]] && rm -rf ${download}/${target}/${aufnum}/
-	cp --link -vrf ${sampleset}/${ethid}/ ${download}/${target}/${aufnum} || error=1
+	cp --link -${verbose}rf ${sampleset}/${ethid}/ ${download}/${target}/${aufnum} || error=1
 done < ${1}
 
 (( error )) && exit 0

@@ -270,6 +270,12 @@ case "$1" in
 		${scriptdir}/purge_sftp -r "${recent}" -c viollier.conf "${param[@]}"
 		conda deactivate
 	;;
+	uploadrequests)
+		echo "Hangling raw-read upload requests for Viollier"
+		. $baseconda/miniconda3/bin/activate ""
+		${scriptdir}/handle_request_raw_viollier -c viollier.conf
+		conda deactivate
+	;;
 	sortsamples)
 		. $baseconda/miniconda3/bin/activate pybis
 		cd $basedir

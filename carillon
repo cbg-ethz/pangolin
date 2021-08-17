@@ -65,6 +65,13 @@ ${scriptdir}/belfry syncopenbis --recent
 ${scriptdir}/belfry syncfgcz --recent
 ${scriptdir}/belfry sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 
+# uploading requests require prior successful download
+if [[ ( -e ${statusdir}/sortsamples_fail ) && ( ${statusdir}/sortsamples_fail -nt  ${statusdir}/sortsamples_success ) ]]; then
+	echo 'warning: cannot serve upload requests sampleset data not successfully fetched yet' > /dev/stderr
+else
+	${scriptdir}/belfry uploadrequests
+fi
+
 echo '---------'
 if [[ !  ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]]; then
 	echo "Data was copied: $(<${statusdir}/syncopenbis_new)"
