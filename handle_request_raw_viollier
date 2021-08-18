@@ -2,7 +2,7 @@
 
 configfile=viollier.conf
 
-usage() { echo "Usage: $0 [-c <configfile>]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [ -f ] [-c <configfile>]" 1>&2; exit $1; }
 
 # Helper
 fail() {
@@ -27,7 +27,7 @@ status() {
 	printf '\e[36;1m%s\e[0m\n'	"$1"
 }
 
-
+force=0
 while getopts "c:h" o; do
 	case "${o}" in
 		c)	configfile=${OPTARG}
@@ -36,6 +36,7 @@ while getopts "c:h" o; do
 				usage 1
 			fi
 			;;
+		f)	force=1 ;;
 		h)	usage 0	;;
 		*)	usage 1	;;
 	esac
@@ -73,8 +74,10 @@ cd ${basedir}
 
 # download new request file and compare with old one
 if lftp -c "set xfer:clobber on; get1 sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}/${expname}/${target_base}/${req_file} -o ${download}/${target_base}/"; then
+	if (( force )); then
+		status "Forcing update"
 	# check content
-	if [[ -e "${download}/${target_base}/${req_file}.old" ]] && diff -q "${download}/${target_base}/${req_file}"{,.old}; then 
+	elif [[ -e "${download}/${target_base}/${req_file}.old" ]] && diff -q "${download}/${target_base}/${req_file}"{,.old}; then
 		# same: nothing to do
 		status "No new uploads in ${req_file}"
 		grep -P '^(\([[:alpha:]]+|[[:space:]]+|summary)' ${download}/${target_base}/${msg_file}

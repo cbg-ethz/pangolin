@@ -2,9 +2,10 @@
 
 configfile=server.conf
 
-usage() { echo "Usage: $0 [ -r <recent_to_keep> ] [-c <configfile>] [filter [...]]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [ -d ] [ -r <recent_to_keep> ] [-c <configfile>] [filter [...]]" 1>&2; exit $1; }
 
-while getopts "r:c:h" o; do
+dryrun=0
+while getopts "r:c:dh" o; do
 	case "${o}" in
 		c)	configfile=${OPTARG}
 			if [[ ! -r ${configfile} ]]; then
@@ -12,6 +13,7 @@ while getopts "r:c:h" o; do
 				usage 1
 			fi
 			;;
+		d)	dryrun=1 ;;
 		r)	recent=${OPTARG}
 			if [[ ! ${recent} =~ ^20[[:digit:]]{2}([01][[:digit:]]([0-3][[:digit:]])?)?$ ]]; then
 				echo "Wrong format ${recent}" 1>&2
@@ -81,6 +83,10 @@ if (( ${#purgelist[@]} > 0 )) && [[ -n "${purgelist[*]}" ]]; then
 	if [[ "${purgelist[*]}" =~ [\;\"\'] ]]; then
 		echo "<${purgelist[*]}> invalid character ${BASH_REMATCH[0]}"
 		exit 1
+	fi
+	if (( dryrun )); then
+		echo "Dry-run, not actually deleting"
+		exit 0
 	fi
 	exec lftp -c "connect sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}; du -s${du_option}h ${dir[*]}; rm -r ${purgelist[*]}; sleep 5s; du -s${du_option}h ${dir[*]};"
 else
