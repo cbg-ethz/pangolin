@@ -1,0 +1,111 @@
+#!/bin/bash
+
+configfile=viollier.conf
+
+usage() { echo "Usage: $0 [-c <configfile>]" 1>&2; exit $1; }
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+	exit 1
+}
+
+oops() {
+	printf '\e[33;1mOops:%s\e[0m\n'	"$1"	 1>&2
+}
+
+title() {
+	printf '\e[34;1m======================\n%s\n======================\e[0m\n\n'	"$1"
+}
+
+message() {
+	printf '\e[37;1m%s\t%s\e[0m\n' "$1" "$2"
+}
+
+status() {
+	printf '\e[36;1m%s\e[0m\n'	"$1"
+}
+
+
+while getopts "c:h" o; do
+	case "${o}" in
+		c)	configfile=${OPTARG}
+			if [[ ! -r ${configfile} ]]; then
+				echo "Cannot read ${configfile}" 1>&2
+				usage 1
+			fi
+			;;
+		h)	usage 0	;;
+		*)	usage 1	;;
+	esac
+done
+shift $((OPTIND-1))
+
+
+. ${configfile}
+
+: ${fileserver:?}
+# ${srvport}
+: ${expname:?}
+: ${basedir:=$(pwd)}
+: ${download:?}
+: ${sampleset:?}
+
+
+target_base='raw_othercenters'
+req_file='fastq_requests.tsv'
+msg_file='request_results.txt'
+
+[[ "${1}" == '-h' || "${1}" == '--help' ]] && usage 0
+
+
+if [[ $( < ~/.netrc ) =~ machine[[:space:]]+${fileserver}[[:space:]]?login[[:space:]]+([^[:space:]]+) ]]; then
+	username="${BASH_REMATCH[1]}"
+elif [[ $( < ~/.ssh/config ) =~ Host[[:space:]]+${fileserver}[[:space:]]+ ]]; then
+	username=
+else
+	fail "cannot find login for machine ${fileserver} in ~/.netrc nor ~/.ssh/config" 
+fi
+
+
+cd ${basedir}
+
+# download new request file and compare with old one
+if lftp -c "set xfer:clobber on; get1 sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}/${expname}/${target_base}/${req_file} -o ${download}/${target_base}/"; then
+	# check content
+	if [[ -e "${download}/${target_base}/${req_file}.old" ]] && diff -q "${download}/${target_base}/${req_file}"{,.old}; then 
+		# same: nothing to do
+		status "No new uploads in ${req_file}"
+		grep -P '^(\([[:alpha:]]+|[[:space:]]+|summary)' ${download}/${target_base}/${msg_file}
+		exit 0
+	fi
+else
+	# error
+	fail "Cannot download request file sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}/${expname}/${target_base}/${req_file}" "Please check that ${configfile} is correctly setup"	
+fi
+
+# create result file
+tee ${download}/${target_base}/${msg_file} <<MSG
+starting on $(date --rfc-3339=seconds)
+new ${req_file}, date $(date --rfc-3339=seconds -r "${download}/${target_base}/${req_file}")
+
+attempting upload:
+MSG
+
+# attempt upload
+subdir=$(date '+%Y-%m-%d' -r "${download}/${target_base}/${req_file}")
+if ./upload_viollier_raw -q -c "${configfile}" -s "${subdir}" "${download}/${target_base}/${req_file}" 2>&1; then 
+	# upload success
+	printf '\e[36;1mSuccess\e[0m\n' 1>&2
+	echo -e "successfully uploaded to ${subdir}\n"
+	mv -v "${download}/${target_base}/${req_file}"{,.old}
+else
+	# error
+	printf '\e[31;1mArgh:\e[0m'	1>&2
+	echo -e "error while trying to upload, see above\n"
+fi | tee -a ${download}/${target_base}/${msg_file}
+
+(echo  $'\nsummary of troubles'; grep -oP '(?<=[\(])(zero yield|[[:alpha:]]+)' ${download}/${target_base}/${msg_file}|sort|uniq -c || echo $'\tno troubles found' ) | tee -a ${download}/${target_base}/${msg_file}
+
+exec lftp -c "set xfer:clobber on; put ${download}/${target_base}/${msg_file} -o sftp://${username:+${username}@}${fileserver}${srvport:+:${srvport}}/${expname}/${target_base}/"
