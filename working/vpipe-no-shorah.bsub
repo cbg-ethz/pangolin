@@ -14,6 +14,9 @@ umask 0007
 # unlock if crashed before finishing
 ./vpipe --configfile config.unlock.yaml --dryrun --unlock
 
+# update the shared snake envs (with proxy when not on a login node)
+./create_envs -p 
+
 #cluster='bsub -J COVID-vpipe-cons-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
 cluster='./bsub_wrap.sh  -J COVID-vpipe-{rule} -M {resources.mem_mb} -n {threads} -W {resources.time_min} -R rusage[mem={resources.mem_mb},scratch={resources.disk_mb}] -R span[hosts=1] -e cluster_logs/{rule}_%J-%I.err.log -o cluster_logs/{rule}_%J-%I.out.log'
 mkdir -p cluster_logs/
