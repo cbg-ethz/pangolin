@@ -311,6 +311,15 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 				ln -sf vpipe.${now} ${statusdir}/vpipe_started
 				cat ${statusdir}/vpipe_started
 				printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
+				if [[ -n "${mailto[*]}" ]]; then
+					(
+						echo '(Possibly new) samples not having consensus sequences yet found in batches:'
+						printf ' - %s\n' "${runreason[@]}"
+						echo -e '\nStarting V-pipe on Euler:'
+						cat ${statusdir}/vpipe_started
+					) | mail -s '[Automation-carillon] Starting V-pipe on Euler' "${mailto[@]}"
+					# -r "${mailfrom}"
+				fi
 			fi
 		fi
 	else
