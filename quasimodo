@@ -19,8 +19,11 @@ runtimeout=3600
 drop_cache() {
 	echo dropping cache
 	printf '[%u]\t[%s]\tdrop cache reason:\t%s\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" "${1}" >>drop_cache.log
-	timeout -k 5 -s INT $runtimeout sync
-	printf '[%u]\t[%s]\tsynced\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
+	if timeout -k 5 -s INT $runtimeout sync; then
+		printf '[%u]\t[%s]\tsynced\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
+	else
+		printf '[%u]\t[%s]\tsync timed out\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
+	fi
 	echo 3 | sudo tee /proc/sys/vm/drop_caches
 	printf '[%u]\t[%s]\tcache droped\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
 }
