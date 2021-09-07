@@ -550,7 +550,7 @@ case "$1" in
 			mv -vf "${f%/}/"* "${garbage%/}/"
 			rmdir "${f%/}"
 		done
-		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" garbage/ 
+		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" garbage/
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
