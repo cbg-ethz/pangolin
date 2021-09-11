@@ -4,6 +4,8 @@ scriptdir="$(dirname $(which $0))"
 
 . ${scriptdir}/server.conf
 
+: ${run_shorah:=0}
+
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
 fi
@@ -305,8 +307,13 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 			echo 'error: Pushing sampleset did not succeed' > /dev/stderr
 		else
 			echo 'starting jobs'
+			if (( run_shorah )); then
+				shorah=""
+			else
+				shorah="--no-shorah"
+			fi
 			${remote_batman} addsamples	&& \
-			${remote_batman} vpipe > ${statusdir}/vpipe.${now}	&&	\
+			${remote_batman} vpipe ${shorah} > ${statusdir}/vpipe.${now}	&&	\
 			if [[ -s ${statusdir}/vpipe.${now} ]]; then
 				ln -sf vpipe.${now} ${statusdir}/vpipe_started
 				cat ${statusdir}/vpipe_started

@@ -20,6 +20,11 @@ RXJOB='Job <([[:digit:]]+)> is submitted'
 # Generic job.
 # Job <129052039> is submitted to queue <light.5d>.
 
+now=$(date '+%Y%m%d')
+lastmonth=$(date '+%Y%m' --date='-1 month')
+thismonth=$(date '+%Y%m')
+twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
+
 case "$1" in
 	rsync)
 		# rsync daemon : see ${SSH_ORIGINAL_COMMAND}
@@ -32,25 +37,47 @@ case "$1" in
 	addsamples)
 		mkdir -p --mode=2770 ${clusterdir}/${working}/samples/
 		cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
+		sort -u ${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv > ${clusterdir}/${working}/samples.recent.tsv
 		sort -u ${clusterdir}/${sampleset}/samples.*.tsv > ${clusterdir}/${working}/samples.tsv
 	;;
 	vpipe)
 		declare -A job
 		list=('seq' 'seqqa' 'snv' 'snvqa' 'hugemem' 'hugememqa')
+		shorah=1
+		hold=
+		while [[ -n $2 ]]; do
+			case "$2" in
+				--no-shorah)
+					shorah=0
+				;;
+				--hold)
+					hold='-H'
+				;;
+# 				--recent)
+#					# TODO switch between full cohort and only recent
+# 					recent="--recent=${lastmonth}"
+# 				;;
+				*)
+					echo "Unkown parameter ${2}" > /dev/stderr
+					exit 2
+				;;
+			esac
+			shift
+		done
 		# start first job
 		cd ${clusterdir}/${working}/
 		# use -H to put on hold for analysis
-		if [[ "$(bsub < vpipe-no-shorah.bsub)" =~ ${RXJOB} ]]; then
+		if [[ "$(bsub ${hold} < vpipe-no-shorah.bsub)" =~ ${RXJOB} ]]; then
 			job['seq']=${BASH_REMATCH[1]}
 			# schedule a gatherqa no mater what happens
-			[[ "$(bsub -w "ended(${job['seq']})"  < gatherqa)" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
+			[[ "$(bsub ${hold} -w "ended(${job['seq']})"  < gatherqa)" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
 			# if no fail schedule a full job with snv
-			if [[ "$(bsub -w "done(${job['seq']})" -ti < vpipe.bsub)"  =~ ${RXJOB} ]]; then
+			if (( shorah )) && [[ "$(bsub ${hold} -w "done(${job['seq']})" -ti < vpipe.bsub)"  =~ ${RXJOB} ]]; then
 				job['snv']=${BASH_REMATCH[1]}
 				# schedule a gatherqa no matter what happens to snv
-				[[ "$(bsub -w "done(${job['seq']})&&ended(${job['snv']})"  < gatherqa)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
+				[[ "$(bsub ${hold} -w "done(${job['seq']})&&ended(${job['snv']})"  < gatherqa)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
 				# schedule a hugemem job if snvjob failed
-				if [[ "$(bsub -w "done(${job['seq']})&&exit(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
+				if [[ "$(bsub ${hold} -w "done(${job['seq']})&&exit(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
 					job['hugemem']=${BASH_REMATCH[1]}
 					# schedule a qa afterward
 					[[ "$(bsub -w "done(${job['seq']})&&exit(${job['snv']})&&ended(${job['hugemem']})" -ti  < gatherqa)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}

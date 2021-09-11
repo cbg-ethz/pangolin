@@ -1,3 +1,6 @@
+input:
+  samples_file: samples.recent.tsv
+
 output:
   snv: false
   local: false
