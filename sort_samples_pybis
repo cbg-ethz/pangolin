@@ -11,6 +11,7 @@ import configparser
 import argparse
 import yaml
 from pybis import Openbis
+from pybis import __version__ as pybisver
 from dateutil import parser
 
 # progress bar unicode
@@ -79,6 +80,18 @@ suffix={'ONE':'_MM_1','NONE':''}
 rxrun=re.compile('(?ms)Run type: (?P<type>\S+).*Number of cycles: (?P<len>\d+).*Run folder: (?P<run>(?P<date>\d{6})_[-\w]*)') # e.g.: 'Run type: PAIRED_END\nNumber of cycles: 251\n\nKit : MS9275058-600V3\nRun folder: 200430_M01761_0414_000000000-J3JCT' or {...}'folder: 201023_A00730_0259_BHTVCCDRXX'
 rxcell=re.compile('(?<=/)(?P<seq>(?:\w+-)?(?P<cell>\w+)(?:\:(?P<lane>\d+))?)$') # e.g.: '/BSSE_STADLER_COVID/000000000-CTT3D:1' or '/BSSE_STADLER_COVID/HTVCCDRXX:2'
 rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
+rxrecent=re.compile('^(?P<year>\d{4})(?:(?P<month>\d{2})(?P<day>\d{2})?)?')
+
+registrationDate=None
+if args.recent:
+	try:
+		m=rxrecent.match(args.recent).groupdict()
+	except:
+		print(f"cannot parse recent <{args.recent}>")
+	else:
+		registrationDate=f">{m['year']}-{m['month'] if  m.get('month',None) else '01'}-{m['day'] if m.get('day',None) else '01'}"
+		print(f"requesting registrationDate {registrationDate}")
+
 
 # create sampleset directory if missing
 if not os.path.isdir(os.path.join(basedir,sampleset)):
@@ -132,7 +145,8 @@ cd %(basedir)s
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
 ex=o.get_experiment(code=expname)
-samples=ex.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'})
+samples=ex.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'},registrationDate=registrationDate,count=(10 if '1.18' <= pybisver <= '1.20.0' else None))
+# HACK avoid extreme long waits on some buggy versions of PyBIS
 
 # NOTE iterating over `samples` is problematic, use pandas dataframe instead
 #  - in jupyter, it crashes with "TypeError: argument of type 'int' is not iterable"
@@ -155,10 +169,9 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 	except:
 		print(f"cannot parse: {sa.CONTAINER_PROPERTIES}\n{list(map(lambda x: '%x' % ord(x), sa.CONTAINER_PROPERTIES[0:4]))}")
 		m={}
-	# in Perl  $+{'groupThatDidntMatch'}  is simply empty, in Python trying to access a non-matched groups throws an exception instead, that's my contrived way to get around.
-	runfolder=m['run'] if 'run' in m else ''
+	runfolder=m.get('run', '')
 	rlen=int(m['len'])-1 if 'len' in m else ''
-	rtype=m['type'] if 'type' in m else ''
+	rtype=m.get('type', '')
 	rundate=f"20{m['date']}" if 'date' in m else None # NOTE runfolders are yymmdd, not yyyymmdd
 	skip=False
 	if args.recent:
@@ -201,7 +214,8 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 
 	# only process data which was transfered, we don't have access permission for the rest yet
 	try:
-		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2','MISMATCH_IN_INDEX'}).df
+		datasets=o.get_datasets(sample=sa.permId,props={'EXTERNAL_SAMPLE_NAME','FASTQ_SAMPLE_CODE','BARCODE','INDEX2','MISMATCH_IN_INDEX'}, count=(400 if '1.18' <= pybisver <= '1.20.0' else None)).df # '*').df #
+		# HACK avoid extreme long waits on some buggy versions of PyBIS
 	except:
 		print("\u001b[K\t(not accessible yet - cannot open)")
 	else:
@@ -214,6 +228,9 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 		skip=False
 		if not 'EXTERNAL_SAMPLE_NAME' in datasets.columns:
 			print("\u001b[K\t(missing samplenames)", end='')
+			if pybisver=='1.20.1':
+				print(f"probaby a bug of PyBIS {pybisver}")
+				print(datasets.columns)
 			skip=True
 		else:
 			numsam = ((datasets['type']=='FASTQ_GZ') & (datasets['EXTERNAL_SAMPLE_NAME']!='')).sum()
