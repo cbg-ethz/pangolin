@@ -5,6 +5,7 @@ usage() { echo "Usage: $0 [-p] [snakemake options...] " 1>&2; exit $1; }
 while getopts "ph" o; do
 	case "${o}" in
 		p)	echo "Using proxy"
+			. /etc/profile.d/software_stack_default.sh
 			module load eth_proxy
 			;;
 		h)	usage 0	;;
