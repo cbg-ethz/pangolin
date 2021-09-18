@@ -376,6 +376,7 @@ case "$1" in
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${basedir}/${sampleset}/samples.*.tsv	\
 			${basedir}/${sampleset}/batch.*.yaml	\
+			${basedir}/${sampleset}/projects.*.tsv	\
 			${basedir}/${sampleset}/missing.*.txt	\
 			${basedir}/${sampleset}/patch.*.tsv	\
 			belfry@euler.ethz.ch::${sampleset}/ || (( ++err ))
@@ -543,14 +544,17 @@ case "$1" in
 		done
 		for f in ${working}/samples/*/${2}/; do 
 			garbage="${f//${working}\/samples/garbage}"
-			mkdir --mode=0770 -p "${garbage%/}/raw_data/"
+			mkdir --mode=0770 -p "${garbage%/}/"{raw_data,extracted_data}/
 			mv -vf "${f%/}/raw_data/"* "${garbage%/}/raw_data/"
 			rm "${f%/}/raw_data/"*.fa*
-			rmdir "${f%/}/raw_data"
+			rmdir "${f%/}/raw_data/"
+			#mv -vf "${f%/}/extracted_data/"* "${garbage%/}/extracted_data/"
+			#rm "${f%/}/extracted_data/"*_fastqc.html
+			#rmdir "${f%/}/extracted_data/"
 			mv -vf "${f%/}/"* "${garbage%/}/"
 			rmdir "${f%/}"
 		done
-		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" garbage/
+		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr

@@ -128,7 +128,7 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 		continue
 
 	f = os.path.join(d.split(os.sep)[-1],'FastQC_Result')	# Holds the _fastqc.html files
-	with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
+	with open(t,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
 		o=None	# keep tracking of the order -> FastQC mapping
 		fastqc_samples[f]={}	# list of files (some files didn't get their respective FastQF
 		for r in csv.DictReader(tf, dialect='excel-tab'):
@@ -156,6 +156,7 @@ if args.verbose:
 	print("\x1b[37;1mLooking for sample folders\x1b[31;0m")
 totsam=0
 batches={}
+order2runs={} # table that keeps track of orders and how many runs each has.
 for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# (new style) look for bcl2fastq's json file
 	j = os.path.join(srch, 'Stats','Stats.json')
@@ -174,6 +175,19 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		continue
 
 	order=name # default for corner cases when we don't have an actual order
+
+	# Load the order2runs.tsv file to find out if this order is spead over many runs...
+	o2rt = os.path.join(srch, 'order2runs.txt')
+	o2r_order=None
+	if os.path.isfile(o2rt):
+		with open(o2rt,'rt',encoding='utf-8', newline='') as tf:
+			o2r_runs={}
+			for r in csv.DictReader(tf, dialect='excel-tab'):
+				order=o2r_order=f"o{r['Order']}"
+				o2r_runs[r['Run']]=r.get('Plate','').split(';')
+			order2runs[order]=o2r_runs
+
+	# try parsing order from path string
 	try:
 		m=rxorder.search(name).groupdict()
 		order=m['order']
@@ -182,7 +196,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			# no order but force processing
 			print(f"\x1b[35;1m({name} in force list) \x1b[0m", end='')
 			# search the dataset TSV in case we got a real order number
-			with open(os.path.join(path,'dataset.tsv'),'rt',encoding='utf-8') as tf:
+			with open(os.path.join(path,'dataset.tsv'),'rt',encoding='utf-8', newline='') as tf:
 				r = next(csv.DictReader(tf, dialect='excel-tab'), None)
 				if 'Order Id [B-Fabric]' in r:
 					order = f"o{r['Order Id [B-Fabric]']}"
@@ -283,9 +297,28 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# handle duplicate orders and fuse them if (close in time)
 	if order in batches:
 		key=f"{order}:{name}"
-
 		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
-		if name in nofuselist:
+
+		# check against order2runs (if available)
+		if order in order2runs:
+			if len(order2runs[order]) >= 2:
+				# we do expect more
+				if name in nofuselist:
+					print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: orders2run {';'.join(order2runs[order].keys())} overridden by nofuselist\x1b[0m")
+				else:
+					print(name, f"\x1b[36;1m is dupe of order {order} (reason: as specified in order2runs {';'.join(order2runs[order].keys())})\x1b[0m")
+					batches[order]['dupe']=True
+					b['appendto']=order
+			elif name in fuselist:
+				# configuration forces it anyway
+				print(name, f"\x1b[36;1m is dupe of order {order} (orders2run {';'.join(order2runs[order].keys())} overridden by fuse list)\x1b[0m")
+				batches[order]['dupe']=True
+				b['appendto']=order
+			else:
+				print(name, f"\x1b[31;1m seems dupe of order {order} but orders2run {';'.join(order2runs[order].keys())} contradicts it - dropping folder!\x1b[0m")
+				continue
+		# Proceed with the usual logic
+		elif name in nofuselist:
 			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: in nofuselist\x1b[0m")
 		elif days <= fusedays:
 			print(name, f"\x1b[36;1m is dupe of order {order} (reason: {days} days)\x1b[0m")
@@ -303,7 +336,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# Now, link with FastQC, based on dataset.tsv and...
 
 	# ...based on order column if present ?
-	with open(t,'rt',encoding='utf-8') as tf:	# this file has the same content as the original experiment
+	with open(t,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
 		r = next(csv.DictReader(tf, dialect='excel-tab'))
 		if 'Order Id [B-Fabric]' in r:
 			to = r['Order Id [B-Fabric]']
@@ -315,6 +348,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 				if to != order:
 					print(name, f"\x1b[31;1mFolder order {order} vs dataset.tsv order {to}\x1b[0m")
 			batches[key]=b
+			if args.verbose:
+				print(f"{name}: {order} - {runfolder}")
 			continue
 
 	# ...match by (input_) dataset.tsv content
@@ -372,9 +407,17 @@ X() {
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
 ''' % {'link':link,'sampleset':sampleset,'download':download}, file=sh)
 
+# helper function to handle items that can be either single string or list (or empty)
+listify = lambda x: x if type(x) is list else [] if x is None else [x]
+delistify = lambda x: x if type(x) is str else None if len(x) == 0 else next(iter(x)) if len(x) == 1 else sorted(x, reverse=True)
+
 lastbar=-1
 cursam=0
-otsv={}
+otsv={}	# opened file handles for samples.tsv (for appending)
+osprj={} # opened file handles for projects.tsv (mapping samples name to projects and orders) (for appending)
+oyaml={} # old dictionnaries with previous version of batch.yaml (to be updated and used to overwrite the file)
+omis={} # old list with previous bad samples (to be update and used to overwrite file)
+osamseen={} # old list of previously sample seen with reads (non bad) - used to update omis
 for b in batches:
 	name=batches[b]['name']
 	prj=batches[b]['prj']
@@ -400,7 +443,11 @@ for b in batches:
 		rundate = batches[order]['rundate']
 		batch=f"{rundate}_{order}"
 	else:
+		# Check that this match expectations of order2runs (if present)
 		order=b
+		if order in order2runs and len(order2runs[order]) >= 2 and name not in nofuselist:
+			print(b, f"\x1b[31;1m should have a dupe according to orders2run {';'.join(order2runs[order].keys())} but it is missing - dropping folder!\x1b[0m")
+			continue
 		batch=f"{rundate}_{flowcell}"
 
 	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
@@ -421,27 +468,76 @@ for b in batches:
 	runfolder=None
 	if batch not in otsv:
 		otsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
-		bfabfolder=batches[b]['name']
-		runfolder=batches[b]['runfolder']
-		fastqcfolder=batches[b]['fastqc'] if 'fastqc' in batches[b] else None
+		osprj[batch]=sprj=open(os.path.join(basedir,sampleset,f'projects.{batch}.tsv'), 'wt')
+		oyaml[batch]=yamldict={'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,
+			'runfolder':	batches[b]['runfolder'],
+			'fastqcfolder':	batches[b]['fastqc'] if 'fastqc' in batches[b] else None,
+			'folder':	batches[b]['name'],
+		}
 		badsamples=batches[b]['badsamples']
+		# keep bad lists organised by orders within each batch (as some could be mixed weirdly)
+		if batch not in omis:
+			omis[batch]={order: badsamples}
+			osamseen[batch]={order: set(batches[b]['samples'].keys()).difference(badsamples)}
+		else:
+			omis[batch].update({order: badsamples})
+			osamseen[batch].update({order: set(batches[b]['samples'].keys()).difference(badsamples)})
 	else:
 		tsv=otsv[batch]
-		bfabfolder=[batches[b]['name'],batches[order]['name']]
-		runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
-		fastqcfolder=[]
-		if 'fastqc' in batches[b]:
-			fastqcfolder+=[batches[b]['fastqc']]
-		if 'fastqc' in batches[order]:
-			fastqcfolder+=[batches[order]['fastqc']]
-		if len(fastqcfolder) == 0:
-			fastqcfolder=None
-		badsamples=batches[b]['badsamples'].intersection(batches[order]['badsamples'])
+		sprj=osprj[batch]
+		# update the yaml instead of simply combining
+		yamldict=oyaml[batch]
+		yamldict.update({
+			'project': 	delistify(set([prj] + listify(yamldict['project']))),
+			'order':	delistify(set([order] + listify(yamldict['order']))),
+			'name':	name,
+			#bfabfolder=[batches[b]['name'],batches[order]['name']]
+			'folder':	delistify(set([batches[b]['name']] + listify(yamldict['folder']))),
+			#runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
+			'runfolder':	delistify(set([batches[b]['runfolder']] + listify(yamldict['runfolder']))),
+			#fastqcfolder=[]
+			#if 'fastqc' in batches[b]:
+			#	fastqcfolder+=[batches[b]['fastqc']]
+			#if 'fastqc' in batches[order]:
+			#	fastqcfolder+=[batches[order]['fastqc']]
+			#if len(fastqcfolder) == 0:
+			#	fastqcfolder=None
+			'fastqcfolder':	delistify(set(listify(yamldict['fastqcfolder']) + ([batches[b]['fastqc']] if 'fastqc' in batches[b] else []))),
+		})
+		oyaml[batch]=yamldict
+
+		# intersections etc.
+		# NOTE two fused sequencing set do not necessarily contain the same samples, so the exact venn diagram gets a bit crazierer
+		# list of new samples *with* reads (non bad) that where added now.
+		newnonbadsamples=set(batches[b]['samples'].keys()).difference(batches[b]['badsamples'])
+		if order in omis[batch]:
+			omis[batch].update({order:	(
+					# from the old bad sample : remove those whose samples now have reads
+					omis[batch][order].difference(newnonbadsamples)
+				).union(
+					# from the new bad samples : remove those whose previous sample had reads
+					batches[b]['badsamples'].difference(osamseen[batch][order])
+				)})
+			osamseen[batch][order].update(newnonbadsamples)
+		else:
+			omis[batch].update({order: batches[b]['badsamples'].difference(batches[order]['samples'].keys()) })
+			osamseen[batch].update({order: newnonbadsamples })
+
+		# combine missing between different orders
+		badsamples=[ ]
+		for x in omis[batch].values():
+			badsamples += x
+	# YAML with batch infos
 	with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
-		print(yaml.dump({'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,'runfolder':runfolder,'fastqcfolder':fastqcfolder,'folder':bfabfolder}, sort_keys=False), file=yml)
+		print(yaml.dump(yamldict, sort_keys=False), file=yml)
+	# list of missing files
+	misfname=os.path.join(basedir,sampleset,f'missing.{batch}.txt')
 	if len(badsamples):
-		with open(os.path.join(basedir,sampleset,f'missing.{batch}.txt'), 'wt') as missing:
-			missing.writelines("%s\n" % bad for bad in badsamples)
+		with open(misfname, 'wt') as missing:
+			missing.writelines("%s\n" % patchmap.get(bad, bad) for bad in sorted(set(badsamples)))
+	else:
+		if  os.path.isfile(misfname):
+			os.remove(misfname)
 
 	with open(batches[b]['dataset'],'rt',encoding='utf-8') as tf:
 		for r in csv.DictReader(tf, dialect='excel-tab'):
@@ -500,6 +596,8 @@ for b in batches:
 			# tsv line
 			if ('appendto' not in batches[b]) or (batsamname not in batches[order]['samples']):
 				print(samname, batch, rlen, sep='\t', file=tsv)
+			# map name to project / order / folder
+			print(samname, prj, order, batches[b]['name'], sep='\t', file=sprj)
 
 			# move script
 			print(r'''
