@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -L /bin/bash
 #BSUB -J COWWID
-#BSUB -u "ivan.topolsky@bsse.ethz.ch singer@nexus.ethz.ch carrara@nexus.ethz.ch kim.jablonski@bsse.ethz.ch pelin.icer@bsse.ethz.ch"
+#BSUB -u "ivan.topolsky@bsse.ethz.ch singer@nexus.ethz.ch carrara@nexus.ethz.ch pelin.icer@bsse.ethz.ch" # kim.jablonski@bsse.ethz.ch
 #BSUB -N
 #BSUB -n 1
 #BSUB -M 4096
