@@ -223,7 +223,8 @@ scanmissingsamples() {
 	false
 }
 
-
+# like "$*" but with a different field separator than default.
+join_by() { local IFS="$1"; shift; echo "$*"; }
 
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
 	clearline=0
@@ -313,7 +314,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 				shorah="--no-shorah"
 			fi
 			${remote_batman} addsamples	&& \
-			${remote_batman} vpipe ${shorah} > ${statusdir}/vpipe.${now}	&&	\
+			${remote_batman} vpipe ${shorah} --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now}	&&	\
 			if [[ -s ${statusdir}/vpipe.${now} ]]; then
 				ln -sf vpipe.${now} ${statusdir}/vpipe_started
 				cat ${statusdir}/vpipe_started

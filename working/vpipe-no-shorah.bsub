@@ -9,6 +9,8 @@
 ##### -q light.5d
 #BSUB -W 23:0
 
+### 	batches	@TAG@
+
 umask 0007
 
 # unlock if crashed before finishing

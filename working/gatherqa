@@ -8,6 +8,8 @@
 #BSUB -R rusage[mem=4096]
 #BSUB -W 4:00
 
+### 	batches	@TAG@
+
 umask 0007
 
 #. ../miniconda3/bin/activate 'qa'

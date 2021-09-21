@@ -8,13 +8,21 @@ sampleset=sampleset
 # Input validator
 #
 validateBatchName() {
-	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]]{4,})$ ]]; then
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]-]{4,})$ ]]; then
 		return;
 	else
-		echo "bad batchdate ${1}"
+		echo "bad batchname ${1}"
 		exit 1;
 	fi
 }
+
+validateTags() {
+	local IFS="$1"
+	for b in $2; do
+		validateBatchName "${b}"
+	done
+}
+
 
 RXJOB='Job <([[:digit:]]+)> is submitted'
 # Generic job.
@@ -45,6 +53,7 @@ case "$1" in
 		list=('seq' 'seqqa' 'snv' 'snvqa' 'hugemem' 'hugememqa')
 		shorah=1
 		hold=
+		tag=
 		while [[ -n $2 ]]; do
 			case "$2" in
 				--no-shorah)
@@ -52,6 +61,11 @@ case "$1" in
 				;;
 				--hold)
 					hold='-H'
+				;;
+				--tag)
+					shift
+					validateTags ';' "$2"
+					tag="${2%;}"
 				;;
 # 				--recent)
 #					# TODO switch between full cohort and only recent
@@ -67,10 +81,10 @@ case "$1" in
 		# start first job
 		cd ${clusterdir}/${working}/
 		# use -H to put on hold for analysis
-		if [[ "$(bsub ${hold} < vpipe-no-shorah.bsub)" =~ ${RXJOB} ]]; then
+		if [[ "$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.bsub | bsub -J "COVID-vpipe-<${tag}>-cons" ${hold})" =~ ${RXJOB} ]]; then
 			job['seq']=${BASH_REMATCH[1]}
 			# schedule a gatherqa no mater what happens
-			[[ "$(bsub ${hold} -w "ended(${job['seq']})"  < gatherqa)" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
+			[[ "$(sed "s/@TAG@/<${tag}>/g" gatherqa | bsub -J "COVID-vpipe-<${tag}>-qa" ${hold} -w "ended(${job['seq']})")" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
 			# if no fail schedule a full job with snv
 			if (( shorah )) && [[ "$(bsub ${hold} -w "done(${job['seq']})" -ti < vpipe.bsub)"  =~ ${RXJOB} ]]; then
 				job['snv']=${BASH_REMATCH[1]}
