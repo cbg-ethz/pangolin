@@ -37,7 +37,7 @@ if [[ -n "${BATCH}" ]]; then
 	# 'lastweek' backup
 	if grep -qF "${BATCH}" working/ww-cooc.yaml working/samples.wastewateronly.tsv; then 
 		echo "using:"
-		ls -l working/ww-cooc.yaml working/samples.wastewateronly.ts
+		ls -l working/ww-cooc{,.lastweek}.yaml working/samples.wastewateronly{,.lastweek,.thisweek}.tsv 
 	else 
 		echo "backing up lastweek:"
 		cp -v working/samples.wastewateronly{,.lastweek}.tsv
