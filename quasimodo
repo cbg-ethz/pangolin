@@ -15,6 +15,7 @@ while getopts "sh" o; do
 done
 
 runtimeout=3600
+shorttimeout=300
 
 drop_cache() {
 	echo dropping cache
@@ -58,7 +59,7 @@ ring_carillon() {
 		scriptdir="$(dirname $(which $0))"
 		${scriptdir}/belfry  df
 		remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman euler.ethz.ch --"
-		${remote_batman} df
+		timeout -k 5 -s INT $shorttimeout ${remote_batman} df
 		date -R
 		return 1
 	fi
