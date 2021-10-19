@@ -82,15 +82,15 @@ rxcell=re.compile('(?<=/)(?P<seq>(?:\w+-)?(?P<cell>\w+)(?:\:(?P<lane>\d+))?)$') 
 rxclean=re.compile('[\W_]+') # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
 rxrecent=re.compile('^(?P<year>\d{4})(?:(?P<month>\d{2})(?P<day>\d{2})?)?')
 
-registrationDate=None
+samkwargs={}
 if args.recent:
 	try:
 		m=rxrecent.match(args.recent).groupdict()
 	except:
 		print(f"cannot parse recent <{args.recent}>")
 	else:
-		registrationDate=f">{m['year']}-{m['month'] if  m.get('month',None) else '01'}-{m['day'] if m.get('day',None) else '01'}"
-		print(f"requesting registrationDate {registrationDate}")
+		samkwargs['registrationDate']=f">{m['year']}-{m['month'] if  m.get('month',None) else '01'}-{m['day'] if m.get('day',None) else '01'}"
+		print(f"requesting registrationDate {samkwargs['registrationDate']}")
 
 
 # create sampleset directory if missing
@@ -145,7 +145,10 @@ cd %(basedir)s
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
 ex=o.get_experiment(code=expname)
-samples=ex.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'},registrationDate=registrationDate,count=(10 if '1.18' <= pybisver <= '1.20.0' else None))
+
+if '1.18' <= pybisver <= '1.20.0':
+	samkwargs['count']=10
+samples=ex.get_samples(type=samtype,props={'data_transferred','CONTAINER_PROPERTIES'},**samkwargs)
 # HACK avoid extreme long waits on some buggy versions of PyBIS
 
 # NOTE iterating over `samples` is problematic, use pandas dataframe instead
