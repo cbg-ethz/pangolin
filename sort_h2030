@@ -71,7 +71,10 @@ libkit: Illumina_COVIDSeq
 fused: false
 runfolder: ${d%%/}" > ${sampleset}/batch.${batch}.yaml
 
-
+		echo -ne "\e[35;1m"
+		(gawk '$3!=""{print;l=$3};$3==""{print $0 l;print "Sample "$1"-"$2" is empty">"/dev/stderr"}' ${sampleset}/samples.${batch}.tsv > ${sampleset}/samples.${batch}.tsv.patched) 2>&1
+		echo -ne "\e[0m"
+		mv ${sampleset}/samples.${batch}.tsv{.patched,}
 	else
 		echo "Can't parse ${d}"
 	fi
