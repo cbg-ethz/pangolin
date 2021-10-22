@@ -24,6 +24,7 @@ shift $((OPTIND-1))
 
 : ${fileserver:?}
 # ${srvport}
+# ${prefix}
 : ${expname:?}
 : ${basedir:=$(pwd)}
 : ${download:?}
@@ -42,10 +43,10 @@ else
 fi
 
 if (( ${#@} )); then
-	dir=( "${@/#/ --directory=${expname}/}" )
+	dir=( "${@/#/ --directory=${prefix:+${prefix}/}${expname}/}" )
 	source="${dir[*]}"
 else
-	source="--directory=${expname}/*"
+	source="--directory=${prefix:+${prefix}/}${expname}/*"
 fi
 
 umask 0002
