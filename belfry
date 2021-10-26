@@ -271,7 +271,7 @@ case "$1" in
 		conda deactivate
 	;;
 	uploadrequests)
-		echo "Hangling raw-read upload requests for Viollier"
+		echo "Handling raw-read upload requests for Viollier"
 		. $baseconda/miniconda3/bin/activate ""
 		${scriptdir}/handle_request_raw_viollier -c viollier.conf
 		conda deactivate
