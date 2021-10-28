@@ -17,19 +17,45 @@ done
 runtimeout=3600
 shorttimeout=300
 
+do_the_drop() {
+	# TODO move this into a root user's forced-command with an SSH key
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+}
+
 drop_cache() {
 	echo dropping cache
 	printf '[%u]\t[%s]\tdrop cache reason:\t%s\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" "${1}" >>drop_cache.log
-	if timeout -k 5 -s INT $runtimeout sync; then
-		printf '[%u]\t[%s]\tsynced\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
-	else
-		printf '[%u]\t[%s]\tsync timed out\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
+
+	# empty some cache
+	do_the_drop
+	printf '[%u]\t[%s]\tcache droped\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
+
+	# sync the buffer to have more to drop
+	synctimeout=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^synctimeout=).*$' server.conf)
+	if [[ -z '$synctimeout' ]]; then
+		synctimeout=$runtimeout
 	fi
-	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	if (( synctimeout > 0)); then
+		if timeout -k 5 -s INT $synctimeout sync; then
+			printf '[%u]\t[%s]\tsynced (< %u s)\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" "${synctimeout}" >>drop_cache.log
+		else
+			printf '[%u]\t[%s]\tsync timed out (>= %u s)\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" "${synctimeout}" >>drop_cache.log
+		fi
+	else
+		sync
+		printf '[%u]\t[%s]\tsynced (long-wait)\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
+	fi
+
+	# drop the extra freed by sync
+	do_the_drop
 	printf '[%u]\t[%s]\tcache droped\n' "$(date --utc '+%s')" "$(date --rfc-3339=seconds)" >>drop_cache.log
 }
 
 ring_carillon() {
+	newtimeout=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^runtimeout=).*$' server.conf)
+	if [[ -n "${runtimeout}" ]]; then
+		runtimeout=${newtimeout}
+	fi
 	# kill any remaining rsync
 	if killall -3 rsync; then
 		echo killing stuck rsync processes
@@ -51,7 +77,7 @@ ring_carillon() {
 		fi
 	fi
 	# check if inode limitation "No spoace left on device" is still going on
-	if touch b0rk && [[ -f b0rk ]]; then
+	if timeout -k 5 -s INT ${shorttimeout} touch b0rk && [[ -f b0rk ]]; then
 		rm b0rk
 	else
 		echo "Aargh: problem writing on storage !!!"
@@ -64,8 +90,10 @@ ring_carillon() {
 		return 1
 	fi
 	# run the carrillon script
+	echo "Starting loop for: $runtimeout sec"
 	timeout -k 5 -s INT $runtimeout ./carillon
 	local retval=$?
+	timeout -k 5 -s INT $shorttimeout touch $(dirname $(which $0))/status/loop_done
 
 	# report NFS status
 	dmesg -LTk| grep -P 'nfs:.*server \S* (OK|not responding)' --colour=always|tail -n 1
