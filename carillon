@@ -21,7 +21,7 @@ lockfile=${statusdir}/carillon_lock
 remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman euler.ethz.ch --"
 remote_belfry="ssh -ni ${HOME}/.ssh/id_ed25519_belfry bs-bewi09.ethz.ch --"
 
-
+touch ${statusdir}/oh_hai_im_lopping
 
 if false; then # disable block
 #
