@@ -45,7 +45,7 @@ case "$1" in
 	addsamples)
 		mkdir -p --mode=2770 ${clusterdir}/${working}/samples/
 		cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-		sort -u ${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv > ${clusterdir}/${working}/samples.recent.tsv
+		cat ${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > ${clusterdir}/${working}/samples.recent.tsv
 		sort -u ${clusterdir}/${sampleset}/samples.*.tsv > ${clusterdir}/${working}/samples.tsv
 	;;
 	vpipe)
