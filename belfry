@@ -12,6 +12,7 @@ declare -A lab
 : ${releasedir:?}
 : ${storgrp:?}
 : ${parallel:=16}
+: ${parallelpull:=${parallel}}
 : ${contimeout:=300}
 : ${retries:=10}
 : ${iotimeout:=300}
@@ -447,8 +448,8 @@ case "$1" in
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
-			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
-			xargs -0 -P $parallel -I '{@LIST@}' --	\
+			gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+			xargs -0 -P $parallelpull -I '{@LIST@}' --	\
 				bash -c "callpullrsync_noshorah {@LIST@} " || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
@@ -502,8 +503,8 @@ case "$1" in
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
-			gawk -v P=$(( parallel * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
-			xargs -0 -P $parallel -I '{@LIST@}' --	\
+			gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+			xargs -0 -P $parallelpull -I '{@LIST@}' --	\
 				bash -c "callpullrsync {@LIST@} " || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
