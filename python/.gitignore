@@ -2,3 +2,5 @@ venv*
 *.pyc
 __pycache__
 .*.sw?
+.defaults
+sars_cov_2.db
