@@ -8,13 +8,13 @@ usage:
 
     for testing:
 
-    $ python upload_to_db /path/to/summary_json_file
+    $ python upload_to_db /path/to/summary_zip_file
 
     this will create sqlite3 db 'sars_cov_2.db' in the current working directory
 
     for productive usage:
 
-    $ DBUSER=abcde DBPASSWORD=xyde python upload_to_db /path/to/summary_json_file
+    $ DBUSER=abcde DBPASSWORD=xyde python upload_to_db /path/to/summary_zip_file
 
 the environment variable DBHOST, DBPORT and DATABASE can also be set to overrun
 standard settings.
@@ -23,8 +23,10 @@ standard settings.
 import json
 import os
 import sys
+import tempfile
 import time
 import warnings
+import zipfile
 from datetime import datetime
 
 import sqlalchemy
@@ -32,6 +34,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Integer,
+    LargeBinary,
     MetaData,
     String,
     Table,
@@ -84,9 +87,10 @@ def connect_to_db(connection_string, *, verbose=False, attempts=5, delay=1):
     return engine
 
 
-def create_table_if_not_exists(engine):
+def create_tables_if_not_exists(engine):
     meta = MetaData()
-    consensus = Table(
+
+    consensus_table = Table(
         "new_sequence",
         meta,
         Column("id", Integer, primary_key=True),
@@ -98,11 +102,27 @@ def create_table_if_not_exists(engine):
         Column("checksum_crc64", String),
         Column("sequence", String),
     )
+
+    raw_data_table = Table(
+        "raw_data",
+        meta,
+        Column("id", Integer, primary_key=True),
+        Column("batch", String),
+        Column("sample", String),
+        Column("data", LargeBinary),
+    )
+
     meta.create_all(engine)
-    return consensus
+    return consensus_table, raw_data_table
 
 
-def import_data(engine, consensus, summary_file, batch_size=1000):
+def import_data(engine, consensus_table, raw_data_table, summary_file, batch_size=1000):
+
+    target = tempfile.mkdtemp()
+    with zipfile.ZipFile(summary_file, "r") as zip_ref:
+        zip_ref.extractall(target)
+
+    summary_file = os.path.join(target, "summary.json")
 
     with open(summary_file) as fh:
         try:
@@ -110,7 +130,7 @@ def import_data(engine, consensus, summary_file, batch_size=1000):
         except json.JSONDecodeError as e:
             raise ValueError(f"{summary_file} is no valid json file: {e}") from None
 
-    prepared_stmt = insert(consensus).values(
+    prepared_stmt = insert(consensus_table).values(
         batch=bindparam("batch"),
         sample=bindparam("sample"),
         header=bindparam("header"),
@@ -148,6 +168,15 @@ def import_data(engine, consensus, summary_file, batch_size=1000):
             count += len(rows)
             rows = []
 
+        raw_data_path = entry["raw_data"]
+        if raw_data_path:
+            with open(os.path.join(target, raw_data_path), "rb") as fh:
+                data = fh.read()
+            print(batch, sample)
+            engine.execute(
+                insert(raw_data_table).values(batch=batch, sample=sample, data=data)
+            )
+
     engine.execute(prepared_stmt, rows)
     count += len(rows)
     return count
@@ -172,11 +201,17 @@ if __name__ == "__main__":
     except IOError:
         raise IOError(f"counld not open {summary_file} for reading.") from None
 
+    if os.path.exists(".defaults"):
+        with open(".defaults") as fh:
+            default = dict(line.strip().split("=") for line in fh if line.strip())
+    else:
+        default = {}
+
     DBUSER = os.getenv("DBUSER")
     DBPASSWORD = os.getenv("DBPASSWORD")
-    DBHOST = os.getenv("DBHOST", "id-hdb-psgr-cp61.ethz.ch")
-    DBPORT = os.getenv("DBPORT", "5432")
-    DATABASE = os.getenv("DATABASE", "sars_cov_2")
+    DBHOST = os.getenv("DBHOST", default.get("DBHOST"))
+    DBPORT = os.getenv("DBPORT", default.get("DBPORT"))
+    DATABASE = os.getenv("DATABASE", default.get("DATABASE"))
 
     if DBUSER is not None and DBPASSWORD is not None:
         connection_string = (
@@ -191,7 +226,7 @@ if __name__ == "__main__":
         connection_string = "sqlite+pysqlite:///{}".format(path)
 
     engine = connect_to_db(connection_string)
-    consensus = create_table_if_not_exists(engine)
-    count = import_data(engine, consensus, summary_file)
+    consensus_table, raw_data_table = create_tables_if_not_exists(engine)
+    count = import_data(engine, consensus_table, raw_data_table, summary_file)
 
     print(f"imported {count} sequence(s).")
