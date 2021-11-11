@@ -25,3 +25,6 @@ status/
 ._*
 .snapshot
 .ipynb_checkpoints
+
+# vim backup files:
+.*.sw?
