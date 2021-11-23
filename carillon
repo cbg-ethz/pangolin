@@ -277,8 +277,16 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		fi
 	done
 
+	# are we allowed to submit jobs ?
+	if (( donotsubmit )); then
+		echo -e '\e[35;1mWill NOT submit jobs\e[0m...'
+		if (( mustrun )); then
+			echo '...but there are new jobs that should be started'
+		else
+			echo '...and there is nothing to run anyway'
+		fi
 	# start jobs ?
-	if (( mustrun )); then
+	elif (( mustrun )); then
 		echo 'Will start new job'
 
 		# Sanity check
