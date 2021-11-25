@@ -157,6 +157,8 @@ if args.verbose:
 totsam=0
 batches={}
 order2runs={} # table that keeps track of orders and how many runs each has.
+order2runfolders={}
+plate2runs={} # table that leeps track of which run each plate has ended up in.
 for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# (new style) look for bcl2fastq's json file
 	j = os.path.join(srch, 'Stats','Stats.json')
@@ -180,11 +182,20 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	o2rt = os.path.join(srch, 'order2runs.txt')
 	o2r_order=None
 	if os.path.isfile(o2rt):
-		with open(o2rt,'rt',encoding='utf-8', newline='') as tf:
+		with open(o2rt,'rt',encoding='utf-8') as tf:
 			o2r_runs={}
-			for r in csv.DictReader(tf, dialect='excel-tab'):
+			head = re.split('[ \t]+', tf.readline().rstrip())
+			for lraw in tf:
+				l=lraw.rstrip()
+				if len(l) == 0:
+					continue
+				r = dict(zip(head,re.split('[ \t]+',l)))
+			#for r in csv.DictReader(tf, dialect='excel-tab'):
 				order=o2r_order=f"o{r['Order']}"
-				o2r_runs[r['Run']]=r.get('Plate','').split(';')
+				plates=r.get('Plate','').split(';')
+				o2r_runs[r['Run']]=plates
+				for p in plates:
+					plate2runs[p] = list(set([r['Run']] + plate2runs.get(p, [])))
 			order2runs[order]=o2r_runs
 
 	# try parsing order from path string
@@ -233,6 +244,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	except:
 		print(f"{name} cannot parse: {runfolder}")
 		continue
+	order2runfolders[order]=list(set([runfolder] + order2runfolders.get(order, [])))
 
 	# parse information about reads
 	lane={}
