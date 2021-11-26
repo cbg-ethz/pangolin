@@ -19,6 +19,8 @@ def bar(v, m=128):
 	f=v&7
 	return ('\u2588' * (v >> 3))+(chr(0x2590 - f) if f else '')+('\u00b7' * ((m-v) >> 3))
 
+# column in dataset.tsv under which we need to look for plates
+plate_column = 'Tube [Characteristic]' # 'Platename [Characteristic]'
 
 # parse command line
 argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
@@ -181,6 +183,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# Load the order2runs.tsv file to find out if this order is spead over many runs...
 	o2rt = os.path.join(srch, 'order2runs.txt')
 	o2r_order=None
+	plates=None
 	if os.path.isfile(o2rt):
 		with open(o2rt,'rt',encoding='utf-8') as tf:
 			o2r_runs={}
@@ -192,10 +195,13 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 				r = dict(zip(head,re.split('[ \t]+',l)))
 			#for r in csv.DictReader(tf, dialect='excel-tab'):
 				order=o2r_order=f"o{r['Order']}"
-				plates=r.get('Plate','').split(';')
-				o2r_runs[r['Run']]=plates
-				for p in plates:
-					plate2runs[p] = list(set([r['Run']] + plate2runs.get(p, [])))
+				o2r_plates=r.get('Plate','').split(';') # multiple plates split
+				for ru in r['Run'].split(';'): # multiple runs
+					o2r_runs[ru]=o2r_plates # keep track which run has which plates
+					if name.find(ru) != -1: # e.g.: NOV1039 is the run of name/delivery folder NovaSeq_20211119_NOV1039_o26712_DataDelivery
+						plates=list(set(o2r_plates + ([] if plates is None else plates)))
+				for p in o2r_plates:
+					plate2runs[p] = list(set(r['Run'].split(';') + plate2runs.get(p, [])))
 			order2runs[order]=o2r_runs
 
 	# try parsing order from path string
@@ -298,21 +304,78 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		print(name, f"\x1b[31;1mOnly {len(samples)}!\x1b[0m", sep='\t')
 		continue
 
+	#
+	#   dataset.tsv
+	#
+
+	t=os.path.join(path,'dataset.tsv')
+	to=None
+	tplates=None
+	with open(t,'rt',encoding='utf-8', newline='') as tf:
+		tfc=csv.DictReader(tf, dialect='excel-tab')
+		r = next(tfc)
+		# check plates
+		if plate_column in r:
+			tplates=list(set([r[plate_column]] + [cp[plate_column] for cp in tfc]))
+		# and now check for order column
+		if 'Order Id [B-Fabric]' in r:
+			to = r['Order Id [B-Fabric]']
 
 	#
 	#   Build per batch / samples data
 	#
 
-	t=os.path.join(path,'dataset.tsv')
 	b={'name':name, 'prj': prj, 'path':path, 'dataset':t, 'flowcell': flowcell, 'runfolder': runfolder,'rundate':rundate,'samples':samples,'badyield':badyield,'badsamples':badsamples}
+
+	# add plates, which ever method managed to find them
+	if tplates is not None and len(tplates)>0:
+		b.update({ 'plates':tplates })
+	elif plates is not None and len(plates)>0:
+		b.update({ 'plates':plates })
+
+	# if both attempts at counting plates were successfull, check if they agree
+	if tplates is not None and plates is not None:
+		diff=list(set(tplates).symmetric_difference(set(plates)))
+		if len(diff)>0:
+			print(name, f"\x1b[33;1mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b")
 
 	# handle duplicate orders and fuse them if (close in time)
 	if order in batches:
 		key=f"{order}:{name}"
 		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
 
-		# check against order2runs (if available)
+		# scenario 1: if we have plates for both: check if overlap in plates list
+		intersec=None
+		if plates is not None:
+			print(name, f"checking plates ... { ';'.join(order2runfolders.get(order,[])) }")
+			intersec=set(batches[order].get('plates',[])).intersection(set(plates))
+		else:
+			print (name, "(no plates)");
+
+		# scenario 2: check against order2runs (if available)
+		fuse_reason=''
+		multiplates=list(intersec) if intersec is not None else []
 		if order in order2runs:
+			fuse_reason=f"orders2run {';'.join(order2runs[order].keys())}"
+			# order known for multiple runs?
+			if len(order2runs[order]) >= 2:
+				# and plates shared between runs?
+				op=set()
+				for p in order2runs[order].values():
+					op = set(list(op) + p)
+				if '?' in op:
+					op.remove('?')
+					print (name, f"\x1b[33;1m? in plates\x1b[0m")
+				multi=set([p for p in list(op) if len(plate2runs.get(p,[])) > 1])
+				if intersec is not None:
+					if not multi == intersec:
+						print(name, f"\x1b[33;1mnon-concording multiplates: dataset <{';'.join(list(intersec.difference(multi)))}<  and order2run >{';'.join(list(multi.difference(intersec)))}>\x1b")
+					multiplates=list(multi.union(intersec))
+				else:
+					multiplates=list(multi)
+			# TODO act upon multiplates, carry information about multiplates + '?' to output section below.
+
+			#order2runs[order]={r: [ p for p in plates] for r,plates in o2r_runs.items() }
 			if len(order2runs[order]) >= 2:
 				# we do expect more
 				if name in nofuselist:
@@ -321,13 +384,26 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 					print(name, f"\x1b[36;1m is dupe of order {order} (reason: as specified in order2runs {';'.join(order2runs[order].keys())})\x1b[0m")
 					batches[order]['dupe']=True
 					b['appendto']=order
+				if len(multiplates) > 0:
+					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
+				else:
+					print (name, f"\x1b[31;1mno plates overlap !!!\x1b[0m")
+
 			elif name in fuselist:
 				# configuration forces it anyway
 				print(name, f"\x1b[36;1m is dupe of order {order} (orders2run {';'.join(order2runs[order].keys())} overridden by fuse list)\x1b[0m")
 				batches[order]['dupe']=True
 				b['appendto']=order
+				if len(multiplates) > 0:
+					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
+				else:
+					print (name, f"\x1b[31;1mno plates overlap !!!\x1b[0m")
 			else:
 				print(name, f"\x1b[31;1m seems dupe of order {order} but orders2run {';'.join(order2runs[order].keys())} contradicts it - dropping folder!\x1b[0m")
+				if len(multiplates) > 0:
+					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
+				else:
+					print (name, f"\x1b[31;1mno plates overlap !!!\x1b[0m")
 				continue
 		# Proceed with the usual logic
 		elif name in nofuselist:
@@ -348,10 +424,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# Now, link with FastQC, based on dataset.tsv and...
 
 	# ...based on order column if present ?
-	with open(t,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
-		r = next(csv.DictReader(tf, dialect='excel-tab'))
-		if 'Order Id [B-Fabric]' in r:
-			to = r['Order Id [B-Fabric]']
+	if to is not None:
 			# sanity check: is the folder the same?
 			if to in fastqc:
 				b['fastqc']=fastqc[to]
@@ -457,6 +530,7 @@ for b in batches:
 	else:
 		# Check that this match expectations of order2runs (if present)
 		order=b
+		# TODO check no shared plates
 		if order in order2runs and len(order2runs[order]) >= 2 and name not in nofuselist:
 			print(b, f"\x1b[31;1m should have a dupe according to orders2run {';'.join(order2runs[order].keys())} but it is missing - dropping folder!\x1b[0m")
 			continue
@@ -481,10 +555,12 @@ for b in batches:
 	if batch not in otsv:
 		otsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
 		osprj[batch]=sprj=open(os.path.join(basedir,sampleset,f'projects.{batch}.tsv'), 'wt')
+		plts = { 'plates': delistify(batches[b]['plates']) } if batches[b].get('plates') is not None else { }
 		oyaml[batch]=yamldict={'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,
 			'runfolder':	batches[b]['runfolder'],
 			'fastqcfolder':	batches[b]['fastqc'] if 'fastqc' in batches[b] else None,
 			'folder':	batches[b]['name'],
+			**plts,
 		}
 		badsamples=batches[b]['badsamples']
 		# keep bad lists organised by orders within each batch (as some could be mixed weirdly)
@@ -499,6 +575,8 @@ for b in batches:
 		sprj=osprj[batch]
 		# update the yaml instead of simply combining
 		yamldict=oyaml[batch]
+		combine_plts = delistify(set(listify(yamldict.get('plates', [])) + batches[b].get('plates', [])))
+		plts = { 'plates': combine_plts } if combine_plts is not None else { }
 		yamldict.update({
 			'project': 	delistify(set([prj] + listify(yamldict['project']))),
 			'order':	delistify(set([order] + listify(yamldict['order']))),
@@ -515,6 +593,7 @@ for b in batches:
 			#if len(fastqcfolder) == 0:
 			#	fastqcfolder=None
 			'fastqcfolder':	delistify(set(listify(yamldict['fastqcfolder']) + ([batches[b]['fastqc']] if 'fastqc' in batches[b] else []))),
+			**plts,
 		})
 		oyaml[batch]=yamldict
 
@@ -605,11 +684,14 @@ for b in batches:
 			if ends==2:
 				r2=r['Read2 [File]'].split(os.sep)[-1]
 
+			# plate
+			plate = [ r[plate_column] ] if plate_column in r else []
+
 			# tsv line
 			if ('appendto' not in batches[b]) or (batsamname not in batches[order]['samples']):
 				print(samname, batch, rlen, sep='\t', file=tsv)
 			# map name to project / order / folder
-			print(samname, prj, order, batches[b]['name'], sep='\t', file=sprj)
+			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
 
 			# move script
 			print(r'''
