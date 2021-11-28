@@ -1,0 +1,17 @@
+#!/bin/bash
+#BSUB -L /bin/bash
+#BSUB -J COWWID-NewVar_final
+#BSUB -u "ivan.topolsky@bsse.ethz.ch pelin.icer@bsse.ethz.ch david.dreifuss@bsse.ethz.ch" # singer@nexus.ethz.ch carrara@nexus.ethz.ch" # kim.jablonski@bsse.ethz.ch
+#BSUB -N
+#BSUB -n 1
+#BSUB -M 4096
+#BSUB -R rusage[mem=4096]
+#BSUB -W 4:00
+
+: ${prefix:="new"}
+
+printf '%s\n' working/ww-${prefix}-202*.yaml | sort -r | xargs cat > working/ww-${prefix}.yaml
+
+. /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
+
+exec cojac/cooc-tabmut -y working/ww-${prefix}.yaml -o working/ww-${prefix}.csv -m -l -/
