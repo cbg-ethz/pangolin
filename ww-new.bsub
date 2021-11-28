@@ -1,0 +1,45 @@
+#!/bin/bash
+#BSUB -L /bin/bash
+#BSUB -J COWWID-NewVar
+#BSUB -u "ivan.topolsky@bsse.ethz.ch" # pelin.icer@bsse.ethz.ch david.dreifuss@bsse.ethz.ch" # singer@nexus.ethz.ch carrara@nexus.ethz.ch" # kim.jablonski@bsse.ethz.ch
+#BSUB -N
+#BSUB -n 1
+#BSUB -M 8192
+#BSUB -R rusage[mem=8192]
+#BSUB -W 4:00
+
+#batches=( "" 20211105_HML7HDRXY 20211112_HN3JWDRXY 20211119_HM7WYDRXY )
+batches=( "" $(cut -f 2 working/samples.wastewateronly.tsv|sort -ru) )
+
+prefix="new"
+
+
+if (( $LSB_JOBINDEX )); then
+	echo "JobIdx $LSB_JOBINDEX"
+
+	batch=${batches[$LSB_JOBINDEX]}
+
+	# check if samplename is ok
+	if [[ -z "${batch}" ]]; then
+		echo "wrong job index ${LSB_JOBINDEX}"
+		echo "Run with:"
+		echo " - bsub -J \"COWWID-NewVar[1-${#batches[@]}]\" < ww-new.bsub"
+		exit 1;
+	fi
+	tsv=${TMPDIR:+$TMPDIR/}samples.${prefix}-${batch}.tsv
+	echo "batch: ${batch}"
+	gawk -v b="${batch}" '$2==b' < working/samples.wastewateronly.tsv > ${tsv}
+	echo "tsv: ${tsv}"
+	wc -l ${tsv}
+else
+	batch="${prefix}"
+
+	echo "Testing with ${batch}"
+	echo "to run with all, use:"
+	echo " - bsub -J \"COWWID-AY42[1-${#batches[@]}]\" < ww-new.bsub"
+	tsv="working/samples.${new}.tsv"
+fi
+
+. /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
+
+exec test/cojac/cooc-mutbamscan -s ${tsv} -p working/samples -m test/cojac/voc/ -b test/cojac/nCoV-2019.insert.V3.bed -y working/ww-${preifx}-${batch}.yaml -/
