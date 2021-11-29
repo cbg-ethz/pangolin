@@ -281,6 +281,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 	if (( donotsubmit )); then
 		echo -e '\e[35;1mWill NOT submit jobs\e[0m...'
 		if (( mustrun )); then
+			echo 'submit blocked' > ${statusdir}/submit_fail
 			echo '...but there are new jobs that should be started'
 		else
 			echo '...and there is nothing to run anyway'
@@ -291,7 +292,8 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 
 		# Sanity check
 		if [[ ( -e ${statusdir}/sortsamples_fail ) && ( ${statusdir}/sortsamples_fail -nt  ${statusdir}/sortsamples_success ) ]]; then
-			echo 'error: sampleset data not successfully fetched yet' > /dev/stderr
+			echo 'data fetch error' > ${statusdir}/submit_fail
+			echo -e '\e[31;1merror: sampleset data not successfully fetched yet\e[0m' > /dev/stderr
 			exit 1
 		fi
 		if [[ ( ! -e ${statusdir}/syncopenbis_new ) || ( ( -e ${statusdir}/vpipe_started ) && ( ${statusdir}/vpipe_started -nt ${statusdir}/syncopenbis_new ) ) ]]; then
