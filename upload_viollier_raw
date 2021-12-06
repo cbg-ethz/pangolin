@@ -97,7 +97,7 @@ while read aufxx ethid rest; do
 	echo "${ethid} -> ${aufnum}"
 	[[ -d ${download}/${target}/${aufnum}/ ]] && rm -rf ${download}/${target}/${aufnum}/
 	cp --link -${verbose}rf ${sampleset}/${ethid}/ ${download}/${target}/${aufnum} || error=1
-done < ${1}
+done < <( cat ${1}; echo; )
 
 (( error )) && exit 0
 
