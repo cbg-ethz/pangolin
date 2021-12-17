@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cluster_user="${USER%%@*}"
 scriptdir="$(dirname $(which $0))"
 
 declare -A lab
@@ -76,7 +77,7 @@ callpushrsync() {
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
 		--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:'bsse-covid19-pangolin-euler'	\
@@ -100,7 +101,7 @@ callpullrsync() {
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
 		--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:"${storgrp}"	\
@@ -133,7 +134,7 @@ callpullrsync_noshorah() {
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
 		--password-file ~/rsync.pass.euler	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 		-g --chown=:"${storgrp}"	\
@@ -345,17 +346,17 @@ case "$1" in
 	;;
 	fixopenbisrights)
 		validateBatchDate "$2"
-
-		dir=( ${basedir}/${download}/${2}* )
-		if (( ${#dir[@]} > 1 )); then
-			echo "${#dir[@]} directories"
-			echo 'mode directories'
-			find "${dir[@]}" -type d -print0 | xargs -0 chmod u+rwx,g+rwXs,o-rwx
-			echo 'mode files'
-			find "${dir[@]}" -type f -print0 | xargs -0 chmod 0660
-			#echo 'group'
-			#chgrp -R "${storgrp}" "${dir[@]}"
-		fi
+		# TODO update with ACL
+		#dir=( ${basedir}/${download}/${2}* )
+		#if (( ${#dir[@]} > 1 )); then
+		#	echo "${#dir[@]} directories"
+		#	echo 'mode directories'
+		#	find "${dir[@]}" -type d -print0 | xargs -0 chmod u+rwx,g+rwXs,o-rwx
+		#	echo 'mode files'
+		#	find "${dir[@]}" -type f -print0 | xargs -0 chmod 0660
+		#	#echo 'group'
+		#	#chgrp -R "${storgrp}" "${dir[@]}"
+		#fi
 	;;
 	pushsampleset)
 		if [[ "${2}" = "--recent" ]]; then
@@ -372,7 +373,7 @@ case "$1" in
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
@@ -397,7 +398,7 @@ case "$1" in
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 			-iPzrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
@@ -417,7 +418,7 @@ case "$1" in
 		fi
 		rsync	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
@@ -437,7 +438,7 @@ case "$1" in
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:"${storgrp}"	\
@@ -472,7 +473,7 @@ case "$1" in
 		fi
 		rsync	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
@@ -492,7 +493,7 @@ case "$1" in
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${USER%%@*} -oConnectTimeout=${contimeout}"	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\

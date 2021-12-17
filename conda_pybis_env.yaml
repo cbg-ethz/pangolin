@@ -18,6 +18,7 @@ dependencies:
   - urllib3 
   - certifi 
   - chardet 
+  - pyyaml
   #- ipykernel
   # for google sheet:
   - google-api-python-client

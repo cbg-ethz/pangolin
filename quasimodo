@@ -84,7 +84,9 @@ ring_carillon() {
 		# TODO use carillon phases
 		scriptdir="$(dirname $(which $0))"
 		${scriptdir}/belfry  df
-		remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman euler.ethz.ch --"
+		cluster_user="${USER%%@*}"
+		cluster_user=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^cluster_user=).*$' server.conf)
+		remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman -l ${cluster_user} euler.ethz.ch --"
 		timeout -k 5 -s INT $shorttimeout ${remote_batman} df
 		date -R
 		return 1
