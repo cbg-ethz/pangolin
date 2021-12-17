@@ -28,7 +28,7 @@ status() {
 }
 
 force=0
-while getopts "cf:h" o; do
+while getopts "c:fh" o; do
 	case "${o}" in
 		c)	configfile=${OPTARG}
 			if [[ ! -r ${configfile} ]]; then
