@@ -19,6 +19,11 @@ argparser.add_argument('-f', '--fastqdir', metavar='DIR', required=False, defaul
 	type=str, dest='fastqdir', help="directory containing .fastq.gz files if not in 'Fastq' subdirectory")
 argparser.add_argument('-o', '--outdir', metavar='DIR', required=False, default='sampleset',
 	type=str, dest='outdir', help="output directory")
+argparser.add_argument('-m', '--mode', metavar='MODE', required=False,
+	type=str, dest='mode', help="POSIX file access mode to be passed to mkdir")
+argparser.add_argument('-L', '--linking', metavar='CPLINK', required=False, default='--link',
+	type=str, dest='link', choices=['','--link','--symbolic-link','--reflink'],
+	help="parameter to pass to `cp` for linking files instead of copying their data")
 argparser.add_argument('-b', '--batch', metavar='LAB', required=False, default=None,
 	type=str, dest='batch', help="generate batch descrition")
 argparser.add_argument('-s', '--summary', required=False,
@@ -34,9 +39,16 @@ args = argparser.parse_args()
 statsdir=args.statsdir
 fastqdir=args.fastqdir if args.fastqdir else os.path.join(statsdir, 'Fastq')
 sampleset=args.outdir
-link='--link'
+link=args.link
 append=args.append
 lab = args.batch
+
+# parse the chmod parameter
+try:
+	mkdirmode=int(args.mode, base=8) if args.mode else None
+except:
+	print(f"cannot parse <{args.mode}> as an octal chmod value. see `mkdir --help` for informations")
+	sys.exit(2)
 
 # regex for parsing and/or validating strings
 rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
@@ -115,7 +127,8 @@ print(runfolder, flowcell, date, sep='\t')
 # create sampleset directory if missing
 if not os.path.isdir(sampleset):
 	try:
-		os.mkdir(sampleset, mode=0o770)
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(sampleset,**kwmkdir)
 	except FileExistsError:
 		pass
 
@@ -128,6 +141,7 @@ sh=open(os.path.join(sampleset,'movedatafiles.sh'), 'at' if append else 'wt')
 # generic header: only for stand-alone files.
 if not append: print(r'''
 link='%(link)s'
+mode='%(mode)s' # e.g.: --mode=0770
 
 # Helper
 fail() {
@@ -148,7 +162,7 @@ X() {
 
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-''' % {'link':link,'sampleset':sampleset}, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''),'sampleset':sampleset}, file=sh)
 
 # per batch directory checks
 print(r"[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'" % {'download':fastqdir}, file=sh)
@@ -197,7 +211,7 @@ with open(os.path.join(statsdir, 'SampleSheetUsed.csv'),'rt',encoding='utf-8', n
 fastq=( %(download)s/%(sname)s*%(lglob)s_R[1-2]*%(suffix)s.fastq.gz )
 [[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(sname)s'
 (( ( ${#fastq[@]} %% %(ends)u ) != 0 )) && fail 'Number of fastq files not multiple of %(ends)u' "${#fastq[@]} : ${fastq[*]}"
-mkdir --mode=0770 -p '%(sampleset)s/%(fname)s/%(batch)s/raw_data'
+mkdir ${mode} -p "%(sampleset)s/"{,"%(fname)s/"{,"%(batch)s/"{,raw_data}}}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
 	[[ $file =~ _(R[[:digit:]])((_.*)?[.]fastq[.]gz)$ ]] && destname="${filename//${BASH_REMATCH[2]}/.fastq.gz}"

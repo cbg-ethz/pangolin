@@ -18,27 +18,47 @@ argparser.add_argument('-q', '--qcdir', metavar='DIR', required=False, default=N
 	type=str, dest='qcdir', help="if set, import FastQC's _fastqc.html files from there")
 argparser.add_argument('-o', '--outdir', metavar='DIR', required=False, default='sampleset',
 	type=str, dest='outdir', help="output directory")
+argparser.add_argument('-m', '--mode', metavar='MODE', required=False,
+	type=str, dest='mode', help="POSIX file access mode to be passed to mkdir")
+argparser.add_argument('-L', '--linking', metavar='CPLINK', required=False, default='--link',
+	type=str, dest='link', choices=['','--link','--symbolic-link','--reflink'],
+	help="parameter to pass to `cp` for linking files instead of copying their data")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
 argparser.add_argument('-a', '--append', required=False,
 	action='store_true', dest='append', help="Append to the end of movedatafiles.sh, instead of overwritting\n(use when calling from an external combiner wrapper)")
 argparser.add_argument('-n', '--noempty', required=False,
 	action='store_true', dest='noempty', help="skip fastq.gz files with bad yield (0 reads)")
+argparser.add_argument('-p', '--patchmap', metavar='TSV', required=False, default=None,
+	type=str, dest='patchtsv', help="patchmap file to rename samples")
 args = argparser.parse_args()
 
 statsdir=args.statsdir
 fastqdir=args.fastqdir if args.fastqdir else statsdir
 qcdir=args.qcdir
 sampleset=args.outdir
-link='--link'
+link=args.link
 append=args.append
 noempty=args.noempty
 
 statsjson=os.path.join(statsdir, 'Stats/Stats.json')
 
+# parse the chmod parameter
+try:
+	mkdirmode=int(args.mode, base=8) if args.mode else None
+except:
+	print(f"cannot parse <{args.mode}> as an octal chmod value. see `mkdir --help` for informations")
+	sys.exit(2)
+
 # regex for parsing and/or validating strings
 rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
 rxcell=re.compile('(?:0+-)?(?P<cell>\w+(?:-\d+)?)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX' or 'BPA73113-1417'
+
+# patch file exist ?
+patchmap = { }
+if args.patchtsv:
+	with open(args.patchtsv,'rt',encoding='utf-8', newline='') as pf:
+		patchmap = { old:new for (old,new,*r) in csv.reader(pf, delimiter="\t") }
 
 
 with open(statsjson, 'rt') as f:
@@ -88,7 +108,8 @@ for l in stats['ReadInfosForLanes']: # lane
 # create sampleset directory if missing
 if not os.path.isdir(sampleset):
 	try:
-		os.mkdir(sampleset, mode=0o770)
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(sampleset,**kwmkdir)
 	except FileExistsError:
 		pass
 
@@ -101,6 +122,7 @@ sh=open(os.path.join(sampleset,'movedatafiles.sh'), 'at' if append else 'wt')
 # generic header: only for stand-alone files.
 if not append: print(r'''
 link='%(link)s'
+mode='%(mode)s' # e.g.: --mode=0770
 
 # Helper
 fail() {
@@ -121,7 +143,7 @@ X() {
 
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-''' % {'link':link,'sampleset':sampleset}, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''),'sampleset':sampleset}, file=sh)
 
 # per batch directory checks
 print(r"[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'" % {'download':fastqdir}, file=sh)
@@ -137,6 +159,7 @@ for l in stats['ConversionResults']: # lane
 
 	for s in l['DemuxResults']: # sample in lane
 		samname=s['SampleName']
+		fixedname=patchmap[samname] if samname in patchmap else samname
 
 		# filter out fastq files with zero reads
 		if noempty and s['NumberReads'] == 0:
@@ -145,29 +168,29 @@ for l in stats['ConversionResults']: # lane
 
 		# info
 		if not args.summary:
-			print(samname, f"{'paired' if ends > 1 else 'single'}-end", rlen, sep='\t')
+			print(fixedname, f"{'paired' if ends > 1 else 'single'}-end", rlen, sep='\t')
 		# output files
 		if tsv:
-			print(samname, batch, rlen, sep='\t', file=tsv)
+			print(fixedname, batch, rlen, sep='\t', file=tsv)
 		if sh:
-			subst={'download':fastqdir,'sampleset':sampleset,'sname':samname,'ends':ends,'batch':batch,'suffix':''}
+			subst={'download':fastqdir,'sampleset':sampleset,'sname':samname,'fname':fixedname,'ends':ends,'batch':batch,'suffix':''}
 			# 'midfix': _S*_L%(lane)03u
 			# 'suffix': _001_MM_1 mm
 			print(r'''
 fastq=( %(download)s/%(sname)s*_R[1-2]*%(suffix)s.fastq.gz )
 [[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(sname)s'
 (( ${#fastq[@]} != %(ends)u )) && fail 'Number of fastq files not %(ends)u' "${#fastq[@]} : ${fastq[*]}"
-mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
+mkdir ${mode} -p "%(sampleset)s/"{,"%(fname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
 	[[ $file =~ _(R[[:digit:]])((_.*)?[.]fastq[.]gz)$ ]] && destname="${filename//${BASH_REMATCH[2]}/.fastq.gz}"
-	cp -v ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
+	cp -v ${link} "${file}" "%(sampleset)s/%(fname)s/%(batch)s/raw_data/${destname}"||X
 ''' % subst, file=sh)
-		if qcdir:
-			subst['fastqc']=qcdir
-			print(r'''
+			if qcdir:
+				subst['fastqc']=qcdir
+				print(r'''
 	fqcname="${filename//%(suffix)s.fastq.gz/_fastqc.html}"
-	cp -v ${link} "%(fastqc)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
+	cp -v ${link} "%(fastqc)s/${fqcname}" "%(sampleset)s/%(fname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 ''' % subst, file=sh)
 			print('done', file=sh)
 

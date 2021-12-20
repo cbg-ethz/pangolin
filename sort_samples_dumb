@@ -21,7 +21,7 @@ info() {
 	[[ -n "$2" ]] && echo "$2" 1>&2
 }
 
-usage() { echo "Usage: $0 -f <DIR> -b <BATCH> [-l <LEN>] [-L {''|--link|--reflink}] -o <DIR>
+usage() { echo "Usage: $0 -f <DIR> -b <BATCH> [-l <LEN>] [-L {''|--link|--symbolic-link|--reflink}] -o <DIR> -m <MODE>
 	-f : directory containing .fastq.gz files
 	-b : batch name to use for 2nd level (e.g.: date)
 	-l : read lenght (default: autodetect)
@@ -31,7 +31,8 @@ usage() { echo "Usage: $0 -f <DIR> -b <BATCH> [-l <LEN>] [-L {''|--link|--reflin
 	-D : sample have duplicates (e.g.: across lanes)
 	-p : prefix to prepend to fastq files (e.g.: for fusing runs)
 	-s : suffix to append to fastq files (e.g.: for fusing runs)
-	-o : output directory" 1>&2; exit $1; }
+	-o : output directory
+	-m : POSIX mode parameter to pass to mkdir (e.g.: 0770)" 1>&2; exit $1; }
 # TODO support FastQC files
 
 link=--link
@@ -41,7 +42,8 @@ prefix=''
 suffix=''
 quiet=0
 duplicates=0
-while getopts "f:b:Dl:L:p:s:o:t:Tqh" o; do
+mode=
+while getopts "f:b:Dl:L:p:s:o:m:t:Tqh" o; do
 	case "${o}" in
 		f)	fastq_dir="${OPTARG}"
 			l=( ${fastq_dir} )
@@ -55,11 +57,14 @@ while getopts "f:b:Dl:L:p:s:o:t:Tqh" o; do
 			[[ $read_len =~ ^[[:digit:]]+$ ]]	|| fail  "Non-digit characters <${read_len//[[:digit:]]/}> in <${read_len}>" 'Please only use numbers for read lean'
 			;;
 		L)	link="${OPTARG}"
-			[[ -z "${OPTARG}" || "${OPTARG}" == '--link' || "${OPTARG}" == '--reflink' ]]	|| fail "Invalid link parameter <${OPTARG}>"
+			[[ -z "${OPTARG}" || "${OPTARG}" =~ ^(--link|--symbolic-link|--reflink)$ ]]	|| fail "Invalid link parameter <${OPTARG}>"
 			;;
 		p)	prefix="${OPTARG}"	;;
 		s)	suffix="${OPTARG}"	;;
 		o)	out_dir="${OPTARG}"	;;
+		m)	mode="${OPTARG}"
+			[[ $mode =~ ^[0-7]{,4}$ ]]	|| fail "Invalid characters <${mode//[0-7]/}> in <${mode}>" 'mode should be an octal chmod value, see `mkdir --help` for informations'
+			;;
 		t)	tsv="${OPTARG}"	;;
 		T)	truncate=0	;;
 		q)	quiet=1	;;
@@ -133,7 +138,7 @@ else
 fi
 
 # files
-mkdir -m 0770 -p "${out_dir}/" || fail "cannot create output directory <${out_dir}>"
+mkdir -p ${mode:+-m ${mode}} "${out_dir}/" || fail "cannot create output directory <${out_dir}>"
 if (( truncate )); then
 	echo -n '' > "${tsv}"
 fi
@@ -193,7 +198,7 @@ while read -d $'\0' f; do
 		(( numsam++ ))
 	fi
 
-	mkdir -m 0770 -p "${out_dir}/${samname}/${batch_name}/"{raw_data,extracted_data}
+	mkdir -p ${mode:+-m ${mode}} "${out_dir}/"{,"${samname}/"{,"${batch_name}/"{,raw_data,extracted_data}}}
 	cp ${link} "${f}" "${out_dir}/${samname}/${batch_name}/raw_data/${prefix}${rawname}${suffix}_${read}.${ext}"
 # scanning with find
 done < <(find ${bsdextregex} ${fastq_dir} -type f ${gnuextregex} -iregex ".*${rxextentsion}" -print0)

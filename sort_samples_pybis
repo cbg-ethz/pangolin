@@ -47,6 +47,7 @@ basedir={os.getcwd()}
 sampleset=sampleset
 download=openbis-downloads
 link=--link
+mode=
 [_]
 """ + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
 
@@ -73,6 +74,14 @@ linking instead of copying ?
  --hardlink for most unix-like filesystems
 '''
 
+# parse the chmod parameter
+try:
+	cf_mode=config['_']['mode'].strip("\"'")
+	mkdirmode=int(cf_mode, base=8) if cf_mode else None
+except:
+	print(f"cannot parse <{config['_']['mode']}> as an octal chmod value. see `mkdir --help` for informations")
+	sys.exit(2)
+
 # Hardcoded tables
 suffix={'ONE':'_MM_1','NONE':''}
 
@@ -96,7 +105,8 @@ if args.recent:
 # create sampleset directory if missing
 if not os.path.isdir(os.path.join(basedir,sampleset)):
 	try:
-		os.mkdir(os.path.join(basedir,sampleset), mode=0o770)
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(os.path.join(basedir,sampleset),**kwmkdir)
 	except FileExistsError:
 		pass
 
@@ -117,6 +127,7 @@ atexit.register(o.logout)
 sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
 print(r'''
 link='%(link)s'
+mode='%(mode)s' # e.g.: --mode=0770
 
 # Helper
 fail() {
@@ -140,7 +151,7 @@ cd %(basedir)s
 # sanity checks
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-''' % {'link':link,'basedir':basedir,'download':download,'sampleset':sampleset}, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'basedir':basedir,'download':download,'sampleset':sampleset}, file=sh)
 
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
@@ -321,7 +332,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L%(lane)03u_R[1-2]_*%(mm)s.fastq.gz )
 [[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
 (( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[*]}"
-mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
+mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
 	[[ $file =~ _L%(lane)03u_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"

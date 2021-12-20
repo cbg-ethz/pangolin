@@ -48,6 +48,7 @@ basedir={os.getcwd()}
 sampleset=sampleset
 download=bfabric-downloads
 link=--link
+mode=
 badlist=
 forcelist=
 nofuselist=
@@ -82,6 +83,14 @@ nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_'
 '''folders to never merge'''
 fusedays=int(config['_']['fusedays'].strip("\"'"))
 '''delay after which orders aren't considered for merging anymore'''
+
+# parse the chmod parameter
+try:
+	cf_mode=config['_']['mode'].strip("\"'")
+	mkdirmode=int(cf_mode, base=8) if cf_mode else None
+except:
+	print(f"cannot parse <{config['_']['mode']}> as an octal chmod value. see `mkdir --help` for informations")
+	sys.exit(2)
 
 # glob all projects
 if re.search('/p\d+/?$', expname):
@@ -458,7 +467,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 # create sampleset directory if missing
 if not os.path.isdir(os.path.join(basedir,sampleset)):
 	try:
-		os.mkdir(os.path.join(basedir,sampleset), mode=0o770)
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(os.path.join(basedir,sampleset),**kwmkdir)
 	except FileExistsError:
 		pass
 
@@ -469,6 +479,7 @@ sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
 # generic header: only for stand-alone files.
 print(r'''
 link='%(link)s'
+mode='%(mode)s' # e.g.: --mode=0770
 
 # Helper
 fail() {
@@ -490,7 +501,7 @@ X() {
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
-''' % {'link':link,'sampleset':sampleset,'download':download}, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
 
 # helper function to handle items that can be either single string or list (or empty)
 listify = lambda x: x if type(x) is list else [] if x is None else [x]
@@ -695,7 +706,7 @@ for b in batches:
 
 			# move script
 			print(r'''
-mkdir --mode=0770 -p "%(sampleset)s/%(sname)s/%(batch)s/"{raw_data,extracted_data}
+mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
 cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
 			if ends==2:
 				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
