@@ -11,12 +11,18 @@ if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
 fi
 
+if [[ ! $mode =~ ^[0-7]{,4}$ ]]; then
+	echo "Invalid characters <${mode//[0-7]/}> in <${mode}>"
+	echo 'mode should be an octal chmod value, see `mkdir --help` for informations'
+	mode=
+fi
+
 cd ${basedir}
 
 umask 0002
 
 statusdir="${basedir}/status"
-mkdir -m 0770 -p ${statusdir}
+mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 lockfile=${statusdir}/carillon_lock
 
 remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman -l ${cluster_user} euler.ethz.ch --"

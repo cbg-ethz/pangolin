@@ -65,7 +65,7 @@ ring_carillon() {
 			killall -9 rsync
 		fi
 		# drop the cache (in case it help getting rsync processes unstuck
-		drop_cache 'lingering rsync'
+		#drop_cache 'lingering rsync'
 	else
 		nfsmsg="$(dmesg -Lk | gawk -vT=$(($(date '+%s' --date="-${runtimeout} seconds") - $(date '+%s' --date="$(uptime --since)"))) '(substr($1,2)+0)>=(T+0) && $0~/nfs:.*not responding/')"
 		if [[ -n "$nfsmsg" ]]; then
@@ -73,7 +73,7 @@ ring_carillon() {
 			echo "$nfsmsg"
 
 			# drop the cache (in case of non-responding server)
-			drop_cache "nfs not responding since ${runtimeout} sec ago"
+			#drop_cache "nfs not responding since ${runtimeout} sec ago"
 		fi
 	fi
 	# check if inode limitation "No spoace left on device" is still going on

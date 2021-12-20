@@ -22,12 +22,19 @@ if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
 fi
 
+if [[ ! $mode =~ ^[0-7]{,4}$ ]]; then
+	echo "Invalid characters <${mode//[0-7]/}> in <${mode}>"
+	echo 'mode should be an octal chmod value, see `mkdir --help` for informations'
+	mode=
+fi
+
+
 cd ${basedir}
 
 umask 0002
 
 statusdir="${basedir}/status"
-mkdir -m 0770 -p ${statusdir}
+mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 
 baseconda=$HOME/
 timeoutforeground=
@@ -103,8 +110,6 @@ callpullrsync() {
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
-		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
-		-g --chown=:"${storgrp}"	\
 		--link-dest=${basedir}/${sampleset}/	\
 		"${arglist[@]}"	\
 		--exclude='raw_data/*_R[12].fastq.gz'	\
@@ -136,8 +141,6 @@ callpullrsync_noshorah() {
 		--password-file ~/rsync.pass.euler	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
-		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
-		-g --chown=:"${storgrp}"	\
 		--link-dest=${basedir}/${sampleset}/	\
 		"${arglist[@]}"	\
 		--exclude='raw_data/*_R[12].fastq.gz'	\
@@ -346,7 +349,8 @@ case "$1" in
 	;;
 	fixopenbisrights)
 		validateBatchDate "$2"
-		# TODO update with ACL
+		# NOTE ACLs should autopropagate
+
 		#dir=( ${basedir}/${download}/${2}* )
 		#if (( ${#dir[@]} > 1 )); then
 		#	echo "${#dir[@]} directories"
@@ -420,8 +424,8 @@ case "$1" in
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
-			-g --chown=:'bsse-covid19-pangolin-euler'	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
 			"${sheets[@]}"	\
 			/tmp/belfrysheets/
 		if [[ "${2}" = "--recent" ]]; then
@@ -440,8 +444,6 @@ case "$1" in
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
-			-g --chown=:"${storgrp}"	\
 			--relative	\
 			--exclude='*.out.log'	\
 			--exclude='*.err.log'	\
@@ -475,8 +477,8 @@ case "$1" in
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
-			-g --chown=:'bsse-covid19-pangolin-euler'	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
 			"${sheets[@]}"	\
 			/tmp/belfrysheets/
 		if [[ "${2}" = "--recent" ]]; then
@@ -495,8 +497,6 @@ case "$1" in
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
 			--relative	\
 			--exclude='*.out.log'	\
 			--exclude='*.err.log'	\
@@ -542,12 +542,12 @@ case "$1" in
 
 		for f in ${sampleset}/*/${2}; do 
 			garbage=$(dirname "${f//${sampleset}/garbage}")
-			mkdir --mode=0770 -p "${garbage}"
+			mkdir ${mode:+--mode=${mode}} -p "${garbage}"
 			mv -v "${f%/}" "${garbage}/"
 		done
 		for f in ${working}/samples/*/${2}/; do 
 			garbage="${f//${working}\/samples/garbage}"
-			mkdir --mode=0770 -p "${garbage%/}/"{raw_data,extracted_data}/
+			mkdir ${mode:+--mode=${mode}} -p "${garbage%/}/"{raw_data,extracted_data}/
 			mv -vf "${f%/}/raw_data/"* "${garbage%/}/raw_data/"
 			rm "${f%/}/raw_data/"*.fa*
 			rmdir "${f%/}/raw_data/"
