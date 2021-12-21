@@ -101,7 +101,7 @@ SH_BAR
 			echo "Patchmap found for $(basename ${d})"
 			patchmap="--patchmap=${d%%/}.patchmap.tsv"
 		fi
-		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} --forcelanes --batch ${lab} --append
+		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} ${mode:+--mode=${mode}} --forcelanes --batch ${lab} --append
 	else
 		# ignore mal formed folders
 		echo "Can't parse $(basename ${d})"
