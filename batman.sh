@@ -43,10 +43,22 @@ case "$1" in
 		~/log/rotate
 	;;
 	addsamples)
-		mkdir -p --mode=2770 ${clusterdir}/${working}/samples/
-		cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-		cat ${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > ${clusterdir}/${working}/samples.recent.tsv
-		sort -u ${clusterdir}/${sampleset}/samples.*.tsv > ${clusterdir}/${working}/samples.tsv
+		lst="${clusterdir}/${working}/samples.tsv"
+		case "$2" in
+			--recent)
+				lst="${clusterdir}/${working}/samples.recent.tsv"
+				echo "syncing recent: ${lastmonth}, ${thismonth}"
+			;;
+			*)
+				echo "Unkown parameter ${2}" > /dev/stderr
+				exit 2
+			;;
+		esac
+		mkdir -p --mode=2770 "${clusterdir}/${working}/samples/"
+		#cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
+		cat ${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir}/${working}/samples.recent.tsv"
+		sort -u ${clusterdir}/${sampleset}/samples.*.tsv > "${clusterdir}/${working}/samples.tsv"
+		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir}/${sampleset}/{}/" "${clusterdir}/${working}/samples/"
 	;;
 	vpipe)
 		declare -A job
@@ -67,10 +79,10 @@ case "$1" in
 					validateTags ';' "$2"
 					tag="${2%;}"
 				;;
-# 				--recent)
+ 				--recent)
 #					# TODO switch between full cohort and only recent
-# 					recent="--recent=${lastmonth}"
-# 				;;
+# 					#recent="..."
+ 				;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
 					exit 2
