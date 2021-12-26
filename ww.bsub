@@ -11,6 +11,9 @@
 #BSUB -W 4:00
 
 BATCH=
+PROTO=v4
+
+umask 0007
 
 #
 # Input validator
@@ -23,6 +26,24 @@ validateBatchName() {
 		exit 1;
 	fi
 }
+
+#
+# Proto validate + specific files
+#
+case "${PROTO}" in
+	v3)	bedfile="cojac/nCoV-2019.insert.${PROTO^^}.bed"	;;
+	v4)	bedfile="cojac/SARS-CoV-2.insert.${PROTO^^}.txt"	;;
+	*)
+		echo "bad proto ${1}"
+		exit 1;
+	;;
+esac
+allprototsv=( working/samples.wastewateronly.{v3,v4}.tsv )
+if [[ ! -r "${bedfile}" ]]; then
+	echo "missing bedfile ${bedfile}"
+	exit 1;
+fi
+
 
 
 . /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
@@ -37,16 +58,17 @@ if [[ -n "${BATCH}" ]]; then
 	fi
 
 	# 'lastweek' backup
-	if grep -qF "${BATCH}" working/ww-cooc.yaml working/samples.wastewateronly.tsv; then 
+	if grep -qF "${BATCH}" working/ww-cooc${PROTO:+.${PROTO}}.yaml working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv; then
 		echo "using:"
-		ls -l working/ww-cooc{,.lastweek}.yaml working/samples.wastewateronly{,.lastweek,.thisweek}.tsv 
+		ls -l working/ww-cooc${PROTO:+.${PROTO}}{,.lastweek}.yaml working/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek,.thisweek}.tsv
 	else 
 		echo "backing up lastweek:"
-		cp -v working/samples.wastewateronly{,.lastweek}.tsv
-		cp -v working/ww-cooc{,.lastweek}.yaml
+		cp -v working/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek}.tsv
+		cp -v working/ww-cooc${PROTO:+.${PROTO}}{,.lastweek}.yaml
 
 		
-		(grep -vP '^(Y\d{2,}|NC|\d{6,})' "sampleset/samples.${BATCH}.tsv" | tee working/samples.wastewateronly.thisweek.tsv ; cat working/samples.wastewateronly.lastweek.tsv) > working/samples.wastewateronly.tsv
+		(grep -vP '^(Y\d{2,}|NC|\d{6,})' "sampleset/samples.${BATCH}.tsv" | tee working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv ; cat working/samples.wastewateronly${PROTO:+.${PROTO}}.lastweek.tsv) > working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv
+		cat "${allprototsv[@]}" > working/samples.wastewateronly.tsv
 	fi
 
 	#grep -hv 'KLZHCoV' sampleset/samples.{20210612_JN9YY,20210604_JN8TR,20210528_JN9WM}.tsv > ${SAM}
@@ -54,11 +76,11 @@ if [[ -n "${BATCH}" ]]; then
 	#exec cojac/cooc-mutbamscan -s ${SAM} -p working/samples -m cojac/voc/ -b cojac/nCoV-2019.insert.bed -/ -j ww-sub.json -y ww-sub.yaml
 
 	# run on latest batch only
-	mkdir -p working/ww-cooc/
-	cojac/cooc-mutbamscan -s working/samples.wastewateronly.thisweek.tsv -p working/samples -m cojac/voc/ -b cojac/nCoV-2019.insert.V3.bed -y "working/ww-cooc/ww-cooc.${BATCH}.yaml" -/	&&
-	cat "working/ww-cooc/ww-cooc.${BATCH}.yaml" working/ww-cooc.lastweek.yaml > working/ww-cooc.yaml
+	mkdir -p working/ww-cooc${PROTO:+-${PROTO}}/
+	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv" -p working/samples -m cojac/voc/ -b "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" -/	&&
+	cat "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" "working/ww-cooc${PROTO:+.${PROTO}}.lastweek.yaml" > "working/ww-cooc${PROTO:+.${PROTO}}.yaml"
 else
 	# run on whole wastewater collection
-	cojac/cooc-mutbamscan -s working/samples.wastewateronly.tsv -p working/samples -m cojac/voc/ -b cojac/nCoV-2019.insert.V3.bed -j working/ww-cooc.json -y working/ww-cooc.yaml -/
+	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv" -p working/samples -m cojac/voc/ -b "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -/
 fi &&
-exec cojac/cooc-tabmut -y working/ww-cooc.yaml -o working/ww-cooc.csv -m -l -/
+exec cojac/cooc-tabmut -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -o "working/ww-cooc${PROTO:+.${PROTO}}.csv" -m -l -/

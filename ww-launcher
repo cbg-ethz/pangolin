@@ -1,0 +1,72 @@
+#!/bin/bash
+
+#BATCH=
+: ${PROTO:=v4}
+
+umask 0007
+
+
+
+#
+# Input validator
+#
+validateBatchName() {
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]-]{4,})$ ]]; then
+		return;
+	else
+		echo "bad batchname ${1}"
+		exit 1;
+	fi
+}
+
+
+
+usage() { echo "Usage: $0 [-b <BATCH>] [ -p <PROTO> ]" 1>&2; exit $1; }
+while getopts "b:p:h" o; do
+	case "${o}" in
+		b)	BATCH=${OPTARG}
+			validateBatchName "${BATCH}"
+			;;
+		p)	PROTO="${OPTARG}"	;;
+		h)	usage 0	;;
+		*)	usage 1	;;
+	esac
+done
+shift $((OPTIND-1))
+
+
+#
+# Proto validate + specific files
+#
+case "${PROTO}" in
+	v3)	
+		:
+	;;
+	v4)	
+		:
+	;;
+	*)
+		echo "bad proto ${1}"
+		exit 1;
+	;;
+esac
+
+if [[ -z "${BATCH}" ]]; then
+	echo "Full rebuild currently disabled"
+	exit 1
+elif [[ ! -e "sampleset/samples.${BATCH}.tsv" ]]; then
+	# check existing
+	echo "Cannot find batch ${BATCH}" >&2
+	exit 1
+fi
+
+
+
+#
+# submit to LSF
+#
+
+echo "Submitting for batch ${BATCH} and proto ${PROTO}"
+sed -r 's@^BATCH=@\0"'${BATCH}'"@;s@^(PROTO=).*$@\1"'${PROTO}'"@' ww.bsub | exec bsub
+
+# TODO launcher for rebuild
