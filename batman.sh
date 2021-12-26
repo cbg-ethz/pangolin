@@ -96,17 +96,17 @@ case "$1" in
 		if [[ "$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.bsub | bsub -J "COVID-vpipe-<${tag}>-cons" ${hold})" =~ ${RXJOB} ]]; then
 			job['seq']=${BASH_REMATCH[1]}
 			# schedule a gatherqa no mater what happens
-			[[ "$(sed "s/@TAG@/<${tag}>/g" gatherqa | bsub -J "COVID-vpipe-<${tag}>-qa" ${hold} -w "ended(${job['seq']})")" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
+			[[ "$(sed "s/@TAG@/<${tag}>/g" qa-launcher | bsub -J "COVID-vpipe-<${tag}>-qa" ${hold} -w "ended(${job['seq']})")" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
 			# if no fail schedule a full job with snv
 			if (( shorah )) && [[ "$(bsub ${hold} -w "done(${job['seq']})" -ti < vpipe.bsub)"  =~ ${RXJOB} ]]; then
 				job['snv']=${BASH_REMATCH[1]}
 				# schedule a gatherqa no matter what happens to snv
-				[[ "$(bsub ${hold} -w "done(${job['seq']})&&ended(${job['snv']})"  < gatherqa)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
+				[[ "$(bsub ${hold} -w "done(${job['seq']})&&ended(${job['snv']})"  < qa-launcher)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
 				# schedule a hugemem job if snvjob failed
 				if [[ "$(bsub ${hold} -w "done(${job['seq']})&&exit(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
 					job['hugemem']=${BASH_REMATCH[1]}
 					# schedule a qa afterward
-					[[ "$(bsub -w "done(${job['seq']})&&exit(${job['snv']})&&ended(${job['hugemem']})" -ti  < gatherqa)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
+					[[ "$(bsub -w "done(${job['seq']})&&exit(${job['snv']})&&ended(${job['hugemem']})" -ti  < qa-launcher)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
 				fi
 			fi
 		fi >&2

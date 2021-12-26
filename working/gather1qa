@@ -1,16 +1,40 @@
 #!/bin/bash
 #BSUB -L /bin/bash
 #BSUB -J COVID-qa
-#BSUB -u "ivan.topolsky@bsse.ethz.ch singer@nexus.ethz.ch carrara@nexus.ethz.ch louis.duplessis@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch" # chaoran.chen@bsse.ethz.ch
-#BSUB -N
+#BSUB -u "ivan.topolsky@bsse.ethz.ch" # singer@nexus.ethz.ch carrara@nexus.ethz.ch louis.duplessis@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch" # chaoran.chen@bsse.ethz.ch
+##### -N
 #BSUB -n 1
 #BSUB -M 4096
 #BSUB -R rusage[mem=4096]
 #BSUB -W 4:00
 
-### 	batches	@TAG@
+batches=()
 
 umask 0007
+
+if (( $LSB_JOBINDEX )); then
+	echo "JobIdx $LSB_JOBINDEX"
+
+	batch=${batches[$LSB_JOBINDEX]}
+
+	# check if samplename is ok
+	if [[ -z "${batch}" ]]; then
+		echo "wrong job index ${LSB_JOBINDEX}"
+		echo "Max is ${#batches[@]}"
+		exit 1;
+	fi
+	input_tsv="${TMPDIR:+$TMPDIR/}samples.qa-${batch}.tsv"
+	output_csv="qa/qa.${batch}.csv"
+	echo "batch: ${batch}"
+	gawk -v b="${batch}" '$2==b' < samples.tsv > ${input_tsv}
+	echo "tsv: ${input_tsv}"
+	wc -l ${input_tsv}
+else
+	echo "to run with all, use:"
+	echo " - bsub -J \"COVID-qa[1-${#batches[@]}]\" < gather1qa"
+	exit 1
+fi
+
 
 #. ../miniconda3/bin/activate 'qa'
 # channels:
@@ -419,8 +443,8 @@ while read subject sublvl len; do
 		printf '%s,' ${qadata[$k]}
 	done
 	echo
-done < samples.tsv 
-} > qa.csv
+done < "${input_tsv}"
+} > "${output_csv}"
 if (( return_fail )); then
 	fail "Critical errors have been found. Output isn't consistent"
 fi

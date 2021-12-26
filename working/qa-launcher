@@ -1,0 +1,76 @@
+#!/bin/bash
+
+umask 0007
+
+
+
+#
+# Input validator
+#
+validateBatchName() {
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]-]{4,})$ ]]; then
+		return;
+	else
+		echo "bad batchname ${1}"
+		exit 1;
+	fi
+}
+
+RXJOB='Job <([[:digit:]]+)> is submitted'
+# Generic job.
+# Job <129052039> is submitted to queue <light.5d>.
+
+
+usage() { echo "Usage: $0 [ -r | -a | <BATCHES>... ]" 1>&2; exit $1; }
+while getopts "rah" o; do
+	case "${o}" in
+		r)	batches=( $(cut -f 2 samples.recent.tsv	| sort -r -u ) )	;;
+		a)	batches=( $(cut -f 2 samples.tsv	| sort -r -u ) )	;;
+		h)	usage 0	;;
+		*)	usage 1	;;
+	esac
+done
+shift $((OPTIND-1))
+
+batches+=( "$@" )
+# TODO deduplicate
+
+if (( ${#batches[@]} == 0 )); then
+	# default: all
+	echo "Default to recent  batches"
+	batches=( $(cut -f 2 samples.recent.tsv	| sort -r -u ) )
+fi
+
+# Validate everything
+for b in "${batches[@]}"; do
+	validateBatchName "${b}"
+done
+
+echo "Total batches: ${#batches[*]}" 
+
+
+#
+# submit to LSF
+#
+
+if [[ "$(sed -r 's@^(batches=).*$@\1( "" '"$(printf '"%s" ' "${batches[@]}" )"')@' gather1qa | bsub -J "COVID-qa[1-${#batches[@]}]" | tee /dev/stderr)" =~ ${RXJOB} ]]; then
+	job="${BASH_REMATCH[1]}"
+else
+	echo "Failed job submission"
+fi
+
+# schedule a assembly no mater what happens
+echo "Waiting for ${job} to finish..."
+bwait -w "ended(${job})"
+
+echo "Assembling..."
+( 
+	for b in "${batches[@]}"; do
+		csv="qa/qa.${b}.csv"
+		if [[ -r "${csv}" ]] && head -n 1 "${csv}"; then
+			break;
+		fi
+	done
+	cut -f 2 samples.tsv | sort -r -u | xargs -r -i tail -n '+2' 'qa/qa.{}.csv'
+) > qa.csv
+echo "Done."
