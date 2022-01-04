@@ -49,13 +49,13 @@ link='--link'
 
 # Helper
 fail() {
-	printf '\e[31;1mArgh: %%s\e[0m\n'	"\$1"	1>&2
+	printf '\e[31;1mArgh: %s\e[0m\n'	"\$1"	1>&2
 	[[ -n "\$2" ]] && echo "\$2" 1>&2
 	exit 1
 }
 
 warn() {
-	printf '\e[33;1mArgh: %%s\e[0m\n'	"\$1"	1>&2
+	printf '\e[33;1mArgh: %s\e[0m\n'	"\$1"	1>&2
 	[[ -n "\$2" ]] && echo "\$2" 1>&2
 }
 
