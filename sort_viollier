@@ -96,6 +96,11 @@ SH_BAR
 	fi
 	# folder ?
 	if [[ $(basename ${d}) =~ ${rx_folder} ]]; then
+		if [[ -n "$(find "${d}" -type f -name '*.filepart' | tee /dev/stderr)" ]]; then
+			echo -e "\e[33;1mIncompletely downloaded files in $(basename ${d})\e[0m skipping..."
+			touch status/syncviollier_failed
+			continue
+		fi
 		patch=
 		if [[ -e "${d%%/}.patchmap.tsv" ]]; then
 			echo "Patchmap found for $(basename ${d})"

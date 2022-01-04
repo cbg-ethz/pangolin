@@ -254,6 +254,10 @@ case "$1" in
 			param+=( 'raw_sequences' )
 			echo "syncing all: ${param[*]}"
 		fi
+		# HACK delete previous partial downloads
+		. <(grep '^download=' viollier.conf)
+		echo "Removing partial files from:" "${param[@]/#/${download}/}"
+		find "${param[@]/#/${download}/}" -type f -name '*.filepart' -print0 | xargs -r -0 rm -v
 		syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp -c viollier.conf "${param[@]}"|tee /dev/stderr)"
 		checksyncoutput "viollier" "$syncoutput"
 		conda deactivate
