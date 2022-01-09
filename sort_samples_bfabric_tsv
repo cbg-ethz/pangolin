@@ -391,8 +391,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 					print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: orders2run {';'.join(order2runs[order].keys())} overridden by nofuselist\x1b[0m")
 				else:
 					print(name, f"\x1b[36;1m is dupe of order {order} (reason: as specified in order2runs {';'.join(order2runs[order].keys())})\x1b[0m")
-					batches[order]['dupe']=True
-					b['appendto']=order
+					#batches[order]['dupe']=True
+					#b['appendto']=order
 				if len(multiplates) > 0:
 					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
 				else:
@@ -401,8 +401,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			elif name in fuselist:
 				# configuration forces it anyway
 				print(name, f"\x1b[36;1m is dupe of order {order} (orders2run {';'.join(order2runs[order].keys())} overridden by fuse list)\x1b[0m")
-				batches[order]['dupe']=True
-				b['appendto']=order
+				#batches[order]['dupe']=True
+				#b['appendto']=order
 				if len(multiplates) > 0:
 					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
 				else:
@@ -419,12 +419,12 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: in nofuselist\x1b[0m")
 		elif days <= fusedays:
 			print(name, f"\x1b[36;1m is dupe of order {order} (reason: {days} days)\x1b[0m")
-			batches[order]['dupe']=True
-			b['appendto']=order
+			#batches[order]['dupe']=True
+			#b['appendto']=order
 		elif name in fuselist:
 			print(name, f"\x1b[36;1m is dupe of order {order} (reason: in fuse list)\x1b[0m")
-			batches[order]['dupe']=True
-			b['appendto']=order
+			#batches[order]['dupe']=True
+			#b['appendto']=order
 		else:
 			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: {days} days appart is more than {fusedays}\x1b[0m")
 	else:
@@ -544,7 +544,7 @@ for b in batches:
 		# TODO check no shared plates
 		if order in order2runs and len(order2runs[order]) >= 2 and name not in nofuselist:
 			print(b, f"\x1b[31;1m should have a dupe according to orders2run {';'.join(order2runs[order].keys())} but it is missing - dropping folder!\x1b[0m")
-			continue
+			#continue
 		batch=f"{rundate}_{flowcell}"
 
 	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
