@@ -93,11 +93,11 @@ while read aufxx ethid rest; do
 		continue
 	fi
 
+	[[ -d ${download}/${target}/${aufnum}/ ]] && rm -rf ${download}/${target}/${aufnum}/
 	#new loop
 	for singleethid in ${ethid}
 	do
 		echo "${singleethid} -> ${aufnum}"
-		[[ -d ${download}/${target}/${aufnum}/ ]] && rm -rf ${download}/${target}/${aufnum}/
 		cp --link -${verbose}rf ${sampleset}/${singleethid}/ ${download}/${target}/${aufnum} || error=1
 	done
 done < <( cat ${1}; echo; )
