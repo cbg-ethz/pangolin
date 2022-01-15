@@ -29,6 +29,8 @@ argparser.add_argument('-c', '--config', metavar='CONF', required=False,
 	type=str, dest='config', help="configuration file to load")
 argparser.add_argument('-f', '--force', required=False,
 	action='store_true', dest='force', help="Force overwriting any existing file when moving")
+argparser.add_argument('-Q', '--no-fastqc', required=False,
+	action='store_true', dest='nofqc', help="Skip importing fastqc dirs")
 argparser.add_argument('-s', '--summary', required=False,
 	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
 argparser.add_argument('-v', '--verbose', required=False,
@@ -346,7 +348,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	if tplates is not None and plates is not None:
 		diff=list(set(tplates).symmetric_difference(set(plates)))
 		if len(diff)>0:
-			print(name, f"\x1b[33;1mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b")
+			print(name, f"\x1b[33;1mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b[0m")
 
 	# handle duplicate orders and fuse them if (close in time)
 	if order in batches:
@@ -549,7 +551,7 @@ for b in batches:
 
 	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
 	qcdir=None
-	if (not dupe) and ('fastqc' in batches[b]):
+	if (not args.nofqc) and (not dupe) and ('fastqc' in batches[b]):
 		qcdir=batches[b]['fastqc']
 		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
 
