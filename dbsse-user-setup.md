@@ -21,6 +21,7 @@
        - `Host fgcz-gstore.uzh.ch`: special port (see `fcgz.conf`)
        - `Host sftp.gc.health2030.ch`: **relies on ** SSH key + optionnal special port (see `h2030.conf`)
        - `Host tsftp.viollier.ch`: **relies on** SSH key (not ED25519)
+       - `Host euler.ethz.ch`: there is no `@d` domain suffix on Euler
   - `~/.ssh/id_ed25519_batman` **MUST NOT** be a normal user key
     special-purpose SSH key used by `quasimodo` and `carrillon` to run `batman.sh`'s subcommands on Euler with forced-commands.
   - `~/.ssh/id_ed25519_belfry` **MUST NOT** be a normal user key
