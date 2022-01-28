@@ -85,7 +85,7 @@ while read aufxx ethid rest; do
 			fi
 			continue
 		elif [[ ${ethid} == *$'\n'* ]]; then
-			echo "(${aufnum}: multiple matches: ${ethid//$'\n'/ }\nUploading all matches)"
+			echo -e "(${aufnum}: multiple matches: ${ethid//$'\n'/ }\nUploading all matches)"
 		fi
 	elif [[ ! ${ethid} =~ ^[[:digit:]]{6,} ]]; then
 		echo "cannot parse ${ethid}" >&2
@@ -94,11 +94,21 @@ while read aufxx ethid rest; do
 	fi
 
 	[[ -d ${download}/${target}/${aufnum}/ ]] && rm -rf ${download}/${target}/${aufnum}/
-	#new loop
+	mkdir -p ${download}/${target}/${aufnum}
+	# copy each duplicate sample in a separate subdirectory
 	for singleethid in ${ethid}
 	do
 		echo "${singleethid} -> ${aufnum}"
-		cp --link -${verbose}rf ${sampleset}/${singleethid}/ ${download}/${target}/${aufnum} || error=1
+		for b in ${sampleset}/${singleethid}/*; do
+			bname="$(basename "${b}")"
+			# NOTE make sure to distinguish samples by their internal ETHID, in case that they come from the same batch, e.g.:
+			#
+			# if '34889065' maps to both '34889065_A9' and '34889065_C9' from the same batch '20211203_HTHMGDRXY':
+			# 'sampleset/34889065_A9/20211203_HTHMGDRXY' => '...{target}/34889065/20211203_HTHMGDRXY-34889065_A9'
+			# 'sampleset/34889065_C9/20211203_HTHMGDRXY' => '...{target}/34889065/20211203_HTHMGDRXY-34889065_C9'
+			#
+			cp --link -${verbose}rf ${b} ${download}/${target}/${aufnum}/${bname}-${singleethid} || error=1
+		done
 	done
 done < <( cat ${1}; echo; )
 
