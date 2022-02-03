@@ -10,8 +10,26 @@
 
 : ${prefix:="new"}
 
-printf '%s\n' working/ww-${prefix}-202*.yaml | sort -r | xargs cat > working/ww-${prefix}.yaml
+proto=
+
+umask 0007
+
+case "${proto}" in
+	v3)
+		:
+	;;
+	v4)
+		:
+	;;
+	*)
+		echo "bad proto ${proto}"
+		exit 2;
+	;;
+esac
+
+
+printf '%s\n' "working/ww-${prefix}-${proto}-202"*.yaml | sort -r | xargs cat > "working/ww-${prefix}-${proto}.yaml"
 
 . /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
 
-exec cojac/cooc-tabmut -y working/ww-${prefix}.yaml -o working/ww-${prefix}.csv -m -l -/
+exec cojac/cooc-tabmut -y "working/ww-${prefix}-${proto}.yaml" -o "working/ww-${prefix}-${proto}.csv" -m -l -/

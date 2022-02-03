@@ -34,7 +34,7 @@ case "${PROTO}" in
 	v3)	bedfile="cojac/nCoV-2019.insert.${PROTO^^}.bed"	;;
 	v4)	bedfile="cojac/SARS-CoV-2.insert.${PROTO^^}.txt"	;;
 	*)
-		echo "bad proto ${1}"
+		echo "bad proto ${PROTO}"
 		exit 1;
 	;;
 esac
@@ -77,10 +77,12 @@ if [[ -n "${BATCH}" ]]; then
 
 	# run on latest batch only
 	mkdir -p working/ww-cooc${PROTO:+-${PROTO}}/
-	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv" -p working/samples -m cojac/voc/ -b "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" -/	&&
+	# to regenerate the YAML:	--vocdir cojac/voc/ --bedfile "${bedfile}" --out-amp "amplicons.${PROTO}.yaml"
+	# to re-use previous YAML:	--in-amp "amplicons.${PROTO}.yaml"
+	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv" -p working/samples --in-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" -/	&&
 	cat "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" "working/ww-cooc${PROTO:+.${PROTO}}.lastweek.yaml" > "working/ww-cooc${PROTO:+.${PROTO}}.yaml"
 else
 	# run on whole wastewater collection
-	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv" -p working/samples -m cojac/voc/ -b "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -/
+	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv" -p working/samples --vocdir cojac/voc/ --bedfile "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -/
 fi &&
 exec cojac/cooc-tabmut -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -o "working/ww-cooc${PROTO:+.${PROTO}}.csv" -m -l -/

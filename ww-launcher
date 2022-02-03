@@ -2,6 +2,7 @@
 
 #BATCH=
 : ${PROTO:=v4}
+: ${MASS:=0}
 
 umask 0007
 
@@ -21,18 +22,30 @@ validateBatchName() {
 
 
 
-usage() { echo "Usage: $0 [-b <BATCH>] [ -p <PROTO> ]" 1>&2; exit $1; }
-while getopts "b:p:h" o; do
+usage() { echo "Usage: $0 [ -m ] [-b <BATCH>] [ -p <PROTO> ]" 1>&2;
+if (( $1 == 0 )); then
+echo "options:
+-b <BATCH>   only run on this batch
+-p <PROTO>   protocol used ${PROTO:+
+             [default: $PROTO]}
+-m           mass-rebuild using new definition in test/cojac/
+             (use -b to only test new def on single batch)
+-h           print this help message and exit"
+fi
+exit $1; }
+while getopts "b:p:mh" o; do
 	case "${o}" in
 		b)	BATCH=${OPTARG}
 			validateBatchName "${BATCH}"
 			;;
 		p)	PROTO="${OPTARG}"	;;
+		m)	MASS=1	;;
 		h)	usage 0	;;
 		*)	usage 1	;;
 	esac
 done
 shift $((OPTIND-1))
+
 
 
 #
@@ -52,8 +65,12 @@ case "${PROTO}" in
 esac
 
 if [[ -z "${BATCH}" ]]; then
-	echo "Full rebuild currently disabled"
-	exit 1
+	if (( MASS )); then
+		echo "Mass rebuild requested"
+	else
+		echo "No batch specified, use option '-m' if you want to mass-rebuild"
+		exit 1
+	fi
 elif [[ ! -e "sampleset/samples.${BATCH}.tsv" ]]; then
 	# check existing
 	echo "Cannot find batch ${BATCH}" >&2
@@ -66,7 +83,34 @@ fi
 # submit to LSF
 #
 
+RXJOB='Job <([[:digit:]]+)> is submitted'
+# Generic job.
+# Job <129052039> is submitted to queue <light.5d>.
+
+if (( MASS )); then
+	if [[ -z "${BATCH}" ]]; then
+		echo "Submitting mass-rebuild"
+		for p in v3 v4; do
+			batches=( $(cut -f 2 working/samples.wastewateronly.${p}.tsv	| sort -r -u ) )
+			echo "proto: ${p}, ${#batches[@]} batches"
+			if [[ "$(sed -r 's@^(batches=).*$@\1( "" '"$(printf '"%s" ' "${batches[@]}" )"')@;s@^(proto=).*$@\1"'${p}'"@' ww-new.bsub | bsub -J "COWWID-NewVar[1-${#batches[@]}]" | tee /dev/stderr)" =~ ${RXJOB} ]]; then
+				job="${BASH_REMATCH[1]}"
+				sed -r 's@^(proto=).*$@\1"'${p}'"@' ww-new-final.bsub | bsub -J "COWWID-NewVar_final-${p}" -w "ended(${job})"
+			else
+				echo "Failed job submission"
+				exit 2
+			fi
+		done
+		exit 0
+	else
+		echo "Test new definition with batch ${BATCH} - protocol will be detected from the lists"
+		sed -r 's@^(prefix=).*$@\1"'${BATCH}'"@;s@^(batches=).*$@\1@;s@^(proto=).*$@\1@' ww-new.bsub | exec bsub
+		exit 0
+	fi
+	echo "Submission breakage"
+	exit 2
+fi
+
 echo "Submitting for batch ${BATCH} and proto ${PROTO}"
 sed -r 's@^BATCH=@\0"'${BATCH}'"@;s@^(PROTO=).*$@\1"'${PROTO}'"@' ww.bsub | exec bsub
-
-# TODO launcher for rebuild
+exit 0

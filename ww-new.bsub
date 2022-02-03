@@ -10,8 +10,23 @@
 
 #batches=( "" 20211105_HML7HDRXY 20211112_HN3JWDRXY 20211119_HM7WYDRXY )
 batches=( "" $(cut -f 2 working/samples.wastewateronly.tsv|sort -ru) )
-
+proto=
 prefix="new"
+
+umask 0007
+
+
+#
+# Input validator
+#
+validateBatchName() {
+	if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]-]{4,})$ ]]; then
+		return;
+	else
+		echo "bad batchname ${1}"
+		exit 2;
+	fi
+}
 
 
 if (( $LSB_JOBINDEX )); then
@@ -33,13 +48,45 @@ if (( $LSB_JOBINDEX )); then
 	wc -l ${tsv}
 else
 	batch="${prefix}"
+	prefix='test'
 
 	echo "Testing with ${batch}"
 	echo "to run with all, use:"
-	echo " - bsub -J \"COWWID-AY42[1-${#batches[@]}]\" < ww-new.bsub"
-	tsv="working/samples.${new}.tsv"
+	echo " - bsub -J \"COWWID-NewVar[1-${#batches[@]}]\" < ww-new.bsub"
+	tsv="sampleset/samples.${batch}.tsv"
 fi
+
+validateBatchName "${batch}"
+
+#
+# Proto validate + specific files
+#
+if [[ -z "${proto}" ]]; then
+	echo "no protocol specified, trying to detect in lists..."
+	for p in v3 v4; do
+		echo -ne "${p}:\t"
+		if grep -qF "${batch}" working/samples.wastewateronly.${p}.tsv; then
+			echo "found!"
+			proto="${p}"
+			break
+		else
+			echo "... "
+		fi
+	done
+	if [[ -z "${proto}" ]]; then
+		echo "not found :-("
+		exit 2
+	fi
+fi
+case "${proto}" in
+	v3)	bedfile="cojac/nCoV-2019.insert.${proto^^}.bed"	;;
+	v4)	bedfile="cojac/SARS-CoV-2.insert.${proto^^}.txt"	;;
+	*)
+		echo "bad proto ${proto}"
+		exit 2;
+	;;
+esac
 
 . /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
 
-exec test/cojac/cooc-mutbamscan -s ${tsv} -p working/samples -m test/cojac/voc/ -b test/cojac/nCoV-2019.insert.V3.bed -y working/ww-${preifx}-${batch}.yaml -/
+exec test/cojac/cooc-mutbamscan -s "${tsv}" -p working/samples -m test/cojac/voc/ -b "test/${bedfile}" --out-amp "amplicons.${prefix}.${proto}.yaml" -y "working/ww-${prefix}-${proto}-${batch}.yaml" -/
