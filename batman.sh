@@ -76,7 +76,10 @@ case "$1" in
 				;;
 				--tag)
 					shift
-					validateTags ';' "$2"
+					if [[ ! "${2}" =~ ^[[:alnum:]]+$ ]]; then
+						# if it's not just letters and number, test if it is a list of valid batches
+						validateTags ';' "$2"
+					fi
 					tag="${2%;}"
 				;;
  				--recent)
