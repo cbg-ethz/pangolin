@@ -96,11 +96,19 @@ SH_BAR
 	fi
 	# folder ?
 	if [[ $(basename ${d}) =~ ${rx_folder} ]]; then
+		# check for left-over (windows') partial download files
 		if [[ -n "$(find "${d}" -type f -name '*.filepart' | tee /dev/stderr)" ]]; then
 			echo -e "\e[33;1mIncompletely downloaded files in $(basename ${d})\e[0m skipping..."
 			touch status/syncviollier_failed
 			continue
 		fi
+		# Remove irrelevant samples from sample sheet
+		if [[ "$(< ${d}/SampleSheetUsed.csv)" =~ [[:space:]]Error ]]; then
+			echo -e "Filtering out 'Error<n>' samples"
+			mv ${d}/SampleSheetUsed.csv{,.err}
+			grep -vP '^Error' ${d}/SampleSheetUsed.csv.err > ${d}/SampleSheetUsed.csv
+		fi
+		# Search for patchmap if available
 		patch=
 		if [[ -e "${d%%/}.patchmap.tsv" ]]; then
 			echo "Patchmap found for $(basename ${d})"
