@@ -1,3 +1,5 @@
+##TODO: wait for refactoring and use the test_id, so that you can directly match the auftragnummer
+
 #Script too validate the raw data upload requests we receive from Viollier.
 #The validation comprises the following steps:
 #1) check if the requested samples are in the database
@@ -142,7 +144,6 @@ def log_warning(samples, warning_type):
         sys.exit('Error: unknown warning_type')
 
 def main(args):
-    max_matches = 4
     db_config = read_config(args.db_config)
     db_connection = connect_to_db(db_config)
     imported_data = get_db_info(db_connection)
@@ -152,7 +153,7 @@ def main(args):
         raise Exception("I am unable to disconnect to the database.", e)
     data_request = match_request(imported_data, args.req_file)
     viollier_data = filter_viollier(data_request)
-    clean_data = filter_typo(viollier_data, max_matches)
+    clean_data = filter_typo(viollier_data, args$max_matches)
     yield_data = filter_yield(clean_data)
     create_tsv(yield_data, args.out_file)
 
@@ -160,6 +161,7 @@ parser = argparse.ArgumentParser(description='Validate Viollier raw data upload 
 parser.add_argument('--db_config', help = "File containing the yaml config with credentials to connect to the database")
 parser.add_argument('--req_file', help = "File containing the requests from Viollier. One ID per line")
 parser.add_argument('--out_file', help = "Filename to use to save only the ID that passed validation")
+parser.add_argument('--max_matches', help = "Maximum number of allowed matches for a raw data upload request")
 args = parser.parse_args()
 
 main(args)
