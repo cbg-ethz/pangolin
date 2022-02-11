@@ -93,16 +93,31 @@ tee ${download}/${target_base}/${msg_file} <<MSG
 starting on $(date --rfc-3339=seconds)
 new ${req_file}, date $(date --rfc-3339=seconds -r "${download}/${target_base}/${req_file}")
 
+validating input:
+MGS
+
+# validate input
+validated_file='fastq_requests_validated.tsv'
+if python ./validate_request_raw_viollier.py --req_file ${download}/${target_base}/${req_file} --out_table ${download}/${target_base}/${validated_file} --db_config ${download}/${target_base}/${dbconfigfile} --max_matches ${max_matches} 2>&1; then
+	printf '\e[36;1mValidation successful\e[0m\n' 1>&2
+	echo -e "successfully validated input\n"
+else
+	# error
+	printf '\e[31;1mValidation failed!\e[0m'     1>&2
+	echo -e "error while trying to validate the request, see above\n"
+fi | tee -a ${download}/${target_base}/${msg_file}
+
 attempting upload:
 MSG
 
 # attempt upload
 subdir=$(date '+%Y-%m-%d' -r "${download}/${target_base}/${req_file}")
-if ./upload_viollier_raw -q -c "${configfile}" -s "${subdir}" "${download}/${target_base}/${req_file}" 2>&1; then 
+if ./upload_viollier_raw -q -c "${configfile}" -s "${subdir}" "${download}/${target_base}/${validated_file}" 2>&1; then 
 	# upload success
 	printf '\e[36;1mSuccess\e[0m\n' 1>&2
 	echo -e "successfully uploaded to ${subdir}\n"
 	mv -v "${download}/${target_base}/${req_file}"{,.old}
+	mv -v "${download}/${target_base}/${validated_file}"{,.old}
 else
 	# error
 	printf '\e[31;1mArgh:\e[0m'	1>&2
