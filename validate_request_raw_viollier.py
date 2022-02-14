@@ -61,7 +61,7 @@ def get_db_info(db_connection):
         imported_data_1_tuples = cursor.fetchall()
     # Get the list od viollier samples
     with db_connection.cursor() as cursor:
-        cursor.execute("SELECT ethid FROM " + DEST_TABLE_2)
+        cursor.execute("SELECT sample_number, ethid FROM " + DEST_TABLE_2)
         imported_data_2_tuples = cursor.fetchall()
     imported_data = [imported_data_1_tuples, imported_data_2_tuples]
     return imported_data 
@@ -69,59 +69,39 @@ def get_db_info(db_connection):
 def tuple_match(tpl, target):
     return [t for t in tpl if len(t) > len(target) and all(a == b for a, b in zip(t, target))]
 
-##Match the data fetched from the database with the requests from viollier
-def match_request(imported_data, req_file):
+def filter_viollier(imported_data, req_file):
     with open(req_file) as fp:
         lines = fp.readlines()
     lines = [s.rstrip() for s in lines]
-    #this gets the matching
-    matching = {}
-    for line in lines:
-        matching[line] = None
-        for t in imported_data[0]:
-            if(line in t[0]):
-                if (matching[line] == None):
-                    matching[line] = [t]
-                else:
-                    matching[line].append(t)
-    #This gets the requests without matches
-    not_matching_names = [line for line in lines if matching[line] == None]
-    matching_names = list(set(lines) - set(not_matching_names))
-    if len(not_matching_names) > 0:
-        log_warning(not_matching_names, warning_type = 'db')
-        for key in not_matching_names:
-            matching.pop(key, None)
-    return [matching, imported_data[1]]
-
-def filter_viollier(data_request):
-    viollier_names = set([ name for name in data_request[0].keys() for db_viollier in data_request[1] if name in str(db_viollier) ])
-    not_viollier = list(set(data_request[0].keys()) - viollier_names)
+    #viollier_samples has the couples: [requested, ethid] of all requested that match the viollier sample names
+    #with the refactoring this will use the auftragsnummer of the test_id field
+    viollier_samples = [ [line, name[1]] for line in lines for name in imported_data[1] if line == str(name[0]) ]
+    viollier_names = [ name[0] for name in viollier_samples ]
+    not_viollier = list(set(lines) - set(viollier_names))
     if len(not_viollier) > 0:
         log_warning(not_viollier, warning_type = 'viollier')
-        for key in not_viollier:
-            data_request[0].pop(key, None)
-    return data_request[0]
+    matching = {}
+    for sample in viollier_samples:
+        matching[sample[0]] = None
+        for consensus in imported_data[0]:
+            if sample[1] == consensus[1]:
+                if matching[sample[0]] == None:
+                    matching[sample[0]] = [consensus]
+                else:
+                    matching[sample[0]].append(consensus)
+    return matching
 
-def filter_typo(viollier_data, max_matches):
-    not_typo_names = [req for req in viollier_data.keys() if len(viollier_data[req]) < max_matches]
-    typo_names = list(set(viollier_data.keys() - set(not_typo_names)))
-    if len(typo_names) > 0:
-        log_warning(typo_names, warning_type = 'typo')
-        for key in typo_names:
-            viollier_data.pop(key, None)
-    return viollier_data
-
-def filter_yield(clean_data):
+def filter_yield(viollier_data):
     #Get al keys that have at least one item in values that show 0 coverage
     no_yield = []
-    for key,value in clean_data.items():
+    for key,value in viollier_data.items():
         no_cov_items = 0
         for item in value:
             if item[2] == 0:
                 no_cov_items = no_cov_items + 1
         if no_cov_items == len(value):
             no_yield.append(key)
-    with_yield = clean_data.keys() - no_yield
+    with_yield = viollier_data.keys() - no_yield
     if len(no_yield) > 0:
         log_warning(no_yield, warning_type = 'yield')
     return with_yield
@@ -132,8 +112,6 @@ def create_tsv(yield_data, out_file):
             file_object.write('%s\n' % item)
 
 def log_warning(samples, warning_type):
-    if (warning_type == "db"):
-        print('samples not in db: ' + str(samples))
     elif (warning_type == "viollier"):
         print('samples not from viollier: ' + str(samples))
     elif (warning_type == "yield"):
@@ -151,17 +129,14 @@ def main(args):
         db_connection.close()
     except Exception as e:
         raise Exception("I am unable to disconnect to the database.", e)
-    data_request = match_request(imported_data, args.req_file)
-    viollier_data = filter_viollier(data_request)
-    clean_data = filter_typo(viollier_data, args.max_matches)
-    yield_data = filter_yield(clean_data)
+    viollier_data = filter_viollier(imported_data, args.req_file)
+    yield_data = filter_yield(viollier_data)
     create_tsv(yield_data, args.out_file)
 
 parser = argparse.ArgumentParser(description='Validate Viollier raw data upload requests against the database')
 parser.add_argument('--db_config', help = "File containing the yaml config with credentials to connect to the database")
 parser.add_argument('--req_file', help = "File containing the requests from Viollier. One ID per line")
 parser.add_argument('--out_file', help = "Filename to use to save only the ID that passed validation")
-parser.add_argument('--max_matches', help = "Maximum number of allowed matches for a raw data upload request")
 args = parser.parse_args()
 
 main(args)
