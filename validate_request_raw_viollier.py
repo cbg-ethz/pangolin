@@ -153,7 +153,7 @@ def main(args):
         raise Exception("I am unable to disconnect to the database.", e)
     data_request = match_request(imported_data, args.req_file)
     viollier_data = filter_viollier(data_request)
-    clean_data = filter_typo(viollier_data, args$max_matches)
+    clean_data = filter_typo(viollier_data, args.max_matches)
     yield_data = filter_yield(clean_data)
     create_tsv(yield_data, args.out_file)
 
