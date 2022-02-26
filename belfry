@@ -112,6 +112,8 @@ callpullrsync() {
 		-izrltH --fuzzy --fuzzy --inplace	\
 		--link-dest=${basedir}/${sampleset}/	\
 		"${arglist[@]}"	\
+		--exclude='uploads/*'	\
+		--exclude='raw_uploads/*.tmp.*'	\
 		--exclude='raw_data/*_R[12].fastq.gz'	\
 		--exclude='extracted_data/R[12]_fastqc.html'	\
 		--exclude='variants/SNVs/REGION_*/reads.fas'	\
@@ -143,6 +145,8 @@ callpullrsync_noshorah() {
 		-izrltH --fuzzy --fuzzy --inplace	\
 		--link-dest=${basedir}/${sampleset}/	\
 		"${arglist[@]}"	\
+		--exclude='uploads/*'	\
+		--exclude='raw_uploads/*.tmp.*'	\
 		--exclude='raw_data/*_R[12].fastq.gz'	\
 		--exclude='extracted_data/R[12]_fastqc.html'	\
 		--exclude='variants/'	\
