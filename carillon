@@ -220,7 +220,13 @@ scanmissingsamples() {
 		# look for only guaranteed samples
 		[[ $sample =~ $rxsample ]] || continue
 		# check the presence of fasta on each sample
-		if [[ -e ${basedir}/${working}/samples/${sample}/${batch}/references/ref_majority.fasta ]]; then 
+		if [[ -e ${basedir}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
+			# this will check for:
+			#  - references/ref_majority.fasta
+			#  - references/consensus.bcftools.fasta & .chain
+			#  - references/frameshift_deletions_check.tsv
+			#  etc.
+			#  see V-pipe's rule 'prepare_upload' in publish.smk
 			echo -n '.'
 		else 
 			echo -e "\r+${batch/_/:}\t!${sample}\e[K"
@@ -289,7 +295,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		echo -e '\e[35;1mWill NOT submit jobs\e[0m...'
 		if (( mustrun )); then
 			echo 'submit blocked' > ${statusdir}/submit_fail
-			echo '...but there are new jobs that should be started'
+			echo -e '...\e[33;1mbut there are new jobs that should be started !!!\e[0m'
 		else
 			echo '...and there is nothing to run anyway'
 		fi
