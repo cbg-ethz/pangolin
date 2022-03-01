@@ -429,8 +429,10 @@ case "$1" in
 		elif [[ "${2}" = "--batch" ]]; then
 			validateBatchName "${3}"
 			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+		elif [[ "${2}" = "--catchup" ]]; then
+			sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
 		else
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.*.tsv" )
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
 		fi
 		rsync	\
 			--password-file ~/rsync.pass.euler	\
@@ -447,8 +449,10 @@ case "$1" in
 		elif [[ "${2}" = "--batch" ]]; then
 			validateBatchName "${3}"
 			sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
+		elif [[ "${2}" = "--catchup" ]]; then
+			sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
 		else
-			sheets=( /tmp/belfrysheets/samples.*.tsv )
+			sheets=( /tmp/belfrysheets/samples.2*.tsv )
 		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
@@ -470,6 +474,8 @@ case "$1" in
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
 			touch ${statusdir}/pullsamples_noshorah_fail
+		elif [[ "${2}" = "--catchup" ]]; then
+			echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
 		else
 			touch ${statusdir}/pullsamples_noshorah_success
 		fi
@@ -482,8 +488,10 @@ case "$1" in
 		elif [[ "${2}" = "--batch" ]]; then
 			validateBatchName "${3}"
 			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+		elif [[ "${2}" = "--catchup" ]]; then
+			sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
 		else
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.*.tsv" )
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
 		fi
 		rsync	\
 			--password-file ~/rsync.pass.euler	\
@@ -500,8 +508,10 @@ case "$1" in
 		elif [[ "${2}" = "--batch" ]]; then
 			validateBatchName "${3}"
 			sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
+		elif [[ "${2}" = "--catchup" ]]; then
+			sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
 		else
-			sheets=( /tmp/belfrysheets/samples.*.tsv )
+			sheets=( /tmp/belfrysheets/samples.2*.tsv )
 		fi
 		err=0
 		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
@@ -523,6 +533,8 @@ case "$1" in
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
 			touch ${statusdir}/pullsamples_fail
+		elif [[ "${2}" = "--catchup" ]]; then
+			echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
 		else
 			touch ${statusdir}/pullsamples_success
 		fi
