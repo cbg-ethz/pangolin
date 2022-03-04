@@ -82,6 +82,7 @@ following instruction on [BSSE wiki](https://wiki-bsse.ethz.ch/display/DBSSEPUBL
   . ~/miniconda3/bin/activate
   # install environment from yaml
   mamba env create -f /links/shared/covid19-pangolin/backup/conda_pybis_env.yaml
+  mamba env create -f /links/shared/covid19-pangolin/backup/conda_vineyard.yaml
   ```
   **note:**
    - PyBIS it self isn't available on bioconda (yet), and will therefore be install by mamba using pip.

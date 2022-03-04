@@ -289,7 +289,7 @@ case "$1" in
 	;;
 	uploadrequests)
 		echo "Handling raw-read upload requests for Viollier"
-		. $baseconda/miniconda3/bin/activate ""
+		. $baseconda/miniconda3/bin/activate "vineyard"
 		${scriptdir}/handle_request_raw_viollier -c viollier.conf
 		conda deactivate
 	;;

@@ -94,7 +94,7 @@ starting on $(date --rfc-3339=seconds)
 new ${req_file}, date $(date --rfc-3339=seconds -r "${download}/${target_base}/${req_file}")
 
 validating input:
-MGS
+MSG
 
 # validate input
 validated_file='fastq_requests_validated.tsv'
@@ -107,8 +107,10 @@ else
 	echo -e "error while trying to validate the request, see above\n"
 fi | tee -a ${download}/${target_base}/${msg_file}
 
+tee ${download}/${target_base}/${msg_file} <<MSG2
+
 attempting upload:
-MSG
+MSG2
 
 # attempt upload
 subdir=$(date '+%Y-%m-%d' -r "${download}/${target_base}/${req_file}")

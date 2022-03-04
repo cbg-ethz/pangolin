@@ -1,4 +1,6 @@
-##TODO: wait for refactoring and use the test_id, so that you can directly match the auftragnummer
+#!/usr/bin/env python3
+
+## TODO: wait for refactoring and use the test_id, so that you can directly match the auftragnummer
 
 #Script too validate the raw data upload requests we receive from Viollier.
 #The validation comprises the following steps:
@@ -112,7 +114,7 @@ def create_tsv(yield_data, out_file):
             file_object.write('%s\n' % item)
 
 def log_warning(samples, warning_type):
-    elif (warning_type == "viollier"):
+    if (warning_type == "viollier"):
         print('samples not from viollier: ' + str(samples))
     elif (warning_type == "yield"):
         print('samples with no yield: ' + str(samples))

@@ -1,0 +1,11 @@
+name: vineyard
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - psycopg2
+  - pyyaml
+  - lftp
+  - curl

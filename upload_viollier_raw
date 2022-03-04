@@ -62,6 +62,10 @@ while read aufxx ethid rest; do
 	# skip empty lines
 	if [[ -z ${auf} ]]; then
 		continue
+	elif [[ ! ${auf} =~ ^[[:digit:]]{8,} ]]; then
+		echo "cannot parse ${auf}" >&2
+		error=1
+		continue
 	fi
 	aufnum=${BASH_REMATCH[0]}
 
