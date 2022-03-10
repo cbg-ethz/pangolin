@@ -48,6 +48,7 @@ with open(args.config) as f: config.read_string(f"""
 lab={os.path.splitext(os.path.basename(args.config))[0]}
 basedir={os.getcwd()}
 sampleset=sampleset
+staging=staging-fgcz
 download=bfabric-downloads
 link=--link
 mode=
@@ -66,6 +67,8 @@ basedir=config['_']['basedir'].strip("\"'")
 expname=config['_']['expname'].strip("\"'")
 '''projects name in SFTP'''
 download=config['_']['download'].strip("\"'")
+'''sub-directory to temporary hold the datasets during download'''
+staging=config['_']['staging-gfb'].strip("\"'")
 '''sub-directory to hold the unsorted downloaded datasets'''
 sampleset=config['_']['sampleset'].strip("\"'")
 '''sub-directory to hold the sorted samples set'''
@@ -474,9 +477,16 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 	except FileExistsError:
 		pass
 
+# create staging directory if missing
+if not os.path.isdir(os.path.join(basedir,staging)):
+	try:
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(os.path.join(basedir,staging),**kwmkdir)
+	except FileExistsError:
+		pass
 
 # shell script file with all moving instructions inside
-sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
+sh=open(os.path.join(basedir,staging,'movedatafiles.sh'), 'wt')
 
 # generic header: only for stand-alone files.
 print(r'''
@@ -502,8 +512,9 @@ X() {
 
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
+[[ -d '%(staging)s' ]] || fail 'No staging directory:' '%(staging)s'
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
-''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset, 'staging':staging, 'download':download}, file=sh)
 
 # helper function to handle items that can be either single string or list (or empty)
 listify = lambda x: x if type(x) is list else [] if x is None else [x]
@@ -557,7 +568,7 @@ for b in batches:
 
 	# patch file exist ?
 	patchmap = { }
-	patchtsv=os.path.join(basedir,sampleset,f"patch.{prj.removeprefix('p')}.{order.removeprefix('o')}.tsv")
+	patchtsv=os.path.join(basedir,staging,f"patch.{prj.removeprefix('p')}.{order.removeprefix('o')}.tsv")
 	if os.path.isfile(patchtsv):
 		print(f"\x1b[32;1mpatching {order} {name} with {patchtsv}\x1b[0m")
 		with open(patchtsv,'rt',encoding='utf-8', newline='') as pf:
@@ -566,8 +577,8 @@ for b in batches:
 	# batch TSV file and info YAML
 	runfolder=None
 	if batch not in otsv:
-		otsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
-		osprj[batch]=sprj=open(os.path.join(basedir,sampleset,f'projects.{batch}.tsv'), 'wt')
+		otsv[batch]=tsv=open(os.path.join(basedir,sstaging,f'samples.{batch}.tsv'), 'wt')
+		osprj[batch]=sprj=open(os.path.join(basedir,staging,f'projects.{batch}.tsv'), 'wt')
 		plts = { 'plates': delistify(batches[b]['plates']) } if batches[b].get('plates') is not None else { }
 		oyaml[batch]=yamldict={'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,
 			'runfolder':	batches[b]['runfolder'],
@@ -708,16 +719,16 @@ for b in batches:
 
 			# move script
 			print(r'''
-mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
-cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
+mkdir ${mode} -p "%(staging)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
+cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(staging)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'staging':staging,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
 			if ends==2:
-				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(staging)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'staging':staging,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
 			if qcdir and fulname in fastqc_samples[qcdir]:
 				fqc=rxfqext.sub('_fastqc.html',r1)
-				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(staging)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'staging':staging,'sname':samname,'batch':batch}, file=sh)
 				if ends==2:
 					fqc=rxfqext.sub('_fastqc.html',r2)
-					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(staging)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'staging':staging,'sname':samname,'batch':batch}, file=sh)
 
 print(f"""
 echo -e '\\r\\e[K[{bar(128)}] done.'

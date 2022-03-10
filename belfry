@@ -321,38 +321,64 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[gfb]} )); then
-			${scriptdir}/sort_samples_pybis -c gfb.conf ${force} ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+                        staging = ${staging-gfb}
+
+                        # safety check
+                        if [[ $(realpath ${basedir}/${staging}) == $(realpath ${basedir} )  || $(realpath ${basedir}/${staging}) == $(realpath ${basedir}/${sampleset} ) ]]; then
+                                echo "bad staging path ${staging}"
+                                touch ${statusdir}/sortsamples_fail
+                                exit 2
+                        fi
+
+
+                        ${scriptdir}/sort_samples_pybis -c gfb.conf ${force} ${summary} ${recent} && bash ${basedir}/${staging}/movedatafiles.sh && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
 		else
 			echo "Skipping gfb"
 		fi
 		if  (( ${lab[fgcz]} )); then
 # 			# TODO config file
 			. <(grep '^google_sheet_patches=' fgcz.conf)
-# 			staging=staging-fcgz
-# 
-# 			# safety check
-# 			if [[ $(realpath ${basedir}/${staging}) == $(realpath ${basedir} )  || $(realpath ${basedir}/${staging}) == $(realpath ${basedir}/${sampleset} ) ]]; then
-# 				echo "bad staging path ${staging}"
-# 				touch ${statusdir}/sortsamples_fail
-# 				exit 2
-# 			fi
-# 
+ 			staging=${staging-fcgz}
+ 
+ 			# safety check
+ 			if [[ $(realpath ${basedir}/${staging}) == $(realpath ${basedir} )  || $(realpath ${basedir}/${staging}) == $(realpath ${basedir}/${sampleset} ) ]]; then
+ 				echo "bad staging path ${staging}"
+ 				touch ${statusdir}/sortsamples_fail
+ 				exit 2
+ 			fi
+ 
 			(( google_sheet_patches )) && ${scriptdir}/google_sheet_patches
-# 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${staging}/movedatafiles.sh && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
-			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf --no-fastqc ${force} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+ 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf ${force} ${recent} && bash ${basedir}/${staging}/movedatafiles.sh && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
 		else
 			echo "Skipping fgcz"
 		fi
 		if  (( ${lab[h2030]} )) && [[ -e ${statusdir}/synch2030_ended && -e ${statusdir}/synch2030_started && ${statusdir}/synch2030_ended -nt ${statusdir}/synch2030_started ]]; then
+                        staging=${staging-h2030}
+                        # safety check
+                        if [[ $(realpath ${basedir}/${staging}) == $(realpath ${basedir} )  || $(realpath ${basedir}/${staging}) == $(realpath ${basedir}/${sampleset} ) ]]; then
+                                echo "bad staging path ${staging}"
+                                touch ${statusdir}/sortsamples_fail
+                                exit 2
+                        fi
+
 			# NOTE always recent/based on last sync), no support for --force, move done immediately/no separate movedatafiles.sh
-			${scriptdir}/sort_h2030 -c h2030.conf $(< ${statusdir}/synch2030_started ) || fail=1
+                        ${scriptdir}/sort_h2030 -c h2030.conf $(< ${statusdir}/synch2030_started ) && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
 		else
 			echo "Skipping h2030"
 		fi
 		if  (( ${lab[viollier]} )); then
+                        staging = ${staging-viollier}
+
+                        # safety check
+                        if [[ $(realpath ${basedir}/${staging}) == $(realpath ${basedir} )  || $(realpath ${basedir}/${staging}) == $(realpath ${basedir}/${sampleset} ) ]]; then
+                                echo "bad staging path ${staging}"
+                                touch ${statusdir}/sortsamples_fail
+                                exit 2
+                        fi
+
 			# NOTE always --force, short options only
 			# HACK hardcoded paths due to multiple directories
-			${scriptdir}/sort_viollier -c viollier.conf  ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+                        ${scriptdir}/sort_viollier -c viollier.conf  ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${basedir}/${staging}/movedatafiles.sh && cp -rf --link ${basedir}/${staging}/* ${basedir}/${sampleset}/ || fail=1
 		else
 			echo "Skipping viollier"
 		fi

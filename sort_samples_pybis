@@ -44,7 +44,8 @@ with open(args.config) as f: config.read_string(f"""
 lab={os.path.splitext(os.path.basename(args.config))[0]}
 samtype=ILLUMINA_FLOW_LANE
 basedir={os.getcwd()}
-sampleset=sampleset
+sampleset = sampleset
+staging = staging-gfb
 download=openbis-downloads
 link=--link
 mode=
@@ -64,6 +65,8 @@ samtype=config['_']['samtype'].strip("\"'")
 basedir=config['_']['basedir'].strip("\"'")
 '''base dircetory'''
 download=config['_']['download'].strip("\"'")
+'''sub-directory to temporary hold the datasets during download'''
+staging=config['_']['staging-gfb'].strip("\"'")
 '''sub-directory to hold the unsorted downloaded datasets'''
 sampleset=config['_']['sampleset'].strip("\"'")
 '''sub-directory to hold the sorted samples set'''
@@ -109,6 +112,13 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 		os.mkdir(os.path.join(basedir,sampleset),**kwmkdir)
 	except FileExistsError:
 		pass
+# create staging directory if missing
+if not os.path.isdir(os.path.join(basedir,staging)):
+	try:
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(os.path.join(basedir,staging),**kwmkdir)
+	except FileExistsError:
+		pass
 
 # we use ~/.netrc to obtain credentials 
 # (we need that config file anyway to download the data files from openbis' fileserver)
@@ -124,7 +134,7 @@ o.login(username, password, save_token=True)   # save the session token in ~/.py
 atexit.register(o.logout)
 
 # shell script file with all moving instructions inside
-sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
+sh=open(os.path.join(basedir,staging,'movedatafiles.sh'), 'wt')
 print(r'''
 link='%(link)s'
 mode='%(mode)s' # e.g.: --mode=0770
@@ -151,7 +161,8 @@ cd %(basedir)s
 # sanity checks
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'basedir':basedir,'download':download,'sampleset':sampleset}, file=sh)
+[[ -d '%(staging)s' ]] || fail 'No staging directory:' '%(staging)s'
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'basedir':basedir,'download':download,'sampleset':sampleset, 'staging':staging}, file=sh)
 
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
@@ -272,7 +283,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 			tsv=batchtsv[batch]
 		else:
 			# batch TSV sample list
-			batchtsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv'), 'wt')
+			batchtsv[batch]=tsv=open(os.path.join(basedir,staging,f'samples.{batch}.tsv'), 'wt')
 			batchlanes[batch]={lane: sa.permId}
 			batchseensname[batch]={ } # check for duplicate samples in different lane (i.e.: fused samples)
 
@@ -292,7 +303,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 			if not args.summary:
 				print('\t', samcode, libkit, sep='\t')
 
-			with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
+			with open(os.path.join(basedir,samplset,f'batch.{batch}.yaml'), 'wt') as yml:
 				print(yaml.dump({'type':'openbis','lab':lab,'url':apiurl,'libkit':libkit,'runfolder':runfolder,'properties':sa.CONTAINER_PROPERTIES},sort_keys=False), file=yml)
 
 
@@ -332,27 +343,27 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L%(lane)03u_R[1-2]_*%(mm)s.fastq.gz )
 [[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
 (( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[*]}"
-mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
+mkdir ${mode} -p "%(staging)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
 for file in "${fastq[@]}"; do
 	filename="${file##*/}"
 	[[ $file =~ _L%(lane)03u_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
-	cp -v%(force)s ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
+	cp -v%(force)s ${link} "${file}" "%(staging)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
 	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
-	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]''' % {'force': ('f' if args.force else ''),'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':(suffix[ds.MISMATCH_IN_INDEX] if ds.MISMATCH_IN_INDEX in suffix else ''),'idx1':ds.BARCODE,'idx2':ds.INDEX2,'lane':lane}, file=sh)
+	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]''' % {'force': ('f' if args.force else ''),'download':download,'staging':staging,'sname':ds.sname,'batch':batch,'id':ds.permId,'fqcode':ds.FASTQ_SAMPLE_CODE,'seq':seq,'mm':(suffix[ds.MISMATCH_IN_INDEX] if ds.MISMATCH_IN_INDEX in suffix else ''),'idx1':ds.BARCODE,'idx2':ds.INDEX2,'lane':lane}, file=sh)
 					# copy FastQC only for none-dupes
 					if not fusedupe:
 						# HACK at this point, we might not know it's a fusedupe yet and do a copy we shouldn't
 						if fastqc is not None:
-							print(r'''	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
+							print(r'''	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(staging)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
-''' % {'force': ('-f' if args.force else ''),'download':download,'sampleset':sampleset,'sname':ds.sname,'batch':batch,'fastqc':fastqc,'seqdir':seqdir}, file=sh)
+''' % {'force': ('-f' if args.force else ''),'download':download,'staging':staging,'sname':ds.sname,'batch':batch,'fastqc':fastqc,'seqdir':seqdir}, file=sh)
 					else:
 						# HACK remove any left over FastQC from the other copy, keep old dates to avoid re-updating
 						# TODO don't stream out movefile.sh but do proper two-step fusing as in bfabric_tsv
-						print(r'''	rm -f "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
-	touch --reference="%(sampleset)s/%(sname)s/%(batch)s/raw_data" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data"
+						print(r'''	rm -f "%(staging)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
+	touch --reference="%(staging)s/%(sname)s/%(batch)s/raw_data" "%(staging)s/%(sname)s/%(batch)s/extracted_data"
 done
-''' % {'sampleset':sampleset,'sname':ds.sname,'batch':batch}, file=sh)
+''' % {'staging':staging,'sname':ds.sname,'batch':batch}, file=sh)
 				# look for FASTQC holder directory
 				elif ds.type == 'FASTQC':
 					# upload error: duplicate samples (a typoe of OpenBIS crash).

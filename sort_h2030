@@ -25,8 +25,7 @@ duplicates=1
 : ${basedir:=$(pwd)}
 : ${download:?}
 : ${sampleset:?}
-
-
+: ${staging-h2030:?}
 
 if (( ${#@} < 1)); then
 	usage 2
@@ -57,14 +56,14 @@ for d in "${@}"; do
 		batch="20${BASH_REMATCH[1]}_${flowcell}"
 		quiet=''
 		dupes=''
-		if [[ -r "${sampleset}/samples.${batch}.tsv" ]]; then
+		if [[ -r "${staging-h2030}/samples.${batch}.tsv" ]]; then
 			quiet='-q'
 			echo "${batch} : ${d}"
 		fi
 		if (( duplicates )); then
 			dupes='-D'
 		fi
-		./sort_samples_dumb ${quiet} ${dupes} -f ${basedir}/${download}/${d} -b "${batch}" -o "${sampleset}" ${mode:+-m ${mode}}|| success=0
+		./sort_samples_dumb ${quiet} ${dupes} -f ${basedir}/${download}/${d} -b "${batch}" -o "${staging}" ${mode:+-m ${mode}}|| success=0
 		echo "type: h2030
 lab: h2030
 libkit: Illumina_COVIDSeq
@@ -72,9 +71,9 @@ fused: false
 runfolder: ${d%%/}" > ${sampleset}/batch.${batch}.yaml
 
 		echo -ne "\e[35;1m"
-		(gawk '$3!=""{print;l=$3};$3==""{print $0 l;print "Sample "$1"-"$2" is empty">"/dev/stderr"}' ${sampleset}/samples.${batch}.tsv > ${sampleset}/samples.${batch}.tsv.patched) 2>&1
+		(gawk '$3!=""{print;l=$3};$3==""{print $0 l;print "Sample "$1"-"$2" is empty">"/dev/stderr"}' ${staging}/samples.${batch}.tsv > ${staging}/samples.${batch}.tsv.patched) 2>&1
 		echo -ne "\e[0m"
-		mv ${sampleset}/samples.${batch}.tsv{.patched,}
+		mv ${staging}/samples.${batch}.tsv{.patched,}
 	else
 		echo "Can't parse ${d}"
 	fi
