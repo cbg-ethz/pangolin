@@ -32,7 +32,6 @@ duplicates=1
 : ${basedir:=$(pwd)}
 : ${download:?}
 : ${sampleset:?}
-: ${staging-viollier:?}
 
 if (( ${#@} < 1)); then
 	scan=( ${basedir}/${download}/*/ )
@@ -43,7 +42,7 @@ fi
 rx_folder='^(20[[:digit:]]{2}[01][[:digit:]][0-3][[:digit:]])_([[:alnum:]]+)$'  # e.g.: 20210528_061936
 #            ^-[1]: date                                      ^-[2]: time
 
-cat > ${basedir}/${staging-viollier}/movedatafiles.sh <<SH_HEAD
+cat > ${basedir}/${sampleset}/movedatafiles.sh <<SH_HEAD
 link='--link'
 
 # Helper
@@ -65,7 +64,6 @@ X() {
 
 # sanity checks
 [[ -d '${sampleset}' ]] || fail 'No sampleset directory:' '${sampleset}'
-[[ -d '${staging-viollier}' ]] || fail 'No Viollier staging directory:' '${staging-viollier}'
 SH_HEAD
 
 success=1
@@ -80,7 +78,7 @@ for d in "${scan[@]}"; do
 		bar2=''
 	fi
 	bar3="$(for ((i=0;i< ( (128-v)>>3);++i)) do echo -n $'\u22C5' ; done)" # normally: \u00b7
-	cat >> ${basedir}/${staging-viollier}/movedatafiles.sh <<SH_BAR
+	cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_BAR
 echo -ne '\\r[${bar1}${bar2}${bar3}] ${b}/${#scan[@]}\\r'
 SH_BAR
 	(( ++b ))
@@ -114,7 +112,7 @@ SH_BAR
 			echo "Patchmap found for $(basename ${d})"
 			patchmap="--patchmap=${d%%/}.patchmap.tsv"
 		fi
-		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${staging-viollier} ${mode:+--mode=${mode}} --force --forcelanes --batch ${lab} --append
+		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} ${mode:+--mode=${mode}} --force --forcelanes --batch ${lab} --append
 	else
 		# ignore mal formed folders
 		echo "Can't parse $(basename ${d})"
@@ -122,7 +120,7 @@ SH_BAR
 done
 
 bar1="$(for ((i=0;i< (128>>3);++i)) do echo -n $'\u2588'; done)"
-cat >> ${basedir}/${staging-viollier}/movedatafiles.sh <<SH_FOOT
+cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_FOOT
 echo -e '\\r[${bar1}] done.'
 
 if (( ALLOK )); then
