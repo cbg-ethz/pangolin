@@ -33,6 +33,8 @@ duplicates=1
 : ${download:?}
 : ${sampleset:?}
 
+
+
 if (( ${#@} < 1)); then
 	scan=( ${basedir}/${download}/*/ )
 else

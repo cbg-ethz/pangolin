@@ -44,7 +44,7 @@ with open(args.config) as f: config.read_string(f"""
 lab={os.path.splitext(os.path.basename(args.config))[0]}
 samtype=ILLUMINA_FLOW_LANE
 basedir={os.getcwd()}
-sampleset = sampleset
+sampleset=sampleset
 download=openbis-downloads
 link=--link
 mode=
@@ -151,7 +151,7 @@ cd %(basedir)s
 # sanity checks
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'basedir':basedir,'download':download,'sampleset':sampleset, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'basedir':basedir,'download':download,'sampleset':sampleset}, file=sh)
 
 
 #o.get_projects(space='BSSE_STADLER_COVID', code='STADLER_COVID')[0].get_experiments()
@@ -292,7 +292,7 @@ for sa in dataframe.sort_values(by=['registrationDate'],ascending=[True]).itertu
 			if not args.summary:
 				print('\t', samcode, libkit, sep='\t')
 
-			with open(os.path.join(basedir,samplset,f'batch.{batch}.yaml'), 'wt') as yml:
+			with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
 				print(yaml.dump({'type':'openbis','lab':lab,'url':apiurl,'libkit':libkit,'runfolder':runfolder,'properties':sa.CONTAINER_PROPERTIES},sort_keys=False), file=yml)
 
 

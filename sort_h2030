@@ -26,6 +26,8 @@ duplicates=1
 : ${download:?}
 : ${sampleset:?}
 
+
+
 if (( ${#@} < 1)); then
 	usage 2
 fi

@@ -474,6 +474,7 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 	except FileExistsError:
 		pass
 
+
 # shell script file with all moving instructions inside
 sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
 
@@ -502,7 +503,7 @@ X() {
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
 [[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
-''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset, 'download':download}, file=sh)
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
 
 # helper function to handle items that can be either single string or list (or empty)
 listify = lambda x: x if type(x) is list else [] if x is None else [x]
