@@ -1,0 +1,5 @@
+default:
+  vineyard:
+    host: id-hdb-psgr-cp61.ethz.ch
+    dbname: sars_cov_2
+    port: 5432
