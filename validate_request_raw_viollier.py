@@ -16,6 +16,17 @@ import argparse
 import yaml
 import netrc
 
+# parse command line
+def parse_args():
+    """ Set up the parsing of command-line arguments """
+
+    parser = argparse.ArgumentParser(description='Validate Viollier raw data upload requests against the database')
+    parser.add_argument('-c', '--db_config', metavar='YAML', required=True, help = "File containing the yaml config with credentials to connect to the database")
+    parser.add_argument('-i', '--req_file', metavar='TSV', required=True, help = "File containing the requests from Viollier. One ID per line")
+    parser.add_argument('-o', '--out_file', metavar='TSV', required=True, help = "Filename to use to save only the ID that passed validation")
+    return parser.parse_args()
+
+
 ##Get db credentials
 def read_config(configfile):
     with open(configfile) as file:
@@ -140,7 +151,8 @@ def log_warning(samples, warning_type):
     else:
         sys.exit('Error: unknown warning_type')
 
-def main(args):
+def main():
+    args = parse_args()
     db_config = read_config(args.db_config)
     db_connection = connect_to_db(db_config)
     imported_data = get_db_info(db_connection)
@@ -153,11 +165,6 @@ def main(args):
     yield_data = filter_yield(viollier_data)
     create_tsv(yield_data, args.out_file)
 
-parser = argparse.ArgumentParser(description='Validate Viollier raw data upload requests against the database')
-parser.add_argument('--db_config', help = "File containing the yaml config with credentials to connect to the database")
-parser.add_argument('--req_file', help = "File containing the requests from Viollier. One ID per line")
-parser.add_argument('--out_file', help = "Filename to use to save only the ID that passed validation")
-args = parser.parse_args()
-
-main(args)
+if __name__ == '__main__':
+    main()
 
