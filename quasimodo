@@ -116,6 +116,11 @@ echo 'First run...'
 ring_carillon || (( singleshot == 0 )) || exit 1
 
 while sleep 1200; do 
+	# re-enter directory (in case a NFS crash has rendered the previous CWD handle stale)
+	workpath=$(dirname $(which $0))
+	cd ~
+	cd "${workpath}"
+
 	echo 'loop...'
 	/usr/bin/kinit -l 1h -k -t $HOME/$USER.keytab ${USER%@*}@D.ETHZ.CH;
 	ring_carillon
