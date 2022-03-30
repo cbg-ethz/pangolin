@@ -44,6 +44,8 @@ fi
 rx_folder='^(20[[:digit:]]{2}[01][[:digit:]][0-3][[:digit:]])_([[:alnum:]]+)$'  # e.g.: 20210528_061936
 #            ^-[1]: date                                      ^-[2]: time
 
+# appended batches: make shared header (cf. sort_samples_jobinfo)
+# and also setup combined error status (GRANDTOTAL_ALLOK)
 cat > ${basedir}/${sampleset}/movedatafiles.sh <<SH_HEAD
 link='--link'
 
@@ -59,6 +61,7 @@ warn() {
 	[[ -n "\$2" ]] && echo "\$2" 1>&2
 }
 
+GRANDTOTAL_ALLOK=1
 ALLOK=1
 X() {
 	ALLOK=0
@@ -114,24 +117,31 @@ SH_BAR
 			echo "Patchmap found for $(basename ${d})"
 			patchmap="--patchmap=${d%%/}.patchmap.tsv"
 		fi
-		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} ${mode:+--mode=${mode}} --force --forcelanes --batch ${lab} --append
+		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} ${mode:+--mode=${mode}} --force --forcelanes --batch ${lab} --append --staging
+		# between appended batches: combine error status into overall status  & reset local error status
+		cat >> ${basedir}/${sampleset}/movedatafiles.sh <<MERGE_ALLOK
+(( GRANDTOTAL_ALLOK &= ALLOK ))
+ALLOK=1
+MERGE_ALLOK
 	else
 		# ignore mal formed folders
 		echo "Can't parse $(basename ${d})"
 	fi
 done
 
+# coda: (cf. sort_samples_jobinfo)
+# progress bar & based on combined exit status
 bar1="$(for ((i=0;i< (128>>3);++i)) do echo -n $'\u2588'; done)"
 cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_FOOT
 echo -e '\\r[${bar1}] done.'
 
-if (( ALLOK )); then
-	echo All Ok
-	exit 0
-else
+if (( ! GRANDTOTAL_ALLOK )); then
 	echo Some errors
 	exit 1
 fi;
+
+echo All Ok
+exit 0
 SH_FOOT
 
 if (( success )); then

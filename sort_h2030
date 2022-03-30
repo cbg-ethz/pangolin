@@ -64,7 +64,7 @@ for d in "${@}"; do
 		if (( duplicates )); then
 			dupes='-D'
 		fi
-		./sort_samples_dumb ${quiet} ${dupes} -f ${basedir}/${download}/${d} -b "${batch}" -o "${sampleset}" ${mode:+-m ${mode}}|| success=0
+		./sort_samples_dumb ${quiet} ${dupes} -f ${basedir}/${download}/${d} -b "${batch}" -g -o "${sampleset}" ${mode:+-m ${mode}}|| success=0
 		echo "type: h2030
 lab: h2030
 libkit: Illumina_COVIDSeq

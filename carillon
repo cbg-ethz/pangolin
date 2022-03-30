@@ -6,6 +6,7 @@ cluster_user="${USER%%@*}"
 . ${scriptdir}/server.conf
 
 : ${run_shorah:=0}
+: ${staging:=1}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
@@ -292,12 +293,12 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 
 	# are we allowed to submit jobs ?
 	if (( donotsubmit )); then
-		echo -e '\e[35;1mWill NOT submit jobs\e[0m...'
+		echo -e '\e[35;1mWill NOT submit jobs\e[0m...' > /dev/stderr
 		if (( mustrun )); then
 			echo 'submit blocked' > ${statusdir}/submit_fail
-			echo -e '...\e[33;1mbut there are new jobs that should be started !!!\e[0m'
+			echo -e '...\e[33;1mbut there are new jobs that should be started !!!\e[0m' > /dev/stderr
 		else
-			echo '...and there is nothing to run anyway'
+			echo '...and there is nothing to run anyway' > /dev/stderr
 		fi
 	# start jobs ?
 	elif (( mustrun )); then
@@ -305,19 +306,29 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 
 		# Sanity check
 		if [[ ( -e ${statusdir}/sortsamples_fail ) && ( ${statusdir}/sortsamples_fail -nt  ${statusdir}/sortsamples_success ) ]]; then
-			echo 'data fetch error' > ${statusdir}/submit_fail
-			echo -e '\e[31;1merror: sampleset data not successfully fetched yet\e[0m' > /dev/stderr
-			exit 1
+			if (( staging )); then
+				echo -e '\e[33;1mwarning: sampleset data not successfully fetched yet, using staging\e[0m' > /dev/stderr
+			else
+				echo 'data fetch error' > ${statusdir}/submit_fail
+				echo -e '\e[31;1merror: sampleset data not successfully fetched yet\e[0m' > /dev/stderr
+				exit 1
+			fi
 		fi
 		if [[ ( ! -e ${statusdir}/syncopenbis_new ) || ( ( -e ${statusdir}/vpipe_started ) && ( ${statusdir}/vpipe_started -nt ${statusdir}/syncopenbis_new ) ) ]]; then
 			echo 'oops: something fishy: no downloaded data newer than last run ?' > /dev/stderr
 		fi
+		# point of comparison for dates:
 		if [[ -e ${statusdir}/vpipe_ended ]]; then
 			lastrun=${statusdir}/vpipe_ended
-		elif [[ -e   ${statusdir}/syncopenbis_new ]]; then
-			lastrun=${statusdir}/syncopenbis_new
 		else
-			lastrun=${statusdir}/sortsamples_success
+			# find the most recent 'new' sync status
+			lastsync=( $(ls -t ${statusdir}/sync*_new) )
+			if [[ -e "${lastsync[0]}" ]]; then
+				lastrun="${lastsync[0]}"
+			else
+				# last fall back: sort success
+				lastrun=${statusdir}/sortsamples_success
+			fi
 		fi
 
 		# push sampleset data
@@ -356,7 +367,18 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 		fi
 	else
 		echo 'No new jobs to start'
-		${scriptdir}/belfry purgeviollier
+
+		# check for left-over .staging files
+		staging_tsv=( sampleset/samples.202*.tsv.staging )
+		if [[ "${staging_tsv[*]}" =~ \* ]]; then
+			# no staging files => safe to purge
+			${scriptdir}/belfry purgeviollier
+		else
+			echo 'possible unsubmitted failed import?' > ${statusdir}/submit_fail
+			echo -e '\e[31;1mLeft-over staging files\e[0m' > /dev/stderr
+			printf ' - %s\n' "${staging_tsv[@]##*/}" > /dev/stderr
+		fi
+
 	fi
 else
 	echo 'There is already run going on'
