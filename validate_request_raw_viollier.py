@@ -14,6 +14,7 @@ import psycopg2
 import os
 import argparse
 import yaml
+import netrc
 
 ##Get db credentials
 def read_config(configfile):
@@ -32,16 +33,26 @@ def read_config(configfile):
         sys.exit("Error: missing 'dbname' field under 'vineyard' in config file")
     elif db_config["default"]["vineyard"].get("dbname") == None:
         sys.exit("Error: empty 'dbname' field under 'vineyard' in config file")
-    elif "username" not in db_config.get("default").get("vineyard"):
-        sys.exit("Error: missing 'username' field under 'vineyard' in config file")
+
+    username,password=netrc.netrc().authenticators(db_config["default"]["vineyard"].get("host"))[0::2]
+
+    if "username" not in db_config.get("default").get("vineyard"):
+        if username is not None:
+            db_config["default"]["vineyard"]["username"] = username
+        else:
+            sys.exit(f"Error: missing 'username' field both under 'vineyard' in config file and for {db_config['default']['vineyard'].get('host')} in .netrc")
     elif db_config["default"]["vineyard"].get("username") == None:
         sys.exit("Error: empty 'username' field under 'vineyard' in config file")
-    elif "password" not in db_config.get("default").get("vineyard"):
-        sys.exit("Error: missing 'password' field under 'vineyard' in config file")
+
+    if "password" not in db_config.get("default").get("vineyard"):
+        if password is not None:
+            db_config["default"]["vineyard"]["password"] = password
+        else:
+            sys.exit(f"Error: missing 'password' field both under 'vineyard' in config file and for {db_config['default']['vineyard'].get('host')} in .netrc")
     elif db_config["default"]["vineyard"].get("password") == None:
         sys.exit("Error: empty 'password' field under 'vineyard' in config file")
-    else:
-        return db_config["default"]["vineyard"]
+
+    return db_config["default"]["vineyard"]
 
 ##Connect to the database
 def connect_to_db(db_config):

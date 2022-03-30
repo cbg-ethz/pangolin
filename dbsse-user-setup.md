@@ -13,6 +13,8 @@
     - `machine bs-openbis04.ethz.ch` (see `gfb.conf`)
     - `machine fgcz-gstore.uzh.ch` (see `fcgz.conf`)
     - `machine sftp.gc.health2030.ch` (see `h2030.conf`)
+    - optionnally, credention for the database can be specified here
+      - otherwise, one must provide them in a YAML file listed inside `viollier.conf`'s porperty `dbconfigfile`
 - `~/.ssh/config`
    controls various parameters of SSH connection.
     - ControlMaster **MUST NOT** be enabled (otherwise part of the parallelism gains are lost)
