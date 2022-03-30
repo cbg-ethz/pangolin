@@ -373,11 +373,13 @@ fi;
 
 """, file=sh)
 
-for b in keys(batchtsv):
-    print(f"mv -v {sampleset}/sample.{b}.tsv.staging samples {sampleset}/sample.{b}.tsv", file=sh)
+for b in batchtsv.keys():
+    print(f"mv -v {sampleset}/samples.{b}.tsv.staging {sampleset}/samples.{b}.tsv", file=sh)
 
 print("""
 echo All Ok
 exit 0
 """, file=sh)
 
+if status == 1:
+	sys.exit('Some FastQC files still missing')

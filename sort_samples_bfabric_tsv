@@ -728,12 +728,10 @@ fi;
 
 """, file=sh)
 
-TODO: add the check for the keys
-for b in keys(batches):
-    print(f"mv -v {sampleset}/sample.{b}.tsv.staging samples {sampleset}/sample.{b}.tsv", file=sh)
+for b in otsv.keys():
+	print(f"mv -v {sampleset}/samples.{b}.tsv.staging {sampleset}/samples.{b}.tsv", file=sh)
 
 print("""
 echo All Ok
 exit 0
 """, file=sh)
-
