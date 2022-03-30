@@ -56,9 +56,15 @@ def read_config(configfile):
 
 ##Connect to the database
 def connect_to_db(db_config):
-    db_connection = "dbname=\'" + db_config.get("dbname") + "\' user=\'" + db_config.get("username") + "\' host=\'" + db_config.get("host") + "\' password=\'" + db_config.get("password") + "\'"
     try:
-        conn = psycopg2.connect(db_connection)
+        conn = psycopg2.connect(
+            host= db_config.get("host"),
+            database=db_config.get("dbname"),
+            user=db_config.get("username"),
+            password=db_config.get("password"),
+            port=db_config.get("port", '5432'),
+        )
+
     except Exception as e:
         raise Exception("I am unable to connect to the database.", e)
     return(conn)
@@ -142,6 +148,7 @@ def main(args):
         db_connection.close()
     except Exception as e:
         raise Exception("I am unable to disconnect to the database.", e)
+
     viollier_data = filter_viollier(imported_data, args.req_file)
     yield_data = filter_yield(viollier_data)
     create_tsv(yield_data, args.out_file)
