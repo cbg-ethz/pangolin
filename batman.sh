@@ -128,6 +128,66 @@ case "$1" in
 	purgelogs)
 		find ${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm -- 
 	;;
+	scratch)
+		temp_scratch="${SCRATCH}/pangolin/temp"
+		olderthan=60
+		purge=0
+		loop=0
+		filter=
+		while [[ -n $2 ]]; do
+			case "$2" in
+				--minutes-ago)
+					if [[ ! "${3}" =~ ^[[:digit:]]+$ ]]; then
+						echo "parameter of ${2} must be a number of minutes (digits only), got <${3}> instead" > /dev/stderr
+						exit 2
+					fi
+					shift
+					olderthan=$2
+				;;
+				--loop)
+					loop=1
+				;&
+				--purge)
+					purge=1
+				;;
+				*)
+					echo "Unkown parameter ${2}" > /dev/stderr
+					exit 2
+				;;
+			esac
+			shift
+		done
+
+		if (( purge )); then
+			echo "purging in ${temp_scratch}..."
+		else
+			echo "listing in ${temp_scratch}..."
+		fi
+
+		count_all=0
+		count_old=0
+		while read s; do
+			(( ++count_all ))
+			if [[ -r "${clusterdir}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
+				(( ++count_old ))
+				if (( purge )); then
+					rm -rvf  "${temp_scratch}/samples/${s}"
+				else
+					echo "${s}";
+				fi
+			fi;
+		done < <((cd "${temp_scratch}/" && find samples/ -type f ${filter} ) | grep -oP '(?<=samples/)[^/]+/[^/]+(?=/)' | sort -u) | tee /dev/stderr | wc -l  2>&1
+		echo "Samples: ${count_old} old / ${count_all} total"
+
+		if (( loop )); then
+			echo -e '\n\e[38;5;45;1mYou just keep on trying\e[0m\n\e[38;5;208;1mTill you run out of cake\e[0m'
+			if sleep "$(( 5 + olderthan))m"; then
+				# loop if no breaks
+				exec "${0}" scratch --minutes-ago "${olderthan}" --loop
+			fi
+			echo "I'm not even angry"
+		fi
+	;;
 	completion)
 		if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
 			bpeek $2 | gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:]]+%\) done$/{print $0 "\t" date}'
