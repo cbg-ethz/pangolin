@@ -98,7 +98,7 @@ MSG
 
 # validate input
 validated_file='fastq_requests_validated.tsv'
-if python ./validate_request_raw_viollier.py --req_file ${download}/${target_base}/${req_file} --out_table ${download}/${target_base}/${validated_file} --db_config ${download}/${target_base}/${dbconfigfile} 2>&1; then
+if python ./validate_request_raw_viollier.py --req_file ${download}/${target_base}/${req_file} --out_file ${download}/${target_base}/${validated_file} --db_config ${download}/${target_base}/${dbconfigfile} 2>&1; then
 	printf '\e[36;1mValidation successful\e[0m\n' 1>&2
 	echo -e "successfully validated input\n"
 else
