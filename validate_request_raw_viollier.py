@@ -15,6 +15,7 @@ import os
 import argparse
 import yaml
 import netrc
+import sys
 
 # parse command line
 def parse_args():
@@ -45,7 +46,12 @@ def read_config(configfile):
     elif db_config["default"]["vineyard"].get("dbname") == None:
         sys.exit("Error: empty 'dbname' field under 'vineyard' in config file")
 
-    username,password=netrc.netrc().authenticators(db_config["default"]["vineyard"].get("host"))[0::2]
+    username=password=None
+    netrc_creds=netrc.netrc().authenticators(db_config["default"]["vineyard"]["host"])
+    if netrc_creds is None:
+        print(f"warning: host {db_config['default']['vineyard']['host']} not in ~/.netrc", file=sys.stderr)
+    else:
+        username,password=netrc_creds[0::2]
 
     if "username" not in db_config.get("default").get("vineyard"):
         if username is not None:
