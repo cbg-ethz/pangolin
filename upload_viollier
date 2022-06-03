@@ -75,7 +75,7 @@ done
 
 if (( ${#tsvs[@]} == 0 )); then
 	echo "Nothing to do"
-	exit error
+	exit $error
 fi
 
 cat "${tsvs[@]}" | while read sample batch len; do
