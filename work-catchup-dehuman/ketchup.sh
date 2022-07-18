@@ -47,6 +47,16 @@ case "$1" in
 				list_tsv=( $(echo "../sampleset/samples.${2}"*".tsv" ) )
 				shift
 			;;
+			--tsv)
+				shift
+				if [[ ! -r "${2}" ]]; then
+					echo "Cannot read ${2}"
+					exit 1
+				fi
+				# TODO validate
+				list_tsv=( "${2}" )
+				shift
+			;;
 		esac
 		shift
 
@@ -65,7 +75,7 @@ case "$1" in
 
 		# check everything is normal
 		if (( ${#list_tsv[@]} == 0 )); then
-			echo "usage: ${0} samples [ --recent | --date <YYYYMM> ] <BATCH>..." > /dev/stderr
+			echo "usage: ${0} samples [ --recent | --date <YYYYMM> | --tsv <TSV> ] <BATCH>..." > /dev/stderr
 			exit 2
 		fi
 
