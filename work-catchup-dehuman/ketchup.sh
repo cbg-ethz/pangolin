@@ -113,7 +113,12 @@ case "$1" in
 				;;
 				--loop)
 					loop=1
-					filter='-name dehuman.sam'
+					#filter='-name dehuman.sam'
+					### dh_aln.sam
+					### reject_R2.fastq.gz
+					### reject_R1.fastq.gz
+					### host_aln.sam
+					### dehuman.filter
 				;&
 				--purge)
 					purge=1
