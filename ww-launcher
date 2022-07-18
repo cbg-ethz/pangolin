@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #BATCH=
-: ${PROTO:=v4}
+: ${PROTO:=v41}
 : ${MASS:=0}
 
 umask 0007
@@ -58,6 +58,9 @@ case "${PROTO}" in
 	v4)	
 		:
 	;;
+	v41)
+		:
+	;;
 	*)
 		echo "bad proto ${1}"
 		exit 1;
@@ -90,7 +93,7 @@ RXJOB='Job <([[:digit:]]+)> is submitted'
 if (( MASS )); then
 	if [[ -z "${BATCH}" ]]; then
 		echo "Submitting mass-rebuild"
-		for p in v3 v4; do
+		for p in v3 v4 v41; do
 			batches=( $(cut -f 2 working/samples.wastewateronly.${p}.tsv	| sort -r -u ) )
 			echo "proto: ${p}, ${#batches[@]} batches"
 			if [[ "$(sed -r 's@^(batches=).*$@\1( "" '"$(printf '"%s" ' "${batches[@]}" )"')@;s@^(proto=).*$@\1"'${p}'"@' ww-new.bsub | bsub -J "COWWID-NewVar[1-${#batches[@]}]" | tee /dev/stderr)" =~ ${RXJOB} ]]; then

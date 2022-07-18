@@ -21,6 +21,9 @@ case "${proto}" in
 	v4)
 		:
 	;;
+	v41)
+		:
+	;;
 	*)
 		echo "bad proto ${proto}"
 		exit 2;
@@ -31,5 +34,6 @@ esac
 printf '%s\n' "working/ww-${prefix}-${proto}-202"*.yaml | sort -r | xargs cat > "working/ww-${prefix}-${proto}.yaml"
 
 . /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
+cojac=cojac/cojac-wrapper
 
-exec cojac/cooc-tabmut -y "working/ww-${prefix}-${proto}.yaml" -o "working/ww-${prefix}-${proto}.csv" -m -l -/
+exec ${cojac} cooc-tabmut -y "working/ww-${prefix}-${proto}.yaml" -o "working/ww-${prefix}-${proto}.csv" -m -l --batchname="/"

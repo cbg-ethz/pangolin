@@ -6,7 +6,7 @@
 #BSUB -n 1
 #BSUB -M 8192
 #BSUB -R rusage[mem=8192]
-#BSUB -W 4:00
+#BSUB -W 8:00
 
 #batches=( "" 20211105_HML7HDRXY 20211112_HN3JWDRXY 20211119_HM7WYDRXY )
 batches=( "" $(cut -f 2 working/samples.wastewateronly.tsv|sort -ru) )
@@ -63,7 +63,7 @@ validateBatchName "${batch}"
 #
 if [[ -z "${proto}" ]]; then
 	echo "no protocol specified, trying to detect in lists..."
-	for p in v3 v4; do
+	for p in v3 v4 v41; do
 		echo -ne "${p}:\t"
 		if grep -qF "${batch}" working/samples.wastewateronly.${p}.tsv; then
 			echo "found!"
@@ -81,6 +81,7 @@ fi
 case "${proto}" in
 	v3)	bedfile="cojac/nCoV-2019.insert.${proto^^}.bed"	;;
 	v4)	bedfile="cojac/SARS-CoV-2.insert.${proto^^}.txt"	;;
+	v41)	bedfile="cojac/SARS-CoV-2.insert.${proto^^}.bed"	;;
 	*)
 		echo "bad proto ${proto}"
 		exit 2;
@@ -89,4 +90,4 @@ esac
 
 . /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
 
-exec test/cojac/cooc-mutbamscan -s "${tsv}" -p working/samples -m test/cojac/voc/ -b "test/${bedfile}" --out-amp "amplicons.${prefix}.${proto}.yaml" -y "working/ww-${prefix}-${proto}-${batch}.yaml" -/
+exec test/cojac-wrapper cooc-mutbamscan -s "${tsv}" -p working/samples -m test/cojac/voc/ --rev -b "test/${bedfile}" --out-amplicons "amplicons.${prefix}.${proto}.yaml" -y "working/ww-${prefix}-${proto}-${batch}.yaml" --batchname="/"

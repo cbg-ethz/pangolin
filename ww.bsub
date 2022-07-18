@@ -6,12 +6,13 @@
 #BSUB -n 1
 #BSUB -M 8192
 #BSUB -R 'rusage[mem=8192]'
+#BSUB -W 8:00
 ##### -M 4096
 ##### -R rusage[mem=4096]
-#BSUB -W 4:00
+##### -W 4:00
 
 BATCH=
-PROTO=v4
+PROTO=v41
 
 umask 0007
 
@@ -33,12 +34,13 @@ validateBatchName() {
 case "${PROTO}" in
 	v3)	bedfile="cojac/nCoV-2019.insert.${PROTO^^}.bed"	;;
 	v4)	bedfile="cojac/SARS-CoV-2.insert.${PROTO^^}.txt"	;;
+	v41)	bedfile="cojac/SARS-CoV-2.insert.${PROTO^^}.bed"	;;
 	*)
 		echo "bad proto ${PROTO}"
 		exit 1;
 	;;
 esac
-allprototsv=( working/samples.wastewateronly.{v3,v4}.tsv )
+allprototsv=( working/samples.wastewateronly.{v3,v4,v41}.tsv )
 if [[ ! -r "${bedfile}" ]]; then
 	echo "missing bedfile ${bedfile}"
 	exit 1;
@@ -47,6 +49,7 @@ fi
 
 
 . /cluster/project/pangolin/miniconda3/bin/activate 'cojac'
+cojac=cojac/cojac-wrapper
 
 if [[ -n "${BATCH}" ]]; then
 	echo "only on batch ${BATCH}"
@@ -70,6 +73,7 @@ if [[ -n "${BATCH}" ]]; then
 		
 	(grep -vP '^(Y\d{2,}|NC|\d{6,})' "sampleset/samples.${BATCH}.tsv" | tee working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv ; cat working/samples.wastewateronly${PROTO:+.${PROTO}}.lastweek.tsv) > working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv
 	cat "${allprototsv[@]}" > working/samples.wastewateronly.tsv
+	gawk 'BEGIN{proto=""};FNR==1{match(FILENAME, /\.(v[[:digit:]]+)\.tsv/, part);proto=part[1]};{printf("%s\t%s\n", $0, proto)}' "${allprototsv[@]}"  > working/samples.wastewateronly.proto.tsv
 
 	#grep -hv 'KLZHCoV' sampleset/samples.{20210612_JN9YY,20210604_JN8TR,20210528_JN9WM}.tsv > ${SAM}
 	#grep -hP '(?P<plant>\d+)_(?P<year>20\d{2})_(?:(?:(?P<month>[01]?\d)_(?P<day>[0-3]?\d))|(?:R_(?P<repeat>\d+)))'  sampleset/samples.{20210612_JN9YY,20210604_JN8TR,20210528_JN9WM}.tsv > ${SAM}
@@ -79,10 +83,10 @@ if [[ -n "${BATCH}" ]]; then
 	mkdir -p working/ww-cooc${PROTO:+-${PROTO}}/
 	# to regenerate the YAML:	--vocdir cojac/voc/ --bedfile "${bedfile}" --out-amp "amplicons.${PROTO}.yaml"
 	# to re-use previous YAML:	--in-amp "amplicons.${PROTO}.yaml"
-	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv" -p working/samples --in-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" -/	&&
+	${cojac} cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv" -p working/samples --in-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" --batchname="/"	&&
 	cat "working/ww-cooc${PROTO:+-${PROTO}}/ww-cooc.${BATCH}.yaml" "working/ww-cooc${PROTO:+.${PROTO}}.lastweek.yaml" > "working/ww-cooc${PROTO:+.${PROTO}}.yaml"
 else
 	# run on whole wastewater collection
-	cojac/cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv" -p working/samples --vocdir cojac/voc/ --bedfile "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -/
+	${cojac} cooc-mutbamscan -s "working/samples.wastewateronly${PROTO:+.${PROTO}}.tsv" -p working/samples --vocdir cojac/voc/ --bedfile "${bedfile}" --out-amp "amplicons.${PROTO}.yaml" -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" --batchname="/"
 fi &&
-exec cojac/cooc-tabmut -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -o "working/ww-cooc${PROTO:+.${PROTO}}.csv" -m -l -/
+exec ${cojac} cooc-tabmut -y "working/ww-cooc${PROTO:+.${PROTO}}.yaml" -o "working/ww-cooc${PROTO:+.${PROTO}}.csv" -m -l --batchname="/"
