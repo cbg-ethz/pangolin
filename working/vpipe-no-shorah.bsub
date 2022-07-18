@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -L /bin/bash
 #BSUB -J COVID-vpipe-cons
-#BSUB -u "ivan.topolsky@bsse.ethz.ch singer@nexus.ethz.ch carrara@nexus.ethz.ch louis.duplessis@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch" # kim.jablonski@bsse.ethz.ch chaoran.chen@bsse.ethz.ch
+#BSUB -u "ivan.topolsky@bsse.ethz.ch singer@nexus.ethz.ch carrara@nexus.ethz.ch louis.duplessis@bsse.ethz.ch" # sarah.nadeau@bsse.ethz.ch kim.jablonski@bsse.ethz.ch chaoran.chen@bsse.ethz.ch
 #BSUB -N
 #BSUB -M 16384
 #BSUB -R rusage[mem=16384]
@@ -10,6 +10,24 @@
 #BSUB -W 23:0
 
 ### 	batches	@TAG@
+
+
+logfile=/cluster/scratch/bs-pangolin/log.$LSB_JOBID
+
+# tee all output from this script into logfile
+exec > >(tee -a $logfile) 2>&1
+
+function sendmail {
+   cat $logfile | mail ivan.topolsky@bsse.ethz.ch\
+        singer@nexus.ethz.ch\
+        carrara@nexus.ethz.ch\
+        louis.duplessis@bsse.ethz.ch\
+        schmittu@ethz.ch
+        -s "VPIPE FAILED: please check $LSB_OUTPUTFILE"
+}
+
+trap sendmail ERR
+
 
 umask 0007
 
