@@ -403,8 +403,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			elif name in fuselist:
 				# configuration forces it anyway
 				print(name, f"\x1b[36;1m is dupe of order {order} (orders2run {';'.join(order2runs[order].keys())} overridden by fuse list)\x1b[0m")
-				#batches[order]['dupe']=True
-				#b['appendto']=order
+				batches[order]['dupe']=True
+				b['appendto']=order
 				if len(multiplates) > 0:
 					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
 				else:
