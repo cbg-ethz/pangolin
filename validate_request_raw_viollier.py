@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-## TODO: wait for refactoring and use the test_id, so that you can directly match the auftragnummer
-
 #Script too validate the raw data upload requests we receive from Viollier.
 #The validation comprises the following steps:
 #1) check if the requested samples are in the database
@@ -88,18 +86,22 @@ def connect_to_db(db_config):
 
 ##Load the information from the database
 def get_db_info(db_connection):
-    DEST_TABLE_1 = "consensus_sequence"
-    DEST_TABLE_2 = "viollier_test"
-    # Get consensus_sequence from the database
-    ## TODO: during refactoring this will need rework
+    DEST_TABLE_1 = "viollier_metadata"
+    DEST_TABLE_2 = "consensus_sequence"
+    DEST_TABLE_3 = "consensus_sequence_meta"
+    # Get the anonymised ethid from the sample number
     with db_connection.cursor() as cursor:
-        cursor.execute("SELECT sample_name, ethid, coverage FROM " + DEST_TABLE_1)
+        cursor.execute("SELECT sample_number, ethid FROM " + DEST_TABLE_1)
         imported_data_1_tuples = cursor.fetchall()
-    # Get the list od viollier samples
+    # Get the sample_name from the ethid
     with db_connection.cursor() as cursor:
-        cursor.execute("SELECT sample_number, ethid FROM " + DEST_TABLE_2)
+        cursor.execute("SELECT sample_name, ethid FROM " + DEST_TABLE_2)
         imported_data_2_tuples = cursor.fetchall()
-    imported_data = [imported_data_1_tuples, imported_data_2_tuples]
+    # Get the coverage
+    with db_connection.cursor() as cursor:
+        cursor.execute("SELECT sample_name, coverage_mean FROM " + DEST_TABLE_3)
+        imported_data_3_tuples = cursor.fetchall()
+    imported_data = [imported_data_1_tuples, imported_data_2_tuples, imported_data_3_tuples]
     return imported_data 
 
 def tuple_match(tpl, target):
@@ -110,37 +112,35 @@ def filter_viollier(imported_data, req_file):
         lines = fp.readlines()
     lines = [s.rstrip() for s in lines]
     #viollier_samples has the couples: [requested, ethid] of all requested that match the viollier sample names
-    #with the refactoring this will use the auftragsnummer of the test_id field
-    viollier_samples = [ [line, name[1]] for line in lines for name in imported_data[1] if line == str(name[0]) ]
+    viollier_samples = [ [line, name[1]] for line in lines for name in imported_data[0] if line == str(name[0]) ]
     viollier_names = [ name[0] for name in viollier_samples ]
+    #This returns a list of tuple, each showing, in this order: requested, ethid, sample_name
+    viollier_sample_name = [ [*ethid, name[0]] for ethid in viollier_samples for name in imported_data[1] if ethid[1] == name[1] ]
     not_viollier = list(set(lines) - set(viollier_names))
     if len(not_viollier) > 0:
         log_warning(not_viollier, warning_type = 'viollier')
-    matching = {}
-    for sample in viollier_samples:
-        matching[sample[0]] = None
-        for consensus in imported_data[0]:
-            if sample[1] == consensus[1]:
-                if matching[sample[0]] == None:
-                    matching[sample[0]] = [consensus]
-                else:
-                    matching[sample[0]].append(consensus)
-    return matching
 
-def filter_yield(viollier_data):
-    #Get al keys that have at least one item in values that show 0 coverage
+     return viollier_sample_name
+
+def filter_yield(viollier_data, imported_data):
+    #Get all keys that have at least one item in values that show 0 coverage
     no_yield = []
-    for key,value in viollier_data.items():
-        no_cov_items = 0
-        for item in value:
-            if item[2] == 0:
-                no_cov_items = no_cov_items + 1
-        if no_cov_items == len(value):
-            no_yield.append(key)
-    with_yield = viollier_data.keys() - no_yield
-    if len(no_yield) > 0:
-        log_warning(no_yield, warning_type = 'yield')
-    return with_yield
+
+    viollier_covs = [ coverage for name in viollier_data for coverage in imported_data[2] if name[2] == coverage[0] ]
+    viollier_requested = [ name[2] for name in viollier_data ]
+    viollier_with_cov = [ name[0] for name in viollier_covs ]
+    
+    viollier_no_cov = [x for x in viollier_requested if x not in viollier_with_cov]
+    if len(viollier_no_cov) > 0:
+        log_warning(viollier_no_cov, warning_type = 'missing yield')
+
+    viollier_no_yield = [x[0] for x in viollier_covs if x[1] == 0]
+    if len(viollier_no_yield) > 0:
+        log_warning(viollier_no_yield, warning_type = '0 yield')
+
+    viollier_with_yield = [x[0] for x in viollier_covs if x[1] > 0]
+
+    return viollier_with yield
 
 def create_tsv(yield_data, out_file):
     with open(out_file, 'w') as file_object:
@@ -168,7 +168,7 @@ def main():
         raise Exception("I am unable to disconnect to the database.", e)
 
     viollier_data = filter_viollier(imported_data, args.req_file)
-    yield_data = filter_yield(viollier_data)
+    yield_data = filter_yield(viollier_data, imported_data)
     create_tsv(yield_data, args.out_file)
 
 if __name__ == '__main__':
