@@ -126,7 +126,7 @@ def filter_yield(viollier_data, imported_data):
     #Get all keys that have at least one item in values that show 0 coverage
     no_yield = []
 
-    viollier_covs = [ coverage for name in viollier_data for coverage in imported_data[2] if name[2] == coverage[0] ]
+    viollier_covs = [ (*name, coverage[1]) for name in viollier_data for coverage in imported_data[2] if name[2] == coverage[0] ]
     viollier_requested = [ name[2] for name in viollier_data ]
     viollier_with_cov = [ name[0] for name in viollier_covs ]
     
@@ -134,26 +134,27 @@ def filter_yield(viollier_data, imported_data):
     if len(viollier_no_cov) > 0:
         log_warning(viollier_no_cov, warning_type = 'missing yield')
 
-    viollier_no_yield = [x[0] for x in viollier_covs if x[1] == 0]
+    viollier_no_yield = [x for x in viollier_covs if x[3] == 0]
     if len(viollier_no_yield) > 0:
         log_warning(viollier_no_yield, warning_type = '0 yield')
 
-    viollier_with_yield = [x[0] for x in viollier_covs if x[1] > 0]
+    viollier_with_yield = [x for x in viollier_covs if x[3] > 0]
+    
 
     return viollier_with yield
 
 def create_tsv(yield_data, out_file):
     with open(out_file, 'w') as file_object:
         for item in list(yield_data):
-            file_object.write('%s\n' % item)
+            file_object.write(item[0] + '\t' + str(item[1]) + '\n')
 
 def log_warning(samples, warning_type):
     if (warning_type == "viollier"):
         print('samples not from viollier: ' + str(samples))
-    elif (warning_type == "yield"):
+    elif (warning_type == "missing yield"):
+        print('samples with missing yield: ' + str(samples))
+    elif (warning_type == "0 yield"):
         print('samples with no yield: ' + str(samples))
-    elif (warning_type == "typo"):
-        print('samples with excessive matches: ' + str(samples))
     else:
         sys.exit('Error: unknown warning_type')
 
