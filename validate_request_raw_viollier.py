@@ -113,21 +113,27 @@ def filter_viollier(imported_data, req_file):
     lines = [s.rstrip() for s in lines]
     #viollier_samples has the couples: [requested, ethid] of all requested that match the viollier sample names
     viollier_samples = [ [line, name[1]] for line in lines for name in imported_data[0] if line == str(name[0]) ]
+    if len(viollier_samples) == 0:
+        sys.exit("No requested samples are in the available viollier metadata. Please investigate!")
     viollier_names = [ name[0] for name in viollier_samples ]
     #This returns a list of tuple, each showing, in this order: requested, ethid, sample_name
     viollier_sample_name = [ [*ethid, name[0]] for ethid in viollier_samples for name in imported_data[1] if ethid[1] == name[1] ]
+    viollier_names_imported = [ name[0] for name in viollier_sample_name ]
+    if not len(viollier_names) == len(viollier_names_imported):
+        not_imported = [ name for name in viollier_names if name not in viollier_names_imported ]
+        log_warning(not_imported, "not imported")
     not_viollier = list(set(lines) - set(viollier_names))
     if len(not_viollier) > 0:
         log_warning(not_viollier, warning_type = 'viollier')
 
-     return viollier_sample_name
+    return viollier_sample_name
 
 def filter_yield(viollier_data, imported_data):
     #Get all keys that have at least one item in values that show 0 coverage
     no_yield = []
 
     viollier_covs = [ (*name, coverage[1]) for name in viollier_data for coverage in imported_data[2] if name[2] == coverage[0] ]
-    viollier_requested = [ name[2] for name in viollier_data ]
+    viollier_requested = [ name[0] for name in viollier_data ]
     viollier_with_cov = [ name[0] for name in viollier_covs ]
     
     viollier_no_cov = [x for x in viollier_requested if x not in viollier_with_cov]
@@ -141,7 +147,7 @@ def filter_yield(viollier_data, imported_data):
     viollier_with_yield = [x for x in viollier_covs if x[3] > 0]
     
 
-    return viollier_with yield
+    return viollier_with_yield
 
 def create_tsv(yield_data, out_file):
     with open(out_file, 'w') as file_object:
@@ -155,6 +161,8 @@ def log_warning(samples, warning_type):
         print('samples with missing yield: ' + str(samples))
     elif (warning_type == "0 yield"):
         print('samples with no yield: ' + str(samples))
+    elif (warning_type == "not imported"):
+        print('samples still not processed: ' + str(samples))
     else:
         sys.exit('Error: unknown warning_type')
 
