@@ -450,12 +450,11 @@ case "$1" in
 			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			--relative	\
+			-izrlt --fuzzy --fuzzy --inplace	\
 			--exclude='*.out.log'	\
 			--exclude='*.err.log'	\
 			--exclude='*.benchmark'	\
-			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
+			belfry@euler.ethz.ch::${working}/{qa.csv,variants}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
@@ -509,12 +508,11 @@ case "$1" in
 			rsync	--timeout=${iotimeout}	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			--relative	\
+			-izrlt --fuzzy --fuzzy --inplace	\
 			--exclude='*.out.log'	\
 			--exclude='*.err.log'	\
 			--exclude='*.benchmark'	\
-			belfry@euler.ethz.ch::${working}/./{qa.csv,variants/}	\
+			belfry@euler.ethz.ch::${working}/{qa.csv,variants}	\
 			${basedir}/${working}/ || (( ++err ))
 		echo "samples:"
 		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
