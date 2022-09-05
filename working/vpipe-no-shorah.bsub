@@ -22,7 +22,7 @@ function sendmail {
    echo "see $logfile and $LSB_OUTPUTFILE" | ssh bs-pangolin@d@bs-stadler04.ethz.ch ./sendmail.sh \
 	ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch shuqing.yu@nexus.ethz.ch \
         schmittu@ethz.ch \
-        -s "VPIPE FAILED: please check $LSB_OUTPUTFILE"
+        -s "'VPIPE FAILED: please check $LSB_OUTPUTFILE'"
 }
 
 trap sendmail ERR
