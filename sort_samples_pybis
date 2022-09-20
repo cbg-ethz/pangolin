@@ -29,9 +29,11 @@ def bar(v, m=128):
     )
 
 
-def report_progress(prgrs, prgmax, summary):
+def report_progress(prgrs, prgmax, summary, sh=None):
     barstr = bar(math.floor(prgrs * 128 / prgmax))
     print(f"\r[{barstr}] {prgrs}/{prgmax}", end=("\r" if summary else "\n"))
+    if sh:
+        print (f"echo -ne '\\r[{barstr}] {prgrs}/{prgmax} \\r'", file=sh)
 
 
 # parse command line
@@ -403,7 +405,7 @@ for sa in dataframe.sort_values(by=["registrationDate"], ascending=[True]).itert
     )
 
     # progress bar
-    report_progress(prgrs, prgmax, args.summary)
+    report_progress(prgrs, prgmax, args.summary, sh=sh)
     prgrs += 1
 
     if skip:
