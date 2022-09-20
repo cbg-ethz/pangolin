@@ -209,6 +209,9 @@ rxcell = re.compile(r"(?<=/)(?P<seq>(?:\w+-)?(?P<cell>\w+)(?:\:(?P<lane>\d+))?)$
 rxclean = re.compile(
     r"[\W_]+"
 )  # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
+rxclean_new = re.compile(
+    r"[^\-A-Za-z0-9_]+|(?<=[^-])-(?=[^-])"
+)  # more recently, double dashes are not sanitized but included
 rxrecent = re.compile(r"^(?P<year>\d{4})(?:(?P<month>\d{2})(?P<day>\d{2})?)?")
 
 samkwargs = {}
@@ -531,9 +534,15 @@ for sa in dataframe.sort_values(by=["registrationDate"], ascending=[True]).itert
                 ),
                 file=yml,
             )
-
+    # HACK newer not the sanitized sname:
+    # old:  20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz
+    #  vs
+    # new: 20220918053122718-60893170/original/BSSE_QGF_217197_HJ7TCDRX2_1_MM_1/BSSE_QGF_217197_HJ7TCDRX2_1_05c07553--CP341--F1--type--opt_ATACAACC_ACCGTGTG_S198_L001_R1_001_MM_1.fastq.gz
     datasets["sname"] = datasets.apply(
-        lambda ds: rxclean.sub("_", ds["EXTERNAL_SAMPLE_NAME"]), axis=1
+        (lambda ds: rxclean.sub("_", ds["EXTERNAL_SAMPLE_NAME"]))
+        if sa.permId < "20220916"
+        else (lambda ds: rxclean_new.sub("_", ds["EXTERNAL_SAMPLE_NAME"])),
+        axis=1,
     )  # clean-up samplename from un friendly caracter
 
     # check for duplicate name in same lane (some crashes of OpenBIS cause this)

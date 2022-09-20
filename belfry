@@ -321,7 +321,7 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[gfb]} )); then
-			${scriptdir}/sort_samples_pybis -c gfb.conf ${force} ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+			${scriptdir}/sort_samples_pybis -c gfb.conf --assume-same-protocol ${force} ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping gfb"
 		fi

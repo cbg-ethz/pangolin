@@ -8,17 +8,16 @@ dependencies:
   - pandas
   - numpy
   - pyyaml
-  - pip 
-  - pytest 
-  - texttable 
-  - tabulate 
-  - requests 
-  - click 
-  - zope.interface 
-  - urllib3 
-  - certifi 
-  - chardet 
-  - pyyaml
+  - pip
+  - pytest
+  - texttable
+  - tabulate
+  - requests
+  - urllib3
+  - click
+  #- zope.interface
+  #- certifi
+  #- chardet
   #- ipykernel
   # for google sheet:
   - google-api-python-client
