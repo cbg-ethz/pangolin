@@ -83,7 +83,48 @@ argparser.add_argument(
         " the argument"
     ),
 )
+argparser.add_argument(
+    "-4",
+    "--protocols",
+    metavar="PROTOCOLSYAML",
+    required=False,
+    default=None,
+    dest="protoyaml",
+    help="Generate 4-column samples.tsv, using 'name' and 'alias' from the supplied protocols YAML file",
+)
+argparser.add_argument(
+    "-a",
+    "--assume-same-protocol",
+    required=False,
+    action="store_true",
+    dest="sameproto",
+    help="Assumes that all samples from the same batch have been processed with the same protocol and thus only look up the first samples as a speed optimisation",
+)
 args = argparser.parse_args()
+
+
+def load_proto(protoyaml):
+    """load a protocols YAML file and build a mapping of full name strings to the short keys"""
+    with open(protoyaml) as f:
+        py = yaml.load(f, Loader=yaml.BaseLoader)
+
+    pmap = {}
+
+    for k, p in py.items():
+
+        if "name" in p:
+            pmap[p.get("name")] = k
+
+        for a in p.get("alias", []):
+            assert (
+                a not in pmap
+            ), f"duplicate alias <{a}> in protocols YAML file <{protoyaml}>, last see in <{pmap[a]}>"
+            pmap[a] = k
+
+    return pmap
+
+
+proto = load_proto(args.protoyaml) if args.protoyaml else None
 
 
 def load_config(args):
@@ -184,11 +225,11 @@ if args.recent:
 
 
 kwmkdir = {"mode": mkdirmode} if mkdirmode else {}
-os.mkdir(os.path.join(basedir, sampleset), exist_ok=True, **kwmkdir)
+os.makedirs(os.path.join(basedir, sampleset), exist_ok=True, **kwmkdir)
 
 # we use ~/.netrc to obtain credentials
 # (we need that config file anyway to download the data files from openbis' fileserver)
-username, password = netrc.netrc(file="./netrc").authenticators(fileserver)[0::2]
+username, password = netrc.netrc().authenticators(fileserver)[0::2]
 
 if 0:
     # console interactive
@@ -296,13 +337,31 @@ def fetch_kit(args):
     return libkit
 
 
-def fetch_kits(ex, fastq_sample_codes):
-    unique_codes = set(fastq_sample_codes)
+cache_kit = {}
+
+
+def fetch_kits(ex, fastq_sample_codes, first_only):
+    """try to fetch all the KITs used for every sample of a batch"""
+
+    # HACK as an optimisation use a single value for the whole column (only get the kit of the first sample with a KIT)
+    if first_only:
+        for sc in set(fastq_sample_codes):
+            kit = fetch_kit((ex, sc))
+            # keep trying samples in succession, in case the first one has missing kit
+            if not kit:
+                continue
+            return kit
+        return None
+
+    # ...otherwise do it the slow way, but:
+    #  - parallelise multi-threaded
+    #  - process sample duplicates in a single request
+    unique_codes = set(fastq_sample_codes) - set(cache_kit.keys())
     args = [(ex, code) for code in unique_codes]
     with ThreadPoolExecutor(max_workers=30) as executor:
         kits = executor.map(fetch_kit, args)
-    lookup = dict(zip(unique_codes, kits))
-    return [lookup[code] for code in fastq_sample_codes]
+    cache_kit.update(dict(zip(unique_codes, kits)))
+    return [cache_kit[code] for code in fastq_sample_codes]
 
 
 # iterate through samples, i.e.: through flow cell lanes
@@ -424,7 +483,9 @@ for sa in dataframe.sort_values(by=["registrationDate"], ascending=[True]).itert
         print("\t(not usable yet - skipping)")
         continue
 
-    datasets["KIT"] = fetch_kits(ex, datasets["FASTQ_SAMPLE_CODE"])
+    datasets["KIT"] = fetch_kits(
+        ex, datasets["FASTQ_SAMPLE_CODE"], first_only=args.sameproto
+    )
 
     tsv = None
     fastqc = None
@@ -452,9 +513,8 @@ for sa in dataframe.sort_values(by=["registrationDate"], ascending=[True]).itert
         # get the (non-empty) first sample fastq code among the datasets
 
         libkit = ", ".join(sorted(set(datasets["KIT"]) - {None}))
-        print("KIT", libkit)
         if not args.summary:
-            print("\t", samcode, libkit, sep="\t")
+            print("\tKIT:", libkit, sep="\t")
 
         with open(os.path.join(basedir, sampleset, f"batch.{batch}.yaml"), "wt") as yml:
             print(
@@ -472,141 +532,154 @@ for sa in dataframe.sort_values(by=["registrationDate"], ascending=[True]).itert
                 file=yml,
             )
 
-        datasets["sname"] = datasets.apply(
-            lambda ds: rxclean.sub("_", ds["EXTERNAL_SAMPLE_NAME"]), axis=1
-        )  # clean-up samplename from un friendly caracter
+    datasets["sname"] = datasets.apply(
+        lambda ds: rxclean.sub("_", ds["EXTERNAL_SAMPLE_NAME"]), axis=1
+    )  # clean-up samplename from un friendly caracter
 
-        # check for duplicate name in same lane (some crashes of OpenBIS cause this)
-        seensname = {}
+    # check for duplicate name in same lane (some crashes of OpenBIS cause this)
+    seensname = {}
 
-        # samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ
-        for ds in datasets.sort_values(
-            by=["type", "sname", "permId"], ascending=[True, True, False]
-        ).itertuples(name="DataSets"):
-            if not args.summary:
-                print(
-                    "\u001b[K\t",
-                    ds.permId,
-                    ds.type,
-                    ds.status,
-                    ds.registrationDate,
-                    ds.sname,
-                    ds.EXTERNAL_SAMPLE_NAME,
-                    ds.FASTQ_SAMPLE_CODE,
-                    ds.BARCODE,
-                    ds.INDEX2,
-                    ds.MISMATCH_IN_INDEX,
-                    ds.KIT,
-                    sep="\t",
-                )
-            # skip unavailable data files
-            if ds.status == "AVAILABLE":
-                # look for FASTQ files (skip undetermined indexes)
-                if ds.type == "FASTQ_GZ" and ds.EXTERNAL_SAMPLE_NAME:
-                    # check that we actually have a FastQC
-                    if (fastqc is None) and (not args.skipqc):
-                        print("No FASTQC", file=sys.stderr)
-                        status |= 1
-                    # upload error: duplicate samples (a typoe of OpenBIS crash).
-                    if ds.sname in seensname:
-                        # TODO sanity checks if it is indeed the same sample
-                        print(
-                            f"\u001b[K\t\tduplicate {ds.sname} already in {seensname[ds.sname]}",
-                            file=sys.stderr,
-                        )
-                        continue
-                    seensname[ds.sname] = ds.permId
-
-                    # fusing multiple samples replicated in lanes
-                    fusedupe = False
-                    if ds.sname in batchseensname[batch]:
-                        dupecount += 1
-                        # print(f"{ds.sname} duplicate in lanes {lane} and {batchseensname[batch][ds.sname]}\n")
-                        fusedupe = True
-                    else:
-                        print(ds.sname, batch, rlen, ds.KIT, sep="\t", file=tsv)
-                        batchseensname[batch][ds.sname] = lane
-                    # 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz
+    # samples are sorted alphanumerically and FASTQC comes before all FASTQ_GZ
+    for ds in datasets.sort_values(
+        by=["type", "sname", "permId"], ascending=[True, True, False]
+    ).itertuples(name="DataSets"):
+        if not args.summary:
+            print(
+                "\u001b[K\t",
+                ds.permId,
+                ds.type,
+                ds.status,
+                ds.registrationDate,
+                ds.sname,
+                ds.EXTERNAL_SAMPLE_NAME,
+                ds.FASTQ_SAMPLE_CODE,
+                ds.BARCODE,
+                ds.INDEX2,
+                ds.MISMATCH_IN_INDEX,
+                ds.KIT,
+                sep="\t",
+            )
+        # skip unavailable data files
+        if ds.status == "AVAILABLE":
+            # look for FASTQ files (skip undetermined indexes)
+            if ds.type == "FASTQ_GZ" and ds.EXTERNAL_SAMPLE_NAME:
+                # check that we actually have a FastQC
+                if (fastqc is None) and (not args.skipqc):
+                    print("No FASTQC", file=sys.stderr)
+                    status |= 1
+                # upload error: duplicate samples (a typoe of OpenBIS crash).
+                if ds.sname in seensname:
+                    # TODO sanity checks if it is indeed the same sample
                     print(
-                        r"""
+                        f"\u001b[K\t\tduplicate {ds.sname} already in {seensname[ds.sname]}",
+                        file=sys.stderr,
+                    )
+                    continue
+                seensname[ds.sname] = ds.permId
+
+                # fusing multiple samples replicated in lanes
+                fusedupe = False
+                if ds.sname in batchseensname[batch]:
+                    dupecount += 1
+                    # print(f"{ds.sname} duplicate in lanes {lane} and {batchseensname[batch][ds.sname]}\n")
+                    fusedupe = True
+                else:
+                    # TSV fields: either 3 column or 4 columns if proto are to be extracted
+                    tf = [ds.sname, batch, rlen]
+                    if proto:
+                        if ds.KIT:
+                            assert (
+                                ds.KIT in proto
+                            ), f"Cannot find library kit <{ds.KIT}> in protocols YAML file <{args.protoyaml}>"
+                            tf += [proto[ds.KIT]]
+                        else:
+                            print(
+                                f"\u001b[K\t\twarning, missing KIT for sample {ds.sname}"
+                            )
+
+                    print(*tf, sep="\t", file=tsv)
+                    batchseensname[batch][ds.sname] = lane
+                # 20200603125141062-60694758/original/BSSE_QGF_139661_000000000_CTTKK_1_MM_1/BSSE_QGF_139661_000000000_CTTKK_1_120000_239_D1_AAGTCGTG_AATTATGC_S97_L001_R1_001_MM_1.fastq.gz
+                print(
+                    r"""
 [[ -d '%(download)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(id)s (for %(sname)s)'
 fastq=( %(download)s/%(id)s/original/%(fqcode)s_%(seq)s%(mm)s/%(fqcode)s_%(seq)s_%(sname)s_%(idx1)s_%(idx2)s_S*_L%(lane)03u_R[1-2]_*%(mm)s.fastq.gz )
 [[ "${fastq[*]}" =~ [\*\[] ]] && fail 'Cannot list fastq files:' '%(id)s : %(sname)s'
 (( ${#fastq[@]} != 2 )) && fail 'Number of fastq files not 2' "${#fastq[@]} : ${fastq[*]}"
 mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
 for file in "${fastq[@]}"; do
-	filename="${file##*/}"
-	[[ $file =~ _L%(lane)03u_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
-	cp -v%(force)s ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
-	fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
-	[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]"""
-                        % {
-                            "force": ("f" if args.force else ""),
-                            "download": download,
-                            "sampleset": sampleset,
-                            "sname": ds.sname,
-                            "batch": batch,
-                            "id": ds.permId,
-                            "fqcode": ds.FASTQ_SAMPLE_CODE,
-                            "seq": seq,
-                            "mm": (
-                                suffix[ds.MISMATCH_IN_INDEX]
-                                if ds.MISMATCH_IN_INDEX in suffix
-                                else ""
-                            ),
-                            "idx1": ds.BARCODE,
-                            "idx2": ds.INDEX2,
-                            "lane": lane,
-                        },
-                        file=sh,
-                    )
-                    # copy FastQC only for none-dupes
-                    if not fusedupe:
-                        # HACK at this point, we might not know it's a fusedupe yet and do a copy we shouldn't
-                        if fastqc is not None:
-                            print(
-                                r"""	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
-done
-"""
-                                % {
-                                    "force": ("-f" if args.force else ""),
-                                    "download": download,
-                                    "sampleset": sampleset,
-                                    "sname": ds.sname,
-                                    "batch": batch,
-                                    "fastqc": fastqc,
-                                    "seqdir": seqdir,
-                                },
-                                file=sh,
-                            )
-                    else:
-                        # HACK remove any left over FastQC from the other copy, keep old dates to avoid re-updating
-                        # TODO don't stream out movefile.sh but do proper two-step fusing as in bfabric_tsv
+filename="${file##*/}"
+[[ $file =~ _L%(lane)03u_R[[:digit:]](_[[:digit:]]+%(mm)s.fastq.gz)$ ]] && destname="${filename//${BASH_REMATCH[1]}/.fastq.gz}"
+cp -v%(force)s ${link} "${file}" "%(sampleset)s/%(sname)s/%(batch)s/raw_data/${destname}"||X
+fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
+[[ $destname =~ _L%(lane)03u_(R[[:digit:]]).fastq.gz$ ]]"""
+                    % {
+                        "force": ("f" if args.force else ""),
+                        "download": download,
+                        "sampleset": sampleset,
+                        "sname": ds.sname,
+                        "batch": batch,
+                        "id": ds.permId,
+                        "fqcode": ds.FASTQ_SAMPLE_CODE,
+                        "seq": seq,
+                        "mm": (
+                            suffix[ds.MISMATCH_IN_INDEX]
+                            if ds.MISMATCH_IN_INDEX in suffix
+                            else ""
+                        ),
+                        "idx1": ds.BARCODE,
+                        "idx2": ds.INDEX2,
+                        "lane": lane,
+                    },
+                    file=sh,
+                )
+                # copy FastQC only for none-dupes
+                if not fusedupe:
+                    # HACK at this point, we might not know it's a fusedupe yet and do a copy we shouldn't
+                    if fastqc is not None:
                         print(
-                            r"""	rm -f "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
-	touch --reference="%(sampleset)s/%(sname)s/%(batch)s/raw_data" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data"
+                            r"""	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
 done
 """
                             % {
+                                "force": ("-f" if args.force else ""),
+                                "download": download,
                                 "sampleset": sampleset,
                                 "sname": ds.sname,
                                 "batch": batch,
+                                "fastqc": fastqc,
+                                "seqdir": seqdir,
                             },
                             file=sh,
                         )
-                # look for FASTQC holder directory
-                elif ds.type == "FASTQC":
-                    # upload error: duplicate samples (a typoe of OpenBIS crash).
-                    if fastqc is not None:
-                        print(
-                            f"\u001b[K\t\tduplicate FastQC already in {fastqc}",
-                            file=sys.stderr,
-                        )
-                        continue
-                    # 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
-                    fastqc = ds.permId  # keep the reference
-        if dupecount:
-            print(f"\u001b[K\t\t{dupecount} samples were duplicate from previous lane")
+                else:
+                    # HACK remove any left over FastQC from the other copy, keep old dates to avoid re-updating
+                    # TODO don't stream out movefile.sh but do proper two-step fusing as in bfabric_tsv
+                    print(
+                        r"""	rm -f "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
+touch --reference="%(sampleset)s/%(sname)s/%(batch)s/raw_data" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data"
+done
+"""
+                        % {
+                            "sampleset": sampleset,
+                            "sname": ds.sname,
+                            "batch": batch,
+                        },
+                        file=sh,
+                    )
+            # look for FASTQC holder directory
+            elif ds.type == "FASTQC":
+                # upload error: duplicate samples (a typoe of OpenBIS crash).
+                if fastqc is not None:
+                    print(
+                        f"\u001b[K\t\tduplicate FastQC already in {fastqc}",
+                        file=sys.stderr,
+                    )
+                    continue
+                # 20200603132156916-60694852/original/000000000_CTTKK_1/BSSE_QGF_139567_000000000_CTTKK_1_120162_283_H2_AATGTTCT_AGTCACCT_S4_L001_R1_001_fastqc.html
+                fastqc = ds.permId  # keep the reference
+    if dupecount:
+        print(f"\u001b[K\t\t{dupecount} samples were duplicate from previous lane")
 
 print(
     f"""
