@@ -33,7 +33,7 @@ def report_progress(prgrs, prgmax, summary, sh=None):
     barstr = bar(math.floor(prgrs * 128 / prgmax))
     print(f"\r[{barstr}] {prgrs}/{prgmax}", end=("\r" if summary else "\n"))
     if sh:
-        print (f"echo -ne '\\r[{barstr}] {prgrs}/{prgmax} \\r'", file=sh)
+        print(f"echo -ne '\\r[{barstr}] {prgrs}/{prgmax} \\r'", file=sh)
 
 
 # parse command line
@@ -649,9 +649,7 @@ fqcname="${filename//%(mm)s.fastq.gz/_fastqc.html}"
                     # HACK at this point, we might not know it's a fusedupe yet and do a copy we shouldn't
                     if fastqc is not None:
                         print(
-                            r"""	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X
-done
-"""
+                            r"""	cp %(force)s ${link} "%(download)s/%(fastqc)s/original/%(seqdir)s/${fqcname}" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"||X"""
                             % {
                                 "force": ("-f" if args.force else ""),
                                 "download": download,
@@ -668,9 +666,7 @@ done
                     # TODO don't stream out movefile.sh but do proper two-step fusing as in bfabric_tsv
                     print(
                         r"""	rm -f "%(sampleset)s/%(sname)s/%(batch)s/extracted_data/${BASH_REMATCH[1]}_fastqc.html"
-touch --reference="%(sampleset)s/%(sname)s/%(batch)s/raw_data" "%(sampleset)s/%(sname)s/%(batch)s/extracted_data"
-done
-"""
+touch --reference='%(sampleset)s/%(sname)s/%(batch)s/raw_data' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data'"""
                         % {
                             "sampleset": sampleset,
                             "sname": ds.sname,
@@ -678,6 +674,11 @@ done
                         },
                         file=sh,
                     )
+                print(
+                    r"""done
+""",
+                    file=sh,
+                )
             # look for FASTQC holder directory
             elif ds.type == "FASTQC":
                 # upload error: duplicate samples (a typoe of OpenBIS crash).
