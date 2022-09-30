@@ -21,6 +21,7 @@ def bar(v, m=128):
 
 # column in dataset.tsv under which we need to look for plates
 plate_column = 'Tube [Characteristic]' # 'Platename [Characteristic]'
+lib_column = 'LibraryPrepKit' # e.g.: "SARS-CoV-2 ARTIC V4.1 NEB Ultra II"
 
 # parse command line
 argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
@@ -37,7 +38,42 @@ argparser.add_argument('-v', '--verbose', required=False,
 	action='store_true', dest='verbose', help="Explicitely list every single parse folder")
 argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
 	dest='recent', help="Only process batches whose date is posterior to the argument")
+argparser.add_argument("-4", "--protocols", metavar="PROTOCOLSYAML", required=False, default=None,
+	type=str, dest="protoyaml", help="Generate 4-column samples.tsv, using 'name' and 'alias' from the supplied protocols YAML file")
+argparser.add_argument("-l", "--libkit-override", metavar="PROTOCOLSTSV", required=False, default=None,
+	type=str, dest="libkittsv", help="Patch map to override LibraryPrepKit for certain projects/orders")
+
 args = argparser.parse_args()
+
+
+def load_proto(protoyaml):
+	"""load a protocols YAML file and build a mapping of full name strings to the short keys"""
+	with open(protoyaml) as f:
+		py = yaml.load(f, Loader=yaml.BaseLoader)
+
+	pmap = {}
+
+	for k, p in py.items():
+
+		if "name" in p:
+			pmap[p.get("name")] = k
+
+		for a in p.get("alias", []):
+			assert (
+				a not in pmap
+			), f"duplicate alias <{a}> in protocols YAML file <{protoyaml}>, last see in <{pmap[a]}>"
+			pmap[a] = k
+
+	return pmap
+
+
+proto = load_proto(args.protoyaml) if args.protoyaml else None
+
+
+libkitoverride = { }
+if args.libkittsv:
+	with open(args.libkittsv,'rt',encoding='utf-8', newline='') as pf:
+		libkitoverride = { (prj,ordr):newval for (prj,ordr,newval,*o) in csv.reader(pf, delimiter="\t") }
 
 
 # Load defaults from config file
@@ -56,6 +92,7 @@ forcelist=
 nofuselist=
 fuselist=
 fusedays=30
+fallbackproto=
 [_]
 """ + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
 
@@ -81,10 +118,12 @@ forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_'][
 '''folders to use even with missing order'''
 fuselist=(config['_']['fuselist'].strip("\"'").split(',')) if len(config['_']['fuselist']) else list()
 '''folders to always merge'''
-nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_']['nofuselist']) else list()
-'''folders to never merge'''
-fusedays=int(config['_']['fusedays'].strip("\"'"))
-'''delay after which orders aren't considered for merging anymore'''
+# nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_']['nofuselist']) else list()
+# '''folders to never merge'''
+# fusedays=int(config['_']['fusedays'].strip("\"'"))
+# '''delay after which orders aren't considered for merging anymore'''
+
+fallbackproto=config['_']['fallbackproto'].strip("\"'")
 
 # parse the chmod parameter
 try:
@@ -263,6 +302,17 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		continue
 	order2runfolders[order]=list(set([runfolder] + order2runfolders.get(order, [])))
 
+	# skip older
+	if args.recent:
+		if rundate < args.recent:
+			#print(f"Skipping {rundate} {order} {flowcell}")
+			continue
+			# NOTE for this skip to work, all recplicate of an order must be in the fuselist, otherwise merge can be accidentally missed if the replicate span across a month border
+
+	# not skipped, advertise libkit forcing
+	if (prj, order) in libkitoverride:
+		print(name, f"\x1b[32;1mforcing {lib_column} of {order} {name} as {libkitoverride[(prj, order)]}\x1b[0m")
+
 	# parse information about reads
 	lane={}
 	for l in stats['ReadInfosForLanes']: # lane
@@ -325,6 +375,9 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	with open(t,'rt',encoding='utf-8', newline='') as tf:
 		tfc=csv.DictReader(tf, dialect='excel-tab')
 		r = next(tfc)
+		# check proto
+		if lib_column not in r:
+			print(name, f"\u001b[33;1mwarning, missing {lib_column} in <{t}>\u001b[0m")
 		# check plates
 		if plate_column in r:
 			tplates=list(set([r[plate_column]] + [cp[plate_column] for cp in tfc]))
@@ -348,87 +401,23 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	if tplates is not None and plates is not None:
 		diff=list(set(tplates).symmetric_difference(set(plates)))
 		if len(diff)>0:
-			print(name, f"\x1b[33;1mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b[0m")
+			if args.verbose:
+				print(name, f"\x1b[33mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b[0m")
+			else:
+				print(name, f"\x1b[33mnon-concording plates list: between dataset and order2run\x1b[0m")
 
-	# handle duplicate orders and fuse them if (close in time)
+	# handle orders replicate and fuse them
 	if order in batches:
 		key=f"{order}:{name}"
 		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
 
-		# scenario 1: if we have plates for both: check if overlap in plates list
-		intersec=None
-		if plates is not None:
-			print(name, f"checking plates ... { ';'.join(order2runfolders.get(order,[])) }")
-			intersec=set(batches[order].get('plates',[])).intersection(set(plates))
+		# single scenario / ultra-simple fuse logic: is it in list? (No more autoguessing)
+		if name in fuselist or batches[order]['name'] in fuselist:
+			print(name, f"\x1b[36;1m{rundate}_{flowcell} is REPLICATE of order {order}'s {batches[order]['name']} - {batches[order]['rundate']}_{batches[order]['flowcell']} (reason: in fuse list)\x1b[0m (note: {days} days appart)")
+			batches[order]['dupe']=True
+			b['appendto']=order
 		else:
-			print (name, "(no plates)");
-
-		# scenario 2: check against order2runs (if available)
-		fuse_reason=''
-		multiplates=list(intersec) if intersec is not None else []
-		if order in order2runs:
-			fuse_reason=f"orders2run {';'.join(order2runs[order].keys())}"
-			# order known for multiple runs?
-			if len(order2runs[order]) >= 2:
-				# and plates shared between runs?
-				op=set()
-				for p in order2runs[order].values():
-					op = set(list(op) + p)
-				if '?' in op:
-					op.remove('?')
-					print (name, f"\x1b[33;1m? in plates\x1b[0m")
-				multi=set([p for p in list(op) if len(plate2runs.get(p,[])) > 1])
-				if intersec is not None:
-					if not multi == intersec:
-						print(name, f"\x1b[33;1mnon-concording multiplates: dataset <{';'.join(list(intersec.difference(multi)))}<  and order2run >{';'.join(list(multi.difference(intersec)))}>\x1b")
-					multiplates=list(multi.union(intersec))
-				else:
-					multiplates=list(multi)
-			# TODO act upon multiplates, carry information about multiplates + '?' to output section below.
-
-			#order2runs[order]={r: [ p for p in plates] for r,plates in o2r_runs.items() }
-			if len(order2runs[order]) >= 2:
-				# we do expect more
-				if name in nofuselist:
-					print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: orders2run {';'.join(order2runs[order].keys())} overridden by nofuselist\x1b[0m")
-				else:
-					print(name, f"\x1b[36;1m is dupe of order {order} (reason: as specified in order2runs {';'.join(order2runs[order].keys())})\x1b[0m")
-					#batches[order]['dupe']=True
-					#b['appendto']=order
-				if len(multiplates) > 0:
-					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
-				else:
-					print (name, f"\x1b[31;1mno plates overlap !!!\x1b[0m")
-
-			elif name in fuselist:
-				# configuration forces it anyway
-				print(name, f"\x1b[36;1m is dupe of order {order} (orders2run {';'.join(order2runs[order].keys())} overridden by fuse list)\x1b[0m")
-				batches[order]['dupe']=True
-				b['appendto']=order
-				if len(multiplates) > 0:
-					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
-				else:
-					print (name, f"\x1b[31;1mno plates overlap !!!\x1b[0m")
-			else:
-				print(name, f"\x1b[31;1m seems dupe of order {order} but orders2run {';'.join(order2runs[order].keys())} contradicts it - dropping folder!\x1b[0m")
-				if len(multiplates) > 0:
-					print (name, f"\x1b[32;1mmultiplate.\x1b[0m")
-				else:
-					print (name, f"\x1b[31;1mno plates overlap !!!\x1b[0m")
-				continue
-		# Proceed with the usual logic
-		elif name in nofuselist:
-			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: in nofuselist\x1b[0m")
-		elif days <= fusedays:
-			print(name, f"\x1b[36;1m is dupe of order {order} (reason: {days} days)\x1b[0m")
-			#batches[order]['dupe']=True
-			#b['appendto']=order
-		elif name in fuselist:
-			print(name, f"\x1b[36;1m is dupe of order {order} (reason: in fuse list)\x1b[0m")
-			#batches[order]['dupe']=True
-			#b['appendto']=order
-		else:
-			print(name, f"\x1b[36;1mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: {days} days appart is more than {fusedays}\x1b[0m")
+			print(name, f"\x1b[36mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: not in fuse list {days}\x1b[0m (note: {days} days appart)")
 	else:
 		key=order
 
@@ -540,13 +529,12 @@ for b in batches:
 		order = batches[b]['appendto']
 		rundate = batches[order]['rundate']
 		batch=f"{rundate}_{order}"
+	elif name in fuselist:
+		# Check that this match expectations of fuselist
+		print(b, f"\x1b[31;1m should have a replicate according to fuselit but only {name} - {rundate}_{flowcell} found, no replicate found - dropping folder!\x1b[0m")
+		continue
 	else:
-		# Check that this match expectations of order2runs (if present)
 		order=b
-		# TODO check no shared plates
-		if order in order2runs and len(order2runs[order]) >= 2 and name not in nofuselist:
-			print(b, f"\x1b[31;1m should have a dupe according to orders2run {';'.join(order2runs[order].keys())} but it is missing - dropping folder!\x1b[0m")
-			#continue
 		batch=f"{rundate}_{flowcell}"
 
 	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
@@ -562,6 +550,9 @@ for b in batches:
 		print(f"\x1b[32;1mpatching {order} {name} with {patchtsv}\x1b[0m")
 		with open(patchtsv,'rt',encoding='utf-8', newline='') as pf:
 			patchmap = { old:new for (old,new,*r) in csv.reader(pf, delimiter="\t") }
+
+	# patch file exist ?
+	forcelibkit = libkitoverride.get( (prj, order), None )
 
 	# batch TSV file and info YAML
 	runfolder=None
@@ -631,6 +622,7 @@ for b in batches:
 		badsamples=[ ]
 		for x in omis[batch].values():
 			badsamples += x
+
 	# YAML with batch infos
 	with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
 		print(yaml.dump(yamldict, sort_keys=False), file=yml)
@@ -702,7 +694,21 @@ for b in batches:
 
 			# tsv line
 			if ('appendto' not in batches[b]) or (batsamname not in batches[order]['samples']):
-				print(samname, batch, rlen, sep='\t', file=tsv)
+				tf = [samname, batch, rlen]
+				library = forcelibkit if forcelibkit else r.get(lib_column, None)
+				# HACK parse ASCII
+				if library == "None":
+					library = None
+				if proto:
+					if library:
+						assert (
+							library in proto
+						), f"Cannot find library kit <{library}> in protocols YAML file <{args.protoyaml}> while processing <{batches[b]['dataset']}>"
+						tf += [proto[library]]
+					elif fallbackproto:
+						tf += [fallbackproto]
+				print(*tf, sep="\t", file=tsv)
+
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
 
