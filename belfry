@@ -17,6 +17,7 @@ declare -A lab
 : ${contimeout:=300}
 : ${retries:=10}
 : ${iotimeout:=300}
+: ${protocolyaml:=/references/primers.yaml}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
@@ -321,7 +322,7 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[gfb]} )); then
-			${scriptdir}/sort_samples_pybis -c gfb.conf --assume-same-protocol ${force} ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+			${scriptdir}/sort_samples_pybis -c gfb.conf --protocols=${basedir}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping gfb"
 		fi
@@ -330,12 +331,13 @@ case "$1" in
 			. <(grep '^google_sheet_patches=' fgcz.conf)
  
 			(( google_sheet_patches )) && ${scriptdir}/google_sheet_patches
- 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf --no-fastqc ${force} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+ 			${scriptdir}/sort_samples_bfabric_tsv -c fgcz.conf --no-fastqc --protocols=${basedir}/${working}/${protocolyaml}  --libkit-override=${basedir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping fgcz"
 		fi
 		if  (( ${lab[h2030]} )) && [[ -e ${statusdir}/synch2030_ended && -e ${statusdir}/synch2030_started && ${statusdir}/synch2030_ended -nt ${statusdir}/synch2030_started ]]; then
 			# NOTE always recent/based on last sync), no support for --force, move done immediately/no separate movedatafiles.sh
+			# TODO support for protocols
 			${scriptdir}/sort_h2030 -c h2030.conf $(< ${statusdir}/synch2030_started ) || fail=1
 		else
 			echo "Skipping h2030"
@@ -343,7 +345,7 @@ case "$1" in
 		if  (( ${lab[viollier]} )); then
 			# NOTE always --force, short options only
 			# HACK hardcoded paths due to multiple directories
-			${scriptdir}/sort_viollier -c viollier.conf  ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
+			${scriptdir}/sort_viollier -c viollier.conf -4 ${basedir}/${working}/${protocolyaml} ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping viollier"
 		fi

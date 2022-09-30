@@ -1,0 +1,41 @@
+v41:
+  name: SARS-CoV-2 ARTIC V4.1
+  alias:
+    - SARS-CoV-2 ARTIC V4.1 NEB Ultra II
+    - SARS-CoV-2 ARTIC V4.1 NexteraXT
+  inserts_bedfile: references/primers/v41/SARS-CoV-2.insert.bed
+  primers_bedfile: references/primers/v41/SARS-CoV-2.primer.bed
+  primers_file: references/primers/v41/SARS-CoV-2.tsv
+  primers_fasta: references/primers/v41/SARS-CoV-2.primer.fasta
+v4:
+  name: SARS-CoV-2 ARTIC V4
+  alias:
+    - SARS-CoV-2 ARTIC V4 NEB Ultra II
+    - SARS-CoV-2 ARTIC V4 NexteraXT
+    ## Viollier and FGCZ special
+    #- Custom
+    ## FGCZ special
+    #- I don't know
+  inserts_bedfile: references/primers/v4/SARS-CoV-2.insert.bed
+  primers_bedfile: references/primers/v4/SARS-CoV-2.primer.bed
+  primers_file: references/primers/v4/SARS-CoV-2.tsv
+  primers_fasta: references/primers/v4/ARTIC_v4.fasta
+v3:
+  name: SARS-CoV-2 ARTIC V3
+  alias:
+    - SARS-CoV-2 ARTIC V3 NEB Ultra II
+    - SARS-CoV-2 ARTIC V3 NexteraXT
+    - ARTIC_NEB
+    - ARTICV3_NEB
+    - COVID_ARTIC_V3_NEB
+    ## FGCZ old
+    #- NEB Next Ultra DNA
+    # Not 100% exact, because Illumina introduces additional controls
+    - Illumina_COVIDSeq
+    - COVIDSeq_RUO_Custom
+    - EASYSEQ_SARS_COV2_WHOLE_GENOME_NGS
+    # Nimagen: not 100% sure.
+  inserts_bedfile: references/primers/v3/nCoV-2019.insert.bed
+  primers_bedfile: references/primers/v3/nCoV-2019.primer.bed
+  primers_file: references/primers/v3/nCoV-2019.tsv
+  primers_fasta: references/primers/v3/ARTIC_v3.fasta
