@@ -1,14 +1,11 @@
 #!/bin/bash
-#BSUB -L /bin/bash
-#BSUB -J CATCHUP-vpipe
-#BSUB -u "ivan.topolsky@bsse.ethz.ch" # carrara@nexus.ethz.ch" # pelin.icer@bsse.ethz.ch david.dreifuss@bsse.ethz.ch" # kim.jablonski@bsse.ethz.ch louis.duplessis@bsse.ethz.ch" # sarah.nadeau@bsse.ethz.ch chaoran.chen@bsse.ethz.ch
-#BSUB -N
-#BSUB -M 16384
-#BSUB -R rusage[mem=16384]
-#BSUB -R light
-##### -q light.5d
-#BSUB -W 23:0
-##### -W 72:0
+#SBATCH --job-name="CATCHUP-vpipe"
+#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch" # carrara@nexus.ethz.ch" # pelin.icer@bsse.ethz.ch david.dreifuss@bsse.ethz.ch" # kim.jablonski@bsse.ethz.ch louis.duplessis@bsse.ethz.ch" # sarah.nadeau@bsse.ethz.ch chaoran.chen@bsse.ethz.ch
+#SBATCH --mail-type=END
+#SBATCH --mem=16384
+####### --partition=light
+#SBATCH --time=23:00:00
+######  --time=72:00:00
 
 umask 0007
 
@@ -32,5 +29,5 @@ mkdir -p cluster_logs/
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/)
 #exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 240 --keep-going --rerun-incomplete --use-conda  all coverage --omit-from snv
 #exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 240 --keep-going --rerun-incomplete --use-conda  --notemp --keep-incomplete samples/35970056/20220204_HYFH3BGXK/raw_uploads/dehuman.cram
-exec ./vpipe --profile ${SNAKEMAKE_PROFILE}/smk-simple-slurm/ -j 120  --latency-wait 600 --keep-going --rerun-incomplete --use-conda --until dehuman prepare_upload
+exec ./vpipe --profile ${SNAKEMAKE_PROFILE}/smk-simple-slurm/ --until dehuman prepare_upload
 

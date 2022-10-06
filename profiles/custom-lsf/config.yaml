@@ -1,0 +1,30 @@
+cluster:
+  mkdir -p cluster_logs/{rule} &&
+  ${{SNAKEMAKE_PROFILE:-../profiles}}/custom-lsf/bsub_wrap.sh
+     -J COVID-vpipe-{rule}
+     -n {threads}
+     -M "$(( {resources.mem_mb} / {threads} ))"
+     -W "{resources.runtime}"
+     -R "rusage[mem=$(( {resources.mem_mb} / {threads} )),scratch={resources.disk_mb}]"
+     -R "span[hosts=1]"
+     -o cluster_logs/{rule}/{rule}_%J-%I.out.log
+     -e cluster_logs/{rule}/{rule}_%J-%I.err.log
+cluster-status: ../profiles/custom-lsf/status.sh
+default-resources:
+  - mem_mb=1000
+  - disk_mb=1000
+  - runtime=15
+restart-times: 1
+max-jobs-per-second: 30
+max-status-checks-per-second: 1
+local-cores: 1
+latency-wait: 600
+jobs: 120
+keep-going: True
+rerun-trigger: mtime
+rerun-incomplete: True
+use-conda: True
+#printshellcmds: True
+#scheduler: greedy
+conda-prefix: "../snake-envs"
+#shadow-prefix: "${SCRATCH}/pangolin/shadow"
