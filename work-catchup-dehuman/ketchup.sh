@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 scriptdir="$(dirname $(which $0))"
+baseconda="$scriptdir/../"
 
 #
 # Input validator
@@ -163,8 +164,24 @@ case "$1" in
 		fi
 	;;
 
-	#while read s b o; do declare -a r; r=( $(gawk -v s="${s}" -v b="${b}" 'BEGIN{FS=","};FNR==1{for(f=1;f<NF&&$f!="input_r1";f++);};$1==s&&$2==b{print $f " " $(f+1);}' ../working/qa/qa.${b}.csv) ); f="$(<"samples/${s}/${b}/alignments/dehuman.count")"; cram="samples/${s}/${b}/raw_uploads/dehuman.cram"; cr=$(samtools view -c -F 2304 "${cram}"); (( tot=r[0] + r[1] - f )); echo -n "${r[0]}+${r[1]}-$f=${tot} vs ${cr} "; if (( tot > cr )); then echo "${cram}" | tee -a cram_error.txt; else echo "."; fi; done < samples.catchup.tsv
-	#;;
+	check_reads)
+		. $baseconda/miniconda3/bin/activate "qa"
+		while read s b o; do
+			declare -a r;
+			r=( $(gawk -v s="${s}" -v b="${b}" 'BEGIN{FS=","};FNR==1{for(f=1;f<NF&&$f!="input_r1";f++);};$1==s&&$2==b{print $f " " $(f+1);}' ../working/qa/qa.${b}.csv) );
+			f="$(<"samples/${s}/${b}/alignments/dehuman.count")";
+			cram="samples/${s}/${b}/raw_uploads/dehuman.cram";
+			cr="$(samtools view -c -F 2304 "${cram}")";
+			(( tot=r[0] + r[1] - f ));
+			echo -n "${r[0]}+${r[1]}-$f=${tot} vs ${cr} ";
+			if (( tot > cr )); then
+				echo "${cram}" | tee -a cram_error.txt;
+			else
+				echo ".";
+			fi;
+		done < samples.catchup.tsv
+	;;
+
 	delete_raw)
 		cmd='printf %s\n'
 		msg='\r\e[1mConsider %s/%b for deletion\e[0m\n'
