@@ -21,7 +21,7 @@ default-resources:
   - runtime=15
 restart-times: 1
 max-jobs-per-second: 30
-max-status-checks-per-second: 1
+max-status-checks-per-second: 30
 local-cores: 1
 latency-wait: 600
 jobs: 120

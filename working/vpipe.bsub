@@ -11,8 +11,6 @@
 
 umask 0007
 
-#cluster='bsub -J COVID-vpipe-{rule} -M {params.mem} -n {threads} -W {params.time} -R rusage[mem={params.mem},scratch={params.scratch}] -R span[hosts=1]] -e {log.errfile} -o {log.outfile}'
-cluster='./bsub_wrap.sh -J COVID-vpipe-{rule} -M {resources.mem_mb} -n {threads} -W {resources.time_min} -R rusage[mem={resources.mem_mb},scratch={resources.disk_mb}] -R span[hosts=1] -e cluster_logs/{rule}_%J-%I.err.log -o cluster_logs/{rule}_%J-%I.out.log'
 mkdir -p cluster_logs/
 
-exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 60 --keep-going --use-conda --configfile config.snv.yaml
+exec ./vpipe --profile ${SNAKEMAKE_PROFILE}/custom-lsf/ --configfile config.snv.yaml

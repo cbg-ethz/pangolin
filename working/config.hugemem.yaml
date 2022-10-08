@@ -11,8 +11,9 @@ output:
   QA: true
 
 snv:
-    time: 240
-    mem: 32768
+    #time: 240
+    #mem: 32768
+    mem: 524288
     #threads: 8
     #threads: 63
     threads: 16

@@ -32,5 +32,5 @@ mkdir -p cluster_logs/
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/)
 #exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 240 --keep-going --rerun-incomplete --use-conda  all coverage --omit-from snv
 #exec ./vpipe --cluster "$cluster" -j 120  --latency-wait 240 --keep-going --rerun-incomplete --use-conda  --notemp --keep-incomplete samples/35970056/20220204_HYFH3BGXK/raw_uploads/dehuman.cram
-exec ./vpipe --profile ${SNAKEMAKE_PROFILE}/smk-simple-slurm/ -j 120  --latency-wait 600 --keep-going --rerun-incomplete --use-conda --until dehuman prepare_upload
+exec ./vpipe --profile ${SNAKEMAKE_PROFILE}/smk-simple-slurm/ --until dehuman prepare_upload
 

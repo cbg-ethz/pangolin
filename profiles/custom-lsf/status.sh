@@ -6,7 +6,7 @@ RXJOB='<([[:digit:]]+)>'
 if [[ "$*" =~ $RXJOB ]]; then
 	J="${BASH_REMATCH[1]}"
 else
-	echo "Cannot find JobID in '$*'" > /dev/stderr
+	echo "Cannot find JobID in '$*'" >&2
 	exit
 fi
 
@@ -26,7 +26,7 @@ case "${state}" in
 		echo "running"
 	;;
 	*)
-		echo "Weird status ${state}" > /dev/stderr
+		echo "Weird status ${state}" >&2
 		echo "running"
 	;;
 esac
