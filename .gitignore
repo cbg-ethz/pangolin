@@ -26,5 +26,8 @@ status/
 .snapshot
 .ipynb_checkpoints
 
+#logs
+slurm-*
+
 # vim backup files:
 .*.sw?

@@ -12,5 +12,5 @@
 umask 0007
 
 mkdir -p cluster_logs/
-
+export SNAKEMAKE_PROFILE=$(realpath ../profiles/)
 exec ./vpipe --profile ${SNAKEMAKE_PROFILE}/custom-lsf/ --configfile config.snv.yaml

@@ -1,13 +1,10 @@
 #!/bin/bash
-#BSUB -L /bin/bash
-#BSUB -J COVID-vpipe-cons
-#BSUB -u "ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch shuqing.yu@nexus.ethz.ch schmittu@ethz.ch"
-#BSUB -N
-#BSUB -M 16384
-#BSUB -R rusage[mem=16384]
-#BSUB -R light
-##### -q light.5d
-#BSUB -W 23:0
+#SBATCH --job-name="COVID-vpipe-cons"
+#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch shuqing.yu@nexus.ethz.ch schmittu@ethz.ch"
+#SBATCH --mail-type=END
+#SBATCH --mem-per-cpu=16384
+####### --partition=light
+#SBATCH --time=23:00:00
 
 ### 	batches	@TAG@
 
@@ -22,7 +19,7 @@ function sendmail {
    echo "see $logfile and $LSB_OUTPUTFILE" | ssh bs-pangolin@d@bs-stadler04.ethz.ch ./sendmail.sh \
 	ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch shuqing.yu@nexus.ethz.ch \
         schmittu@ethz.ch \
-        -s "VPIPE FAILED: please check $LSB_OUTPUTFILE"
+        -s "'VPIPE FAILED: please check $LSB_OUTPUTFILE'"
 }
 
 trap sendmail ERR

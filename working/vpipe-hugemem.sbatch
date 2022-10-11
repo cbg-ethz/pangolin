@@ -1,13 +1,10 @@
 #!/bin/bash
-#BSUB -L /bin/bash
-#BSUB -J COVID-vpipe-hugemem
-#BSUB -u "ivan.topolsky@bsse.ethz.ch"
-#BSUB -N
-#BSUB -M 16384
-#BSUB -R rusage[mem=16384]
-#BSUB -R light
-##### -q light.5d
-#BSUB -W 96:0
+SBATCH --job-name="COVID-vpipe-hugemem"
+#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch"
+#SBATCH --mail-type=END
+#SBATCH --mem-per-cpu=16384
+####### --partition=light
+#SBATCH --time=96:00:00
 
 umask 0007
 
