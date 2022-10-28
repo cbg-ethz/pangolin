@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+umask 0007
+
 scriptdir="$(dirname $(which $0))"
 baseconda="$scriptdir/../"
 
