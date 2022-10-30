@@ -7,6 +7,7 @@ baseconda="$scriptdir/"
 
 working=working
 worktest=work-vp-test
+sampleset=sampleset
 
 #
 # Input validator
@@ -24,8 +25,28 @@ validateBatchName() {
 
 
 lastmonth=$(date '+%Y%m' --date='-1 month')
+thismonth=$(date '+%Y%m')
 
 case "$1" in
+	autoaddww|autoaddwastewater)
+		projects=( 'p23224' 'p24991' 'p26177' )
+		projpat="$( ( IFS='|';echo "${projects[*]}" ) )"
+		gawk -v d="${lastmonth}" '$2<d' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.tsv.old
+		{
+			# assemble samples.wastewateronly.tsv
+			{
+				printf '%s\n' ${sampleset}/projects.${thismonth}* ${sampleset}/projects.${lastmonth}* | grep -vF '*' | sort -r | while read p; do 
+					echo -n "${p} - ${p//projects/samples} ... " >&2
+					gawk -v projpat="${projpat}" '(FILENAME~/\/projects\./)&&($2~projpat){ww[$1]++;nww++};(FILENAME~/\/samples\./)&&(ww[$1]);END{print nww >> "/dev/stderr"}' "${p}" "${p//projects/samples}"
+				done | tee >(cut -f4 >&3) # pass the protos to the second part bellow
+				cat ${working}/samples.wastewateronly.tsv.old
+			} > ${working}/samples.wastewateronly.tsv
+		} 3>&1 | sort | uniq -c | while read cnt PROTO o; do
+			echo "proto: ${PROTO} (${cnt})"
+			gawk -v proto="${PROTO}" '$4==proto' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.${PROTO}.tsv
+		done;
+	;;
+
 	shufflebatches)
 		if [[ -z "$2" || "$2" == "--help" ]]; then
 			echo "Usage: $0 $1 <BATCH>" 1>&2;
@@ -44,7 +65,7 @@ case "$1" in
 		echo "batch ${BATCH}"
 
 		# majority votre proto
-		read cnt PROTO o < <(cut -f4 sampleset/samples.20221003_HJK2VDRX2.tsv | sort | uniq -c | tee /dev/stderr)
+		read cnt PROTO o < <(cut -f4 sampleset/samples.${BATCH}.tsv | sort | uniq -c | tee /dev/stderr)
 		echo "proto: ${PROTO}"
 
 		#
