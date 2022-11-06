@@ -1,6 +1,7 @@
 v41:
   name: SARS-CoV-2 ARTIC V4.1
   alias:
+    - COVID_ARTIC_V4.1_NEB
     - SARS-CoV-2 ARTIC V4.1 NEB Ultra II
     - SARS-CoV-2 ARTIC V4.1 NexteraXT
   inserts_bedfile: references/primers/v41/SARS-CoV-2.insert.bed
