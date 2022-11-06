@@ -33,6 +33,19 @@ lastmonth=$(date '+%Y%m' --date='-1 month')
 thismonth=$(date '+%Y%m')
 twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
 
+if [[ "$1" == "--limited" ]]; then
+	shift
+	case "$1" in
+		rsync|df)
+			# sub-commands allowed in limited mode.
+		;;
+		*)
+			echo "sub-command ${1} not allowed in limited mode" >&2
+			exit 2
+		;;
+	esac
+fi
+
 case "$1" in
 	rsync)
 		# rsync daemon : see ${SSH_ORIGINAL_COMMAND}
