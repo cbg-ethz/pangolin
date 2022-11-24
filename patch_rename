@@ -36,43 +36,57 @@ status() {
 
 
 # fetch batch description
-if [[ -z "${1}" ]]; then
+if [[ -z "${1}" || "${1}" == "--help" ]]; then
 	cat <<USAGE
 Usage:
-	$0 <batch>
+	$0 [ --patch <patchfile> ] <batchname>
 Applies samplename patch after the fact.
 USAGE
 	exit
 fi
 
+# forced patchname ?
+patchfile=
+if [[  "${1}" == "--patch" ]]; then
+	shift
+	patchfile="${1}"
+	shift
+fi
+
+# get batch
 batchname="${1}"
 byml="${sampleset}/batch.${batchname}.yaml"
 [[ -r "${byml}" ]] || fail "Cannot open ${byml}"
 
-# parse batch description
-batch=$(<${byml})
-[[ "${batch}" =~ lab:[[:space:]]+([[:alnum:]]+) ]] || fail "Cannot find lab" $'file was:\n'"${batch}"
-lab="${BASH_REMATCH[1]}"
-case "$lab" in
-	fgcz)
-		echo "patch remapping for fgcz"
-		if [[ "${2}" == "--force" ]]; then
-			patchfile="${3}"
-			echo "forcing patchfile ${patchfile}"
-		else
-			[[ "${batch}" =~ order:[[:space:]]+o?([[:digit:]]+) ]] || fail "Cannot find order" $'file was:\n'"${batch}"
-			order="${BASH_REMATCH[1]}"
-			echo "order ${order}"
-			[[ "${batch}" =~ project:[[:space:]]+p?([[:digit:]]+) ]] || fail "Cannot find project" $'file was:\n'"${batch}"
-			project="${BASH_REMATCH[1]}"
-			echo "project ${project}"
-			patchfile="${sampleset}/patch.${project}.${order}.tsv"
-		fi
-	;;
-	*)
-		fail "Unknown lab $lab"
+# get patchname (if not provided)
+if [[ -z "${patchfile}" ]]; then
+	echo "autodetecting patchmap for ${batchname}"
+	# parse batch description
+	batch=$(<${byml})
+	[[ "${batch}" =~ lab:[[:space:]]+([[:alnum:]]+) ]] || fail "Cannot find lab" $'file was:\n'"${batch}"
+	lab="${BASH_REMATCH[1]}"
+	case "$lab" in
+		fgcz)
+			echo "patch remapping for fgcz"
+			if [[ "${2}" == "--force" ]]; then
+				patchfile="${3}"
+				echo "forcing patchfile ${patchfile}"
+			else
+				# TODO fallback to projects.{batch}.tsv
+				[[ "${batch}" =~ order:[[:space:]]+o?([[:digit:]]+) ]] || fail "Cannot find order" $'file was:\n'"${batch}"
+				order="${BASH_REMATCH[1]}"
+				echo "order ${order}"
+				[[ "${batch}" =~ project:[[:space:]]+p?([[:digit:]]+) ]] || fail "Cannot find project" $'file was:\n'"${batch}"
+				project="${BASH_REMATCH[1]}"
+				echo "project ${project}"
+				patchfile="${sampleset}/patch.${project}.${order}.tsv"
+			fi
 		;;
-esac
+		*)
+			fail "Unknown lab $lab"
+		;;
+	esac
+fi
 
 # look for patchfile
 [[ -r "${patchfile}" ]] || fail "Cannot open ${patchfile}"
@@ -119,13 +133,13 @@ done < "${patchfile}"
 
 # patch sample tsv list
 mv "${sampleset}/samples.${batchname}.tsv"{,.old}
-while read old batch len; do
+while read old batch len proto; do
 	new="${old}"
 	if [[ -z ${map[$old]} ]]; then
 		oops "tsv $new not in patch list"
 	else
 		new="${map[$old]}"
 	fi
-	printf "%s\t%s\t%u\n" ${new} ${batch} ${len}
+	printf "%s\t%s\t%u\t%s\n" "${new}" "${batch}" "${len}" "${proto}"
 done < "${sampleset}/samples.${batchname}.tsv.old" > "${sampleset}/samples.${batchname}.tsv"
 #rm "${sampleset}/samples.${batchname}.tsv.old"
