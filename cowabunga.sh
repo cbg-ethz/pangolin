@@ -21,6 +21,17 @@ validateBatchName() {
 	fi
 }
 
+validateProto() {
+	case "$1" in
+		v3|v4|v41)
+			return
+		;;
+		*)
+			echo "bad proto ${1}"
+			exit 1;
+		;;
+	esac
+}
 
 
 
@@ -100,7 +111,7 @@ case "$1" in
 	;;
 
 	bring_results)
-		TSV=samples.wastewateronly.v41.tsv
+		TSV=samples.wastewateronly.tsv
 		overwrite=0
 		if [[ -n "$2" ]]; then
 			case "$2" in
@@ -131,6 +142,7 @@ case "$1" in
 		mkdir -p ${worktest}/results/
 
 		while read s b o; do
+			rmdir --ignore-fail-on-non-empty ${worktest}/results/${s}/${b}/
 			if (( overwrite )); then
 				rm -rvf ${worktest}/results/${s}/${b}/
 			elif [[ -e ${worktest}/results/${s}/${b}/ ]]; then
@@ -140,6 +152,15 @@ case "$1" in
 			mkdir -p ${worktest}/results/${s}/${b}/
 			cp -alv ${working}/samples/${s}/${b}/{references,alignments} ${worktest}/results/${s}/${b}/
 		done < ${worktest}/${TSV}
+	;;
+
+	fetch_cooc)
+		proto=${2:-v41}
+		validateProto "${proto}"
+		echo "fetching ${proto}:"
+
+		gawk -v proto="${proto}" '$4==proto' ${worktest}/samples.tsv | while read s b o; do cat ${worktest}/results/${s}/${b}/signatures/cooc.yaml; echo -n '.' >&2; done > ${worktest}/cooc.${proto}.yaml
+		echo "done"
 	;;
 
 	*)
