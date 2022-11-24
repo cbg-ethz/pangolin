@@ -152,6 +152,7 @@ def load_config(args):
             download=openbis-downloads
             link=--link
             mode=
+            enforce_fetching=
             [_]
             """
             + f.read()
@@ -175,6 +176,7 @@ basedir = get_entry("basedir")
 download = get_entry("download")
 sampleset = get_entry("sampleset")
 link = get_entry("link")
+enforce_fetching = get_entry("enforce_fetching")
 
 # parse the chmod parameter
 try:
@@ -234,7 +236,9 @@ os.makedirs(os.path.join(basedir, sampleset), exist_ok=True, **kwmkdir)
 
 # we use ~/.netrc to obtain credentials
 # (we need that config file anyway to download the data files from openbis' fileserver)
-username, password = netrc.netrc().authenticators(fileserver)[0::2]
+username = os.environ.get("USERNAME") or netrc.netrc().authenticators(fileserver)[0]
+password = os.environ.get("PASSWORD") or netrc.netrc().authenticators(fileserver)[2]
+# username, password = netrc.netrc().authenticators(fileserver)[0::2]
 
 if 0:
     # console interactive
@@ -488,8 +492,11 @@ for sa in dataframe.sort_values(by=["registrationDate"], ascending=[True]).itert
         print("\t(not usable yet - skipping)")
         continue
 
+    first_only=args.sameproto
+    if enforce_fetching:
+        first_only = batch not in set(b.strip() for b in enforce_fetching.split(","))
     datasets["KIT"] = fetch_kits(
-        ex, datasets["FASTQ_SAMPLE_CODE"], first_only=args.sameproto
+        ex, datasets["FASTQ_SAMPLE_CODE"], first_only=first_only
     )
 
     tsv = None
