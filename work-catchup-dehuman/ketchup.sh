@@ -210,7 +210,7 @@ case "$1" in
 				-s "${scriptdir}/samples/${s}/${b}/raw_uploads/dehuman.cram.md5"
 				&& -s "${scriptdir}/samples/${s}/${b}/raw_uploads/dehuman.cram"
 				&& -e "${scriptdir}/samples/${s}/${b}/upload_prepared.touch"
-				&& -s "${scriptdir}/samples/${s}/${b}/alignments/REF_aln.bam"
+				&& -s "${scriptdir}/samples/${s}/${b}/alignments/REF_aln_trim.bam"
 				&& -s "${scriptdir}/samples/${s}/${b}/references/consensus.bcftools.fasta"
 			]]; then
 				printf "${msg}" "${s}" "${b}"
@@ -219,7 +219,7 @@ case "$1" in
 				continue
 			fi
 
-			${cmd} "${scriptdir}/samples/${s}/${b}/"{raw_data,preprocessed_data}/*.fastq.gz "${scriptdir}/../sampleset/${s}/${b}/raw_data/"*.fastq.gz
+			${cmd} "${scriptdir}/samples/${s}/${b}/"{raw_data,preprocessed_data}/*.fastq.gz "${scriptdir}/../sampleset/${s}/${b}/raw_data/"*.fastq.gz "${scriptdir}/samples/${s}/${b}/alignments/"REF_aln.bam*
 			(cd "${scriptdir}/samples/"	&& rmdir --ignore-fail-on-non-empty --parents "${s}/${b}/raw_data" )
 			(cd "${scriptdir}/../sampleset/" && rmdir --ignore-fail-on-non-empty --parents "${s}/${b}/raw_data" )
 		done
@@ -228,7 +228,7 @@ case "$1" in
 
 	still_around)
 		sort -u "${scriptdir}/samples.catchup.tsv" | while read s b o; do
-			if [[ -d "${scriptdir}/../sampleset/${s}/${b}/raw_data/" ]]; then
+			if [[ -d "${scriptdir}/../sampleset/${s}/${b}/raw_data/" || -f "${scriptdir}/samples/${s}/${b}/alignments/REF_aln.bam" ]]; then
 				echo -e "\r\e[K${s}/${b} still around"
 			else
 				echo -n '.'
