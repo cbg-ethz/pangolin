@@ -1,6 +1,6 @@
 cluster:
   mkdir -p cluster_logs/{rule} &&
-  ${{SNAKEMAKE_PROFILE:-../profiles}}/smk-simple-slurm/sbatch_wrap.sh
+  sbatch
     --parsable
     --job-name=COVID-vpipe-{rule}-{wildcards}
     --cpus-per-task={threads}
