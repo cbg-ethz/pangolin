@@ -40,7 +40,7 @@ thismonth=$(date '+%Y%m')
 
 case "$1" in
 	autoaddww|autoaddwastewater)
-		projects=( 'p23224' 'p24991' 'p26177' )
+		projects=( 'p23224' 'p24991' 'p26177' 'p30045' )
 		projpat="$( ( IFS='|';echo "${projects[*]}" ) )"
 		gawk -v d="${lastmonth}" '$2<d' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.tsv.old
 		{
