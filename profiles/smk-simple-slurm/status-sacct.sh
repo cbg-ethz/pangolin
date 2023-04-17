@@ -16,7 +16,8 @@ read output other < <(sacct -j "$jobid" --format State --noheader)
 if [[ $output =~ ^(COMPLETED).* ]]
 then
   echo success
-elif [[ $output =~ ^(RUNNING|PENDING|COMPLETING|CONFIGURING|SUSPENDED).* ]]
+elif [[ $output =~ ^(RUNNING|PENDING|COMPLETING|CONFIGURING|SUSPENDED).* || -z "$output" ]]
+# HACK: if sacct has crashed (e.g. failure to connect to slurmdb) and doesn't return any output, consider the jobs as still running
 then
   echo running
 else

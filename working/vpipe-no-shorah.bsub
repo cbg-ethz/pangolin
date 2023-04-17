@@ -44,5 +44,5 @@ module load eth_proxy
 echo "${https_proxy}"
 
 mkdir -p cluster_logs/
-export SNAKEMAKE_PROFILE=$(realpath ../profiles/)
-./vpipe --profile ${SNAKEMAKE_PROFILE}/custom-lsf/ --configfile config.no-shorah.yaml --omit-from snv
+export SNAKEMAKE_PROFILE=$(realpath ../profiles/custom-lsf/)
+./vpipe --profile ${SNAKEMAKE_PROFILE} --configfile config.no-shorah.yaml --omit-from snv
