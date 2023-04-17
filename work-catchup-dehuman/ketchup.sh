@@ -175,7 +175,7 @@ case "$1" in
 			cram="samples/${s}/${b}/raw_uploads/dehuman.cram";
 			cr="$(samtools view -c -F 2304 "${cram}")";
 			(( tot=r[0] + r[1] - f ));
-			echo -n "${r[0]}+${r[1]}-$f=${tot} vs ${cr} ";
+			echo -n ${s} ${b} "${r[0]}+${r[1]}-$f=${tot} vs ${cr} ";
 			if (( tot > cr )); then
 				echo "${cram}" | tee -a cram_error.txt;
 			else

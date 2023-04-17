@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name="CATCHUP-vpipe"
-#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch" # carrara@nexus.ethz.ch" # pelin.icer@bsse.ethz.ch david.dreifuss@bsse.ethz.ch" # kim.jablonski@bsse.ethz.ch louis.duplessis@bsse.ethz.ch" # sarah.nadeau@bsse.ethz.ch chaoran.chen@bsse.ethz.ch
+#SBATCH --mail-user="carrara@nexus.ethz.ch" # pelin.icer@bsse.ethz.ch david.dreifuss@bsse.ethz.ch" # kim.jablonski@bsse.ethz.ch louis.duplessis@bsse.ethz.ch" # sarah.nadeau@bsse.ethz.ch chaoran.chen@bsse.ethz.ch
 #SBATCH --mail-type=END
 #SBATCH --mem-per-cpu=16384
 ####### --partition=light
