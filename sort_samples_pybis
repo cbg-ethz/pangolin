@@ -212,10 +212,11 @@ rxrun = re.compile(
 rxcell = re.compile(r"(?<=/)(?P<seq>(?:\w+-)?(?P<cell>\w+)(?:\:(?P<lane>\d+))?)$")
 rxclean = re.compile(
     r"[\W_]+"
-)  # or [\-\.\:\/] : characters that are converted to '_' for file-system friendliness
+)  # or [\-\.\:\/] : characters that are converted to (single) '_' for file-system friendliness
 rxclean_new = re.compile(
-    r"[^\-A-Za-z0-9_]+|(?<=[^-])-(?=[^-])"
+    r"(?:[^\-A-Za-z0-9]|(?<=[^-])-(?=[^-]))+"
 )  # more recently, double dashes are not sanitized but included
+# TODO we currently presume double-underscores ARE converted to single '_'. To be clarified if this code ever gets de-mothballed in the future. (To whomever is handling the '27 bird flu: good luck)  
 rxrecent = re.compile(r"^(?P<year>\d{4})(?:(?P<month>\d{2})(?P<day>\d{2})?)?")
 
 samkwargs = {}
