@@ -70,10 +70,10 @@ echo 'Data sync'
 echo '========='
 
 [[ -n $skipsync ]] && echo "Hack: ${skipsync} will be skiped."
-[[ $skipsync != h2030   ]] && ${scriptdir}/belfry synch2030 # --recent : there are no old archive at Health2030 anyway
-[[ $skipsync != violler ]] && ${scriptdir}/belfry syncviollier # --recent : there are no old archive, we're even supposed to perform the deletion
+#[[ $skipsync != h2030   ]] && ${scriptdir}/belfry synch2030 # --recent : there are no old archive at Health2030 anyway
+#[[ $skipsync != violler ]] && ${scriptdir}/belfry syncviollier # --recent : there are no old archive, we're even supposed to perform the deletion
 [[ $skipsync != fgcz    ]] && ${scriptdir}/belfry syncfgcz --recent
-[[ $skipsync != gfb     ]] && ${scriptdir}/belfry syncopenbis --recent
+#[[ $skipsync != gfb     ]] && ${scriptdir}/belfry syncopenbis --recent
 ${scriptdir}/belfry sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 
 # uploading requests require prior successful download
