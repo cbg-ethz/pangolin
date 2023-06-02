@@ -3,6 +3,7 @@
 clusterdir=/cluster/project/pangolin
 working=working
 sampleset=sampleset
+vilocadir=work-viloca/SARS-CoV-2-wastewater-sample-processing-VILOCA
 
 #
 # Input validator
@@ -237,5 +238,10 @@ case "$1" in
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
 		exit 2
+	;;
+	viloca)
+		# start first job
+		cd ${clusterdir}/${vilocadir}/
+		./run_workflow.sh
 	;;
 esac

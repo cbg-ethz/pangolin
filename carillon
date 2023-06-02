@@ -24,6 +24,9 @@ umask 0002
 
 statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
+viloca_statusdir="${basedir}/${viloca_basedir}/status"
+mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
+viloca_staging=${viloca_samples}.staging
 lockfile=${statusdir}/carillon_lock
 
 remote_batman="ssh -ni ${HOME}/.ssh/id_ed25519_batman -l ${cluster_user} euler.ethz.ch --"
@@ -214,7 +217,6 @@ echo "============="
 
 # TODO support a yaml with regex
 rxsample='(^[[:digit:]]{6,}_)|(^[[:digit:]]{8,})|(^Y[[:digit:]]{8,})|([[:digit:]]{2}_20[[:digit:]]{2}_[01]?[[:digit:]]_[0-3]?[[:digit:]])|(^KLZHC[oO][vV])|(^B[aA][[:digit:]]{4,})|(^USB_20[[:digit:]]{2}_[01]?[[:digit:]]_[[:digit:]]{2}_.{8})'
-#rxsample='^[[:digit:]]{6,}_'
 
 scanmissingsamples() {
 	while read sample batch other; do 
@@ -382,6 +384,166 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 	fi
 else
 	echo 'There is already run going on'
+fi
+
+#
+# Phase 5: run viloca on new samples if no viloca instance is running
+#
+
+echo "========================"
+echo "Check current VILOCA run"
+echo "========================"
+
+
+if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
+	stillrunning=0
+	while read j id; do
+		# skip missing
+		if [[ -z "${id}" ]]; then
+			echo "VILOCA - $j : (not started)"
+			continue
+		fi
+
+		# skip already finished
+		if [[ ( -e ${viloca_statusdir}/viloca_${j}_ended ) && ( ${viloca_statusdir}/viloca_${j}_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
+			old="$(<${viloca_statusdir}/viloca_${j}_ended)"
+			if [[ "${id}" == "${old}" ]]; then
+				echo "VILOCA - $j : $id already finished"
+			else
+				echo "VILOCA - $j : mismatch $id vs $old"
+			fi
+			continue
+		fi
+
+		# cluster status
+		stat=$(${remote_batman} job "${id}" || echo "(no answer)")
+		if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
+			# running
+			echo -n "VILOCA - $j : $id : $stat"
+			(( ++stillrunning ))
+			if [[ "${stat}" == 'RUN' && ( ! "$j" =~ qa$ ) ]]; then
+				echo -ne '\t'
+				${remote_batman} completion "${id}" | tail -n 1
+			else
+				echo ''
+			fi
+			sleep 1
+			continue
+		fi
+
+		# not running
+		echo "VILOCA - $j : $id finishing"
+
+		echo "${id}" > ${viloca_statusdir}/viloca_${j}_ended
+	done < ${viloca_statusdir}/viloca_started
+
+	if (( stillrunning == 0 )); then
+		${scriptdir}/belfry pullsamples_viloca --recent
+		if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
+			echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
+		else
+			echo "pulling VILOCA data failed"
+		fi
+	fi
+else
+	echo 'No current VILOCA run.'
+fi
+
+#
+# Phase 6: restart VILOCA runs if new data
+#
+
+echo "===================="
+echo "Start new VILOCA run"
+echo "===================="
+
+if [[ ( ( ! -e ${viloca_statusdir}/viloca_ended ) && ( ! -e ${viloca_statusdir}/viloca_started ) ) || ( ${viloca_statusdir}/viloca_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
+	mustrun_viloca=0
+	ref=$(date --reference="${viloca_statusdir}/viloca_started" '+%Y%m%d')
+	now=$(date '+%Y%m%d')
+	limit=$(date --date='2 weeks ago' '+%Y%m%d')
+	if [[ ! -f ${viloca_samples} ]]; then
+		echo "Can't find ${viloca_samples}, creating it empty"
+		echo ",sample,batch" > ${viloca_samples}
+	fi
+	if [[ ! -f ${viloca_staging} ]]; then
+		echo "No staging file availabe, creating it"
+		cat ${viloca_samples} > ${viloca_staging}
+
+	else
+
+	echo "Check batch against ${ref}:"
+	for t in ${basedir}/${sampleset}/samples.*.tsv; do
+		if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
+			echo "oops: Can't parse <${t}> ?!" > /dev/stderr
+		fi
+
+		batchname=${${t#*.}%".tsv"}
+		analysed_batches=$(cat $viloca_staging | awk -F ',' '{print $3}' | sort | uniq)
+		# check if any sample from the batch has been added already
+		if [[ ${analysed_batches[*]} =~ $batchname ]]; then
+		    #If yes, check if all of them have been added or if new ones appeared in the meantime
+			if [ $(wc -l < $t) -eq $(grep -o $batchname <<< ${analysed_batches} | wc -l) ]; then
+				continue
+			else
+				echo "Found new samples for batch $batchname"
+				# check if this batch is still being processed by Vpipe
+				batch_status_file=grep -rl ${statusdir}/vpipe_new.* -e $batchname
+				batch_run_date=${batch_status_file#*.}
+				if [ ( ${batch_status_file#*.} -lt ${$(cat ${statusdir}/vpipe_ended)#*.} ) || ( ${batch_status_file#*.} -eq ${$(cat ${statusdir}/vpipe_ended)#*.} ) ]; then
+					echo "that Vpipe finished analysing. Updating the VILOCA staging samples list"
+					cat $t | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> $viloca_staging
+					cat $viloca_staging | sort | uniq > $viloca_staging
+					++mustrun_viloca					
+				else
+					echo "that Vpipe is STILL analysing. Ignoring until next loop"
+					continue
+				fi
+			fi
+		else
+			echo "Found new completed batch: $batchname. Updating the VILOCA staging samples list"
+			cat $t | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> $viloca_staging
+			++mustrun_viloca
+		fi
+
+	# are we allowed to submit jobs ?
+	if (( donotsubmit_viloca )); then
+		echo -e '\e[35;1mWill NOT submit VILOCA jobs\e[0m...' > /dev/stderr
+		if (( mustrun_viloca )); then
+			echo 'VILOCA submit blocked' > ${viloca_statusdir}/viloca_submit_fail
+			echo -e '...\e[33;1mbut there are new VILOCA jobs that should be started !!!\e[0m' > /dev/stderr
+		else
+			echo '...and there is nothing VILOCA-related to run anyway' > /dev/stderr
+		fi
+	# start jobs ?
+	elif (( mustrun_viloca )); then
+		echo 'New VILOCA job waiting. Checking if Viloca is already running...'
+		if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
+			echo "BUT there is already a VILOCA instance running! Retrying during the next loop"
+		else
+			echo 'starting VILOCA jobs'
+			mv ${viloca_staging} ${viloca_samples}
+			${remote_batman} viloca --recent --tag "$(join_by ';' "${runreason[@]}")" > ${viloca_statusdir}/viloca.${now}	&&	\
+			if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
+				ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
+				cat ${viloca_statusdir}/viloca_started
+				printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
+				if [[ -n "${mailto[*]}" ]]; then
+					(
+						echo '(Possibly new) samples not having VILOCA results yet found:'
+						printf ' - %s\n' "${runreason[@]}"
+						echo -e '\nStarting VILOCA on Euler:'
+						cat ${viloca_statusdir}/viloca_started
+					) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
+					# -r "${mailfrom}"
+				fi
+			fi
+		fi
+	else
+		echo 'No new VILOCA jobs to start'
+	fi
+else
+	echo 'There is already A VILOCA run going on'
 fi
 
 #
