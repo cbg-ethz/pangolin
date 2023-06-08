@@ -1,0 +1,777 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import glob
+import io 
+import re
+import configparser
+import argparse
+import csv
+import json
+import yaml
+import hashlib
+import math
+import datetime
+
+# progress bar unicode
+def bar(v, m=128):
+	f=v&7
+	return ('\u2588' * (v >> 3))+(chr(0x2590 - f) if f else '')+('\u00b7' * ((m-v) >> 3))
+
+# column in dataset.tsv under which we need to look for plates
+plate_column = 'Tube [Characteristic]' # 'Platename [Characteristic]'
+lib_column = 'LibraryPrepKit' # e.g.: "SARS-CoV-2 ARTIC V4.1 NEB Ultra II"
+
+# parse command line
+argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
+argparser.add_argument('-c', '--config', metavar='CONF', required=False,
+	default='config/server.conf',
+	type=str, dest='config', help="configuration file to load")
+argparser.add_argument('-f', '--force', required=False,
+	action='store_true', dest='force', help="Force overwriting any existing file when moving")
+argparser.add_argument('-Q', '--no-fastqc', required=False,
+	action='store_true', dest='nofqc', help="Skip importing fastqc dirs")
+argparser.add_argument('-s', '--summary', required=False,
+	action='store_true', dest='summary', help="Only display a summary of datasets, not an exhaustive list of all samples")
+argparser.add_argument('-v', '--verbose', required=False,
+	action='store_true', dest='verbose', help="Explicitely list every single parse folder")
+argparser.add_argument('-r', '--recent', metavar='ONLYAFTER', required=False,
+	dest='recent', help="Only process batches whose date is posterior to the argument")
+argparser.add_argument("-4", "--protocols", metavar="PROTOCOLSYAML", required=False, default=None,
+	type=str, dest="protoyaml", help="Generate 4-column samples.tsv, using 'name' and 'alias' from the supplied protocols YAML file")
+argparser.add_argument("-l", "--libkit-override", metavar="PROTOCOLSTSV", required=False, default=None,
+	type=str, dest="libkittsv", help="Patch map to override LibraryPrepKit for certain projects/orders")
+
+args = argparser.parse_args()
+
+
+def load_proto(protoyaml):
+	"""load a protocols YAML file and build a mapping of full name strings to the short keys"""
+	with open(protoyaml) as f:
+		py = yaml.load(f, Loader=yaml.BaseLoader)
+
+	pmap = {}
+
+	for k, p in py.items():
+
+		if "name" in p:
+			pmap[p.get("name")] = k
+
+		for a in p.get("alias", []):
+			assert (
+				a not in pmap
+			), f"duplicate alias <{a}> in protocols YAML file <{protoyaml}>, last see in <{pmap[a]}>"
+			pmap[a] = k
+
+	return pmap
+
+
+proto = load_proto(args.protoyaml) if args.protoyaml else None
+
+
+libkitoverride = { }
+if args.libkittsv:
+	with open(args.libkittsv,'rt',encoding='utf-8', newline='') as pf:
+		libkitoverride = { (prj,ordr):newval for (prj,ordr,newval,*o) in csv.reader(pf, delimiter="\t") }
+
+
+# Load defaults from config file
+config = configparser.ConfigParser(strict=False) # non-strict: support repeated section headers
+config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in section headers
+with open(args.config) as f: config.read_string(f"""
+[DEFAULT]
+lab={os.path.splitext(os.path.basename(args.config))[0]}
+basedir={os.getcwd()}
+sampleset=sampleset
+download=bfabric-downloads
+link=--link
+mode=
+badlist=
+forcelist=
+nofuselist=
+fuselist=
+fusedays=30
+fallbackproto=
+[_]
+""" + f.read()) # add defaults + a pseudo-section "_" right before the ini file, to support bash-style section_header-less config files
+
+lab=config['_']['lab'].strip("\"'")
+'''name of the lab, to put in the batch YAML'''
+basedir=config['_']['basedir'].strip("\"'")
+'''base dircetory'''
+expname=config['_']['expname'].strip("\"'")
+'''projects name in SFTP'''
+download=config['_']['download'].strip("\"'")
+'''sub-directory to hold the unsorted downloaded datasets'''
+sampleset=config['_']['sampleset'].strip("\"'")
+'''sub-directory to hold the sorted samples set'''
+link=config['_']['link'].strip("\"'")
+'''
+linking instead of copying ?
+ --reflink for CoW filesystems (ZFS, BTRFS)
+ --hardlink for most unix-like filesystems
+'''
+badlist=(config['_']['badlist'].strip("\"'").split(',')) if len(config['_']['badlist']) else list()
+'''folders to skip'''
+forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_']['forcelist']) else list()
+'''folders to use even with missing order'''
+fuselist=(config['_']['fuselist'].strip("\"'").split(',')) if len(config['_']['fuselist']) else list()
+'''folders to always merge'''
+# nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_']['nofuselist']) else list()
+# '''folders to never merge'''
+# fusedays=int(config['_']['fusedays'].strip("\"'"))
+# '''delay after which orders aren't considered for merging anymore'''
+
+fallbackproto=config['_']['fallbackproto'].strip("\"'")
+
+# parse the chmod parameter
+try:
+	cf_mode=config['_']['mode'].strip("\"'")
+	mkdirmode=int(cf_mode, base=8) if cf_mode else None
+except:
+	print(f"cannot parse <{config['_']['mode']}> as an octal chmod value. see `mkdir --help` for informations")
+	sys.exit(2)
+
+# glob all projects
+if re.search('/p\d+/?$', expname):
+	# project name included in the SFTP path, we don't need to scan
+	projects=''
+	extrapath=0
+else:
+	# whole storage in SFTP path, we need to scan for projects
+	projects='p[0-9][0-9][0-9]*' 
+	extrapath=1
+
+# RegEx to parse some specific string
+rxorder=re.compile(r'(?:^|/|_)(?P<order>o\d+)') # match the order patter either after a "_", at the start of the string (wether it's the actual start or the initial part after a path)
+rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
+rxcell=re.compile('(?:0+-)?(?P<cell>\w+(?:-\d+)?)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX' or 'BPA73113-1417'
+rxsuffix=re.compile('(?:_S\d+)?(?:_L\d+)?$') # e.g.: ..._Plate_2_011120EG27_A4_S5_L001
+rxfqext=re.compile('\.fastq\.gz$') 
+
+
+
+################################
+#                              #
+#   Phase 1: Gather the data   #
+#                              #
+################################
+
+# look for dataset files
+
+# FastQC
+if args.verbose:
+	print("\x1b[37;1mLooking for FastQC folders\x1b[31;0m")
+fastqc={} # maps orders to FastQC directories (or in the absence of order number: checksum of the input_dataset)
+fastqc_samples={} # maps which samples are present in which FastQC directory (some might be missing)
+for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
+	name = d.split(os.sep)[-1]
+	if name in badlist:
+		print(f"skipping {name} in bad list")
+		continue
+
+	t = os.path.join(d,'input_dataset.tsv'); 
+	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
+	if not (os.path.isdir(os.path.join(d,'FastQC_Result')) and 
+			os.path.isfile(t)):
+		if args.verbose:
+			print(f"{name} no FastQC_Result")
+		continue
+
+	f = os.path.join(d.split(os.sep)[-1],'FastQC_Result')	# Holds the _fastqc.html files
+	with open(t,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
+		o=None	# keep tracking of the order -> FastQC mapping
+		fastqc_samples[f]={}	# list of files (some files didn't get their respective FastQF
+		for r in csv.DictReader(tf, dialect='excel-tab'):
+			fastqc_samples[f][r['Name']] = True
+			if (not o) and ('Order Id [B-Fabric]' in r):
+				o = r['Order Id [B-Fabric]']
+
+		if o:
+			# match by Order Id, but not all have it
+			fastqc[o]=f
+			if args.verbose:
+				print(f"{name} - order {o}")
+			continue
+
+	# match by (input_) dataset.tsv content
+	md5_hash = hashlib.md5(usedforsecurity=False)
+	with open(t,'rb') as tf:
+		md5_hash.update(tf.read())
+	fastqc[md5_hash.digest()]=f
+	if args.verbose:
+		print(f"{name} - checksum {md5_hash.digest()}")
+ 
+# Samples
+if args.verbose:
+	print("\x1b[37;1mLooking for sample folders\x1b[31;0m")
+totsam=0
+batches={}
+order2runs={} # table that keeps track of orders and how many runs each has.
+order2runfolders={}
+plate2runs={} # table that leeps track of which run each plate has ended up in.
+for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
+	pathparts = srch.split(os.sep)
+	path = os.sep.join(pathparts)
+	name = pathparts[-1]
+	prj = pathparts[-2] if extrapath else ''
+
+	# (new style) look for bcl2fastq's json file
+	j = os.path.join(srch, 'Stats','Stats.json')
+	if not os.path.isfile(j):
+		# (old style) look within the Reports generated by bcl2fastq
+		j = os.path.join(srch, 'stats','Reports','Stats.json')
+		if not os.path.isfile(j):
+			# (newest style) multiple stat files, one for each barcode format in the run
+			# We need to identify which one is related to our files based on dataset.tsv
+			statsfiles = glob.glob(os.path.join(srch,'DmxStats','Stats_*.standard.json'))
+			if len(statsfiles) == 0:
+				continue
+			else:
+				# We assume that the entire run uses the same barcode length for all samples
+				# TODO: generalize
+				with open(os.path.join(path,'dataset.tsv'),'rt',encoding='utf-8', newline='') as tf:
+					r = next(csv.DictReader(tf, dialect='excel-tab'), None)
+					if 'barcode1' in r:
+						barcode1 = len(f"{r['barcode1']}")
+					if 'barcode2' in r:
+						barcode2 = len(f"{r['barcode2']}")
+				# build the stats filename based on the barcode lengths
+				j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
+				if not os.path.isfile(j):
+					continue
+
+	if name in badlist:
+		print(f"\x1b[35;1mskipping {name} in bad list\x1b[0m")
+		continue
+
+	order=name # default for corner cases when we don't have an actual order
+
+	# Load the order2runs.tsv file to find out if this order is spead over many runs...
+	o2rt = os.path.join(srch, 'order2runs.txt')
+	o2r_order=None
+	plates=None
+	if os.path.isfile(o2rt):
+		with open(o2rt,'rt',encoding='utf-8') as tf:
+			o2r_runs={}
+			head = re.split('[ \t]+', tf.readline().rstrip())
+			for lraw in tf:
+				l=lraw.rstrip()
+				if len(l) == 0:
+					continue
+				r = dict(zip(head,re.split('[ \t]+',l)))
+			#for r in csv.DictReader(tf, dialect='excel-tab'):
+				order=o2r_order=f"o{r['Order']}"
+				o2r_plates=r.get('Plate','').split(';') # multiple plates split
+				for ru in r['Run'].split(';'): # multiple runs
+					o2r_runs[ru]=o2r_plates # keep track which run has which plates
+					if name.find(ru) != -1: # e.g.: NOV1039 is the run of name/delivery folder NovaSeq_20211119_NOV1039_o26712_DataDelivery
+						plates=list(set(o2r_plates + ([] if plates is None else plates)))
+				for p in o2r_plates:
+					plate2runs[p] = list(set(r['Run'].split(';') + plate2runs.get(p, [])))
+			order2runs[order]=o2r_runs
+
+	# try parsing order from path string
+	try:
+		m=rxorder.search(name).groupdict()
+		order=m['order']
+	except:
+		if name in forcelist:
+			# no order but force processing
+			print(f"\x1b[35;1m({name} in force list) \x1b[0m", end='')
+			# search the dataset TSV in case we got a real order number
+			with open(os.path.join(path,'dataset.tsv'),'rt',encoding='utf-8', newline='') as tf:
+				r = next(csv.DictReader(tf, dialect='excel-tab'), None)
+				if 'Order Id [B-Fabric]' in r:
+					order = f"o{r['Order Id [B-Fabric]']}"
+					print(order, end='')
+			# otherwise we leave the above default (name)
+			print()
+		else:
+			print(f"\x1b[31;1mcan't parse {name}\x1b[0m")
+			continue
+
+	########################################
+	#                                      #
+	#   Parse the Demultiplex stats JSON   #
+	#                                      #
+	########################################
+
+	# first, retrieve the bfabric ID - sample name matches from dataset.tsv
+	# This must happen only if the columns exist, as older or malformed dataset.tsv files can lack the required columns
+	t=os.path.join(path,'dataset.tsv')
+	namematch=None
+	try:
+		with open(t,'rt',encoding='utf-8', newline='') as tf:
+			tfc=csv.DictReader(tf, dialect='excel-tab')
+			namematch = {cp['Sample Id [B-Fabric]']: cp['Name'] for cp in tfc}
+	except KeyError:
+		if args.verbose:
+			print("problems with the column matching in dataset.tsv. Excluding the bfabric ID conversion")
+			namematch={}
+
+	with open(j, 'rt') as f:
+		stats = json.loads(f.read());
+
+	# parse flowcell
+	try:
+		m=rxcell.search(stats['Flowcell']).groupdict()
+		flowcell=m['cell']
+	except:
+		print(f"{name} cannot parse: {stats['Flowcell']}")
+		continue
+
+	# parse run folder
+	runfolder=stats['RunId']
+	try:
+		m=rxrun.search(runfolder).groupdict()
+		rundate=f"20{m['date']}" # NOTE runfolders are yymmdd, not yyyymmdd
+		if flowcell != m['cell']:
+			print(f"{name} Warning: cell missmatch: {flowcell} vs {m['cell']}")
+	except:
+		print(f"{name} cannot parse: {runfolder}")
+		continue
+	order2runfolders[order]=list(set([runfolder] + order2runfolders.get(order, [])))
+
+	# skip older
+	if args.recent:
+		if rundate < args.recent:
+			#print(f"Skipping {rundate} {order} {flowcell}")
+			continue
+			# NOTE for this skip to work, all recplicate of an order must be in the fuselist, otherwise merge can be accidentally missed if the replicate span across a month border
+
+	# not skipped, advertise libkit forcing
+	if (prj, order) in libkitoverride:
+		print(name, f"\x1b[32;1mforcing {lib_column} of {order} {name} as {libkitoverride[(prj, order)]}\x1b[0m")
+
+	# parse information about reads
+	lane={}
+	for l in stats['ReadInfosForLanes']: # lane
+		lanenum=l['LaneNumber']
+		ends=rlen=0
+		for r in l['ReadInfos']: # read phases (indexes, reads)
+			if r['IsIndexedRead']: continue 
+
+			# sanity check
+			if rlen and rlen != r['NumCycles']:
+				print(f"{name} Warning: read lenght changes from {rlen} to {r['NumCycles']} we currently only support symetric read lenghts")
+
+			# gather info
+			ends+=1
+			if rlen < r['NumCycles']: rlen=r['NumCycles']
+		
+		# sanity check
+		if ends < 1 or ends > 2:
+			print(f"{name} Error: we currently only support single or paired ends, but found {ends} reads")
+
+		lane[lanenum]={'ends': ends, 'rlen': rlen-1}
+
+	# parse info about samples
+	samples={}
+	badyield=0
+	badsamples=set()
+	for l in stats['ConversionResults']: # lane
+		lanenum=l['LaneNumber']
+		ends=lane[lanenum]['ends']
+		rlen=lane[lanenum]['rlen']
+
+		for s in l['DemuxResults']: # sample in lane
+			samname=s['SampleName']
+			# In case the json file is listing using the bfabric IDs instead of the sample names, convert
+			if samname in namematch:
+				samname = namematch[samname]
+			# filter out fastq files with zero reads
+			if s['NumberReads'] == 0:
+				badyield+=1;
+				badsamples.add(samname)
+				continue
+
+			samples[samname]={'ends': ends, 'rlen': rlen}
+			totsam+=1
+
+	# Check readcounts
+	if badyield:
+		print(name, f"\x1b[33;1m{badyield} samples with bad yield !\x1b[0m", sep='\t')
+
+	# Need multiple samples
+	if len(samples) < 2:
+		print(name, f"\x1b[31;1mOnly {len(samples)}!\x1b[0m", sep='\t')
+		continue
+
+	#
+	#   dataset.tsv
+	#
+
+	t=os.path.join(path,'dataset.tsv')
+	to=None
+	tplates=None
+	with open(t,'rt',encoding='utf-8', newline='') as tf:
+		tfc=csv.DictReader(tf, dialect='excel-tab')
+		r = next(tfc)
+		# check proto
+		if lib_column not in r:
+			print(name, f"\u001b[33;1mwarning, missing {lib_column} in <{t}>\u001b[0m")
+		# check plates
+		if plate_column in r:
+			tplates=list(set([r[plate_column]] + [cp[plate_column] for cp in tfc]))
+		# and now check for order column
+		if 'Order Id [B-Fabric]' in r:
+			to = r['Order Id [B-Fabric]']
+
+	#
+	#   Build per batch / samples data
+	#
+
+	b={'name':name, 'prj': prj, 'path':path, 'dataset':t, 'flowcell': flowcell, 'runfolder': runfolder,'rundate':rundate,'samples':samples,'badyield':badyield,'badsamples':badsamples}
+
+	# add plates, which ever method managed to find them
+	if tplates is not None and len(tplates)>0:
+		b.update({ 'plates':tplates })
+	elif plates is not None and len(plates)>0:
+		b.update({ 'plates':plates })
+
+	# if both attempts at counting plates were successfull, check if they agree
+	if tplates is not None and plates is not None:
+		diff=list(set(tplates).symmetric_difference(set(plates)))
+		if len(diff)>0:
+			if args.verbose:
+				print(name, f"\x1b[33mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b[0m")
+			else:
+				print(name, f"\x1b[33mnon-concording plates list: between dataset and order2run\x1b[0m")
+
+	# handle orders replicate and fuse them
+	if order in batches:
+		key=f"{order}:{name}"
+		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
+
+		# single scenario / ultra-simple fuse logic: is it in list? (No more autoguessing)
+		if name in fuselist or batches[order]['name'] in fuselist:
+			print(name, f"\x1b[36;1m{rundate}_{flowcell} is REPLICATE of order {order}'s {batches[order]['name']} - {batches[order]['rundate']}_{batches[order]['flowcell']} (reason: in fuse list)\x1b[0m (note: {days} days appart)")
+			batches[order]['dupe']=True
+			b['appendto']=order
+		else:
+			print(name, f"\x1b[36mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: not in fuse list {days}\x1b[0m (note: {days} days appart)")
+	else:
+		key=order
+
+	# Now, link with FastQC, based on dataset.tsv and...
+
+	# ...based on order column if present ?
+	if to is not None:
+			# sanity check: is the folder the same?
+			if to in fastqc:
+				b['fastqc']=fastqc[to]
+				if to[0] != 'o':
+					to = f"o{to}"
+				if to != order:
+					print(name, f"\x1b[31;1mFolder order {order} vs dataset.tsv order {to}\x1b[0m")
+			batches[key]=b
+			if args.verbose:
+				print(f"{name}: {order} - {runfolder}")
+			continue
+
+	# ...match by (input_) dataset.tsv content
+	md5_hash = hashlib.md5(usedforsecurity=False)
+	with open(t,'rb') as tf:
+		md5_hash.update(tf.read())
+	md5=md5_hash.digest()
+	if md5 in fastqc:
+		b['fastqc']=fastqc[md5]
+	batches[key]=b
+	if args.verbose:
+		print(f"{name}: {order} - {runfolder}")
+
+
+################################
+#                              #
+#   Phase 2: Output the thing  #
+#                              #
+################################
+
+# create sampleset directory if missing
+if not os.path.isdir(os.path.join(basedir,sampleset)):
+	try:
+		kwmkdir={ 'mode': mkdirmode } if mkdirmode else { }
+		os.mkdir(os.path.join(basedir,sampleset),**kwmkdir)
+	except FileExistsError:
+		pass
+
+
+# shell script file with all moving instructions inside
+sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
+
+# generic header: only for stand-alone files.
+print(r'''
+link='%(link)s'
+mode='%(mode)s' # e.g.: --mode=0770
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+	exit 1
+}
+
+warn() {
+	printf '\e[33;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+}
+
+ALLOK=1
+X() {
+	ALLOK=0
+}
+
+# sanity checks
+[[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
+[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
+
+# helper function to handle items that can be either single string or list (or empty)
+listify = lambda x: x if type(x) is list else [] if x is None else [x]
+delistify = lambda x: x if type(x) is str else None if len(x) == 0 else next(iter(x)) if len(x) == 1 else sorted(x, reverse=True)
+
+lastbar=-1
+cursam=0
+otsv={}	# opened file handles for samples.tsv (for appending)
+osprj={} # opened file handles for projects.tsv (mapping samples name to projects and orders) (for appending)
+oyaml={} # old dictionnaries with previous version of batch.yaml (to be updated and used to overwrite the file)
+omis={} # old list with previous bad samples (to be update and used to overwrite file)
+osamseen={} # old list of previously sample seen with reads (non bad) - used to update omis
+for b in batches:
+	name=batches[b]['name']
+	prj=batches[b]['prj']
+	rundate=batches[b]['rundate']
+	flowcell=batches[b]['flowcell']
+
+	# skip older
+	if args.recent:
+		if rundate < args.recent:
+			totsam -= len(batches[b]['samples'])
+			#print(f"Skipping {rundate} {order} {flowcell}")
+			continue
+
+	# either classic '20201120_JDNB4' or merged '20201124_o23391'
+	dupe=False
+	if 'dupe' in batches[b]:
+		dupe=True
+		order=b
+		batch=f"{rundate}_{order}"
+	elif 'appendto' in batches[b]:
+		dupe=True
+		order = batches[b]['appendto']
+		rundate = batches[order]['rundate']
+		batch=f"{rundate}_{order}"
+	elif name in fuselist:
+		# Check that this match expectations of fuselist
+		print(b, f"\x1b[31;1m should have a replicate according to fuselit but only {name} - {rundate}_{flowcell} found, no replicate found - dropping folder!\x1b[0m")
+		continue
+	else:
+		order=b
+		batch=f"{rundate}_{flowcell}"
+
+	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
+	qcdir=None
+	if (not args.nofqc) and (not dupe) and ('fastqc' in batches[b]):
+		qcdir=batches[b]['fastqc']
+		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
+
+	# patch file exist ?
+	patchmap = { }
+	patchtsv=os.path.join(basedir,sampleset,f"patch.{prj.removeprefix('p')}.{order.removeprefix('o')}.tsv")
+	if os.path.isfile(patchtsv):
+		print(f"\x1b[32;1mpatching {order} {name} with {patchtsv}\x1b[0m")
+		with open(patchtsv,'rt',encoding='utf-8', newline='') as pf:
+			patchmap = { old:new for (old,new,*r) in csv.reader(pf, delimiter="\t") }
+
+	# patch file exist ?
+	forcelibkit = libkitoverride.get( (prj, order), None )
+
+	# batch TSV file and info YAML
+	runfolder=None
+	if batch not in otsv:
+		otsv[batch]=tsv=open(os.path.join(basedir,sampleset,f'samples.{batch}.tsv.staging'), 'wt')
+		osprj[batch]=sprj=open(os.path.join(basedir,sampleset,f'projects.{batch}.tsv'), 'wt')
+		plts = { 'plates': delistify(batches[b]['plates']) } if batches[b].get('plates') is not None else { }
+		oyaml[batch]=yamldict={'type':'bfabric','lab':lab,'order':order,'project':prj,'name':name,'fused':dupe,
+			'runfolder':	batches[b]['runfolder'],
+			'fastqcfolder':	batches[b]['fastqc'] if 'fastqc' in batches[b] else None,
+			'folder':	batches[b]['name'],
+			**plts,
+		}
+		badsamples=batches[b]['badsamples']
+		# keep bad lists organised by orders within each batch (as some could be mixed weirdly)
+		if batch not in omis:
+			omis[batch]={order: badsamples}
+			osamseen[batch]={order: set(batches[b]['samples'].keys()).difference(badsamples)}
+		else:
+			omis[batch].update({order: badsamples})
+			osamseen[batch].update({order: set(batches[b]['samples'].keys()).difference(badsamples)})
+	else:
+		tsv=otsv[batch]
+		sprj=osprj[batch]
+		# update the yaml instead of simply combining
+		yamldict=oyaml[batch]
+		combine_plts = delistify(set(listify(yamldict.get('plates', [])) + batches[b].get('plates', [])))
+		plts = { 'plates': combine_plts } if combine_plts is not None else { }
+		yamldict.update({
+			'project': 	delistify(set([prj] + listify(yamldict['project']))),
+			'order':	delistify(set([order] + listify(yamldict['order']))),
+			'name':	name,
+			#bfabfolder=[batches[b]['name'],batches[order]['name']]
+			'folder':	delistify(set([batches[b]['name']] + listify(yamldict['folder']))),
+			#runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
+			'runfolder':	delistify(set([batches[b]['runfolder']] + listify(yamldict['runfolder']))),
+			#fastqcfolder=[]
+			#if 'fastqc' in batches[b]:
+			#	fastqcfolder+=[batches[b]['fastqc']]
+			#if 'fastqc' in batches[order]:
+			#	fastqcfolder+=[batches[order]['fastqc']]
+			#if len(fastqcfolder) == 0:
+			#	fastqcfolder=None
+			'fastqcfolder':	delistify(set(listify(yamldict['fastqcfolder']) + ([batches[b]['fastqc']] if 'fastqc' in batches[b] else []))),
+			**plts,
+		})
+		oyaml[batch]=yamldict
+
+		# intersections etc.
+		# NOTE two fused sequencing set do not necessarily contain the same samples, so the exact venn diagram gets a bit crazierer
+		# list of new samples *with* reads (non bad) that where added now.
+		newnonbadsamples=set(batches[b]['samples'].keys()).difference(batches[b]['badsamples'])
+		if order in omis[batch]:
+			omis[batch].update({order:	(
+					# from the old bad sample : remove those whose samples now have reads
+					omis[batch][order].difference(newnonbadsamples)
+				).union(
+					# from the new bad samples : remove those whose previous sample had reads
+					batches[b]['badsamples'].difference(osamseen[batch][order])
+				)})
+			osamseen[batch][order].update(newnonbadsamples)
+		else:
+			omis[batch].update({order: batches[b]['badsamples'].difference(batches[order]['samples'].keys()) })
+			osamseen[batch].update({order: newnonbadsamples })
+
+		# combine missing between different orders
+		badsamples=[ ]
+		for x in omis[batch].values():
+			badsamples += x
+
+	# YAML with batch infos
+	with open(os.path.join(basedir,sampleset,f'batch.{batch}.yaml'), 'wt') as yml:
+		print(yaml.dump(yamldict, sort_keys=False), file=yml)
+	# list of missing files
+	misfname=os.path.join(basedir,sampleset,f'missing.{batch}.txt')
+	if len(badsamples):
+		with open(misfname, 'wt') as missing:
+			missing.writelines("%s\n" % patchmap.get(bad, bad) for bad in sorted(set(badsamples)))
+	else:
+		if  os.path.isfile(misfname):
+			os.remove(misfname)
+
+	with open(batches[b]['dataset'],'rt',encoding='utf-8') as tf:
+		for r in csv.DictReader(tf, dialect='excel-tab'):
+			# progress
+			prgbar=math.floor(cursam*128/totsam)
+			if lastbar != prgbar:
+				print(f"echo -ne '\\r[{bar(prgbar)}]\\r'", file=sh)
+				lastbar=prgbar
+			cursam+=1
+
+			# match read TSV to known samples
+			fulname=samname=r['Name']
+			if samname in batches[b]['samples']:
+				batsamname=samname
+			else:
+				olen=len(samname)
+				# try removing typical trailing stuff: Sample num, Lane num
+				samname=rxsuffix.sub('', samname)
+				if samname in batches[b]['samples']:
+					batsamname=samname
+				else:
+					# try if one of the batch's sample has a name which is a subset
+					slen=len(samname)
+					mlen=0
+					matchname=None
+					for batsamname in batches[b]['samples']:
+						tlen=len(batsamname)
+						if tlen < slen:
+							if (samname[:tlen] == batsamname) and (mlen < tlen):
+								mlen=tlen
+								matchname=batsamname
+						else:
+							if (samname == batsamname[:slen]) and (mlen < slen):
+								mlen=slen
+								matchname=batsamname
+					if matchname != None:
+						print(f"{batches[b]['name']} {samname} fuzzy matched to {matchname}")
+						batsamname=matchname
+					else:
+						print(f"{batches[b]['name']} Can't match {samname}")
+						continue
+			if dupe:
+				fulname=f"{fulname}_{flowcell}"
+
+			# use patch map to adjust name
+			if samname in patchmap:
+				samname = patchmap[samname]
+
+			# files
+			ends=batches[b]['samples'][batsamname]['ends']
+			rlen=batches[b]['samples'][batsamname]['rlen']
+			r1=r['Read1 [File]'].split(os.sep)[-1]
+			if ends==2:
+				r2=r['Read2 [File]'].split(os.sep)[-1]
+
+			# plate
+			plate = [ r[plate_column] ] if plate_column in r else []
+
+			# tsv line
+			if ('appendto' not in batches[b]) or (batsamname not in batches[order]['samples']):
+				tf = [samname, batch, rlen]
+				library = forcelibkit if forcelibkit else r.get(lib_column, None)
+				# HACK parse ASCII
+				if library == "None":
+					library = None
+				if proto:
+					if library:
+						assert (
+							library in proto
+						), f"Cannot find library kit <{library}> in protocols YAML file <{args.protoyaml}> while processing <{batches[b]['dataset']}>"
+						tf += [proto[library]]
+					elif fallbackproto:
+						tf += [fallbackproto]
+				print(*tf, sep="\t", file=tsv)
+
+			# map name to project / order / folder
+			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
+
+			# move script
+			print(r'''
+mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
+cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
+			if ends==2:
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
+			if qcdir and fulname in fastqc_samples[qcdir]:
+				fqc=rxfqext.sub('_fastqc.html',r1)
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+				if ends==2:
+					fqc=rxfqext.sub('_fastqc.html',r2)
+					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+
+print(f"""
+echo -e '\\r\\e[K[{bar(128)}] done.'
+if (( !ALLOK )); then
+        echo Some errors
+        exit 1
+fi;
+
+""", file=sh)
+
+for b in otsv.keys():
+	print(f"mv -v {sampleset}/samples.{b}.tsv.staging {sampleset}/samples.{b}.tsv", file=sh)
+
+print("""
+echo All Ok
+exit 0
+""", file=sh)

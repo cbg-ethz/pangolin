@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+cd ${SCRIPT_DIR}/..
+
+if ! command -v sshpass >/dev/null ; then
+    echo "please install sshpass"
+    exit 1
+fi
+
+. config/server.conf
+
+login=${cluster_user}@${cluster}
+. secrets/${login}
+
+ssh="sshpass -p $password ssh ${login}"
+scp="sshpass -p $password scp"
+
+
+echo "command=\"${cluster_folder}/batman.sh \${SSH_ORIGINAL_COMMAND}\",no-agent-forwarding,no-pty,no-X11-forwarding $(cat $pubkey)" | $ssh "cat >> .ssh/authorized_keys"
+
+if [ $? -ne 0 ] ; then
+    echo "could not init ${cluster}"
+    exit 1
+fi
+
+
+echo "installed forced command on ${cluster}"
+
+
+
+if $ssh mkdir -p ${cluster_folder}; then
+        echo "created folder ${cluster_folder} on ${cluster}"
+else
+        echo "creating folder ${cluster_folder} on ${cluster} failed"
+        exit 1
+fi
+
+if $scp batman.sh ${login}:${cluster_folder}; then
+        echo "copied batman.sh to ${cluster}"
+else
+        echo "could not copy batman.sh to ${cluster}"
+        exit 1
+fi
+
+if $ssh chmod +x ${cluster_folder}/batman.sh; then
+        echo "set +x permissions on batman.sh at ${cluster}"
+else
+        echo "setting +x permissions on batman.sh at ${cluster} failed"
+        exit 1
+fi

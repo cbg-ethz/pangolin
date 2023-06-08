@@ -1,0 +1,7 @@
+[submodule "V-pipe"]
+	path = V-pipe
+	url = https://github.com/cbg-ethz/V-pipe
+
+[submodule "V-pipe-test"]
+	path = V-pipe-test
+	url = https://github.com/cbg-ethz/V-pipe
