@@ -442,6 +442,7 @@ if run_viloca; then
 			echo "No VILOCA running. Checking if the run was successful or if it ended prematurely due to the time limit"
 			if grep -rq snake.err -e "JOB.*CANCELLED.*DUE TO TIME LIMIT"; then
 				echo "Previous VILOCA run cancelled due to time limit. Restarting it"
+				${remote_batman} unlock_viloca && \
 				${remote_batman} viloca --recent --tag "${lastbatch_vpipe}" > ${viloca_statusdir}/viloca.${now}	&&	\
 				if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
 					ln -sf viloca.${now} ${viloca_statusdir}/viloca_started

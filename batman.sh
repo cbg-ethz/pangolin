@@ -268,4 +268,9 @@ case "$1" in
 			printf "%s\t%s\n" "${v}" "${job[$v]}"
 		done
 	;;
+	unlock_viloca)
+		cd ${clusterdir}/${vilocadir}/
+		. ../../miniconda3/bin/activate 'base'
+		snakemake --unlock
+	;;
 esac
