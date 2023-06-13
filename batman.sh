@@ -241,7 +241,31 @@ case "$1" in
 	;;
 	viloca)
 		# start first job
-		cd ${clusterdir}/${vilocadir}/
 		./run_workflow.sh
+		list=('viloca')
+		while [[ -n $2 ]]; do
+			case "$2" in
+				--tag)
+					shift
+					if [[ ! "${2}" =~ ^[[:alnum:]]+$ ]]; then
+						# if it's not just letters and number, test if it is a list of valid batches
+						validateTags ';' "$2"
+					fi
+					tag="${2%;}"
+				;;
+				*)
+					echo "Unkown parameter ${2}" > /dev/stderr
+					exit 2
+				;;
+			esac
+			shift
+		done
+		# start first job
+		cd ${clusterdir}/${vilocadir}/
+		. run_workflow.sh
+		# write job chain list
+		for v in "${list[@]}"; do
+			printf "%s\t%s\n" "${v}" "${job[$v]}"
+		done
 	;;
 esac
