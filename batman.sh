@@ -3,6 +3,8 @@
 clusterdir=/cluster/project/pangolin
 working=working
 sampleset=sampleset
+uploaddir=${clusterdir}/uploader/ww_raw
+uploadlist=to_upload_ww.tsv
 
 #
 # Input validator
@@ -233,6 +235,12 @@ case "$1" in
 			rmdir "${f%/}"
 		done
 		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
+	;;
+	queue_upload)
+		validateBatchName "$2"
+		cd ${uploaddir}
+		cat ${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' >> ${uploadlist}
+		cat $uploadlist | sort | uniq > $uploadlist
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
