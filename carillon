@@ -24,7 +24,7 @@ umask 0002
 
 statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
-viloca_statusdir="${basedir}/${viloca_basedir}/status"
+viloca_statusdir="${viloca_basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 viloca_staging=${viloca_samples}.staging
 lockfile=${statusdir}/carillon_lock
@@ -484,10 +484,6 @@ if run_viloca; then
 	echo "===================="
 	mustrun_viloca=0
 	if [[ ( ( ! -e ${viloca_statusdir}/viloca_ended ) && ( ! -e ${viloca_statusdir}/viloca_started ) ) || ( ${viloca_statusdir}/viloca_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
-		#### TODO: HERE ADD THE LIMITATION TO RUN ONLY ON THE VERY LATEST BATCH AND RE-ADD BACK RUNREASON	
-		ref=$(date --reference="${viloca_statusdir}/viloca_started" '+%Y%m%d')
-		now=$(date '+%Y%m%d')
-		limit=$(date --date='2 weeks ago' '+%Y%m%d')
 		if [[ ! -f ${viloca_samples} ]]; then
 			echo "Can't find ${viloca_samples}, creating it empty"
 			echo ",sample,batch" > ${viloca_samples}
@@ -495,24 +491,21 @@ if run_viloca; then
 		if [[ ! -f ${viloca_staging} ]]; then
 			echo "No staging file availabe, creating it"
 			cat ${viloca_samples} > ${viloca_staging}
-
-		else
-
-		### TODO: HERE, just trust vpipe
-		lastbatch_viloca = $(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1))
+		fi
+		lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1))
 		echo "Last batch analysed by VILOCA is ${lastbatch_viloca}"
-		vpipe_enddate = $(cat ${statusdir}/vpipe_ended)
-		vpipe_enddate = ${vpipe_enddate#*.}
-		lastbatch_vpipe = $(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
+		vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
+		vpipe_enddate=${vpipe_enddate#*.}
+		lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
 		echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
 		if [[ lastbatch_viloca != lastbatch_vpipe ]]; then
 			echo "There is a new most recent batch that VILOCA can run on!"
-			t = ${basedir}/${sampleset}/samples.${lastbatch_vpipe}.tsv
+			t=${basedir}/${sampleset}/samples.${lastbatch_vpipe}.tsv
 			if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
 							echo "oops: Can't parse <${t}> ?!" > /dev/stderr
 			fi
+			echo ",sample,batch" > $viloca_staging
 			cat $t | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> $viloca_staging
-			cat $viloca_staging | sort | uniq > $viloca_staging
 			++mustrun_viloca
 
 		else
@@ -536,20 +529,26 @@ if run_viloca; then
 			else
 				echo 'starting VILOCA jobs'
 				mv ${viloca_staging} ${viloca_samples}
-				${remote_batman} viloca --recent --tag "${lastbatch_vpipe}" > ${viloca_statusdir}/viloca.${now}	&&	\
-				if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-					ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
-					cat ${viloca_statusdir}/viloca_started
-					printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
-					if [[ -n "${mailto[*]}" ]]; then
-						(
-							echo '(Possibly new) samples not having VILOCA results yet found:'
-							printf ' - %s\n' "${lastbatch_vpipe}"
-							echo -e '\nStarting VILOCA on Euler:'
-							cat ${viloca_statusdir}/viloca_started
-						) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
-						# -r "${mailfrom}"
+				${scriptdir}/belfry pushvilocasamplelist
+				if [[ ( ! -e ${viloca_statusdir}/pushsamplelist_viloca_fail ) || ( ${viloca_statusdir}/pushsamplelist_viloca_success -nt ${viloca_statusdir}/pushsamplelist_viloca_fail ) ]]; then
+					echo Successfully pushed sample list for VILOCA. Starting the run
+					${remote_batman} viloca --recent --tag "${lastbatch_vpipe}" > ${viloca_statusdir}/viloca.${now}	&&	\
+					if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
+						ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
+						cat ${viloca_statusdir}/viloca_started
+						printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
+						if [[ -n "${mailto[*]}" ]]; then
+							(
+								echo '(Possibly new) samples not having VILOCA results yet found:'
+								printf ' - %s\n' "${lastbatch_vpipe}"
+								echo -e '\nStarting VILOCA on Euler:'
+								cat ${viloca_statusdir}/viloca_started
+							) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
+							# -r "${mailfrom}"
+						fi
 					fi
+				else
+					echo "pushing VILOCA sample list failed"
 				fi
 			fi
 		else
