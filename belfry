@@ -99,6 +99,20 @@ callpushrsync() {
 }
 export -f callpushrsync
 
+callpushsamplelist_viloca() {
+	. server.conf
+
+	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		rsync	--timeout=${iotimeout}	\
+		--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
+		-izrltH --fuzzy --fuzzy --inplace	\
+		-p --chmod=Dg+s,ug+rw,o-rwx,Fa-x	\
+		-g --chown=:'bsse-covid19-pangolin-euler'	\
+		"${viloca_samples}"	\
+		belfry@euler.ethz.ch::${viloca_remote_basedir}/
+}
+export -f callpushsamplelist_viloca
 
 callpullrsync() {
 	. server.conf
@@ -441,6 +455,7 @@ case "$1" in
 			-g --chown=:'bsse-covid19-pangolin-euler'	\
 			${viloca_basedir}/samples.csv	\
 			belfry@euler.ethz.ch::${viloca_remote_basedir}/ || (( ++err ))
+		bash -c "callpushsamplelist_viloca " || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
 			touch ${statusdir}/pushsamplelist_viloca_fail
