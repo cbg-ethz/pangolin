@@ -496,7 +496,7 @@ if run_viloca; then
 		echo "Last batch analysed by VILOCA is ${lastbatch_viloca}"
 		vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
 		vpipe_enddate=${vpipe_enddate#*.}
-		lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
+		lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}' | tail -n 1)
 		echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
 		if [[ lastbatch_viloca != lastbatch_vpipe ]]; then
 			echo "There is a new most recent batch that VILOCA can run on!"
@@ -506,7 +506,7 @@ if run_viloca; then
 			fi
 			echo ",sample,batch" > $viloca_staging
 			cat $t | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> $viloca_staging
-			++mustrun_viloca
+			(( ++mustrun_viloca ))
 
 		else
 			echo "No new batch to run VILOCA on"
