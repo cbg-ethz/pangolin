@@ -44,8 +44,6 @@ umask 0002
 statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 
-baseconda=${scriptdir}
-
 timeoutforeground=
 #--foreground
 #
@@ -93,16 +91,14 @@ callpushrsync() {
         exit 1;
     fi
     scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    source ${scriptdir}/secrets/${cluster_user}@${cluster}
-    remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
     
     exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-        rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
+        rsync \
         -izrltH --fuzzy --fuzzy --inplace   \
         -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x    \
         -g \
         "${arglist[@]}" \
-        :${sampleset}/
+        ${sampleset}/
 }
 export -f callpushrsync
 
@@ -115,7 +111,7 @@ callpullrsync() {
 
     local arglist=( )
     if (( ${#@} )); then
-        arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+        arglist=( "${@/#/${cluster_folder}/${working}/samples/}" )
     else
         #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
         echo "rsync job didn't receive list"
@@ -123,8 +119,6 @@ callpullrsync() {
     fi
     exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
         rsync   --timeout=${iotimeout}  \
-        --password-file ~/rsync.pass.euler  \
-        -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
         -izrltH --fuzzy --fuzzy --inplace   \
         --link-dest=${basedir}/${sampleset}/    \
         "${arglist[@]}" \
@@ -146,8 +140,6 @@ export -f callpullrsync
 callpullrsync_noshorah() {
     . config/server.conf
     scriptdir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    source ${scriptdir}/secrets/${cluster_user}@${cluster}
-    remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
 
     local arglist=( )
     if (( ${#@} )); then
@@ -158,7 +150,7 @@ callpullrsync_noshorah() {
     fi
     mkdir -p ${basedir}/${working}/samples/
     timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-        rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
+        rsync  \
         --timeout=${iotimeout}  \
 	--ignore-missing-args \
         -izrltH --fuzzy --fuzzy --inplace   \
@@ -199,7 +191,7 @@ checksyncoutput() {
 
 set -e
 
-echo belry.sh $1
+echo belfry.sh $1
 
 #
 # main handler
@@ -224,15 +216,15 @@ case "$1" in
         fi
         syncoutput="$(${scriptdir}/sync_sftp.sh -c ${scriptdir}/config/gfb.conf "${param[@]}"|tee /dev/stderr)"
         checksyncoutput "openbis" "$syncoutput"
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     syncfgcz)
         echo "Sync FGCZ - bfabric"
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         . <(grep '^projlist=' config/fgcz.conf)
         if [[ "${2}" = "--recent" ]]; then
             limitlast='3 weeks ago'
-            ./exclude_list_bfabric -c config/fgcz.conf -r "${twoweeksago}" -o ${statusdir}/fgcz.exclude.lst
+            ./exclude_list_bfabric.py -c config/fgcz.conf -r "${twoweeksago}" -o ${statusdir}/fgcz.exclude.lst
             param=( '-e' "${statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
             echo -ne "syncing recent: ${limitlast}\texcluding: "
             wc -l ${statusdir}/fgcz.exclude.lst
@@ -241,11 +233,11 @@ case "$1" in
         fi
         syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp.sh -c config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
         checksyncoutput "fgcz" "$syncoutput"
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     synch2030)
         echo "Sync Health2030"
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         # short test - only list dirs
         if [[ ( ( ! -e ${statusdir}/synch2030_ended ) && ( ! -e ${statusdir}/synch2030_started ) ) || ( ${statusdir}/synch2030_ended -nt ${statusdir}/synch2030_started ) ]]; then
             ${scriptdir}/list_sftp -c config/h2030.conf -l ${statusdir}/synch2030.${now}   &&  \
@@ -271,11 +263,11 @@ case "$1" in
                 touch ${statusdir}/synch2030_ended
             fi
         fi
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     syncviollier)
         echo "Sync Viollier"
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         param=( 'sample_metadata' )
         if [[ "${2}" = "--recent" ]]; then
             param+=( "raw_sequences/${lastmonth}*" "raw_sequences/${thismonth}*" )
@@ -292,15 +284,15 @@ case "$1" in
         find "${param[@]/#/${download}/}" -type f -name '*.filepart' -print0 | xargs -r -0 rm -v
         syncoutput="$(/usr/bin/time ${scriptdir}/sync_sftp.sh -c config/viollier.conf "${param[@]}"|tee /dev/stderr)"
         checksyncoutput "viollier" "$syncoutput"
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     uploadviollier)
         echo "Uploading Viollier"
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         param=( 'consensus_sequences' 'raw_othercenters' )
 
         ${scriptdir}/upload_sftp -c config/viollier.conf "${param[@]}"
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     purgeviollier)
         if  (( ! ${lab[viollier]} )); then
@@ -308,23 +300,23 @@ case "$1" in
             exit 0
         fi
         echo "Purge Viollier"
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         param=( 'raw_sequences' )
         recent=$($date --date='2 week ago' '+%Y%m%d')
 
         ${scriptdir}/purge_sftp -r "${recent}" -c config/viollier.conf "${param[@]}"
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     uploadrequests)
         echo "Handling raw-read upload requests for Viollier"
 	echo "deactivated"
 	exit
-        . $baseconda/miniconda3/bin/activate "vineyard"
+        . $baseconda/mambaforge/bin/activate "vineyard"
         ${scriptdir}/handle_request_raw_viollier -c config/viollier.conf
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     sortsamples)
-        . $baseconda/miniconda3/bin/activate pybis
+        . $baseconda/mambaforge/bin/activate pybis
         # cd $basedir
         summary=""
         recent=""
@@ -380,7 +372,7 @@ case "$1" in
             echo "Skipping viollier"
         fi
         (( fail == 0 )) &&  touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     fixopenbisrights)
         validateBatchDate "$2"
@@ -410,7 +402,7 @@ case "$1" in
         fi
 	echo ${sheets[@]}
         err=0
-	source ${scriptdir}/secrets/${cluster_user}@${cluster}
+	source ${baseconda}/secrets/${cluster_user}@${cluster}
         remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
 	shopt -s nullglob
         timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
@@ -423,7 +415,7 @@ case "$1" in
             ${basedir}/${sampleset}/projects.*.tsv  \
             ${basedir}/${sampleset}/missing.*.txt   \
             ${basedir}/${sampleset}/patch.*.tsv \
-	    :${sampleset} || (( ++err ))
+	    :${cluster_mount}/${sampleset} || (( ++err ))
         cut -s --fields=1 "${sheets[@]}"|sort -u|   \
             gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'| \
             xargs -0 -P $parallel -I '{@LIST@}' --  \
@@ -438,67 +430,38 @@ case "$1" in
 	exit
     ;;
     listsamples)
-        timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-            rsync   --timeout=${iotimeout}  \
-            --password-file ~/rsync.pass.euler  \
-            -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-            -iPzrltH --fuzzy --fuzzy --inplace  \
-            -p --chmod=Dg+s,ug+rw,o-rwx \
-            -g \
-            --list-only \
-            belfry@euler.ethz.ch::${working}/samples/
+        ls ${cluster_mount}/${working}/samples/
+        #timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+        #    rsync   --timeout=${iotimeout}  \
+        #    -iPzrltH --fuzzy --fuzzy --inplace  \
+        #    -p --chmod=Dg+s,ug+rw,o-rwx \
+        #    -g \
+        #    --list-only \
+        #    belfry@euler.ethz.ch::${working}/samples/
     ;;
     pullsamples_noshorah)
         # fetch remote sheets
-	source ${scriptdir}/secrets/${cluster_user}@${cluster}
-        remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
-
-        mkdir -p /tmp/belfrysheets/
         if [[ "${2}" = "--recent" ]]; then
-            sheets=( ":${cluster_folder}/${sampleset}/samples.${lastmonth}*.tsv" ":${cluster_folder}/${sampleset}/samples.${thismonth}*.tsv" )
-            # sheets=( ":${sampleset}/samples.*.tsv" ":${sampleset}/samples.${thismonth}*.tsv" )
+            sheets=( ":${cluster_mount}/${sampleset}/samples.${lastmonth}*.tsv" ":${cluster_mount}/${sampleset}/samples.${thismonth}*.tsv" )
         elif [[ "${2}" = "--batch" ]]; then
 	    unused
             validateBatchName "${3}"
-            sheets=( "${cluster_folder}/${sampleset}/samples.${3}.tsv"  )
+            sheets=( "${cluster_mount}/${sampleset}/samples.${3}.tsv"  )
         elif [[ "${2}" = "--catchup" ]]; then
 	    unused
-            sheets=( "${cluster_folder}/catchup/samples.catchup.tsv"  )
+            sheets=( "${cluster_mount}/catchup/samples.catchup.tsv"  )
         else
 	    unused
-            sheets=( "${cluster_folder}/${sampleset}/samples.2*.tsv" )
-        fi
-        rsync -e "${remote_batman} rsync" \
-            -izrltH --fuzzy --fuzzy --inplace   \
-	    --ignore-missing-args \
-            -p --chmod=Dg+s,ug+rw,o-rwx \
-            -g  \
-            "${sheets[@]}"  \
-            /tmp/belfrysheets/
-        if [[ "${2}" = "--recent" ]]; then
-            sheets=( /tmp/belfrysheets/samples.${lastmonth}*.tsv /tmp/belfrysheets/samples.${thismonth}*.tsv )
-            # BUG: will generate non-globed pattern if months are missing
-            echo "pulling recent: ${param[*]##/}"
-        elif [[ "${2}" = "--batch" ]]; then
-	    unused
-            validateBatchName "${3}"
-            sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
-        elif [[ "${2}" = "--catchup" ]]; then
-	    unused
-            sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
-        else
-	    unused
-            sheets=( /tmp/belfrysheets/samples.2*.tsv )
+            sheets=( "${cluster_mount}/${sampleset}/samples.2*.tsv" )
         fi
 
-        err=0
         timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-	    rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
+	    rsync \
             -izrlt --fuzzy --fuzzy --inplace    \
             --exclude='*.out.log'   \
             --exclude='*.err.log'   \
             --exclude='*.benchmark' \
-            :${cluster_folder}/${working}/{qa.csv,variants}  \
+            ${cluster_mount}/${working}/{qa.csv,variants}  \
             ${basedir}/${working}/ || (( ++err ))
         echo "samples:"
         cut -s --fields=1 "${sheets[@]}"|sort -u|   \
@@ -517,7 +480,6 @@ case "$1" in
     ;;
     pullsamples)
         # fetch remote sheets
-        mkdir -p /tmp/belfrysheets/
         if [[ "${2}" = "--recent" ]]; then
             sheets=( "${sampleset}/samples.${lastmonth}*.tsv" "${sampleset}/samples.${thismonth}*.tsv" )
         elif [[ "${2}" = "--batch" ]]; then
@@ -528,7 +490,6 @@ case "$1" in
         else
             sheets=( "${sampleset}/samples.2*.tsv" )
         fi
-	source ${scriptdir}/secrets/${cluster_user}@${cluster}
 	target_dir=$(mktemp -d)
 	echo "pull samples to ${target_dir}"
 	# todo: secrets
@@ -599,8 +560,6 @@ case "$1" in
             sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
         fi
         rsync   \
-            --password-file ~/rsync.pass.euler  \
-            -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "  \
             -izrltH --fuzzy --fuzzy --inplace   \
             -p --chmod=Dg+s,ug+rw,o-rwx \
             -g \
@@ -621,8 +580,6 @@ case "$1" in
         err=0
         timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
             rsync   --timeout=${iotimeout}  \
-            --password-file ~/rsync.pass.euler  \
-            -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrlt --fuzzy --fuzzy --inplace    \
             --exclude='*.out.log'   \
             --exclude='*.err.log'   \
@@ -644,7 +601,7 @@ case "$1" in
         fi
     ;;
     qa_report)
-        . $baseconda/miniconda3/bin/activate qa_report
+        . $baseconda/mambaforge/bin/activate qa_report
         cd ${basedir}/${working}/
         if python qa_report.py; then
 		echo qa report succeeded
@@ -653,19 +610,19 @@ case "$1" in
 		echo qa report failed
 		touch ${statusdir}/qa_report_fail
 	fi
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     pushseq)
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         ./upload_viollier && touch ${statusdir}/pushseq_success || touch ${statusdir}/pushseq_fail
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     gitaddseq)
-        . $baseconda/miniconda3/bin/activate ""
+        . $baseconda/mambaforge/bin/activate "wastewater"
         cd ${releasedir}
         git add qa*
         find samples -name '*.fasta' -type f -print0 | xargs -0 git add
-        ${baseconda}/miniconda3/bin/deactivate
+        mamba deactivate
     ;;
     df)
         df -h ${basedir}

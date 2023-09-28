@@ -10,7 +10,8 @@ set -e
 : ${staging:=1}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
-    echo "$scriptdir vs $basedir"
+    echo "The scripts are in $scriptdir"
+    echo "The base working directory for the automation is $basedir"
 fi
 
 if [[ ! $mode =~ ^[0-7]{,4}$ ]]; then
@@ -32,7 +33,7 @@ lockfile=${statusdir}/carillon_lock
 touch ${statusdir}/oh_hai_im_lopping
 
 
-source ./secrets/${cluster_user}@${cluster}
+source ${baseconda}/secrets/${cluster_user}@${cluster}
 remote_batman="ssh -o StrictHostKeyChecking=no -ni ${privkey} ${cluster_user}@${cluster} --"
 
 #
@@ -45,13 +46,10 @@ echo '========='
 
 set -e
 
-[[ -n $skipsync ]] && echo "Hack: ${skipsync} will be skiped."
+[[ -n $skipsync ]] && echo "${skipsync} will be skipped."
 
 
-[[ $skipsync != gfb     ]] && ${scriptdir}/belfry.sh syncopenbis --recent
-if [[ ( -e ${statusdir}/sortsamples_success ) && ( ( ! -e ${statusdir}/syncopenbis_new ) || ( ${statusdir}/syncopenbis_new -nt ${statusdir}/sortsamples_success ) ) ]]; then
-	${scriptdir}/belfry.sh sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
-fi
+[[ $skipsync != fgcz ]] && echo ${scriptdir}/belfry.sh syncfgcz --recent
 
 
 #
@@ -169,7 +167,7 @@ echo "Start new run"
 echo "============="
 
 # TODO support a yaml with regex
-rxsample='(^[[:digit:]]{6,}_)|([[:digit:]]{2}_20[[:digit:]]{2}_[01]?[[:digit:]]_[0-3]?[[:digit:]])|(^KLZHC[oO][vV])|(^B[aA][[:digit:]]{4,})'
+rxsample='([[:digit:]]{2}_20[[:digit:]]{2}_[01]?[[:digit:]]_[0-3]?[[:digit:]])'
 
 scanmissingsamples() {
     while read sample batch other; do
@@ -198,8 +196,6 @@ scanmissingsamples() {
 # like "$*" but with a different field separator than default.
 join_by() { local IFS="$1"; shift; echo "$*"; }
 
-ls ${statusdir}
-
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
     echo check missing samples
     clearline=0
@@ -207,63 +203,52 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
     runreason=( )
     declare -A flowcell
     # if test -e ${statusdir}/vpipe_started; then
-    if true; then
-    	if test -e ${statusdir}/vpipe_started; then
-           ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
-	else
-	   ref="20000101"
-	fi;
-	   
-        now=$(date '+%Y%m%d')
-        limit=$(date --date='2 weeks ago' '+%Y%m%d')
-        echo "Check batch against ${ref}:"
-        for t in ${basedir}/${sampleset}/samples.*.tsv; do
-	    echo $t
-            if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
-                echo "oops: Can't parse <${t}> ?!" > /dev/stderr
-            fi
+    ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
+    now=$(date '+%Y%m%d')
+    limit=$(date --date='2 weeks ago' '+%Y%m%d')
+    echo "Check batch against ${ref}:"
+    for t in ${cluster_mount}/${sampleset}/samples.20*.tsv; do
+        if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
+            echo "oops: Can't parse <${t}> ?!" > /dev/stderr
+        fi
 
-            # check Duplicates
-            b="${BASH_REMATCH[1]}"
-            f="${BASH_REMATCH[2]}"
-            if [[ -n "${flowcell[$f]}" ]]; then
-                echo "error: Duplicate flowcell $f : ${flowcell[$f]} vs $b" > /dev/stderr
-                exit 2
+        # check Duplicates
+        b="${BASH_REMATCH[1]}"
+        f="${BASH_REMATCH[2]}"
+        if [[ -n "${flowcell[$f]}" ]]; then
+            echo "error: Duplicate flowcell $f : ${flowcell[$f]} vs $b" > /dev/stderr
+            exit 2
+        else
+            flowcell[$f]=$b
+        fi
+
+        # check dates
+        if (( clearline )) && [[ "$limit" < "$b"  ]]; then
+            echo -ne "\n"
+            clearline=0
+        fi
+        if [[ "$ref" < "$b" || "$ref" == "$b" ]]; then
+            echo "!$b:$f"
+            (( ++mustrun ))
+            runreason+=( "${b}_${f}" )
+        elif [[ "$limit" < "$b"  ]] && scanmissingsamples $t; then
+            (( ++mustrun ))
+            runreason+=( "${b}_${f}" )
+        else
+	echo " " $limit $b
+            if  [[ "$limit" < "$b"  ]]; then
+                echo -e "\r($b:$f)\e[K"
             else
-                flowcell[$f]=$b
+                echo -ne "($b:$f)\t"
+                clearline=1
             fi
-	    echo "x" $ref $b
-
-            # check dates
-            if (( clearline )) && [[ "$limit" < "$b"  ]]; then
-                echo -ne "\n"
-                clearline=0
-            fi
-            if [[ "$ref" < "$b" || "$ref" == "$b" ]]; then
-                echo "!$b:$f"
-                (( ++mustrun ))
-                runreason+=( "${b}_${f}" )
-            elif [[ "$limit" < "$b"  ]] && scanmissingsamples $t; then
-                (( ++mustrun ))
-                runreason+=( "${b}_${f}" )
-            else
-		echo " " $limit $b
-                if  [[ "$limit" < "$b"  ]]; then
-                    echo -e "\r($b:$f)\e[K"
-                else
-                    echo -ne "($b:$f)\t"
-                    clearline=1
-                fi
-            fi
-            # sanity check
-            if [[ "$now" < "$b" ]]; then
-                echo "oops: in the future $b vs $now"
-            fi
-        done
-    else
-	mustrun=1
-    fi
-
+        fi
+        # sanity check
+        if [[ "$now" < "$b" ]]; then
+            echo "oops: in the future $b vs $now"
+        fi
+    done
+    
     echo "mustrun $mustrun"
 
     # are we allowed to submit jobs ?
@@ -324,9 +309,9 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
                 shorah="--no-shorah"
             fi
             # ${remote_batman} addsamples --recent #   && \
-            ${remote_batman} vpipe ${shorah} --recent --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} #  &&  \
+            echo ${remote_batman} vpipe ${shorah} --recent --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} #  &&  \
             if [[ -s ${statusdir}/vpipe.${now} ]]; then
-                ln -sf vpipe.${now} ${statusdir}/vpipe_started
+                ln -sf ${statusdor}/vpipe.${now} ${statusdir}/vpipe_started
                 cat ${statusdir}/vpipe_started
                 printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
                 if [[ -n "${mailto[*]}" ]]; then
@@ -344,7 +329,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         echo 'No new jobs to start'
 
         # check for left-over .staging files
-        staging_tsv=( sampleset/samples.202*.tsv.staging )
+        staging_tsv=( ${basedir}/sampleset/samples.202*.tsv.staging )
         if [[ "${staging_tsv[*]}" =~ \* ]]; then
             # no staging files => safe to purge
             ${scriptdir}/belfry.sh purgeviollier
