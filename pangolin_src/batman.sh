@@ -3,6 +3,7 @@
 clusterdir=/cluster/project/pangolin
 working=working
 sampleset=sampleset
+vilocadir=work-viloca/SARS-CoV-2-wastewater-sample-processing-VILOCA
 
 #
 # Input validator
@@ -238,4 +239,20 @@ case "$1" in
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
         ;;
+	viloca)
+		list=('viloca')
+		# start first job
+		cd ${clusterdir}/${vilocadir}/
+		. ../../miniconda3/bin/activate 'base'
+		. run_workflow.sh
+		# write job chain list
+		for v in "${list[@]}"; do
+			printf "%s\t%s\n" "${v}" "${job[$v]}"
+		done
+	;;
+	unlock_viloca)
+		cd ${clusterdir}/${vilocadir}/
+		. ../../miniconda3/bin/activate 'base'
+		snakemake --unlock
+	;;
 esac

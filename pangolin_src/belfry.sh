@@ -24,6 +24,10 @@ declare -A lab
 : ${retries:=10}
 : ${iotimeout:=300}
 : ${protocolyaml:=/references/primers.yaml}
+: ${viloca_results:?}
+: ${viloca_euler_mount:?}
+: ${viloca_samples:?}
+: ${viloca_results:?}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
     echo "$scriptdir vs $basedir"
@@ -43,6 +47,8 @@ umask 0002
 
 statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
+viloca_statusdir="${basedir}/${viloca_basedir}/status"
+mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 
 timeoutforeground=
 #--foreground
@@ -101,7 +107,6 @@ callpushrsync() {
         ${sampleset}/
 }
 export -f callpushrsync
-
 
 callpullrsync() {
 
@@ -169,6 +174,29 @@ callpullrsync_noshorah() {
 }
 export -f callpullrsync_noshorah
 
+#TODO: correct for VM and remove # below
+#callpullrsync_viloca() {
+#	. server.conf
+#
+#	local arglist=( )
+#	if (( ${#@} )); then
+#		arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+#	else
+#		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+#		echo "rsync job didn't receive list"
+#		exit 1;
+#	fi
+#	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
+#		rsync	--timeout=${iotimeout}	\
+#		--password-file ~/rsync.pass.euler	\
+#		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
+#		-izrltH --fuzzy --fuzzy --inplace	\
+#		--link-dest=${viloca_remote_basedir}/${viloca_remote_results}/	\
+#		"${arglist[@]}"	\
+#		--exclude='alignment/'	\
+#		${viloca_results}/
+#}
+#export -f callpullrsync_viloca
 
 #
 # sync helper
@@ -359,18 +387,6 @@ case "$1" in
         fi
         if  (( ${lab[h2030]} )) && [[ -e ${statusdir}/synch2030_ended && -e ${statusdir}/synch2030_started && ${statusdir}/synch2030_ended -nt ${statusdir}/synch2030_started ]]; then
             # NOTE always recent/based on last sync), no support for --force, move done immediately/no separate movedatafiles.sh
-            # TODO support for protocols
-            ${scriptdir}/sort_h2030 -c h2030.conf $(< ${statusdir}/synch2030_started ) || fail=1
-        else
-            echo "Skipping h2030"
-        fi
-        if  (( ${lab[viollier]} )); then
-            # NOTE always --force, short options only
-            # HACK hardcoded paths due to multiple directories
-            ${scriptdir}/sort_viollier -c viollier.conf -4 ${working}/${protocolyaml} ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${basedir}/${sampleset}/movedatafiles.sh || fail=1
-        else
-            echo "Skipping viollier"
-        fi
         (( fail == 0 )) &&  touch ${statusdir}/sortsamples_success || touch ${statusdir}/sortsamples_fail
         mamba deactivate
     ;;
@@ -405,17 +421,23 @@ case "$1" in
 	source ${baseconda}/secrets/${cluster_user}@${cluster}
         remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
 	shopt -s nullglob
+	to_sync="${basedir}/${sampleset}/samples.*.tsv ${basedir}/${sampleset}/projects.*.tsv ${basedir}/${sampleset}/patch.*.tsv"
+	if [ ! $(find ${basedir}/${sampleset}/ -iname batch.*.yaml | wc -l) -eq 0 ]
+	then
+		to_sync="$to_sync ${basedir}/${sampleset}/batch.*.yaml"
+	fi
+	if [ ! $(find ${basedir}/${sampleset}/ -iname missing.*.yaml | wc -l) -eq 0 ]
+        then
+                to_sync="$to_sync ${basedir}/${sampleset}/missing.*.yaml"
+	fi
         timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-            rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
+            #rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
+	    rsync \
             -izrltH --fuzzy --fuzzy --inplace   \
             -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x    \
             -g \
-            ${basedir}/${sampleset}/samples.*.tsv   \
-            ${basedir}/${sampleset}/batch.*.yaml    \
-            ${basedir}/${sampleset}/projects.*.tsv  \
-            ${basedir}/${sampleset}/missing.*.txt   \
-            ${basedir}/${sampleset}/patch.*.tsv \
-	    :${cluster_mount}/${sampleset} || (( ++err ))
+	    $to_sync \
+	    ${cluster_mount}/${sampleset} || (( ++err ))
         cut -s --fields=1 "${sheets[@]}"|sort -u|   \
             gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'| \
             xargs -0 -P $parallel -I '{@LIST@}' --  \
@@ -651,6 +673,49 @@ case "$1" in
         done
         mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
     ;;
+	pullsamples_viloca)
+		echo "pullsamples_viloca NOT YET IMPLEMENTED"
+		## fetch remote sheets
+		#mkdir -p /tmp/belfrysheets/
+		#if [[ "${2}" = "--batch" ]]; then
+		#	validateBatchName "${3}"
+		#	sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+		#elif [[ "${2}" = "--catchup" ]]; then
+		#	sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
+		#else
+		#	sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
+		#fi
+		#rsync	\
+		#	--password-file ~/rsync.pass.euler	\
+		#	-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
+		#	-izrltH --fuzzy --fuzzy --inplace	\
+		#	-p --chmod=Dg+s,ug+rw,o-rwx	\
+		#	-g --chown=:"${storgrp}"	\
+		#	"${sheets[@]}"	\
+		#	/tmp/belfrysheets/
+		#if [[ "${2}" = "--batch" ]]; then
+		#	validateBatchName "${3}"
+		#	sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
+		#elif [[ "${2}" = "--catchup" ]]; then
+		#	sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
+		#else
+		#	sheets=( /tmp/belfrysheets/samples.2*.tsv )
+		#fi
+		#err=0
+		#echo "samples:"
+		#cut -s --fields=1 "${sheets[@]}"|sort -u|	\
+		#	gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+		#	xargs -0 -P $parallelpull -I '{@LIST@}' --	\
+		#		bash -c "callpullrsync_viloca {@LIST@} " || (( ++err ))
+		#if (( err )); then
+		#	echo "Error: ${err} rsync job(s) failed"
+		#	touch ${viloca_statusdir}/pullsamples_viloca_fail
+		#elif [[ "${2}" = "--catchup" ]]; then
+		#	echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
+		#else
+		#	touch ${viloca_statusdir}/pullsamples_viloca_success
+		#fi
+	;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
         exit 2
