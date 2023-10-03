@@ -9,5 +9,4 @@ RUN /root/pangolin/setup/setup.sh
 COPY pangolin_src /root/pangolin
 WORKDIR /root/pangolin
 
-#ENTRYPOINT ["/root/pangolin/entrypoint.sh"]
-ENTRYPOINT ["sleep", "10d" ]
+ENTRYPOINT ["/root/pangolin/entrypoint.sh"]
