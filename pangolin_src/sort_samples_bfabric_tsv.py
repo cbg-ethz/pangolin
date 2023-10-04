@@ -84,7 +84,7 @@ with open(args.config) as f: config.read_string(f"""
 lab={os.path.splitext(os.path.basename(args.config))[0]}
 basedir={os.getcwd()}
 sampleset=sampleset
-download=bfabric-downloads
+download=/mnt/cluster/bfabric-downloads
 link=--link
 mode=
 badlist=

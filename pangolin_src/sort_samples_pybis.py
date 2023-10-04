@@ -149,7 +149,7 @@ def load_config(args):
             samtype=ILLUMINA_FLOW_LANE
             basedir={os.getcwd()}
             sampleset=sampleset
-            download=openbis-downloads
+            download=/mnt/cluster/openbis-downloads
             link=--link
             mode=
             enforce_fetching=
