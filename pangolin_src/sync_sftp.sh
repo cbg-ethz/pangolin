@@ -38,7 +38,7 @@ shift $((OPTIND-1))
 . /home/bs-pangolin/wastewater_setup/secrets/${fileserver}
 
 # add host rsa key if not done yet:
-grep --silent \\[${fileserver}\\]:${srvport} ~/.ssh/known_hosts || { ssh-keyscan -t rsa -p ${srvport} ${fileserver} >> ~/.ssh/known_hosts; }
+grep --silent ${fileserver}:${srvport} ~/.ssh/known_hosts || { ssh-keyscan -t rsa -p ${srvport} ${fileserver} >> ~/.ssh/known_hosts; }
 
 if (( ${#@} )); then
     dir=( "${@/#/ --directory=${prefix:+${prefix}/}${expname}/}" )
@@ -53,7 +53,7 @@ umask 0002
 connect="connect sftp://${user}:${password}@${fileserver}:${srvport}"
 echo $connect
 settings="set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}"
-mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop --target-directory=${basedir}/${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
+mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop --target-directory=${download} ${source} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
 
 echo lftp -c "$settings; $connect; $mirror"
 exec lftp -c "$settings; $connect; $mirror"
