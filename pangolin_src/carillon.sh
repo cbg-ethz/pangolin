@@ -129,7 +129,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 	    vpipe_enddate = $(cat ${statusdir}/vpipe_ended)
 	    vpipe_enddate = ${vpipe_enddate#*.}
 	    lastbatch_vpipe = $(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
-            ${scriptdir}/belfry.sh queue_upload
+            ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
         else
             echo "pulling data failed"
         fi
