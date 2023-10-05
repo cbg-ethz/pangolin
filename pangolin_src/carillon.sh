@@ -126,6 +126,10 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         ${scriptdir}/belfry.sh pullsamples_noshorah --recent
         if [[ ( ! -e ${statusdir}/pullsamples_noshorah_fail ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
             echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
+	    vpipe_enddate = $(cat ${statusdir}/vpipe_ended)
+	    vpipe_enddate = ${vpipe_enddate#*.}
+	    lastbatch_vpipe = $(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
+            ${scriptdir}/belfry.sh queue_upload
         else
             echo "pulling data failed"
         fi

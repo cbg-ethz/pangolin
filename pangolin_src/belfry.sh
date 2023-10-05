@@ -673,7 +673,7 @@ case "$1" in
         done
         mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
     ;;
-	pullsamples_viloca)
+    pullsamples_viloca)
 		echo "pullsamples_viloca NOT YET IMPLEMENTED"
 		## fetch remote sheets
 		#mkdir -p /tmp/belfrysheets/
@@ -715,7 +715,17 @@ case "$1" in
 		#else
 		#	touch ${viloca_statusdir}/pullsamples_viloca_success
 		#fi
-	;;
+    ;;
+    queue_upload)
+	validateBatchName "$2"
+        cd ${uploaddir}
+	# Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
+	echo 'task goes here' | cat - todo.txt > temp && mv temp todo.txt
+        cat ${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${uploadlist} > ${uploadlist}_temp.txt && \
+	mv ${uploadlist}_temp.txt ${uploadlist}
+	# Remove possible duplicates after updating the upload list
+        cat $uploadlist | sort | uniq > $uploadlist
+    ;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
         exit 2
