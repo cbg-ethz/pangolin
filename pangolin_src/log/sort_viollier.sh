@@ -1,0 +1,161 @@
+#!/bin/bash
+
+configfile=config/server.conf
+
+usage() { echo "Usage: $0 [-c <configfile>] [-r <recent>] [ -4 <protocolsyaml> ] [ <directories [...]> ]" 1>&2; exit $1; }
+
+protocolsyaml=
+
+while getopts "c:r:4:h" o; do
+	case "${o}" in
+		c)	configfile=${OPTARG}
+			if [[ ! -r ${configfile} ]]; then
+				echo "Cannot read ${configfile}" 1>&2
+				usage 2
+			fi
+			;;
+		r)	recent=${OPTARG}
+			if [[ ! ${recent} =~ ^20[[:digit:]]{2}([01][[:digit:]]([0-3][[:digit:]])?)?$ ]]; then
+				echo "Wrong format ${recent}" 1>&2
+				usage 2
+			fi
+			;;
+		4)	protocolsyaml=${OPTARG}
+			if [[ ! -r ${protocolsyaml} ]]; then
+				echo "Cannot read ${protocolsyaml}" 1>&2
+				usage 2
+			fi
+			;;
+		h)	usage 0	;;
+		*)	usage 2	;;
+	esac
+done
+shift $((OPTIND-1))
+
+duplicates=1
+
+. ${configfile}
+
+: ${lab:?}
+: ${basedir:=$(pwd)}
+: ${download:?}
+: ${sampleset:?}
+
+
+
+if (( ${#@} < 1)); then
+	scan=( ${basedir}/${download}/*/ )
+else
+	scan=( "${@}" )
+fi
+
+rx_folder='^(20[[:digit:]]{2}[01][[:digit:]][0-3][[:digit:]])_([[:alnum:]]+)$'  # e.g.: 20210528_061936
+#            ^-[1]: date                                      ^-[2]: time
+
+# appended batches: make shared header (cf. sort_samples_jobinfo)
+# and also setup combined error status (GRANDTOTAL_ALLOK)
+cat > ${basedir}/${sampleset}/movedatafiles.sh <<SH_HEAD
+link='--link'
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %s\e[0m\n'	"\$1"	1>&2
+	[[ -n "\$2" ]] && echo "\$2" 1>&2
+	exit 1
+}
+
+warn() {
+	printf '\e[33;1mArgh: %s\e[0m\n'	"\$1"	1>&2
+	[[ -n "\$2" ]] && echo "\$2" 1>&2
+}
+
+GRANDTOTAL_ALLOK=1
+ALLOK=1
+X() {
+	ALLOK=0
+}
+
+# sanity checks
+[[ -d '${sampleset}' ]] || fail 'No sampleset directory:' '${sampleset}'
+SH_HEAD
+
+success=1
+b=0
+for d in "${scan[@]}"; do
+	# progress bar
+	(( v = b * 128 / ${#scan[@]} ))
+	bar1="$(for ((i=0;i< (v>>3);++i)) do echo -n $'\u2588'; done)"
+	if (( (v&7) > 0 )); then
+		bar2="$(echo -ne "\u$(printf '%04x' $((0x2590 - (v&7) )) )")"
+	else
+		bar2=''
+	fi
+	bar3="$(for ((i=0;i< ( (128-v)>>3);++i)) do echo -n $'\u22C5' ; done)" # normally: \u00b7
+	cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_BAR
+echo -ne '\\r[${bar1}${bar2}${bar3}] ${b}/${#scan[@]}\\r'
+SH_BAR
+	(( ++b ))
+	# findable ?
+	if [[ ! -d "${d}" ]]; then
+		echo "No ${d}" 1>&2
+		success=0
+		continue
+	fi
+	# skip older
+	if [[ -n "${recent}" && "$(basename ${d})" < "${recent}" ]]; then
+		continue
+	fi
+	# folder ?
+	if [[ $(basename ${d}) =~ ${rx_folder} ]]; then
+		# check for left-over (windows') partial download files
+		if [[ -n "$(find "${d}" -type f -name '*.filepart' | tee /dev/stderr)" ]]; then
+			echo -e "\e[33;1mIncompletely downloaded files in $(basename ${d})\e[0m skipping..."
+			touch status/syncviollier_failed
+			continue
+		fi
+		# Remove irrelevant samples from sample sheet
+		if [[ "$(< ${d}/SampleSheetUsed.csv)" =~ [[:space:]]Error ]]; then
+			echo -e "Filtering out 'Error<n>' samples"
+			mv ${d}/SampleSheetUsed.csv{,.err}
+			grep -vP '^Error' ${d}/SampleSheetUsed.csv.err > ${d}/SampleSheetUsed.csv
+		fi
+		# Search for patchmap if available
+		patch=
+		if [[ -e "${d%%/}.patchmap.tsv" ]]; then
+			echo "Patchmap found for $(basename ${d})"
+			patchmap="--patchmap=${d%%/}.patchmap.tsv"
+		fi
+		./sort_samples_jobinfo --summary --sourcedir=${d} ${patchmap} --outdir=${basedir}/${sampleset} ${mode:+--mode=${mode}} --force --forcelanes --batch ${lab} --append --staging ${protocolsyaml:+--protocols=${protocolsyaml}}
+		# between appended batches: combine error status into overall status  & reset local error status
+		cat >> ${basedir}/${sampleset}/movedatafiles.sh <<MERGE_ALLOK
+(( GRANDTOTAL_ALLOK &= ALLOK ))
+ALLOK=1
+MERGE_ALLOK
+	else
+		# ignore mal formed folders
+		echo "Can't parse $(basename ${d})"
+	fi
+done
+
+# coda: (cf. sort_samples_jobinfo)
+# progress bar & based on combined exit status
+bar1="$(for ((i=0;i< (128>>3);++i)) do echo -n $'\u2588'; done)"
+cat >> ${basedir}/${sampleset}/movedatafiles.sh <<SH_FOOT
+echo -e '\\r[${bar1}] done.'
+
+if (( ! GRANDTOTAL_ALLOK )); then
+	echo Some errors
+	exit 1
+fi;
+
+echo All Ok
+exit 0
+SH_FOOT
+
+if (( success )); then
+	echo "All ok"
+	exit 0
+else
+	echo "Some problems"
+	exit 1
+fi

@@ -1,0 +1,7 @@
+
+/cluster/project/pangolin/s3c_setup/
+                 - working
+                 - sampleset
+                 - batman.sh
+                 - V-pipe (cloned from https://github.com/cbg-ethz/V-pipe.git, rubicon branch)
+                 - miniconda

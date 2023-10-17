@@ -1,0 +1,11085 @@
+C3_12_2021_01_10/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 8
+      2: 115
+    muts:
+      1: 29
+  76_BA1:
+    sites:
+      1: 33
+      2: 14288
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      1: 2
+      2: 1546
+    muts: {}
+  72_om1:
+    sites:
+      2: 2
+      3: 2
+      5: 452
+    muts:
+      1: 60
+  73_om1:
+    sites:
+      1: 7
+      2: 115
+    muts: {}
+  75_om1:
+    sites:
+      4: 3
+      5: 39
+    muts: {}
+  76_om1:
+    sites:
+      1: 1
+      2: 1
+      4: 1
+      5: 10
+      6: 3
+      7: 3
+      8: 18
+      10: 14285
+    muts:
+      1: 3634
+      2: 19
+  77_om1:
+    sites:
+      1: 11
+      2: 302
+    muts:
+      1: 298
+  79_om1:
+    sites:
+      1: 14
+      2: 34
+      3: 311
+    muts:
+      1: 1
+  80_om1:
+    sites:
+      1: 78
+      2: 16894
+    muts:
+      1: 5
+  81_om1:
+    sites:
+      1: 2
+      2: 28
+      3: 1518
+    muts: {}
+  87_om1:
+    sites:
+      2: 38
+    muts: {}
+  88_om1:
+    sites:
+      2: 83
+    muts: {}
+  72_al:
+    sites:
+      1: 4
+      2: 452
+    muts:
+      1: 36
+      2: 8
+  78_al:
+    sites:
+      1: 1
+      2: 111
+    muts:
+      1: 1
+      2: 37
+  92_al:
+    sites:
+      3: 31
+    muts:
+      3: 2
+  93_al:
+    sites:
+      1: 158
+      2: 298
+    muts:
+      1: 19
+      2: 11
+  73_be:
+    sites:
+      1: 2
+      2: 123
+    muts: {}
+  92_mu:
+    sites:
+      2: 31
+    muts: {}
+  77_d614g:
+    sites:
+      1: 305
+    muts:
+      1: 298
+  76_AY42_de:
+    sites:
+      1: 11
+      2: 14304
+    muts:
+      1: 11
+  91_AY42_de:
+    sites:
+      1: 54
+      2: 1683
+    muts:
+      1: 2
+  76_be_ga:
+    sites:
+      1: 15
+      2: 14305
+    muts:
+      1: 450
+  71_ga:
+    sites:
+      1: 1
+      2: 2
+      3: 234
+    muts: {}
+  95_ga:
+    sites:
+      2: 288
+    muts: {}
+  31_BA2:
+    sites:
+      1: 14
+      2: 593
+    muts: {}
+  75_BA2:
+    sites:
+      4: 42
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 13
+      2: 14304
+    muts:
+      1: 3
+  76_om2:
+    sites:
+      1: 2
+      3: 1
+      4: 10
+      5: 6
+      7: 18
+      8: 14285
+    muts:
+      1: 3633
+      2: 19
+  72_om2121:
+    sites:
+      1: 6
+      2: 451
+    muts: {}
+  76_om2121:
+    sites:
+      1: 1
+      2: 1
+      3: 1
+      4: 3
+      5: 9
+      6: 4
+      7: 10
+      8: 8
+      9: 14285
+    muts:
+      1: 3633
+      2: 19
+  78_om2121:
+    sites:
+      1: 1
+      4: 111
+    muts:
+      1: 38
+  90_om2121_om4:
+    sites:
+      1: 20
+      3: 7
+      4: 5003
+    muts:
+      1: 4
+  2_om4:
+    sites:
+      2: 82
+    muts: {}
+  3_om4:
+    sites:
+      2: 5
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 1732
+    muts: {}
+  95_om4:
+    sites:
+      3: 5
+      4: 283
+    muts:
+      3: 1
+  72_om4_om5:
+    sites:
+      1: 4
+      2: 452
+    muts:
+      1: 44
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 3
+      8: 39
+    muts: {}
+  76_om4_om5:
+    sites:
+      1: 1
+      2: 1
+      3: 1
+      4: 3
+      5: 1
+      6: 8
+      7: 4
+      8: 10
+      9: 8
+      10: 14285
+    muts:
+      1: 10644
+      2: 3648
+      3: 19
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 253
+    muts:
+      1: 5
+  95_om2121_om5:
+    sites:
+      3: 288
+    muts:
+      3: 1
+  87_om5:
+    sites:
+      2: 38
+    muts: {}
+  88_om5:
+    sites:
+      1: 1
+      2: 1
+      3: 82
+    muts:
+      1: 83
+  90_om5:
+    sites:
+      1: 20
+      3: 7
+      4: 5003
+    muts:
+      1: 20
+      3: 17
+      4: 4993
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 204
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 8
+      2: 34
+      3: 565
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      1: 1
+      2: 15
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 136
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 11
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 234
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 111
+    muts:
+      1: 38
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 27
+      2: 321
+    muts:
+      1: 1
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 28
+      2: 1518
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 21
+      2: 2717
+    muts:
+      1: 101
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 1
+      2: 1
+      3: 82
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 27
+      2: 5003
+    muts:
+      1: 1
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 2
+      3: 449
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 14
+    muts: {}
+  13_om275:
+    sites:
+      1: 24
+      2: 2396
+    muts: {}
+  72_om275:
+    sites:
+      2: 453
+    muts: {}
+  73_om275:
+    sites:
+      2: 6
+      5: 116
+    muts:
+      1: 1
+  74_om275:
+    sites:
+      1: 8
+      2: 2070
+    muts: {}
+  75_om275:
+    sites:
+      7: 3
+      8: 39
+    muts: {}
+  76_om275:
+    sites:
+      1: 1
+      3: 5
+      5: 2
+      6: 1
+      7: 19
+      8: 9
+      9: 1
+      10: 14284
+    muts:
+      1: 10663
+      2: 3632
+      3: 17
+  86_om275:
+    sites:
+      1: 1
+      2: 1
+      3: 252
+    muts:
+      1: 5
+  87_om275:
+    sites:
+      2: 38
+    muts: {}
+B3_12_2021_01_08/20210129_JG6LR:
+  73_AY42:
+    sites:
+      2: 4
+    muts:
+      1: 2
+  76_BA1:
+    sites:
+      2: 5353
+    muts: {}
+  81_BA1:
+    sites:
+      2: 4
+    muts: {}
+  72_om1:
+    sites:
+      5: 4120
+    muts:
+      1: 562
+  73_om1:
+    sites:
+      2: 4
+    muts: {}
+  75_om1:
+    sites: {}
+    muts: {}
+  76_om1:
+    sites:
+      10: 5353
+    muts:
+      1: 1498
+      2: 2
+  77_om1:
+    sites:
+      2: 2
+    muts:
+      1: 2
+  79_om1:
+    sites:
+      3: 1
+    muts: {}
+  80_om1:
+    sites:
+      1: 3
+      2: 9055
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      3: 4
+    muts: {}
+  87_om1:
+    sites:
+      2: 1
+    muts: {}
+  88_om1:
+    sites:
+      2: 1914
+    muts:
+      1: 1
+  72_al:
+    sites:
+      2: 4120
+    muts:
+      1: 444
+      2: 201
+  78_al:
+    sites:
+      2: 1578
+    muts: {}
+  92_al:
+    sites:
+      3: 920
+    muts:
+      1: 2
+  93_al:
+    sites:
+      2: 1
+    muts: {}
+  73_be:
+    sites:
+      2: 4
+    muts: {}
+  92_mu:
+    sites:
+      2: 920
+    muts:
+      1: 1
+  77_d614g:
+    sites:
+      1: 2
+    muts:
+      1: 2
+  76_AY42_de:
+    sites:
+      2: 5353
+    muts:
+      1: 3
+  91_AY42_de:
+    sites:
+      2: 7
+    muts: {}
+  76_be_ga:
+    sites:
+      2: 5353
+    muts:
+      1: 1
+  71_ga:
+    sites:
+      3: 7
+    muts: {}
+  95_ga:
+    sites: {}
+    muts: {}
+  31_BA2:
+    sites:
+      2: 4
+    muts: {}
+  75_BA2:
+    sites: {}
+    muts: {}
+  76_B16173_ka:
+    sites:
+      2: 5353
+    muts: {}
+  76_om2:
+    sites:
+      8: 5353
+    muts:
+      1: 1498
+      2: 2
+  72_om2121:
+    sites:
+      2: 4120
+    muts:
+      1: 1
+  76_om2121:
+    sites:
+      9: 5353
+    muts:
+      1: 1499
+      2: 3
+  78_om2121:
+    sites:
+      4: 1578
+    muts: {}
+  90_om2121_om4:
+    sites:
+      4: 2986
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      2: 59
+    muts: {}
+  3_om4:
+    sites: {}
+    muts: {}
+  91_om4:
+    sites:
+      2: 7
+    muts: {}
+  95_om4:
+    sites: {}
+    muts: {}
+  72_om4_om5:
+    sites:
+      2: 4120
+    muts:
+      1: 563
+  75_om2_om2121_om4_om5:
+    sites: {}
+    muts: {}
+  76_om4_om5:
+    sites:
+      10: 5353
+    muts:
+      1: 3848
+      2: 1496
+      3: 5
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 1076
+    muts: {}
+  95_om2121_om5:
+    sites: {}
+    muts: {}
+  87_om5:
+    sites:
+      2: 1
+    muts: {}
+  88_om5:
+    sites:
+      3: 1914
+    muts:
+      1: 1912
+      2: 1
+  90_om5:
+    sites:
+      4: 2986
+    muts:
+      3: 4
+      4: 2982
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 369
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      3: 4
+    muts: {}
+  33_om2_om2121_om275:
+    sites: {}
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1007
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 7
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 1578
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      2: 4
+    muts: {}
+  84_om2121_om275:
+    sites:
+      2: 3792
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 1914
+    muts:
+      1: 2
+  90_om2_om275:
+    sites:
+      2: 2986
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 1
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 106
+    muts: {}
+  13_om275:
+    sites:
+      2: 1
+    muts: {}
+  72_om275:
+    sites:
+      2: 4120
+    muts:
+      1: 4
+  73_om275:
+    sites:
+      5: 4
+    muts: {}
+  74_om275:
+    sites:
+      2: 4227
+    muts: {}
+  75_om275:
+    sites: {}
+    muts: {}
+  76_om275:
+    sites:
+      10: 5353
+    muts:
+      1: 3854
+      2: 1496
+      3: 2
+  86_om275:
+    sites:
+      1: 1
+      3: 1076
+    muts: {}
+  87_om275:
+    sites:
+      2: 1
+    muts: {}
+A3_12_2021_01_06/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 4
+      2: 95
+    muts:
+      1: 36
+  76_BA1:
+    sites:
+      1: 36
+      2: 7986
+    muts:
+      1: 3
+  81_BA1:
+    sites:
+      1: 3
+      2: 1279
+    muts:
+      1: 1
+  72_om1:
+    sites:
+      2: 3
+      3: 2
+      5: 287
+    muts:
+      1: 62
+  73_om1:
+    sites:
+      1: 4
+      2: 95
+    muts: {}
+  75_om1:
+    sites:
+      1: 1
+      4: 1
+      5: 36
+    muts: {}
+  76_om1:
+    sites:
+      2: 2
+      3: 1
+      4: 3
+      5: 7
+      6: 1
+      7: 3
+      8: 20
+      9: 3
+      10: 7982
+    muts:
+      1: 2322
+      2: 33
+  77_om1:
+    sites:
+      1: 6
+      2: 203
+    muts:
+      1: 201
+  79_om1:
+    sites:
+      1: 17
+      2: 20
+      3: 131
+    muts: {}
+  80_om1:
+    sites:
+      1: 45
+      2: 9568
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      1: 3
+      2: 23
+      3: 1256
+    muts:
+      1: 1
+  87_om1:
+    sites:
+      1: 5
+      2: 23
+    muts: {}
+  88_om1:
+    sites:
+      1: 3
+      2: 156
+    muts: {}
+  72_al:
+    sites:
+      1: 5
+      2: 287
+    muts:
+      1: 6
+      2: 57
+  78_al:
+    sites:
+      2: 188
+    muts:
+      1: 37
+      2: 47
+  92_al:
+    sites:
+      3: 26
+    muts:
+      3: 3
+  93_al:
+    sites:
+      1: 127
+      2: 319
+    muts:
+      1: 11
+      2: 22
+  73_be:
+    sites:
+      2: 97
+    muts: {}
+  92_mu:
+    sites:
+      2: 26
+    muts: {}
+  77_d614g:
+    sites:
+      1: 206
+    muts:
+      1: 201
+  76_AY42_de:
+    sites:
+      1: 17
+      2: 7998
+    muts:
+      1: 2
+  91_AY42_de:
+    sites:
+      1: 133
+      2: 1278
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 11
+      2: 8006
+    muts:
+      1: 1277
+  71_ga:
+    sites:
+      3: 165
+    muts: {}
+  95_ga:
+    sites:
+      2: 3
+    muts: {}
+  31_BA2:
+    sites:
+      1: 8
+      2: 360
+    muts: {}
+  75_BA2:
+    sites:
+      2: 1
+      4: 37
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 21
+      2: 7995
+    muts: {}
+  76_om2:
+    sites:
+      1: 2
+      2: 1
+      3: 3
+      4: 7
+      5: 1
+      6: 4
+      7: 22
+      8: 7982
+    muts:
+      1: 2319
+      2: 33
+  72_om2121:
+    sites:
+      1: 6
+      2: 286
+    muts:
+      1: 1
+  76_om2121:
+    sites:
+      2: 2
+      3: 2
+      4: 7
+      5: 3
+      6: 2
+      7: 14
+      8: 10
+      9: 7982
+    muts:
+      1: 2320
+      2: 33
+  78_om2121:
+    sites:
+      4: 188
+    muts:
+      1: 84
+  90_om2121_om4:
+    sites:
+      1: 7
+      3: 27
+      4: 3042
+    muts: {}
+  2_om4:
+    sites:
+      2: 33
+    muts: {}
+  3_om4:
+    sites:
+      2: 11
+    muts: {}
+  91_om4:
+    sites:
+      2: 1408
+    muts: {}
+  95_om4:
+    sites:
+      4: 3
+    muts:
+      3: 1
+  72_om4_om5:
+    sites:
+      1: 5
+      2: 287
+    muts:
+      1: 62
+  75_om2_om2121_om4_om5:
+    sites:
+      3: 1
+      7: 1
+      8: 36
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 2
+      3: 2
+      4: 7
+      6: 3
+      7: 2
+      8: 14
+      9: 10
+      10: 7982
+    muts:
+      1: 5657
+      2: 2323
+      3: 33
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 4
+      2: 232
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 3
+    muts:
+      3: 1
+  87_om5:
+    sites:
+      1: 5
+      2: 23
+    muts: {}
+  88_om5:
+    sites:
+      1: 1
+      2: 6
+      3: 153
+    muts:
+      1: 157
+  90_om5:
+    sites:
+      1: 7
+      3: 27
+      4: 3042
+    muts:
+      1: 7
+      3: 29
+      4: 3040
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 66
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 20
+      3: 345
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 8
+    muts:
+      1: 1
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 66
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 14
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 165
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 188
+    muts:
+      1: 84
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 18
+      2: 136
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 23
+      2: 1256
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 14
+      2: 2259
+    muts:
+      1: 36
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 1
+      2: 6
+      3: 153
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 34
+      2: 3042
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 445
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 20
+    muts: {}
+  13_om275:
+    sites:
+      1: 20
+      2: 1348
+    muts: {}
+  72_om275:
+    sites:
+      2: 287
+    muts: {}
+  73_om275:
+    sites:
+      2: 2
+      3: 2
+      5: 95
+    muts: {}
+  74_om275:
+    sites:
+      1: 20
+      2: 2343
+    muts: {}
+  75_om275:
+    sites:
+      3: 1
+      7: 2
+      8: 35
+    muts: {}
+  76_om275:
+    sites:
+      3: 8
+      4: 1
+      5: 3
+      6: 2
+      7: 14
+      8: 8
+      9: 4
+      10: 7982
+    muts:
+      1: 5662
+      2: 2319
+      3: 31
+  86_om275:
+    sites:
+      1: 3
+      2: 1
+      3: 232
+    muts: {}
+  87_om275:
+    sites:
+      2: 25
+    muts: {}
+H2_12_2021_01_04/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 6
+      2: 238
+    muts:
+      1: 68
+  76_BA1:
+    sites:
+      1: 6
+      2: 8228
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      1: 3
+      2: 1925
+    muts: {}
+  72_om1:
+    sites:
+      2: 1
+      3: 5
+      4: 2
+      5: 3111
+    muts: {}
+  73_om1:
+    sites:
+      1: 5
+      2: 239
+    muts: {}
+  75_om1:
+    sites:
+      4: 17
+      5: 295
+    muts: {}
+  76_om1:
+    sites:
+      5: 1
+      8: 6
+      9: 1
+      10: 8226
+    muts:
+      1: 2976
+      2: 26
+  77_om1:
+    sites:
+      1: 3
+      2: 622
+    muts:
+      1: 621
+  79_om1:
+    sites:
+      1: 1
+      2: 9
+      3: 299
+    muts: {}
+  80_om1:
+    sites:
+      1: 40
+      2: 16687
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      1: 3
+      2: 23
+      3: 1902
+    muts: {}
+  87_om1:
+    sites:
+      1: 12
+      2: 125
+    muts: {}
+  88_om1:
+    sites:
+      1: 2
+      2: 1583
+    muts: {}
+  72_al:
+    sites:
+      1: 7
+      2: 3112
+    muts: {}
+  78_al:
+    sites:
+      2: 3963
+    muts:
+      1: 30
+      2: 105
+  92_al:
+    sites:
+      1: 1
+      2: 2
+      3: 999
+    muts:
+      1: 3
+      2: 4
+      3: 26
+  93_al:
+    sites:
+      1: 215
+      2: 742
+    muts:
+      1: 33
+      2: 47
+  73_be:
+    sites:
+      1: 1
+      2: 243
+    muts: {}
+  92_mu:
+    sites:
+      1: 3
+      2: 1000
+    muts: {}
+  77_d614g:
+    sites:
+      1: 623
+    muts:
+      1: 621
+  76_AY42_de:
+    sites:
+      2: 8234
+    muts:
+      1: 410
+  91_AY42_de:
+    sites:
+      1: 196
+      2: 5378
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 2
+      2: 8232
+    muts:
+      1: 207
+  71_ga:
+    sites:
+      3: 296
+    muts: {}
+  95_ga:
+    sites:
+      2: 376
+    muts: {}
+  31_BA2:
+    sites:
+      1: 16
+      2: 734
+    muts: {}
+  75_BA2:
+    sites:
+      4: 312
+    muts: {}
+  76_B16173_ka:
+    sites:
+      2: 8234
+    muts:
+      1: 409
+  76_om2:
+    sites:
+      4: 1
+      6: 1
+      7: 6
+      8: 8226
+    muts:
+      1: 2977
+      2: 25
+  72_om2121:
+    sites:
+      1: 6
+      2: 3113
+    muts: {}
+  76_om2121:
+    sites:
+      5: 1
+      7: 1
+      8: 6
+      9: 8226
+    muts:
+      1: 2977
+      2: 25
+  78_om2121:
+    sites:
+      3: 2
+      4: 3961
+    muts:
+      1: 123
+  90_om2121_om4:
+    sites:
+      1: 1
+      4: 5320
+    muts:
+      1: 4
+  2_om4:
+    sites:
+      1: 1
+      2: 170
+    muts: {}
+  3_om4:
+    sites:
+      2: 56
+    muts: {}
+  91_om4:
+    sites:
+      1: 3
+      2: 5568
+    muts:
+      1: 26
+  95_om4:
+    sites:
+      3: 3
+      4: 373
+    muts:
+      3: 362
+  72_om4_om5:
+    sites:
+      1: 7
+      2: 3112
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 17
+      8: 295
+    muts: {}
+  76_om4_om5:
+    sites:
+      6: 1
+      8: 1
+      9: 6
+      10: 8226
+    muts:
+      1: 4861
+      2: 3300
+      3: 73
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 15
+      2: 930
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 376
+    muts:
+      3: 362
+  87_om5:
+    sites:
+      1: 12
+      2: 125
+    muts: {}
+  88_om5:
+    sites:
+      2: 7
+      3: 1578
+    muts:
+      1: 1580
+  90_om5:
+    sites:
+      1: 1
+      4: 5320
+    muts:
+      1: 1
+      3: 11
+      4: 5309
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 544
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 31
+      3: 718
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 27
+    muts:
+      1: 3
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 298
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 795
+    muts:
+      1: 1
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 296
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 2
+      3: 3961
+    muts:
+      1: 123
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 304
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 23
+      2: 1902
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 7
+      2: 6041
+    muts:
+      1: 1
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 7
+      3: 1578
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 1
+      2: 5320
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 955
+    muts:
+      1: 1
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 186
+    muts:
+      1: 7
+  13_om275:
+    sites:
+      1: 12
+      2: 974
+    muts: {}
+  72_om275:
+    sites:
+      1: 5
+      2: 3111
+    muts:
+      1: 3
+  73_om275:
+    sites:
+      2: 1
+      3: 1
+      5: 242
+    muts: {}
+  74_om275:
+    sites:
+      1: 7
+      2: 6456
+    muts: {}
+  75_om275:
+    sites:
+      7: 20
+      8: 292
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      8: 6
+      9: 2
+      10: 8225
+    muts:
+      1: 5231
+      2: 2977
+      3: 25
+  86_om275:
+    sites:
+      1: 13
+      2: 6
+      3: 926
+    muts: {}
+  87_om275:
+    sites:
+      2: 126
+    muts: {}
+G2_12_2021_01_02/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 9
+      2: 272
+    muts:
+      1: 93
+  76_BA1:
+    sites:
+      1: 8
+      2: 3300
+    muts: {}
+  81_BA1:
+    sites:
+      1: 2
+      2: 1709
+    muts: {}
+  72_om1:
+    sites:
+      2: 3
+      3: 8
+      5: 3094
+    muts:
+      1: 1
+  73_om1:
+    sites:
+      1: 8
+      2: 273
+    muts: {}
+  75_om1:
+    sites:
+      1: 5
+      4: 21
+      5: 509
+    muts: {}
+  76_om1:
+    sites:
+      2: 1
+      5: 1
+      7: 1
+      8: 6
+      10: 3299
+    muts:
+      1: 1126
+      2: 16
+  77_om1:
+    sites:
+      1: 1
+      2: 153
+    muts:
+      1: 153
+  79_om1:
+    sites:
+      1: 3
+      2: 13
+      3: 198
+    muts: {}
+  80_om1:
+    sites:
+      1: 34
+      2: 8514
+    muts:
+      1: 2
+  81_om1:
+    sites:
+      1: 2
+      2: 14
+      3: 1695
+    muts: {}
+  87_om1:
+    sites:
+      1: 11
+      2: 70
+    muts: {}
+  88_om1:
+    sites:
+      2: 230
+    muts: {}
+  72_al:
+    sites:
+      1: 11
+      2: 3094
+    muts:
+      1: 226
+  78_al:
+    sites:
+      1: 5
+      2: 1303
+    muts: {}
+  92_al:
+    sites:
+      1: 1
+      3: 282
+    muts: {}
+  93_al:
+    sites:
+      1: 89
+      2: 364
+    muts:
+      2: 3
+  73_be:
+    sites:
+      1: 2
+      2: 278
+    muts: {}
+  92_mu:
+    sites:
+      1: 1
+      2: 283
+    muts: {}
+  77_d614g:
+    sites:
+      1: 153
+    muts:
+      1: 153
+  76_AY42_de:
+    sites:
+      1: 7
+      2: 3301
+    muts:
+      1: 2
+  91_AY42_de:
+    sites:
+      1: 6
+      2: 4774
+    muts:
+      1: 2
+  76_be_ga:
+    sites:
+      1: 2
+      2: 3305
+    muts:
+      1: 293
+  71_ga:
+    sites:
+      2: 1
+      3: 274
+    muts: {}
+  95_ga:
+    sites:
+      2: 355
+    muts: {}
+  31_BA2:
+    sites:
+      1: 10
+      2: 665
+    muts: {}
+  75_BA2:
+    sites:
+      2: 8
+      3: 1
+      4: 526
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 7
+      2: 3301
+    muts:
+      1: 1
+  76_om2:
+    sites:
+      1: 1
+      4: 1
+      5: 1
+      7: 6
+      8: 3299
+    muts:
+      1: 1126
+      2: 16
+  72_om2121:
+    sites:
+      1: 9
+      2: 3095
+    muts: {}
+  76_om2121:
+    sites:
+      2: 1
+      5: 1
+      6: 1
+      7: 6
+      9: 3299
+    muts:
+      1: 1126
+      2: 16
+  78_om2121:
+    sites:
+      1: 2
+      3: 3
+      4: 1302
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 8
+      3: 6
+      4: 2818
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      2: 38
+    muts: {}
+  3_om4:
+    sites:
+      2: 59
+    muts: {}
+  91_om4:
+    sites:
+      1: 4
+      2: 4773
+    muts:
+      1: 1
+  95_om4:
+    sites:
+      3: 4
+      4: 351
+    muts:
+      3: 36
+  72_om4_om5:
+    sites:
+      1: 10
+      2: 3095
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      3: 4
+      4: 1
+      5: 4
+      7: 17
+      8: 509
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 1
+      6: 1
+      7: 1
+      8: 6
+      10: 3299
+    muts:
+      1: 2158
+      2: 1129
+      3: 18
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 4
+      2: 60
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 355
+    muts:
+      3: 36
+  87_om5:
+    sites:
+      1: 11
+      2: 70
+    muts: {}
+  88_om5:
+    sites:
+      1: 2
+      2: 4
+      3: 226
+    muts:
+      1: 228
+  90_om5:
+    sites:
+      1: 8
+      3: 6
+      4: 2818
+    muts:
+      1: 8
+      3: 9
+      4: 2815
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 80
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 28
+      3: 644
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 17
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 283
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 292
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 275
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 2
+      3: 1303
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 10
+      2: 201
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 14
+      2: 1695
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 12
+      2: 2564
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 2
+      2: 4
+      3: 226
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 14
+      2: 2818
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 4
+      3: 451
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 80
+    muts: {}
+  13_om275:
+    sites:
+      1: 5
+      2: 282
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 3098
+    muts:
+      1: 4
+  73_om275:
+    sites:
+      2: 5
+      3: 1
+      4: 1
+      5: 274
+    muts: {}
+  74_om275:
+    sites:
+      1: 23
+      2: 4433
+    muts: {}
+  75_om275:
+    sites:
+      3: 4
+      4: 1
+      5: 4
+      7: 22
+      8: 504
+    muts: {}
+  76_om275:
+    sites:
+      3: 1
+      7: 6
+      8: 2
+      10: 3299
+    muts:
+      1: 2165
+      2: 1126
+      3: 16
+  86_om275:
+    sites:
+      1: 2
+      2: 2
+      3: 60
+    muts: {}
+  87_om275:
+    sites:
+      2: 70
+    muts:
+      1: 1
+F2_12_2020_12_31/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 6
+      2: 41
+    muts:
+      1: 16
+  76_BA1:
+    sites:
+      1: 8
+      2: 2512
+    muts: {}
+  81_BA1:
+    sites:
+      1: 2
+      2: 408
+    muts: {}
+  72_om1:
+    sites:
+      2: 3
+      3: 6
+      5: 689
+    muts: {}
+  73_om1:
+    sites:
+      1: 6
+      2: 41
+    muts: {}
+  75_om1:
+    sites:
+      4: 2
+      5: 51
+    muts: {}
+  76_om1:
+    sites:
+      2: 1
+      5: 2
+      8: 6
+      10: 2511
+    muts:
+      1: 378
+  77_om1:
+    sites:
+      1: 5
+      2: 160
+    muts:
+      1: 160
+  79_om1:
+    sites:
+      1: 4
+      2: 11
+      3: 44
+    muts: {}
+  80_om1:
+    sites:
+      1: 41
+      2: 9057
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      1: 2
+      2: 10
+      3: 398
+    muts: {}
+  87_om1:
+    sites:
+      1: 2
+      2: 2
+    muts: {}
+  88_om1:
+    sites:
+      2: 279
+    muts: {}
+  72_al:
+    sites:
+      1: 9
+      2: 689
+    muts: {}
+  78_al:
+    sites:
+      1: 3
+      2: 464
+    muts: {}
+  92_al:
+    sites:
+      2: 2
+      3: 70
+    muts: {}
+  93_al:
+    sites:
+      1: 97
+      2: 265
+    muts:
+      1: 3
+      2: 17
+  73_be:
+    sites:
+      2: 46
+    muts: {}
+  92_mu:
+    sites:
+      2: 72
+    muts: {}
+  77_d614g:
+    sites:
+      1: 160
+    muts:
+      1: 160
+  76_AY42_de:
+    sites:
+      1: 5
+      2: 2514
+    muts: {}
+  91_AY42_de:
+    sites:
+      1: 3
+      2: 1349
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 3
+      2: 2516
+    muts: {}
+  71_ga:
+    sites:
+      2: 1
+      3: 91
+    muts: {}
+  95_ga:
+    sites: {}
+    muts: {}
+  31_BA2:
+    sites:
+      1: 4
+      2: 293
+    muts: {}
+  75_BA2:
+    sites:
+      4: 53
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 5
+      2: 2514
+    muts: {}
+  76_om2:
+    sites:
+      1: 1
+      4: 2
+      6: 1
+      7: 5
+      8: 2511
+    muts:
+      1: 378
+  72_om2121:
+    sites:
+      1: 11
+      2: 688
+    muts: {}
+  76_om2121:
+    sites:
+      2: 1
+      4: 1
+      5: 1
+      7: 5
+      8: 1
+      9: 2511
+    muts:
+      1: 378
+  78_om2121:
+    sites:
+      3: 11
+      4: 456
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 6
+      3: 8
+      4: 1727
+    muts:
+      1: 2
+  2_om4:
+    sites:
+      2: 10
+    muts: {}
+  3_om4:
+    sites:
+      2: 10
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 1347
+    muts:
+      1: 1
+  95_om4:
+    sites: {}
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 8
+      2: 691
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 2
+      8: 51
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 1
+      4: 1
+      6: 1
+      8: 5
+      9: 1
+      10: 2511
+    muts:
+      1: 2138
+      2: 379
+  86_om2_om2121_om4_om5:
+    sites:
+      2: 294
+    muts:
+      1: 20
+  95_om2121_om5:
+    sites: {}
+    muts: {}
+  87_om5:
+    sites:
+      1: 2
+      2: 2
+    muts: {}
+  88_om5:
+    sites:
+      1: 1
+      2: 2
+      3: 277
+    muts:
+      1: 277
+  90_om5:
+    sites:
+      1: 6
+      3: 8
+      4: 1727
+    muts:
+      1: 7
+      3: 19
+      4: 1715
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 106
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 9
+      3: 286
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 9
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 82
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 79
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 91
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 8
+      3: 459
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 12
+      2: 44
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 10
+      2: 398
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 22
+      2: 2349
+    muts:
+      1: 463
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 1
+      2: 2
+      3: 277
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 14
+      2: 1727
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 361
+    muts:
+      1: 1
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 25
+    muts: {}
+  13_om275:
+    sites:
+      1: 6
+      2: 718
+    muts: {}
+  72_om275:
+    sites:
+      1: 4
+      2: 692
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      2: 5
+      3: 1
+      5: 41
+    muts: {}
+  74_om275:
+    sites:
+      1: 19
+      2: 1144
+    muts: {}
+  75_om275:
+    sites:
+      7: 2
+      8: 51
+    muts: {}
+  76_om275:
+    sites:
+      3: 2
+      7: 3
+      8: 4
+      10: 2511
+    muts:
+      1: 2140
+      2: 378
+  86_om275:
+    sites:
+      2: 1
+      3: 293
+    muts:
+      1: 20
+  87_om275:
+    sites:
+      2: 2
+    muts: {}
+E2_12_2020_12_27/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 1
+      2: 21
+    muts:
+      1: 5
+  76_BA1:
+    sites:
+      1: 14
+      2: 4908
+    muts:
+      1: 4
+  81_BA1:
+    sites:
+      2: 534
+    muts: {}
+  72_om1:
+    sites:
+      5: 34
+    muts:
+      1: 4
+  73_om1:
+    sites:
+      1: 1
+      2: 21
+    muts: {}
+  75_om1:
+    sites:
+      5: 6
+    muts: {}
+  76_om1:
+    sites:
+      2: 1
+      4: 2
+      5: 5
+      7: 1
+      8: 6
+      9: 1
+      10: 4906
+    muts:
+      1: 1681
+      2: 6
+  77_om1:
+    sites:
+      1: 1
+      2: 48
+    muts:
+      1: 49
+  79_om1:
+    sites:
+      1: 2
+      2: 2
+      3: 29
+    muts: {}
+  80_om1:
+    sites:
+      1: 55
+      2: 12398
+    muts:
+      1: 2
+  81_om1:
+    sites:
+      2: 28
+      3: 506
+    muts: {}
+  87_om1:
+    sites:
+      2: 3
+    muts: {}
+  88_om1:
+    sites:
+      2: 14
+    muts: {}
+  72_al:
+    sites:
+      2: 34
+    muts:
+      1: 4
+  78_al:
+    sites:
+      2: 31
+    muts:
+      2: 2
+  92_al:
+    sites:
+      3: 1
+    muts: {}
+  93_al:
+    sites:
+      1: 14
+      2: 119
+    muts:
+      2: 1
+  73_be:
+    sites:
+      2: 21
+    muts: {}
+  92_mu:
+    sites:
+      2: 1
+    muts: {}
+  77_d614g:
+    sites:
+      1: 49
+    muts:
+      1: 49
+  76_AY42_de:
+    sites:
+      1: 6
+      2: 4915
+    muts:
+      1: 2
+  91_AY42_de:
+    sites:
+      2: 187
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 6
+      2: 4913
+    muts:
+      1: 1
+  71_ga:
+    sites:
+      3: 64
+    muts: {}
+  95_ga:
+    sites: {}
+    muts: {}
+  31_BA2:
+    sites:
+      1: 2
+      2: 234
+    muts: {}
+  75_BA2:
+    sites:
+      4: 6
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 8
+      2: 4913
+    muts: {}
+  76_om2:
+    sites:
+      1: 1
+      3: 2
+      4: 5
+      5: 1
+      7: 7
+      8: 4906
+    muts:
+      1: 1677
+      2: 6
+  72_om2121:
+    sites:
+      1: 2
+      2: 33
+    muts: {}
+  76_om2121:
+    sites:
+      2: 1
+      4: 3
+      5: 4
+      6: 1
+      7: 5
+      8: 2
+      9: 4906
+    muts:
+      1: 1677
+      2: 6
+  78_om2121:
+    sites:
+      4: 31
+    muts:
+      1: 2
+  90_om2121_om4:
+    sites:
+      1: 1
+      3: 2
+      4: 654
+    muts: {}
+  2_om4:
+    sites:
+      2: 4
+    muts: {}
+  3_om4:
+    sites:
+      2: 4
+    muts: {}
+  91_om4:
+    sites:
+      2: 186
+    muts: {}
+  95_om4:
+    sites: {}
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 1
+      2: 34
+    muts:
+      1: 4
+  75_om2_om2121_om4_om5:
+    sites:
+      8: 6
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 1
+      4: 3
+      6: 4
+      7: 1
+      8: 5
+      9: 2
+      10: 4906
+    muts:
+      1: 3232
+      2: 1675
+      3: 8
+  86_om2_om2121_om4_om5:
+    sites:
+      2: 79
+    muts: {}
+  95_om2121_om5:
+    sites: {}
+    muts: {}
+  87_om5:
+    sites:
+      2: 3
+    muts: {}
+  88_om5:
+    sites:
+      3: 14
+    muts:
+      1: 14
+  90_om5:
+    sites:
+      1: 1
+      3: 2
+      4: 654
+    muts:
+      1: 1
+      3: 3
+      4: 653
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 34
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 5
+      3: 230
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 5
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 30
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 64
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 31
+    muts:
+      1: 2
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 29
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 28
+      2: 506
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 2
+      2: 425
+    muts:
+      1: 1
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 14
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 3
+      2: 654
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 133
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 2
+    muts: {}
+  13_om275:
+    sites:
+      1: 7
+      2: 865
+    muts:
+      1: 1
+  72_om275:
+    sites:
+      1: 1
+      2: 34
+    muts: {}
+  73_om275:
+    sites:
+      3: 1
+      5: 21
+    muts: {}
+  74_om275:
+    sites:
+      1: 5
+      2: 616
+    muts: {}
+  75_om275:
+    sites:
+      8: 6
+    muts: {}
+  76_om275:
+    sites:
+      3: 2
+      5: 3
+      7: 9
+      8: 1
+      9: 1
+      10: 4906
+    muts:
+      1: 3235
+      2: 1678
+      3: 5
+  86_om275:
+    sites:
+      3: 79
+    muts: {}
+  87_om275:
+    sites:
+      2: 3
+    muts: {}
+D2_12_2020_12_25/20210129_JG6LR:
+  73_AY42:
+    sites:
+      2: 106
+    muts:
+      1: 35
+  76_BA1:
+    sites:
+      1: 10
+      2: 16715
+    muts:
+      1: 11
+  81_BA1:
+    sites:
+      1: 2
+      2: 1874
+    muts:
+      1: 1
+  72_om1:
+    sites:
+      3: 2
+      5: 524
+    muts:
+      1: 47
+  73_om1:
+    sites:
+      2: 106
+    muts: {}
+  75_om1:
+    sites:
+      4: 2
+      5: 71
+    muts: {}
+  76_om1:
+    sites:
+      5: 2
+      7: 1
+      8: 8
+      10: 16714
+    muts:
+      1: 2014
+      2: 3
+  77_om1:
+    sites:
+      2: 213
+    muts:
+      1: 213
+  79_om1:
+    sites:
+      1: 2
+      2: 7
+      3: 166
+    muts: {}
+  80_om1:
+    sites:
+      1: 80
+      2: 26589
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      1: 2
+      2: 50
+      3: 1824
+    muts:
+      1: 1
+  87_om1:
+    sites:
+      2: 21
+    muts: {}
+  88_om1:
+    sites:
+      2: 134
+    muts: {}
+  72_al:
+    sites:
+      1: 2
+      2: 524
+    muts:
+      1: 47
+  78_al:
+    sites:
+      2: 448
+    muts: {}
+  92_al:
+    sites:
+      3: 47
+    muts: {}
+  93_al:
+    sites:
+      1: 84
+      2: 219
+    muts:
+      1: 9
+      2: 21
+  73_be:
+    sites:
+      1: 1
+      2: 105
+    muts: {}
+  92_mu:
+    sites:
+      2: 47
+    muts: {}
+  77_d614g:
+    sites:
+      1: 213
+    muts:
+      1: 213
+  76_AY42_de:
+    sites:
+      1: 2
+      2: 16723
+    muts: {}
+  91_AY42_de:
+    sites:
+      1: 2
+      2: 1808
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 5
+      2: 16720
+    muts:
+      1: 550
+  71_ga:
+    sites:
+      3: 222
+    muts: {}
+  95_ga:
+    sites:
+      2: 150
+    muts: {}
+  31_BA2:
+    sites:
+      1: 8
+      2: 464
+    muts: {}
+  75_BA2:
+    sites:
+      4: 73
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 4
+      2: 16721
+    muts:
+      1: 2
+  76_om2:
+    sites:
+      4: 2
+      5: 1
+      7: 8
+      8: 16714
+    muts:
+      1: 2005
+      2: 2
+  72_om2121:
+    sites:
+      1: 2
+      2: 524
+    muts: {}
+  76_om2121:
+    sites:
+      5: 2
+      6: 1
+      7: 2
+      8: 6
+      9: 16714
+    muts:
+      1: 2005
+      2: 2
+  78_om2121:
+    sites:
+      3: 1
+      4: 447
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 1
+      3: 13
+      4: 4675
+    muts: {}
+  2_om4:
+    sites:
+      2: 11
+    muts: {}
+  3_om4:
+    sites:
+      1: 1
+      2: 5
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 1806
+    muts: {}
+  95_om4:
+    sites:
+      3: 5
+      4: 145
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 2
+      2: 524
+    muts:
+      1: 47
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 2
+      8: 71
+    muts: {}
+  76_om4_om5:
+    sites:
+      6: 2
+      7: 1
+      8: 2
+      9: 6
+      10: 16714
+    muts:
+      1: 14696
+      2: 2019
+      3: 5
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 175
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 150
+    muts: {}
+  87_om5:
+    sites:
+      2: 21
+    muts: {}
+  88_om5:
+    sites:
+      3: 134
+    muts:
+      1: 134
+  90_om5:
+    sites:
+      1: 1
+      3: 13
+      4: 4675
+    muts:
+      1: 1
+      3: 16
+      4: 4672
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 167
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 325
+      2: 13
+      3: 459
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      1: 17
+      2: 7
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 149
+    muts:
+      1: 1
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 66
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 222
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 447
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 172
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 50
+      2: 1824
+    muts:
+      1: 1
+  84_om2121_om275:
+    sites:
+      1: 2
+      2: 1725
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 134
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 14
+      2: 4675
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 303
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 23
+    muts: {}
+  13_om275:
+    sites:
+      1: 22
+      2: 2156
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 523
+    muts: {}
+  73_om275:
+    sites:
+      5: 106
+    muts: {}
+  74_om275:
+    sites:
+      2: 3953
+    muts:
+      1: 1
+  75_om275:
+    sites:
+      7: 3
+      8: 70
+    muts: {}
+  76_om275:
+    sites:
+      7: 4
+      8: 7
+      9: 2
+      10: 16712
+    muts:
+      1: 14709
+      2: 2010
+      3: 2
+  86_om275:
+    sites:
+      1: 1
+      3: 175
+    muts: {}
+  87_om275:
+    sites:
+      2: 21
+    muts: {}
+C2_12_2020_12_23/20210129_JG6LR:
+  73_AY42:
+    sites: {}
+    muts: {}
+  76_BA1:
+    sites: {}
+    muts: {}
+  81_BA1:
+    sites: {}
+    muts: {}
+  72_om1:
+    sites: {}
+    muts: {}
+  73_om1:
+    sites: {}
+    muts: {}
+  75_om1:
+    sites: {}
+    muts: {}
+  76_om1:
+    sites: {}
+    muts: {}
+  77_om1:
+    sites: {}
+    muts: {}
+  79_om1:
+    sites: {}
+    muts: {}
+  80_om1:
+    sites: {}
+    muts: {}
+  81_om1:
+    sites: {}
+    muts: {}
+  87_om1:
+    sites: {}
+    muts: {}
+  88_om1:
+    sites: {}
+    muts: {}
+  72_al:
+    sites: {}
+    muts: {}
+  78_al:
+    sites: {}
+    muts: {}
+  92_al:
+    sites: {}
+    muts: {}
+  93_al:
+    sites: {}
+    muts: {}
+  73_be:
+    sites: {}
+    muts: {}
+  92_mu:
+    sites: {}
+    muts: {}
+  77_d614g:
+    sites: {}
+    muts: {}
+  76_AY42_de:
+    sites: {}
+    muts: {}
+  91_AY42_de:
+    sites: {}
+    muts: {}
+  76_be_ga:
+    sites: {}
+    muts: {}
+  71_ga:
+    sites: {}
+    muts: {}
+  95_ga:
+    sites: {}
+    muts: {}
+  31_BA2:
+    sites: {}
+    muts: {}
+  75_BA2:
+    sites: {}
+    muts: {}
+  76_B16173_ka:
+    sites: {}
+    muts: {}
+  76_om2:
+    sites: {}
+    muts: {}
+  72_om2121:
+    sites: {}
+    muts: {}
+  76_om2121:
+    sites: {}
+    muts: {}
+  78_om2121:
+    sites: {}
+    muts: {}
+  90_om2121_om4:
+    sites: {}
+    muts: {}
+  2_om4:
+    sites: {}
+    muts: {}
+  3_om4:
+    sites: {}
+    muts: {}
+  91_om4:
+    sites: {}
+    muts: {}
+  95_om4:
+    sites: {}
+    muts: {}
+  72_om4_om5:
+    sites: {}
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites: {}
+    muts: {}
+  76_om4_om5:
+    sites: {}
+    muts: {}
+  86_om2_om2121_om4_om5:
+    sites: {}
+    muts: {}
+  95_om2121_om5:
+    sites: {}
+    muts: {}
+  87_om5:
+    sites: {}
+    muts: {}
+  88_om5:
+    sites: {}
+    muts: {}
+  90_om5:
+    sites: {}
+    muts: {}
+  14_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  33_om2_om2121_om275:
+    sites: {}
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites: {}
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  84_om2121_om275:
+    sites: {}
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites: {}
+    muts: {}
+  90_om2_om275:
+    sites: {}
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  13_om275:
+    sites: {}
+    muts: {}
+  72_om275:
+    sites: {}
+    muts: {}
+  73_om275:
+    sites: {}
+    muts: {}
+  74_om275:
+    sites: {}
+    muts: {}
+  75_om275:
+    sites: {}
+    muts: {}
+  76_om275:
+    sites: {}
+    muts: {}
+  86_om275:
+    sites: {}
+    muts: {}
+  87_om275:
+    sites: {}
+    muts: {}
+B2_12_2020_12_19/20210129_JG6LR:
+  73_AY42:
+    sites: {}
+    muts: {}
+  76_BA1:
+    sites:
+      1: 1
+      2: 9511
+    muts:
+      1: 6
+  81_BA1:
+    sites:
+      2: 3
+    muts: {}
+  72_om1:
+    sites:
+      5: 143
+    muts:
+      1: 1
+  73_om1:
+    sites: {}
+    muts: {}
+  75_om1:
+    sites: {}
+    muts: {}
+  76_om1:
+    sites:
+      5: 1
+      10: 9511
+    muts:
+      1: 2811
+      2: 322
+      3: 4
+  77_om1:
+    sites:
+      2: 1
+    muts:
+      1: 1
+  79_om1:
+    sites:
+      3: 1
+    muts: {}
+  80_om1:
+    sites:
+      1: 3
+      2: 19591
+    muts:
+      1: 6
+  81_om1:
+    sites:
+      3: 3
+    muts: {}
+  87_om1:
+    sites: {}
+    muts: {}
+  88_om1:
+    sites:
+      2: 111
+    muts: {}
+  72_al:
+    sites:
+      2: 143
+    muts: {}
+  78_al:
+    sites:
+      2: 294
+    muts: {}
+  92_al:
+    sites:
+      3: 41
+    muts: {}
+  93_al:
+    sites: {}
+    muts: {}
+  73_be:
+    sites: {}
+    muts: {}
+  92_mu:
+    sites:
+      2: 41
+    muts: {}
+  77_d614g:
+    sites:
+      1: 1
+    muts:
+      1: 1
+  76_AY42_de:
+    sites:
+      2: 9512
+    muts:
+      1: 7
+  91_AY42_de:
+    sites: {}
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 1
+      2: 9511
+    muts:
+      1: 629
+  71_ga:
+    sites: {}
+    muts: {}
+  95_ga:
+    sites: {}
+    muts: {}
+  31_BA2:
+    sites: {}
+    muts: {}
+  75_BA2:
+    sites: {}
+    muts: {}
+  76_B16173_ka:
+    sites:
+      2: 9512
+    muts:
+      1: 2
+  76_om2:
+    sites:
+      4: 1
+      8: 9511
+    muts:
+      1: 2810
+      2: 321
+      3: 3
+  72_om2121:
+    sites:
+      2: 143
+    muts: {}
+  76_om2121:
+    sites:
+      5: 1
+      9: 9511
+    muts:
+      1: 2810
+      2: 321
+      3: 3
+  78_om2121:
+    sites:
+      4: 294
+    muts: {}
+  90_om2121_om4:
+    sites:
+      4: 3119
+    muts: {}
+  2_om4:
+    sites:
+      2: 66
+    muts: {}
+  3_om4:
+    sites: {}
+    muts: {}
+  91_om4:
+    sites: {}
+    muts: {}
+  95_om4:
+    sites: {}
+    muts: {}
+  72_om4_om5:
+    sites:
+      2: 143
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites: {}
+    muts: {}
+  76_om4_om5:
+    sites:
+      6: 1
+      10: 9511
+    muts:
+      1: 6361
+      2: 2815
+      3: 328
+      4: 3
+  86_om2_om2121_om4_om5:
+    sites:
+      2: 307
+    muts: {}
+  95_om2121_om5:
+    sites: {}
+    muts: {}
+  87_om5:
+    sites: {}
+    muts: {}
+  88_om5:
+    sites:
+      3: 111
+    muts:
+      1: 111
+  90_om5:
+    sites:
+      4: 3119
+    muts:
+      3: 4
+      4: 3115
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 270
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  33_om2_om2121_om275:
+    sites: {}
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 13
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 294
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      2: 3
+    muts: {}
+  84_om2121_om275:
+    sites:
+      2: 1559
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 111
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 3119
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites: {}
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 27
+    muts: {}
+  13_om275:
+    sites: {}
+    muts: {}
+  72_om275:
+    sites:
+      2: 143
+    muts: {}
+  73_om275:
+    sites: {}
+    muts: {}
+  74_om275:
+    sites:
+      2: 1861
+    muts: {}
+  75_om275:
+    sites: {}
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      10: 9511
+    muts:
+      1: 6376
+      2: 2808
+      3: 321
+      4: 4
+  86_om275:
+    sites:
+      3: 307
+    muts: {}
+  87_om275:
+    sites: {}
+    muts: {}
+G1_12_2020_12_17/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 3
+      2: 49
+    muts:
+      1: 12
+  76_BA1:
+    sites:
+      1: 23
+      2: 10650
+    muts:
+      1: 2
+  81_BA1:
+    sites:
+      1: 2
+      2: 1271
+    muts: {}
+  72_om1:
+    sites:
+      2: 3
+      3: 2
+      5: 264
+    muts:
+      1: 1
+  73_om1:
+    sites:
+      1: 3
+      2: 49
+    muts: {}
+  75_om1:
+    sites:
+      5: 15
+    muts: {}
+  76_om1:
+    sites:
+      2: 2
+      5: 1
+      7: 2
+      8: 20
+      10: 10648
+    muts:
+      1: 878
+      2: 1
+  77_om1:
+    sites:
+      1: 5
+      2: 133
+    muts:
+      1: 136
+  79_om1:
+    sites:
+      1: 3
+      2: 5
+      3: 61
+    muts: {}
+  80_om1:
+    sites:
+      1: 97
+      2: 11459
+    muts:
+      1: 5
+  81_om1:
+    sites:
+      1: 2
+      2: 45
+      3: 1226
+    muts: {}
+  87_om1:
+    sites:
+      1: 1
+      2: 12
+    muts: {}
+  88_om1:
+    sites:
+      2: 75
+    muts: {}
+  72_al:
+    sites:
+      1: 5
+      2: 264
+    muts: {}
+  78_al:
+    sites:
+      1: 1
+      2: 137
+    muts: {}
+  92_al:
+    sites:
+      3: 9
+    muts: {}
+  93_al:
+    sites:
+      1: 53
+      2: 79
+    muts: {}
+  73_be:
+    sites:
+      2: 51
+    muts: {}
+  92_mu:
+    sites:
+      2: 9
+    muts: {}
+  77_d614g:
+    sites:
+      1: 136
+    muts:
+      1: 136
+  76_AY42_de:
+    sites:
+      1: 9
+      2: 10664
+    muts:
+      1: 5
+  91_AY42_de:
+    sites:
+      1: 330
+      2: 884
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 3
+      2: 10668
+    muts:
+      1: 4
+  71_ga:
+    sites:
+      3: 207
+    muts: {}
+  95_ga:
+    sites:
+      2: 10
+    muts: {}
+  31_BA2:
+    sites:
+      1: 13
+      2: 327
+    muts:
+      1: 3
+  75_BA2:
+    sites:
+      4: 15
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 9
+      2: 10664
+    muts: {}
+  76_om2:
+    sites:
+      1: 2
+      4: 1
+      5: 2
+      7: 20
+      8: 10648
+    muts:
+      1: 876
+      2: 1
+  72_om2121:
+    sites:
+      1: 4
+      2: 264
+    muts: {}
+  76_om2121:
+    sites:
+      2: 2
+      5: 1
+      6: 2
+      7: 7
+      8: 13
+      9: 10648
+    muts:
+      1: 876
+      2: 1
+  78_om2121:
+    sites:
+      1: 1
+      4: 137
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 8
+      3: 2
+      4: 1732
+    muts: {}
+  2_om4:
+    sites:
+      2: 40
+    muts: {}
+  3_om4:
+    sites:
+      2: 11
+    muts: {}
+  91_om4:
+    sites:
+      1: 2
+      2: 1208
+    muts:
+      1: 1
+  95_om4:
+    sites:
+      3: 1
+      4: 9
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 5
+      2: 264
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      8: 15
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 2
+      6: 1
+      7: 2
+      8: 7
+      9: 13
+      10: 10648
+    muts:
+      1: 9779
+      2: 886
+      3: 1
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 199
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 10
+    muts: {}
+  87_om5:
+    sites:
+      1: 1
+      2: 12
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 74
+    muts:
+      1: 74
+  90_om5:
+    sites:
+      1: 8
+      3: 2
+      4: 1732
+    muts:
+      1: 8
+      3: 4
+      4: 1730
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 44
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 17
+      3: 321
+    muts:
+      1: 3
+  33_om2_om2121_om275:
+    sites:
+      2: 3
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 233
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 7
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 207
+    muts:
+      1: 1
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 137
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 65
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 45
+      2: 1226
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 3
+      2: 578
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 74
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 10
+      2: 1732
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 132
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 4
+    muts: {}
+  13_om275:
+    sites:
+      1: 11
+      2: 910
+    muts: {}
+  72_om275:
+    sites:
+      2: 264
+    muts: {}
+  73_om275:
+    sites:
+      2: 2
+      3: 1
+      5: 49
+    muts:
+      1: 2
+  74_om275:
+    sites:
+      1: 18
+      2: 2817
+    muts: {}
+  75_om275:
+    sites:
+      8: 15
+    muts: {}
+  76_om275:
+    sites:
+      3: 2
+      7: 9
+      8: 14
+      9: 1
+      10: 10647
+    muts:
+      1: 9795
+      2: 874
+      3: 1
+  86_om275:
+    sites:
+      1: 1
+      2: 1
+      3: 198
+    muts: {}
+  87_om275:
+    sites:
+      2: 12
+    muts: {}
+A2_12_2020_12_15/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 11
+      2: 46
+    muts:
+      1: 9
+  76_BA1:
+    sites:
+      1: 20
+      2: 3458
+    muts: {}
+  81_BA1:
+    sites:
+      1: 2
+      2: 993
+    muts: {}
+  72_om1:
+    sites:
+      2: 1
+      3: 1
+      5: 241
+    muts: {}
+  73_om1:
+    sites:
+      1: 10
+      2: 46
+    muts: {}
+  75_om1:
+    sites:
+      1: 2
+      2: 1
+      4: 5
+      5: 67
+    muts: {}
+  76_om1:
+    sites:
+      2: 3
+      3: 1
+      5: 8
+      6: 1
+      7: 3
+      8: 7
+      9: 1
+      10: 3455
+    muts:
+      1: 1184
+      2: 3
+  77_om1:
+    sites:
+      1: 6
+      2: 161
+    muts:
+      1: 162
+  79_om1:
+    sites:
+      1: 6
+      2: 22
+      3: 65
+    muts: {}
+  80_om1:
+    sites:
+      1: 20
+      2: 5020
+    muts: {}
+  81_om1:
+    sites:
+      1: 1
+      2: 18
+      3: 976
+    muts: {}
+  87_om1:
+    sites:
+      1: 3
+      2: 21
+    muts: {}
+  88_om1:
+    sites:
+      1: 1
+      2: 103
+    muts: {}
+  72_al:
+    sites:
+      1: 2
+      2: 241
+    muts: {}
+  78_al:
+    sites:
+      1: 3
+      2: 191
+    muts: {}
+  92_al:
+    sites:
+      3: 58
+    muts: {}
+  93_al:
+    sites:
+      1: 127
+      2: 182
+    muts: {}
+  73_be:
+    sites:
+      1: 1
+      2: 50
+    muts: {}
+  92_mu:
+    sites:
+      1: 1
+      2: 57
+    muts: {}
+  77_d614g:
+    sites:
+      1: 162
+    muts:
+      1: 162
+  76_AY42_de:
+    sites:
+      1: 8
+      2: 3466
+    muts:
+      1: 182
+  91_AY42_de:
+    sites:
+      1: 139
+      2: 1515
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 12
+      2: 3464
+    muts:
+      1: 3
+  71_ga:
+    sites:
+      3: 61
+    muts: {}
+  95_ga:
+    sites:
+      2: 5
+    muts: {}
+  31_BA2:
+    sites:
+      1: 19
+      2: 276
+    muts: {}
+  75_BA2:
+    sites:
+      2: 2
+      3: 1
+      4: 72
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 8
+      2: 3466
+    muts:
+      1: 180
+  76_om2:
+    sites:
+      1: 3
+      3: 1
+      4: 8
+      5: 3
+      6: 1
+      7: 8
+      8: 3455
+    muts:
+      1: 1184
+      2: 3
+  72_om2121:
+    sites:
+      1: 2
+      2: 241
+    muts: {}
+  76_om2121:
+    sites:
+      2: 3
+      3: 1
+      4: 3
+      5: 6
+      6: 3
+      7: 4
+      8: 4
+      9: 3455
+    muts:
+      1: 1184
+      2: 3
+  78_om2121:
+    sites:
+      3: 3
+      4: 191
+    muts:
+      1: 22
+  90_om2121_om4:
+    sites:
+      1: 6
+      3: 5
+      4: 1217
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      2: 2
+    muts: {}
+  3_om4:
+    sites:
+      2: 24
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 1647
+    muts: {}
+  95_om4:
+    sites:
+      4: 5
+    muts:
+      3: 1
+  72_om4_om5:
+    sites:
+      1: 2
+      2: 241
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      3: 2
+      5: 1
+      7: 5
+      8: 67
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 3
+      3: 1
+      4: 2
+      5: 1
+      6: 6
+      7: 3
+      8: 4
+      9: 4
+      10: 3455
+    muts:
+      1: 2123
+      2: 1325
+      3: 24
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 108
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 5
+    muts:
+      3: 1
+  87_om5:
+    sites:
+      1: 3
+      2: 21
+    muts: {}
+  88_om5:
+    sites:
+      2: 2
+      3: 102
+    muts:
+      1: 103
+  90_om5:
+    sites:
+      1: 6
+      3: 5
+      4: 1217
+    muts:
+      1: 6
+      3: 8
+      4: 1214
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 84
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 9
+      2: 16
+      3: 270
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 7
+    muts:
+      1: 1
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 142
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 26
+    muts:
+      1: 3
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 61
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 193
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 19
+      2: 70
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 17
+      2: 977
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 18
+      2: 1123
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 2
+      3: 102
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 11
+      2: 1217
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 2
+      3: 307
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 11
+    muts: {}
+  13_om275:
+    sites:
+      1: 4
+      2: 482
+    muts: {}
+  72_om275:
+    sites:
+      2: 241
+    muts: {}
+  73_om275:
+    sites:
+      2: 3
+      3: 6
+      5: 47
+    muts: {}
+  74_om275:
+    sites:
+      1: 15
+      2: 1571
+    muts: {}
+  75_om275:
+    sites:
+      3: 2
+      5: 1
+      7: 5
+      8: 67
+    muts: {}
+  76_om275:
+    sites:
+      2: 1
+      3: 5
+      4: 1
+      5: 1
+      6: 1
+      7: 10
+      8: 4
+      9: 1
+      10: 3455
+    muts:
+      1: 2286
+      2: 1184
+      3: 3
+  86_om275:
+    sites:
+      1: 1
+      3: 108
+    muts: {}
+  87_om275:
+    sites:
+      2: 21
+    muts: {}
+F1_12_2020_12_13/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 10
+      2: 47
+    muts:
+      1: 15
+  76_BA1:
+    sites:
+      1: 20
+      2: 6864
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      1: 1
+      2: 1050
+    muts: {}
+  72_om1:
+    sites:
+      1: 1
+      2: 1
+      3: 4
+      5: 906
+    muts:
+      1: 1
+  73_om1:
+    sites:
+      1: 9
+      2: 47
+    muts: {}
+  75_om1:
+    sites:
+      4: 7
+      5: 44
+    muts: {}
+  76_om1:
+    sites:
+      2: 2
+      5: 2
+      7: 1
+      8: 17
+      9: 1
+      10: 6861
+    muts:
+      1: 1928
+      2: 1
+  77_om1:
+    sites:
+      1: 9
+      2: 155
+    muts:
+      1: 155
+  79_om1:
+    sites:
+      1: 2
+      2: 21
+      3: 161
+    muts: {}
+  80_om1:
+    sites:
+      1: 75
+      2: 8820
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      1: 1
+      2: 33
+      3: 1017
+    muts: {}
+  87_om1:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  88_om1:
+    sites:
+      2: 120
+    muts: {}
+  72_al:
+    sites:
+      1: 5
+      2: 906
+    muts: {}
+  78_al:
+    sites:
+      2: 289
+    muts: {}
+  92_al:
+    sites:
+      3: 54
+    muts:
+      3: 2
+  93_al:
+    sites:
+      1: 56
+      2: 108
+    muts: {}
+  73_be:
+    sites:
+      2: 52
+    muts: {}
+  92_mu:
+    sites:
+      2: 54
+    muts: {}
+  77_d614g:
+    sites:
+      1: 155
+    muts:
+      1: 155
+  76_AY42_de:
+    sites:
+      1: 3
+      2: 6880
+    muts:
+      1: 2
+  91_AY42_de:
+    sites:
+      1: 3
+      2: 646
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 4
+      2: 6878
+    muts:
+      1: 1
+  71_ga:
+    sites:
+      2: 1
+      3: 283
+    muts: {}
+  95_ga:
+    sites:
+      2: 59
+    muts: {}
+  31_BA2:
+    sites:
+      1: 25
+      2: 295
+    muts:
+      1: 1
+  75_BA2:
+    sites:
+      1: 2
+      2: 1
+      4: 48
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 3
+      2: 6880
+    muts: {}
+  76_om2:
+    sites:
+      1: 2
+      4: 2
+      5: 1
+      6: 1
+      7: 17
+      8: 6861
+    muts:
+      1: 1927
+      2: 1
+  72_om2121:
+    sites:
+      1: 7
+      2: 904
+    muts: {}
+  76_om2121:
+    sites:
+      2: 2
+      4: 1
+      5: 1
+      6: 1
+      7: 2
+      8: 16
+      9: 6861
+    muts:
+      1: 1926
+      2: 2
+  78_om2121:
+    sites:
+      3: 1
+      4: 288
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 7
+      3: 10
+      4: 2943
+    muts:
+      1: 3
+  2_om4:
+    sites:
+      2: 37
+    muts: {}
+  3_om4:
+    sites:
+      2: 8
+    muts:
+      1: 2
+  91_om4:
+    sites:
+      2: 646
+    muts:
+      1: 1
+  95_om4:
+    sites:
+      4: 59
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 5
+      2: 906
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      4: 2
+      5: 1
+      7: 4
+      8: 44
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 2
+      5: 1
+      6: 1
+      7: 1
+      8: 2
+      9: 16
+      10: 6861
+    muts:
+      1: 4946
+      2: 1928
+      3: 6
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 159
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 59
+    muts: {}
+  87_om5:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  88_om5:
+    sites:
+      3: 120
+    muts:
+      1: 120
+  90_om5:
+    sites:
+      1: 7
+      3: 10
+      4: 2943
+    muts:
+      1: 8
+      3: 15
+      4: 2937
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 121
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 9
+      2: 20
+      3: 291
+    muts:
+      1: 1
+  33_om2_om2121_om275:
+    sites:
+      2: 7
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 68
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 11
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 282
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 288
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 12
+      2: 171
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 33
+      2: 1017
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 6
+      2: 1124
+    muts:
+      1: 101
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 120
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 17
+      2: 2943
+    muts:
+      1: 1
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 1
+      3: 161
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 10
+    muts: {}
+  13_om275:
+    sites:
+      1: 15
+      2: 880
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 908
+    muts: {}
+  73_om275:
+    sites:
+      1: 1
+      2: 3
+      3: 5
+      5: 48
+    muts: {}
+  74_om275:
+    sites:
+      1: 16
+      2: 2254
+    muts: {}
+  75_om275:
+    sites:
+      4: 2
+      5: 1
+      7: 4
+      8: 44
+    muts: {}
+  76_om275:
+    sites:
+      3: 2
+      4: 1
+      7: 2
+      8: 17
+      9: 1
+      10: 6861
+    muts:
+      1: 4952
+      2: 1928
+      3: 1
+  86_om275:
+    sites:
+      1: 1
+      3: 159
+    muts: {}
+  87_om275:
+    sites:
+      2: 9
+    muts: {}
+E1_12_2020_12_10/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 10
+      2: 371
+    muts:
+      1: 145
+  76_BA1:
+    sites:
+      2: 4860
+    muts: {}
+  81_BA1:
+    sites:
+      2: 959
+    muts:
+      1: 1
+  72_om1:
+    sites:
+      3: 1
+      5: 2335
+    muts: {}
+  73_om1:
+    sites:
+      1: 10
+      2: 371
+    muts: {}
+  75_om1:
+    sites:
+      4: 6
+      5: 679
+    muts: {}
+  76_om1:
+    sites:
+      10: 4860
+    muts:
+      1: 1485
+  77_om1:
+    sites:
+      2: 463
+    muts:
+      1: 463
+  79_om1:
+    sites:
+      2: 2
+      3: 265
+    muts: {}
+  80_om1:
+    sites:
+      1: 14
+      2: 5727
+    muts:
+      1: 92
+  81_om1:
+    sites:
+      2: 5
+      3: 954
+    muts:
+      1: 1
+  87_om1:
+    sites:
+      2: 258
+    muts: {}
+  88_om1:
+    sites:
+      2: 852
+    muts: {}
+  72_al:
+    sites:
+      1: 1
+      2: 2335
+    muts:
+      1: 1
+  78_al:
+    sites:
+      2: 1462
+    muts:
+      1: 1
+  92_al:
+    sites:
+      3: 1055
+    muts: {}
+  93_al:
+    sites:
+      1: 46
+      2: 493
+    muts: {}
+  73_be:
+    sites:
+      2: 381
+    muts: {}
+  92_mu:
+    sites:
+      2: 1055
+    muts:
+      1: 1
+  77_d614g:
+    sites:
+      1: 463
+    muts:
+      1: 463
+  76_AY42_de:
+    sites:
+      2: 4860
+    muts:
+      1: 1
+  91_AY42_de:
+    sites:
+      2: 2687
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 1
+      2: 4859
+    muts: {}
+  71_ga:
+    sites:
+      3: 245
+    muts: {}
+  95_ga:
+    sites:
+      2: 10
+    muts: {}
+  31_BA2:
+    sites:
+      1: 2
+      2: 237
+    muts: {}
+  75_BA2:
+    sites:
+      4: 685
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 4859
+    muts: {}
+  76_om2:
+    sites:
+      8: 4860
+    muts:
+      1: 1485
+  72_om2121:
+    sites:
+      1: 1
+      2: 2335
+    muts:
+      1: 1
+  76_om2121:
+    sites:
+      9: 4860
+    muts:
+      1: 1486
+  78_om2121:
+    sites:
+      4: 1462
+    muts: {}
+  90_om2121_om4:
+    sites:
+      4: 2448
+    muts: {}
+  2_om4:
+    sites:
+      2: 31
+    muts: {}
+  3_om4:
+    sites:
+      2: 47
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 2686
+    muts: {}
+  95_om4:
+    sites:
+      4: 10
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 1
+      2: 2335
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 6
+      8: 679
+    muts: {}
+  76_om4_om5:
+    sites:
+      10: 4860
+    muts:
+      1: 3372
+      2: 1484
+      3: 2
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 6
+      2: 465
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 10
+    muts: {}
+  87_om5:
+    sites:
+      2: 258
+    muts: {}
+  88_om5:
+    sites:
+      2: 3
+      3: 849
+    muts:
+      1: 849
+  90_om5:
+    sites:
+      4: 2448
+    muts:
+      3: 1
+      4: 2447
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 348
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 3
+      3: 236
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 17
+    muts:
+      1: 1
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 380
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 453
+    muts:
+      1: 27
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 245
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 1462
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 267
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 954
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 4050
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 3
+      3: 849
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 2448
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 539
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 86
+    muts: {}
+  13_om275:
+    sites:
+      1: 8
+      2: 336
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 2334
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      3: 1
+      4: 4
+      5: 376
+    muts: {}
+  74_om275:
+    sites:
+      1: 1
+      2: 3050
+    muts: {}
+  75_om275:
+    sites:
+      7: 11
+      8: 674
+    muts: {}
+  76_om275:
+    sites:
+      9: 1
+      10: 4859
+    muts:
+      1: 3377
+      2: 1483
+  86_om275:
+    sites:
+      1: 6
+      2: 1
+      3: 464
+    muts: {}
+  87_om275:
+    sites:
+      2: 258
+    muts: {}
+D1_12_2020_12_09/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 5
+      2: 531
+    muts:
+      1: 127
+  76_BA1:
+    sites:
+      1: 4
+      2: 5088
+    muts: {}
+  81_BA1:
+    sites:
+      2: 920
+    muts: {}
+  72_om1:
+    sites:
+      3: 4
+      5: 2338
+    muts:
+      1: 5
+  73_om1:
+    sites:
+      1: 5
+      2: 531
+    muts: {}
+  75_om1:
+    sites:
+      4: 20
+      5: 997
+    muts:
+      1: 2
+  76_om1:
+    sites:
+      8: 4
+      9: 2
+      10: 5086
+    muts:
+      1: 1327
+      2: 1
+  77_om1:
+    sites:
+      2: 276
+    muts:
+      1: 276
+  79_om1:
+    sites:
+      1: 1
+      2: 2
+      3: 289
+    muts: {}
+  80_om1:
+    sites:
+      1: 27
+      2: 5805
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      2: 6
+      3: 914
+    muts: {}
+  87_om1:
+    sites:
+      1: 3
+      2: 289
+    muts: {}
+  88_om1:
+    sites:
+      2: 272
+    muts: {}
+  72_al:
+    sites:
+      1: 4
+      2: 2338
+    muts:
+      1: 5
+  78_al:
+    sites:
+      2: 1894
+    muts: {}
+  92_al:
+    sites:
+      2: 1
+      3: 295
+    muts: {}
+  93_al:
+    sites:
+      1: 34
+      2: 352
+    muts:
+      1: 6
+      2: 15
+  73_be:
+    sites:
+      1: 2
+      2: 534
+    muts: {}
+  92_mu:
+    sites:
+      2: 296
+    muts: {}
+  77_d614g:
+    sites:
+      1: 276
+    muts:
+      1: 276
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 5091
+    muts:
+      1: 3
+  91_AY42_de:
+    sites:
+      2: 1856
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      2: 5092
+    muts:
+      1: 2
+  71_ga:
+    sites:
+      3: 164
+    muts:
+      1: 4
+  95_ga:
+    sites:
+      2: 13
+    muts: {}
+  31_BA2:
+    sites:
+      1: 11
+      2: 267
+    muts: {}
+  75_BA2:
+    sites:
+      4: 1017
+    muts:
+      1: 2
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 5091
+    muts: {}
+  76_om2:
+    sites:
+      7: 6
+      8: 5086
+    muts:
+      1: 1327
+      2: 1
+  72_om2121:
+    sites:
+      1: 4
+      2: 2338
+    muts: {}
+  76_om2121:
+    sites:
+      7: 1
+      8: 5
+      9: 5086
+    muts:
+      1: 1327
+      2: 1
+  78_om2121:
+    sites:
+      3: 1
+      4: 1893
+    muts: {}
+  90_om2121_om4:
+    sites:
+      4: 2014
+    muts:
+      1: 168
+  2_om4:
+    sites:
+      2: 38
+    muts: {}
+  3_om4:
+    sites:
+      1: 1
+      2: 97
+    muts: {}
+  91_om4:
+    sites:
+      2: 1856
+    muts:
+      1: 1
+  95_om4:
+    sites:
+      4: 13
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 3
+      2: 2339
+    muts:
+      1: 5
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 20
+      8: 997
+    muts:
+      1: 2
+  76_om4_om5:
+    sites:
+      8: 1
+      9: 5
+      10: 5086
+    muts:
+      1: 3757
+      2: 1328
+      3: 3
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 13
+      2: 433
+    muts:
+      1: 32
+  95_om2121_om5:
+    sites:
+      3: 13
+    muts: {}
+  87_om5:
+    sites:
+      1: 3
+      2: 289
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 271
+    muts:
+      1: 271
+  90_om5:
+    sites:
+      4: 2014
+    muts:
+      3: 170
+      4: 1844
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 147
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 11
+      3: 267
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 11
+    muts:
+      1: 1
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 204
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 323
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 164
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 1894
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 291
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 6
+      2: 914
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 1249
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 271
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 2014
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 386
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 47
+    muts: {}
+  13_om275:
+    sites:
+      1: 9
+      2: 287
+    muts: {}
+  72_om275:
+    sites:
+      1: 3
+      2: 2336
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      4: 1
+      5: 535
+    muts:
+      1: 1
+  74_om275:
+    sites:
+      1: 4
+      2: 1823
+    muts: {}
+  75_om275:
+    sites:
+      7: 29
+      8: 988
+    muts:
+      1: 2
+  76_om275:
+    sites:
+      7: 1
+      8: 3
+      9: 2
+      10: 5086
+    muts:
+      1: 3765
+      2: 1326
+      3: 1
+  86_om275:
+    sites:
+      1: 12
+      2: 5
+      3: 429
+    muts:
+      1: 32
+  87_om275:
+    sites:
+      1: 1
+      2: 291
+    muts: {}
+C1_12_2020_12_08/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 11
+      2: 233
+    muts:
+      1: 79
+  76_BA1:
+    sites:
+      1: 7
+      2: 3587
+    muts: {}
+  81_BA1:
+    sites:
+      2: 727
+    muts: {}
+  72_om1:
+    sites:
+      2: 6
+      3: 1
+      5: 956
+    muts: {}
+  73_om1:
+    sites:
+      1: 11
+      2: 233
+    muts: {}
+  75_om1:
+    sites:
+      4: 15
+      5: 441
+    muts: {}
+  76_om1:
+    sites:
+      3: 1
+      4: 3
+      6: 1
+      8: 4
+      9: 1
+      10: 3585
+    muts:
+      1: 533
+  77_om1:
+    sites:
+      1: 2
+      2: 237
+    muts:
+      1: 222
+  79_om1:
+    sites:
+      1: 3
+      2: 9
+      3: 205
+    muts: {}
+  80_om1:
+    sites:
+      1: 19
+      2: 4953
+    muts: {}
+  81_om1:
+    sites:
+      2: 7
+      3: 720
+    muts: {}
+  87_om1:
+    sites:
+      2: 134
+    muts: {}
+  88_om1:
+    sites:
+      2: 137
+    muts: {}
+  72_al:
+    sites:
+      1: 7
+      2: 956
+    muts: {}
+  78_al:
+    sites:
+      1: 2
+      2: 2067
+    muts:
+      1: 1
+  92_al:
+    sites:
+      2: 1
+      3: 100
+    muts: {}
+  93_al:
+    sites:
+      1: 44
+      2: 222
+    muts: {}
+  73_be:
+    sites:
+      2: 244
+    muts: {}
+  92_mu:
+    sites:
+      1: 1
+      2: 99
+    muts: {}
+  77_d614g:
+    sites:
+      1: 239
+    muts:
+      1: 222
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 3593
+    muts:
+      1: 1
+  91_AY42_de:
+    sites:
+      1: 103
+      2: 1540
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 3
+      2: 3589
+    muts:
+      1: 1
+  71_ga:
+    sites:
+      3: 239
+    muts: {}
+  95_ga:
+    sites:
+      2: 110
+    muts: {}
+  31_BA2:
+    sites:
+      1: 13
+      2: 309
+    muts: {}
+  75_BA2:
+    sites:
+      2: 1
+      4: 455
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 4
+      2: 3590
+    muts: {}
+  76_om2:
+    sites:
+      3: 4
+      5: 1
+      6: 1
+      7: 4
+      8: 3585
+    muts:
+      1: 533
+  72_om2121:
+    sites:
+      1: 7
+      2: 956
+    muts: {}
+  76_om2121:
+    sites:
+      3: 1
+      4: 3
+      6: 1
+      7: 2
+      8: 3
+      9: 3585
+    muts:
+      1: 533
+  78_om2121:
+    sites:
+      1: 1
+      3: 1
+      4: 2067
+    muts:
+      1: 2
+  90_om2121_om4:
+    sites:
+      1: 2
+      3: 1
+      4: 1905
+    muts: {}
+  2_om4:
+    sites:
+      2: 21
+    muts: {}
+  3_om4:
+    sites:
+      2: 48
+    muts: {}
+  91_om4:
+    sites:
+      1: 2
+      2: 1639
+    muts: {}
+  95_om4:
+    sites:
+      3: 2
+      4: 108
+    muts:
+      3: 1
+  72_om4_om5:
+    sites:
+      1: 7
+      2: 956
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      5: 1
+      7: 14
+      8: 441
+    muts: {}
+  76_om4_om5:
+    sites:
+      3: 1
+      4: 3
+      7: 1
+      8: 2
+      9: 3
+      10: 3585
+    muts:
+      1: 3056
+      2: 534
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 11
+      2: 340
+    muts:
+      1: 1
+  95_om2121_om5:
+    sites:
+      3: 110
+    muts:
+      3: 1
+  87_om5:
+    sites:
+      2: 134
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 136
+    muts:
+      1: 136
+  90_om5:
+    sites:
+      1: 2
+      3: 1
+      4: 1905
+    muts:
+      1: 2
+      3: 3
+      4: 1903
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 15
+      3: 307
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 25
+    muts:
+      1: 2
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 265
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 6
+      2: 311
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 239
+    muts:
+      1: 1
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 2068
+    muts:
+      1: 1
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 210
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 7
+      2: 720
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 2
+      2: 424
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 136
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 3
+      2: 1905
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 266
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 1
+    muts: {}
+  13_om275:
+    sites:
+      1: 2
+      2: 249
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 957
+    muts: {}
+  73_om275:
+    sites:
+      2: 6
+      4: 2
+      5: 236
+    muts:
+      1: 1
+  74_om275:
+    sites:
+      1: 17
+      2: 2096
+    muts:
+      1: 1
+  75_om275:
+    sites:
+      5: 1
+      7: 19
+      8: 436
+    muts: {}
+  76_om275:
+    sites:
+      3: 1
+      5: 3
+      7: 2
+      8: 3
+      9: 1
+      10: 3585
+    muts:
+      1: 3058
+      2: 533
+  86_om275:
+    sites:
+      1: 10
+      2: 1
+      3: 340
+    muts:
+      1: 1
+  87_om275:
+    sites:
+      2: 134
+    muts: {}
+A1_12_2020_10_15/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 25
+      2: 81
+    muts:
+      1: 26
+  76_BA1:
+    sites:
+      1: 3
+      2: 1956
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      2: 290
+    muts: {}
+  72_om1:
+    sites:
+      3: 1
+      5: 486
+    muts: {}
+  73_om1:
+    sites:
+      1: 25
+      2: 81
+    muts: {}
+  75_om1:
+    sites:
+      4: 6
+      5: 99
+    muts: {}
+  76_om1:
+    sites:
+      8: 3
+      9: 2
+      10: 1954
+    muts:
+      1: 198
+  77_om1:
+    sites:
+      1: 2
+      2: 113
+    muts:
+      1: 113
+  79_om1:
+    sites:
+      1: 1
+      2: 5
+      3: 46
+    muts: {}
+  80_om1:
+    sites:
+      1: 9
+      2: 2145
+    muts: {}
+  81_om1:
+    sites:
+      3: 290
+    muts: {}
+  87_om1:
+    sites:
+      1: 3
+      2: 43
+    muts: {}
+  88_om1:
+    sites:
+      2: 239
+    muts: {}
+  72_al:
+    sites:
+      1: 1
+      2: 486
+    muts: {}
+  78_al:
+    sites:
+      2: 384
+    muts:
+      1: 1
+  92_al:
+    sites:
+      3: 239
+    muts:
+      1: 1
+  93_al:
+    sites:
+      1: 91
+      2: 116
+    muts:
+      1: 5
+      2: 2
+  73_be:
+    sites:
+      2: 85
+    muts: {}
+  92_mu:
+    sites:
+      2: 239
+    muts: {}
+  77_d614g:
+    sites:
+      1: 113
+    muts:
+      1: 113
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 1958
+    muts: {}
+  91_AY42_de:
+    sites:
+      1: 1
+      2: 675
+    muts: {}
+  76_be_ga:
+    sites:
+      2: 1959
+    muts: {}
+  71_ga:
+    sites:
+      1: 1
+      3: 45
+    muts: {}
+  95_ga:
+    sites:
+      2: 3
+    muts: {}
+  31_BA2:
+    sites:
+      1: 4
+      2: 110
+    muts: {}
+  75_BA2:
+    sites:
+      4: 105
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 1958
+    muts: {}
+  76_om2:
+    sites:
+      7: 5
+      8: 1954
+    muts:
+      1: 197
+  72_om2121:
+    sites:
+      1: 1
+      2: 486
+    muts: {}
+  76_om2121:
+    sites:
+      7: 1
+      8: 4
+      9: 1954
+    muts:
+      1: 198
+  78_om2121:
+    sites:
+      2: 1
+      4: 384
+    muts:
+      1: 1
+  90_om2121_om4:
+    sites:
+      3: 3
+      4: 791
+    muts:
+      1: 32
+  2_om4:
+    sites:
+      2: 22
+    muts: {}
+  3_om4:
+    sites:
+      2: 11
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 672
+    muts: {}
+  95_om4:
+    sites:
+      4: 3
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 1
+      2: 486
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 6
+      8: 99
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 1
+      9: 4
+      10: 1954
+    muts:
+      1: 1761
+      2: 197
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 3
+      2: 132
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 3
+    muts: {}
+  87_om5:
+    sites:
+      1: 3
+      2: 43
+    muts: {}
+  88_om5:
+    sites:
+      3: 239
+    muts:
+      1: 239
+  90_om5:
+    sites:
+      3: 3
+      4: 791
+    muts:
+      3: 35
+      4: 759
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 122
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 7
+      3: 106
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      1: 1
+      2: 5
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 45
+    muts:
+      1: 1
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 42
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 45
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 384
+    muts:
+      1: 1
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 48
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      2: 290
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 6
+      2: 621
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 239
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 3
+      2: 791
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 204
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 45
+    muts: {}
+  13_om275:
+    sites:
+      1: 4
+      2: 140
+    muts: {}
+  72_om275:
+    sites:
+      1: 2
+      2: 485
+    muts: {}
+  73_om275:
+    sites:
+      2: 2
+      3: 21
+      4: 1
+      5: 82
+    muts: {}
+  74_om275:
+    sites:
+      1: 6
+      2: 628
+    muts: {}
+  75_om275:
+    sites:
+      7: 6
+      8: 99
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      8: 2
+      9: 2
+      10: 1954
+    muts:
+      1: 1762
+      2: 197
+  86_om275:
+    sites:
+      1: 3
+      3: 132
+    muts: {}
+  87_om275:
+    sites:
+      2: 43
+    muts: {}
+B1_12_2020_10_15_n/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 5
+      2: 18
+    muts:
+      1: 3
+  76_BA1:
+    sites:
+      1: 9
+      2: 1529
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      1: 1
+      2: 204
+    muts: {}
+  72_om1:
+    sites:
+      2: 4
+      3: 3
+      5: 441
+    muts:
+      1: 52
+  73_om1:
+    sites:
+      1: 5
+      2: 18
+    muts: {}
+  75_om1:
+    sites:
+      4: 3
+      5: 64
+    muts: {}
+  76_om1:
+    sites:
+      4: 1
+      6: 1
+      8: 7
+      10: 1529
+    muts:
+      1: 228
+  77_om1:
+    sites:
+      1: 4
+      2: 43
+    muts:
+      1: 43
+  79_om1:
+    sites:
+      1: 7
+      2: 6
+      3: 32
+    muts: {}
+  80_om1:
+    sites:
+      1: 23
+      2: 1661
+    muts: {}
+  81_om1:
+    sites:
+      1: 1
+      2: 2
+      3: 202
+    muts: {}
+  87_om1:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  88_om1:
+    sites:
+      2: 62
+    muts: {}
+  72_al:
+    sites:
+      1: 7
+      2: 441
+    muts:
+      1: 52
+  78_al:
+    sites:
+      1: 1
+      2: 176
+    muts: {}
+  92_al:
+    sites:
+      1: 1
+      3: 121
+    muts: {}
+  93_al:
+    sites:
+      1: 103
+      2: 107
+    muts: {}
+  73_be:
+    sites:
+      2: 19
+    muts: {}
+  92_mu:
+    sites:
+      1: 1
+      2: 121
+    muts: {}
+  77_d614g:
+    sites:
+      1: 43
+    muts:
+      1: 43
+  76_AY42_de:
+    sites:
+      1: 2
+      2: 1534
+    muts: {}
+  91_AY42_de:
+    sites:
+      1: 4
+      2: 667
+    muts:
+      1: 5
+  76_be_ga:
+    sites:
+      1: 1
+      2: 1537
+    muts:
+      1: 2
+  71_ga:
+    sites:
+      3: 29
+    muts: {}
+  95_ga:
+    sites:
+      2: 3
+    muts: {}
+  31_BA2:
+    sites:
+      1: 5
+      2: 91
+    muts: {}
+  75_BA2:
+    sites:
+      2: 1
+      4: 66
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 3
+      2: 1534
+    muts: {}
+  76_om2:
+    sites:
+      3: 1
+      5: 1
+      7: 7
+      8: 1529
+    muts:
+      1: 227
+  72_om2121:
+    sites:
+      1: 9
+      2: 439
+    muts: {}
+  76_om2121:
+    sites:
+      3: 1
+      5: 1
+      7: 2
+      8: 5
+      9: 1529
+    muts:
+      1: 227
+  78_om2121:
+    sites:
+      3: 2
+      4: 175
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 4
+      3: 3
+      4: 540
+    muts:
+      1: 2
+  2_om4:
+    sites:
+      2: 70
+    muts: {}
+  3_om4:
+    sites:
+      2: 16
+    muts:
+      1: 1
+  91_om4:
+    sites:
+      2: 672
+    muts: {}
+  95_om4:
+    sites:
+      4: 3
+    muts:
+      3: 2
+  72_om4_om5:
+    sites:
+      1: 7
+      2: 441
+    muts:
+      1: 52
+  75_om2_om2121_om4_om5:
+    sites:
+      5: 1
+      7: 2
+      8: 64
+    muts: {}
+  76_om4_om5:
+    sites:
+      3: 1
+      6: 1
+      8: 2
+      9: 5
+      10: 1529
+    muts:
+      1: 1306
+      2: 231
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 1
+      2: 65
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 3
+    muts:
+      3: 2
+  87_om5:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  88_om5:
+    sites:
+      1: 1
+      3: 62
+    muts:
+      1: 63
+  90_om5:
+    sites:
+      1: 4
+      3: 3
+      4: 540
+    muts:
+      1: 4
+      3: 6
+      4: 537
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 44
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 13
+      3: 81
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 1
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 47
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 68
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 29
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 176
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 34
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 202
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 5
+      2: 547
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 1
+      3: 62
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 7
+      2: 540
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 209
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 18
+    muts: {}
+  13_om275:
+    sites:
+      1: 2
+      2: 69
+    muts: {}
+  72_om275:
+    sites:
+      2: 445
+    muts: {}
+  73_om275:
+    sites:
+      2: 1
+      3: 4
+      5: 18
+    muts: {}
+  74_om275:
+    sites:
+      1: 6
+      2: 745
+    muts: {}
+  75_om275:
+    sites:
+      5: 1
+      7: 3
+      8: 63
+    muts: {}
+  76_om275:
+    sites:
+      3: 1
+      5: 1
+      7: 2
+      8: 5
+      10: 1529
+    muts:
+      1: 1309
+      2: 228
+  86_om275:
+    sites:
+      1: 1
+      3: 65
+    muts: {}
+  87_om275:
+    sites:
+      2: 9
+    muts: {}
+G4_10_2021_01_10/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 1
+      2: 110
+    muts:
+      1: 21
+  76_BA1:
+    sites:
+      1: 1
+      2: 5809
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      1: 1
+      2: 509
+    muts: {}
+  72_om1:
+    sites:
+      3: 3
+      5: 2659
+    muts:
+      1: 256
+  73_om1:
+    sites:
+      1: 1
+      2: 110
+    muts: {}
+  75_om1:
+    sites:
+      4: 2
+      5: 119
+    muts: {}
+  76_om1:
+    sites:
+      8: 1
+      10: 5809
+    muts:
+      1: 453
+      2: 2
+  77_om1:
+    sites:
+      2: 332
+    muts:
+      1: 332
+  79_om1:
+    sites:
+      1: 1
+      2: 1
+      3: 228
+    muts: {}
+  80_om1:
+    sites:
+      1: 12
+      2: 9590
+    muts: {}
+  81_om1:
+    sites:
+      1: 1
+      2: 4
+      3: 505
+    muts: {}
+  87_om1:
+    sites:
+      2: 69
+    muts: {}
+  88_om1:
+    sites:
+      2: 976
+    muts: {}
+  72_al:
+    sites:
+      1: 2
+      2: 2660
+    muts:
+      1: 218
+      2: 123
+  78_al:
+    sites:
+      2: 1616
+    muts:
+      1: 13
+      2: 33
+  92_al:
+    sites:
+      2: 1
+      3: 812
+    muts:
+      1: 4
+      2: 6
+      3: 28
+  93_al:
+    sites:
+      1: 41
+      2: 587
+    muts:
+      1: 2
+      2: 5
+  73_be:
+    sites:
+      2: 111
+    muts:
+      1: 1
+  92_mu:
+    sites:
+      2: 813
+    muts: {}
+  77_d614g:
+    sites:
+      1: 332
+    muts:
+      1: 332
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 5809
+    muts:
+      1: 5
+  91_AY42_de:
+    sites:
+      2: 2176
+    muts:
+      1: 2
+  76_be_ga:
+    sites:
+      2: 5810
+    muts: {}
+  71_ga:
+    sites:
+      3: 88
+    muts: {}
+  95_ga:
+    sites:
+      2: 89
+    muts: {}
+  31_BA2:
+    sites:
+      1: 1
+      2: 273
+    muts: {}
+  75_BA2:
+    sites:
+      4: 121
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 5809
+    muts:
+      1: 1
+  76_om2:
+    sites:
+      7: 1
+      8: 5809
+    muts:
+      1: 454
+      2: 1
+  72_om2121:
+    sites:
+      2: 2662
+    muts: {}
+  76_om2121:
+    sites:
+      7: 1
+      9: 5809
+    muts:
+      1: 454
+      2: 1
+  78_om2121:
+    sites:
+      4: 1616
+    muts:
+      1: 40
+  90_om2121_om4:
+    sites:
+      4: 3499
+    muts: {}
+  2_om4:
+    sites:
+      2: 110
+    muts: {}
+  3_om4:
+    sites:
+      2: 20
+    muts: {}
+  91_om4:
+    sites:
+      1: 2
+      2: 2173
+    muts: {}
+  95_om4:
+    sites:
+      3: 1
+      4: 88
+    muts:
+      3: 9
+  72_om4_om5:
+    sites:
+      2: 2662
+    muts:
+      1: 256
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 2
+      8: 119
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 1
+      10: 5809
+    muts:
+      1: 5348
+      2: 460
+      3: 1
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 18
+      2: 924
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 89
+    muts:
+      3: 9
+  87_om5:
+    sites:
+      2: 69
+    muts: {}
+  88_om5:
+    sites:
+      2: 2
+      3: 974
+    muts:
+      1: 974
+  90_om5:
+    sites:
+      4: 3499
+    muts:
+      3: 5
+      4: 3494
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 543
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+      3: 273
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 9
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 70
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 570
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 88
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 1616
+    muts:
+      1: 40
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 229
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 505
+    muts: {}
+  84_om2121_om275:
+    sites:
+      2: 4188
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 2
+      3: 974
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 3499
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 628
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 169
+    muts: {}
+  13_om275:
+    sites:
+      1: 2
+      2: 296
+    muts: {}
+  72_om275:
+    sites:
+      1: 3
+      2: 2659
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      5: 111
+    muts: {}
+  74_om275:
+    sites:
+      1: 1
+      2: 959
+    muts: {}
+  75_om275:
+    sites:
+      7: 3
+      8: 118
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      10: 5809
+    muts:
+      1: 5356
+      2: 453
+      3: 1
+  86_om275:
+    sites:
+      1: 18
+      2: 3
+      3: 921
+    muts: {}
+  87_om275:
+    sites:
+      2: 69
+    muts: {}
+F4_10_2021_01_08/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 1
+      2: 29
+    muts:
+      1: 8
+  76_BA1:
+    sites:
+      1: 6
+      2: 5202
+    muts: {}
+  81_BA1:
+    sites:
+      1: 2
+      2: 431
+    muts: {}
+  72_om1:
+    sites:
+      2: 1
+      3: 3
+      5: 2019
+    muts:
+      1: 472
+  73_om1:
+    sites:
+      1: 1
+      2: 29
+    muts: {}
+  75_om1:
+    sites:
+      4: 1
+      5: 42
+    muts: {}
+  76_om1:
+    sites:
+      8: 6
+      10: 5202
+    muts:
+      1: 1244
+      2: 17
+  77_om1:
+    sites:
+      1: 1
+      2: 111
+    muts:
+      1: 112
+  79_om1:
+    sites:
+      2: 2
+      3: 80
+    muts: {}
+  80_om1:
+    sites:
+      1: 19
+      2: 11158
+    muts:
+      1: 32
+  81_om1:
+    sites:
+      1: 2
+      2: 10
+      3: 421
+    muts: {}
+  87_om1:
+    sites:
+      2: 10
+    muts: {}
+  88_om1:
+    sites:
+      2: 659
+    muts: {}
+  72_al:
+    sites:
+      1: 4
+      2: 2019
+    muts:
+      1: 316
+      2: 255
+  78_al:
+    sites:
+      1: 1
+      2: 986
+    muts:
+      1: 32
+      2: 145
+  92_al:
+    sites:
+      3: 736
+    muts:
+      1: 7
+      2: 8
+      3: 51
+  93_al:
+    sites:
+      1: 26
+      2: 120
+    muts:
+      1: 5
+      2: 4
+  73_be:
+    sites:
+      2: 30
+    muts: {}
+  92_mu:
+    sites:
+      2: 736
+    muts: {}
+  77_d614g:
+    sites:
+      1: 112
+    muts:
+      1: 112
+  76_AY42_de:
+    sites:
+      2: 5208
+    muts:
+      1: 1
+  91_AY42_de:
+    sites:
+      2: 514
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      2: 5208
+    muts:
+      1: 764
+      2: 1
+  71_ga:
+    sites:
+      3: 29
+    muts: {}
+  95_ga:
+    sites:
+      2: 3
+    muts: {}
+  31_BA2:
+    sites:
+      2: 187
+    muts: {}
+  75_BA2:
+    sites:
+      4: 43
+    muts: {}
+  76_B16173_ka:
+    sites:
+      2: 5208
+    muts: {}
+  76_om2:
+    sites:
+      7: 6
+      8: 5202
+    muts:
+      1: 1244
+      2: 17
+  72_om2121:
+    sites:
+      1: 5
+      2: 2018
+    muts: {}
+  76_om2121:
+    sites:
+      8: 6
+      9: 5202
+    muts:
+      1: 1245
+      2: 17
+  78_om2121:
+    sites:
+      4: 987
+    muts:
+      1: 226
+      2: 1
+  90_om2121_om4:
+    sites:
+      1: 1
+      4: 3281
+    muts: {}
+  2_om4:
+    sites:
+      2: 52
+    muts: {}
+  3_om4:
+    sites:
+      2: 16
+    muts: {}
+  91_om4:
+    sites:
+      2: 514
+    muts: {}
+  95_om4:
+    sites:
+      4: 3
+    muts: {}
+  72_om4_om5:
+    sites:
+      1: 4
+      2: 2019
+    muts:
+      1: 472
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 1
+      8: 42
+    muts: {}
+  76_om4_om5:
+    sites:
+      9: 6
+      10: 5202
+    muts:
+      1: 3941
+      2: 1246
+      3: 18
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 5
+      2: 762
+    muts:
+      1: 45
+  95_om2121_om5:
+    sites:
+      3: 3
+    muts: {}
+  87_om5:
+    sites:
+      2: 10
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 658
+    muts:
+      1: 658
+  90_om5:
+    sites:
+      1: 1
+      4: 3281
+    muts:
+      1: 1
+      3: 1
+      4: 3280
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 331
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      3: 187
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 1
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 49
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 309
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 29
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 987
+    muts:
+      1: 226
+      2: 1
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 81
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 10
+      2: 421
+    muts: {}
+  84_om2121_om275:
+    sites:
+      2: 3228
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 658
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 1
+      2: 3281
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 146
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 94
+    muts: {}
+  13_om275:
+    sites:
+      1: 9
+      2: 257
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 2019
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      4: 1
+      5: 29
+    muts: {}
+  74_om275:
+    sites:
+      1: 2
+      2: 1839
+    muts: {}
+  75_om275:
+    sites:
+      7: 1
+      8: 42
+    muts: {}
+  76_om275:
+    sites:
+      8: 6
+      10: 5202
+    muts:
+      1: 3948
+      2: 1243
+      3: 17
+  86_om275:
+    sites:
+      1: 4
+      2: 2
+      3: 761
+    muts:
+      1: 45
+  87_om275:
+    sites:
+      2: 10
+    muts: {}
+E4_10_2021_01_06/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 1
+      2: 51
+    muts:
+      1: 15
+  76_BA1:
+    sites:
+      1: 7
+      2: 10605
+    muts:
+      1: 2
+  81_BA1:
+    sites:
+      1: 1
+      2: 639
+    muts: {}
+  72_om1:
+    sites:
+      5: 3699
+    muts: {}
+  73_om1:
+    sites:
+      1: 1
+      2: 51
+    muts: {}
+  75_om1:
+    sites:
+      4: 1
+      5: 28
+    muts: {}
+  76_om1:
+    sites:
+      8: 7
+      9: 1
+      10: 10604
+    muts:
+      1: 698
+      2: 1
+  77_om1:
+    sites:
+      2: 206
+    muts:
+      1: 201
+  79_om1:
+    sites:
+      2: 2
+      3: 159
+    muts: {}
+  80_om1:
+    sites:
+      1: 35
+      2: 18900
+    muts:
+      1: 2
+  81_om1:
+    sites:
+      1: 1
+      2: 12
+      3: 627
+    muts: {}
+  87_om1:
+    sites:
+      2: 16
+    muts: {}
+  88_om1:
+    sites:
+      2: 1253
+    muts: {}
+  72_al:
+    sites:
+      2: 3699
+    muts: {}
+  78_al:
+    sites:
+      2: 3008
+    muts:
+      1: 202
+      2: 189
+  92_al:
+    sites:
+      2: 1
+      3: 1383
+    muts: {}
+  93_al:
+    sites:
+      1: 17
+      2: 120
+    muts:
+      1: 1
+      2: 13
+  73_be:
+    sites:
+      2: 52
+    muts: {}
+  92_mu:
+    sites:
+      2: 1384
+    muts: {}
+  77_d614g:
+    sites:
+      1: 206
+    muts:
+      1: 201
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 10611
+    muts:
+      1: 339
+  91_AY42_de:
+    sites:
+      2: 785
+    muts:
+      1: 9
+  76_be_ga:
+    sites:
+      2: 10612
+    muts:
+      1: 341
+  71_ga:
+    sites:
+      3: 69
+    muts: {}
+  95_ga:
+    sites:
+      2: 2
+    muts: {}
+  31_BA2:
+    sites:
+      1: 2
+      2: 162
+    muts: {}
+  75_BA2:
+    sites:
+      4: 29
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 10611
+    muts:
+      1: 334
+  76_om2:
+    sites:
+      7: 8
+      8: 10604
+    muts:
+      1: 696
+      2: 1
+  72_om2121:
+    sites:
+      1: 2
+      2: 3697
+    muts:
+      1: 2
+  76_om2121:
+    sites:
+      7: 1
+      8: 7
+      9: 10604
+    muts:
+      1: 698
+      2: 1
+  78_om2121:
+    sites:
+      3: 3
+      4: 3005
+    muts:
+      1: 375
+  90_om2121_om4:
+    sites:
+      4: 7473
+    muts:
+      1: 161
+  2_om4:
+    sites:
+      2: 104
+    muts: {}
+  3_om4:
+    sites:
+      2: 10
+    muts: {}
+  91_om4:
+    sites:
+      1: 2
+      2: 782
+    muts: {}
+  95_om4:
+    sites:
+      4: 2
+    muts:
+      3: 1
+  72_om4_om5:
+    sites:
+      2: 3699
+    muts:
+      1: 1
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 1
+      8: 28
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 1
+      9: 7
+      10: 10604
+    muts:
+      1: 9580
+      2: 1007
+      3: 16
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 4
+      2: 1168
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 2
+    muts:
+      3: 1
+  87_om5:
+    sites:
+      2: 16
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 1252
+    muts:
+      1: 1252
+  90_om5:
+    sites:
+      4: 7473
+    muts:
+      3: 164
+      4: 7309
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 869
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 2
+      3: 162
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 5
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 51
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 548
+    muts:
+      1: 1
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 69
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 3
+      3: 3005
+    muts:
+      1: 373
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 161
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 12
+      2: 627
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 5491
+    muts:
+      1: 966
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 1252
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 7473
+    muts:
+      1: 158
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 137
+    muts:
+      1: 2
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 275
+    muts: {}
+  13_om275:
+    sites:
+      1: 7
+      2: 639
+    muts: {}
+  72_om275:
+    sites:
+      1: 2
+      2: 3697
+    muts:
+      1: 3
+  73_om275:
+    sites:
+      5: 52
+    muts: {}
+  74_om275:
+    sites:
+      1: 1
+      2: 4286
+    muts: {}
+  75_om275:
+    sites:
+      7: 1
+      8: 28
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      8: 6
+      9: 1
+      10: 10604
+    muts:
+      1: 9919
+      2: 690
+      3: 1
+  86_om275:
+    sites:
+      1: 3
+      2: 2
+      3: 1167
+    muts: {}
+  87_om275:
+    sites:
+      2: 16
+    muts: {}
+D4_10_2021_01_04/20210129_JG6LR:
+  73_AY42:
+    sites: {}
+    muts: {}
+  76_BA1:
+    sites:
+      1: 2
+      2: 9615
+    muts:
+      1: 4
+  81_BA1:
+    sites:
+      2: 35
+    muts: {}
+  72_om1:
+    sites:
+      5: 3036
+    muts:
+      1: 100
+  73_om1:
+    sites: {}
+    muts: {}
+  75_om1:
+    sites:
+      5: 1
+    muts: {}
+  76_om1:
+    sites:
+      8: 2
+      10: 9615
+    muts:
+      1: 3231
+      2: 49
+  77_om1:
+    sites:
+      2: 8
+    muts:
+      1: 8
+  79_om1:
+    sites:
+      3: 8
+    muts: {}
+  80_om1:
+    sites:
+      1: 4
+      2: 11465
+    muts:
+      1: 2
+  81_om1:
+    sites:
+      2: 1
+      3: 34
+    muts: {}
+  87_om1:
+    sites:
+      2: 1
+    muts: {}
+  88_om1:
+    sites:
+      2: 1012
+    muts: {}
+  72_al:
+    sites:
+      2: 3036
+    muts:
+      1: 100
+  78_al:
+    sites:
+      2: 2022
+    muts:
+      1: 19
+      2: 68
+  92_al:
+    sites:
+      3: 542
+    muts:
+      2: 1
+      3: 9
+  93_al:
+    sites:
+      1: 1
+      2: 5
+    muts:
+      2: 1
+  73_be:
+    sites: {}
+    muts: {}
+  92_mu:
+    sites:
+      2: 542
+    muts: {}
+  77_d614g:
+    sites:
+      1: 8
+    muts:
+      1: 8
+  76_AY42_de:
+    sites:
+      1: 2
+      2: 9615
+    muts:
+      1: 3
+  91_AY42_de:
+    sites:
+      2: 10
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 1
+      2: 9616
+    muts:
+      1: 482
+  71_ga:
+    sites:
+      3: 1
+    muts: {}
+  95_ga:
+    sites: {}
+    muts: {}
+  31_BA2:
+    sites:
+      2: 8
+    muts: {}
+  75_BA2:
+    sites:
+      4: 1
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 3
+      2: 9614
+    muts: {}
+  76_om2:
+    sites:
+      7: 2
+      8: 9615
+    muts:
+      1: 3231
+      2: 47
+  72_om2121:
+    sites:
+      2: 3036
+    muts:
+      1: 4
+  76_om2121:
+    sites:
+      7: 2
+      9: 9615
+    muts:
+      1: 3232
+      2: 47
+  78_om2121:
+    sites:
+      4: 2022
+    muts:
+      1: 81
+  90_om2121_om4:
+    sites:
+      4: 5007
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      1: 1
+      2: 148
+    muts: {}
+  3_om4:
+    sites: {}
+    muts: {}
+  91_om4:
+    sites:
+      2: 10
+    muts: {}
+  95_om4:
+    sites: {}
+    muts: {}
+  72_om4_om5:
+    sites:
+      2: 3036
+    muts:
+      1: 100
+  75_om2_om2121_om4_om5:
+    sites:
+      8: 1
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 2
+      10: 9615
+    muts:
+      1: 6328
+      2: 3237
+      3: 49
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 2
+      2: 986
+    muts:
+      1: 2
+  95_om2121_om5:
+    sites: {}
+    muts: {}
+  87_om5:
+    sites:
+      2: 1
+    muts: {}
+  88_om5:
+    sites:
+      3: 1012
+    muts:
+      1: 1012
+  90_om5:
+    sites:
+      4: 5007
+    muts:
+      3: 5
+      4: 5002
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 429
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      3: 8
+    muts: {}
+  33_om2_om2121_om275:
+    sites: {}
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 346
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 1
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 2022
+    muts:
+      1: 80
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 8
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 34
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 3509
+    muts:
+      1: 86
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 1012
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 5007
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 6
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 152
+    muts: {}
+  13_om275:
+    sites:
+      2: 4
+    muts: {}
+  72_om275:
+    sites:
+      2: 3036
+    muts:
+      1: 3
+  73_om275:
+    sites: {}
+    muts: {}
+  74_om275:
+    sites:
+      2: 3968
+    muts: {}
+  75_om275:
+    sites:
+      8: 1
+    muts: {}
+  76_om275:
+    sites:
+      7: 2
+      10: 9615
+    muts:
+      1: 6337
+      2: 3231
+      3: 47
+  86_om275:
+    sites:
+      1: 2
+      3: 986
+    muts:
+      1: 3
+  87_om275:
+    sites:
+      2: 1
+    muts: {}
+C4_10_2021_01_02/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 9
+      2: 47
+    muts:
+      1: 19
+  76_BA1:
+    sites:
+      1: 9
+      2: 3870
+    muts: {}
+  81_BA1:
+    sites:
+      1: 1
+      2: 423
+    muts: {}
+  72_om1:
+    sites:
+      1: 1
+      2: 6
+      3: 4
+      5: 940
+    muts:
+      1: 77
+      2: 1
+  73_om1:
+    sites:
+      1: 9
+      2: 47
+    muts: {}
+  75_om1:
+    sites:
+      4: 3
+      5: 47
+    muts: {}
+  76_om1:
+    sites:
+      2: 1
+      4: 1
+      5: 1
+      8: 6
+      10: 3870
+    muts:
+      1: 964
+      2: 1
+  77_om1:
+    sites:
+      1: 1
+      2: 172
+    muts:
+      1: 172
+  79_om1:
+    sites:
+      1: 7
+      2: 16
+      3: 75
+    muts: {}
+  80_om1:
+    sites:
+      1: 27
+      2: 5664
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      2: 8
+      3: 416
+    muts: {}
+  87_om1:
+    sites:
+      1: 1
+      2: 37
+    muts: {}
+  88_om1:
+    sites:
+      1: 5
+      2: 483
+    muts: {}
+  72_al:
+    sites:
+      1: 10
+      2: 940
+    muts:
+      1: 77
+  78_al:
+    sites:
+      1: 3
+      2: 1183
+    muts:
+      1: 1
+  92_al:
+    sites:
+      2: 1
+      3: 355
+    muts:
+      1: 2
+      2: 6
+      3: 20
+  93_al:
+    sites:
+      1: 104
+      2: 310
+    muts:
+      1: 8
+      2: 20
+  73_be:
+    sites:
+      1: 1
+      2: 52
+    muts: {}
+  92_mu:
+    sites:
+      1: 1
+      2: 356
+    muts: {}
+  77_d614g:
+    sites:
+      1: 172
+    muts:
+      1: 172
+  76_AY42_de:
+    sites:
+      1: 4
+      2: 3874
+    muts:
+      1: 211
+  91_AY42_de:
+    sites:
+      1: 8
+      2: 1065
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 1
+      2: 3876
+    muts: {}
+  71_ga:
+    sites:
+      3: 65
+    muts: {}
+  95_ga:
+    sites:
+      2: 53
+    muts: {}
+  31_BA2:
+    sites:
+      1: 3
+      2: 163
+    muts: {}
+  75_BA2:
+    sites:
+      4: 50
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 5
+      2: 3873
+    muts:
+      1: 209
+  76_om2:
+    sites:
+      1: 1
+      3: 1
+      4: 1
+      7: 6
+      8: 3870
+    muts:
+      1: 964
+      2: 1
+  72_om2121:
+    sites:
+      1: 94
+      2: 940
+    muts: {}
+  76_om2121:
+    sites:
+      2: 1
+      4: 2
+      7: 3
+      8: 3
+      9: 3870
+    muts:
+      1: 965
+      2: 1
+  78_om2121:
+    sites:
+      3: 2
+      4: 1183
+    muts:
+      1: 1
+  90_om2121_om4:
+    sites:
+      1: 5
+      3: 14
+      4: 1900
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      1: 1
+      2: 104
+    muts: {}
+  3_om4:
+    sites:
+      1: 1
+      2: 14
+    muts: {}
+  91_om4:
+    sites:
+      2: 1070
+    muts: {}
+  95_om4:
+    sites:
+      3: 3
+      4: 50
+    muts:
+      3: 3
+  72_om4_om5:
+    sites:
+      1: 10
+      2: 940
+    muts:
+      1: 77
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 3
+      8: 47
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 1
+      4: 2
+      8: 3
+      9: 3
+      10: 3870
+    muts:
+      1: 2722
+      2: 1131
+      3: 23
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 13
+      2: 434
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 53
+    muts:
+      3: 3
+  87_om5:
+    sites:
+      1: 1
+      2: 37
+    muts: {}
+  88_om5:
+    sites:
+      1: 3
+      2: 10
+      3: 477
+    muts:
+      1: 483
+  90_om5:
+    sites:
+      1: 5
+      3: 14
+      4: 1900
+    muts:
+      1: 5
+      3: 17
+      4: 1897
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 218
+    muts:
+      1: 1
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 8
+      3: 156
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 2
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 48
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 164
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 65
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 1185
+    muts:
+      1: 1
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 12
+      2: 80
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 7
+      2: 417
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 16
+      2: 3522
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 3
+      2: 10
+      3: 477
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 15
+      2: 1900
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 3
+      3: 403
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 71
+    muts:
+      1: 1
+  13_om275:
+    sites:
+      1: 4
+      2: 180
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 942
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      2: 3
+      3: 4
+      4: 1
+      5: 48
+    muts: {}
+  74_om275:
+    sites:
+      1: 7
+      2: 2052
+    muts: {}
+  75_om275:
+    sites:
+      7: 4
+      8: 46
+    muts: {}
+  76_om275:
+    sites:
+      3: 2
+      5: 1
+      7: 3
+      8: 3
+      10: 3870
+    muts:
+      1: 2911
+      2: 963
+      3: 1
+  86_om275:
+    sites:
+      1: 11
+      2: 7
+      3: 429
+    muts:
+      1: 1
+  87_om275:
+    sites:
+      2: 37
+    muts:
+      1: 1
+B4_10_2020_12_31/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 18
+      2: 174
+    muts:
+      1: 70
+  76_BA1:
+    sites:
+      1: 13
+      2: 3398
+    muts:
+      1: 2
+  81_BA1:
+    sites:
+      1: 3
+      2: 736
+    muts: {}
+  72_om1:
+    sites:
+      2: 6
+      3: 7
+      4: 1
+      5: 1395
+    muts:
+      1: 197
+  73_om1:
+    sites:
+      1: 17
+      2: 174
+    muts: {}
+  75_om1:
+    sites:
+      4: 16
+      5: 162
+    muts:
+      1: 1
+  76_om1:
+    sites:
+      4: 1
+      5: 3
+      6: 2
+      7: 3
+      8: 7
+      10: 3395
+    muts:
+      1: 714
+      2: 5
+  77_om1:
+    sites:
+      1: 7
+      2: 405
+    muts:
+      1: 408
+  79_om1:
+    sites:
+      1: 2
+      2: 20
+      3: 211
+    muts: {}
+  80_om1:
+    sites:
+      1: 27
+      2: 4561
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      1: 3
+      2: 9
+      3: 727
+    muts: {}
+  87_om1:
+    sites:
+      1: 7
+      2: 118
+    muts: {}
+  88_om1:
+    sites:
+      1: 2
+      2: 635
+    muts: {}
+  72_al:
+    sites:
+      1: 14
+      2: 1395
+    muts:
+      1: 141
+      2: 84
+  78_al:
+    sites:
+      1: 2
+      2: 890
+    muts:
+      1: 1
+  92_al:
+    sites:
+      2: 1
+      3: 395
+    muts: {}
+  93_al:
+    sites:
+      1: 108
+      2: 494
+    muts:
+      1: 15
+      2: 15
+  73_be:
+    sites:
+      1: 2
+      2: 187
+    muts:
+      1: 1
+  92_mu:
+    sites:
+      1: 2
+      2: 395
+    muts: {}
+  77_d614g:
+    sites:
+      1: 408
+    muts:
+      1: 408
+  76_AY42_de:
+    sites:
+      1: 6
+      2: 3403
+    muts:
+      1: 143
+  91_AY42_de:
+    sites:
+      1: 7
+      2: 1644
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 7
+      2: 3403
+    muts:
+      1: 156
+  71_ga:
+    sites:
+      1: 1
+      3: 211
+    muts: {}
+  95_ga:
+    sites:
+      2: 16
+    muts: {}
+  31_BA2:
+    sites:
+      1: 16
+      2: 381
+    muts: {}
+  75_BA2:
+    sites:
+      2: 3
+      4: 175
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 8
+      2: 3402
+    muts:
+      1: 142
+  76_om2:
+    sites:
+      3: 1
+      4: 3
+      5: 5
+      7: 7
+      8: 3395
+    muts:
+      1: 712
+      2: 5
+  72_om2121:
+    sites:
+      1: 12
+      2: 1397
+    muts:
+      1: 1
+  76_om2121:
+    sites:
+      4: 2
+      5: 3
+      6: 4
+      7: 6
+      8: 1
+      9: 3395
+    muts:
+      1: 712
+      2: 5
+  78_om2121:
+    sites:
+      3: 3
+      4: 888
+    muts:
+      1: 1
+  90_om2121_om4:
+    sites:
+      1: 8
+      2: 1
+      3: 13
+      4: 3275
+    muts: {}
+  2_om4:
+    sites:
+      2: 127
+    muts: {}
+  3_om4:
+    sites:
+      2: 35
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 1643
+    muts:
+      1: 1
+  95_om4:
+    sites:
+      4: 16
+    muts:
+      3: 4
+  72_om4_om5:
+    sites:
+      1: 13
+      2: 1396
+    muts:
+      1: 198
+  75_om2_om2121_om4_om5:
+    sites:
+      5: 3
+      7: 13
+      8: 162
+    muts:
+      1: 1
+  76_om4_om5:
+    sites:
+      4: 1
+      5: 1
+      6: 3
+      7: 4
+      8: 6
+      9: 1
+      10: 3395
+    muts:
+      1: 2554
+      2: 840
+      3: 12
+      4: 1
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 20
+      2: 435
+    muts:
+      1: 20
+  95_om2121_om5:
+    sites:
+      3: 16
+    muts:
+      3: 4
+  87_om5:
+    sites:
+      1: 7
+      2: 118
+    muts: {}
+  88_om5:
+    sites:
+      1: 44
+      2: 2
+      3: 633
+    muts:
+      1: 675
+  90_om5:
+    sites:
+      1: 8
+      2: 1
+      3: 13
+      4: 3275
+    muts:
+      1: 8
+      2: 1
+      3: 19
+      4: 3269
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 153
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 17
+      3: 375
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 15
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 451
+    muts:
+      1: 1
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 3
+      2: 232
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 211
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 2
+      3: 889
+    muts:
+      1: 1
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 15
+      2: 218
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 9
+      2: 727
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 12
+      2: 2112
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 44
+      2: 2
+      3: 633
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 22
+      2: 3275
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 1
+      3: 598
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 116
+    muts: {}
+  13_om275:
+    sites:
+      1: 8
+      2: 455
+    muts: {}
+  72_om275:
+    sites:
+      1: 2
+      2: 1400
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      1: 1
+      2: 5
+      3: 6
+      4: 2
+      5: 179
+    muts: {}
+  74_om275:
+    sites:
+      1: 16
+      2: 2037
+    muts: {}
+  75_om275:
+    sites:
+      5: 3
+      7: 17
+      8: 158
+    muts:
+      1: 1
+  76_om275:
+    sites:
+      4: 1
+      5: 2
+      7: 10
+      8: 3
+      10: 3395
+    muts:
+      1: 2693
+      2: 712
+      3: 5
+  86_om275:
+    sites:
+      1: 19
+      2: 4
+      3: 432
+    muts:
+      1: 20
+  87_om275:
+    sites:
+      2: 119
+    muts: {}
+A4_10_2020_12_29/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 3
+      2: 280
+    muts:
+      1: 115
+  76_BA1:
+    sites:
+      1: 3
+      2: 5081
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      1: 1
+      2: 606
+    muts: {}
+  72_om1:
+    sites:
+      3: 2
+      5: 1906
+    muts:
+      1: 79
+  73_om1:
+    sites:
+      1: 3
+      2: 280
+    muts: {}
+  75_om1:
+    sites:
+      4: 3
+      5: 280
+    muts: {}
+  76_om1:
+    sites:
+      8: 3
+      10: 5081
+    muts:
+      1: 451
+      2: 4
+  77_om1:
+    sites:
+      2: 410
+    muts:
+      1: 410
+  79_om1:
+    sites:
+      2: 1
+      3: 163
+    muts: {}
+  80_om1:
+    sites:
+      1: 12
+      2: 8255
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      1: 1
+      2: 11
+      3: 595
+    muts: {}
+  87_om1:
+    sites:
+      2: 136
+    muts: {}
+  88_om1:
+    sites:
+      2: 933
+    muts:
+      1: 1
+  72_al:
+    sites:
+      1: 2
+      2: 1906
+    muts:
+      1: 39
+      2: 56
+  78_al:
+    sites:
+      1: 1
+      2: 1489
+    muts:
+      1: 16
+      2: 54
+  92_al:
+    sites:
+      3: 645
+    muts:
+      1: 4
+      2: 3
+      3: 34
+  93_al:
+    sites:
+      1: 42
+      2: 550
+    muts:
+      1: 30
+      2: 17
+  73_be:
+    sites:
+      2: 283
+    muts: {}
+  92_mu:
+    sites:
+      2: 645
+    muts: {}
+  77_d614g:
+    sites:
+      1: 410
+    muts:
+      1: 410
+  76_AY42_de:
+    sites:
+      2: 5084
+    muts:
+      1: 6
+  91_AY42_de:
+    sites:
+      2: 1934
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      2: 5084
+    muts:
+      1: 169
+  71_ga:
+    sites:
+      3: 193
+    muts:
+      1: 1
+  95_ga:
+    sites:
+      2: 17
+    muts: {}
+  31_BA2:
+    sites:
+      1: 4
+      2: 338
+    muts:
+      1: 1
+  75_BA2:
+    sites:
+      4: 283
+    muts:
+      1: 1
+  76_B16173_ka:
+    sites:
+      2: 5084
+    muts:
+      1: 1
+  76_om2:
+    sites:
+      7: 3
+      8: 5081
+    muts:
+      1: 450
+      2: 4
+  72_om2121:
+    sites:
+      1: 1
+      2: 1907
+    muts:
+      1: 1
+  76_om2121:
+    sites:
+      8: 3
+      9: 5081
+    muts:
+      1: 451
+      2: 4
+  78_om2121:
+    sites:
+      2: 1
+      4: 1489
+    muts:
+      1: 65
+  90_om2121_om4:
+    sites:
+      4: 4108
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      2: 120
+    muts: {}
+  3_om4:
+    sites:
+      1: 1
+      2: 11
+    muts: {}
+  91_om4:
+    sites:
+      1: 2
+      2: 1932
+    muts: {}
+  95_om4:
+    sites:
+      4: 17
+    muts:
+      3: 9
+  72_om4_om5:
+    sites:
+      2: 1908
+    muts:
+      1: 80
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 3
+      8: 280
+    muts:
+      1: 1
+  76_om4_om5:
+    sites:
+      9: 3
+      10: 5081
+    muts:
+      1: 4623
+      2: 455
+      3: 4
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 12
+      2: 750
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 17
+    muts:
+      3: 9
+  87_om5:
+    sites:
+      2: 136
+    muts: {}
+  88_om5:
+    sites:
+      2: 3
+      3: 930
+    muts:
+      1: 929
+      2: 1
+  90_om5:
+    sites:
+      4: 4108
+    muts:
+      3: 1
+      4: 4107
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 424
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 4
+      3: 338
+    muts:
+      1: 2
+  33_om2_om2121_om275:
+    sites:
+      2: 20
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 259
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 176
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 193
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      1: 1
+      3: 1489
+    muts:
+      1: 65
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 164
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 11
+      2: 595
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 2519
+    muts:
+      1: 93
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 3
+      3: 930
+    muts:
+      1: 1
+  90_om2_om275:
+    sites:
+      2: 4108
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 592
+    muts:
+      1: 1
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 138
+    muts: {}
+  13_om275:
+    sites:
+      1: 7
+      2: 500
+    muts: {}
+  72_om275:
+    sites:
+      1: 2
+      2: 1906
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      4: 1
+      5: 282
+    muts: {}
+  74_om275:
+    sites:
+      1: 2
+      2: 2229
+    muts:
+      1: 2
+  75_om275:
+    sites:
+      7: 3
+      8: 280
+    muts:
+      1: 1
+  76_om275:
+    sites:
+      8: 3
+      10: 5081
+    muts:
+      1: 4631
+      2: 449
+      3: 4
+  86_om275:
+    sites:
+      1: 12
+      2: 2
+      3: 748
+    muts:
+      1: 1
+  87_om275:
+    sites:
+      2: 136
+    muts: {}
+H3_10_2020_12_25/20210129_JG6LR:
+  73_AY42:
+    sites:
+      2: 400
+    muts:
+      1: 175
+  76_BA1:
+    sites:
+      1: 1
+      2: 4269
+    muts: {}
+  81_BA1:
+    sites:
+      2: 770
+    muts:
+      1: 1
+  72_om1:
+    sites:
+      2: 1
+      3: 2
+      5: 4033
+    muts:
+      1: 766
+  73_om1:
+    sites:
+      2: 400
+    muts: {}
+  75_om1:
+    sites:
+      3: 1
+      5: 942
+    muts: {}
+  76_om1:
+    sites:
+      8: 1
+      9: 2
+      10: 4267
+    muts:
+      1: 576
+      2: 5
+  77_om1:
+    sites:
+      2: 730
+    muts:
+      1: 712
+  79_om1:
+    sites:
+      1: 1
+      3: 402
+    muts: {}
+  80_om1:
+    sites:
+      1: 13
+      2: 13290
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      2: 4
+      3: 766
+    muts:
+      1: 1
+  87_om1:
+    sites:
+      2: 255
+    muts: {}
+  88_om1:
+    sites:
+      2: 1403
+    muts: {}
+  72_al:
+    sites:
+      1: 2
+      2: 4034
+    muts:
+      1: 499
+      2: 416
+  78_al:
+    sites:
+      2: 4009
+    muts:
+      1: 72
+      2: 345
+  92_al:
+    sites:
+      3: 1627
+    muts:
+      1: 22
+      2: 30
+      3: 151
+  93_al:
+    sites:
+      1: 29
+      2: 1431
+    muts:
+      1: 44
+      2: 152
+  73_be:
+    sites:
+      2: 400
+    muts: {}
+  92_mu:
+    sites:
+      2: 1627
+    muts: {}
+  77_d614g:
+    sites:
+      1: 730
+    muts:
+      1: 712
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 4269
+    muts:
+      1: 1
+  91_AY42_de:
+    sites:
+      2: 6775
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      2: 4270
+    muts:
+      1: 383
+      2: 1
+  71_ga:
+    sites:
+      3: 323
+    muts:
+      1: 6
+  95_ga:
+    sites:
+      2: 325
+    muts: {}
+  31_BA2:
+    sites:
+      1: 4
+      2: 968
+    muts:
+      1: 1
+  75_BA2:
+    sites:
+      1: 1
+      4: 942
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 4269
+    muts: {}
+  76_om2:
+    sites:
+      7: 3
+      8: 4267
+    muts:
+      1: 576
+      2: 5
+  72_om2121:
+    sites:
+      1: 2
+      2: 4034
+    muts:
+      1: 1
+  76_om2121:
+    sites:
+      7: 1
+      8: 2
+      9: 4267
+    muts:
+      1: 577
+      2: 5
+  78_om2121:
+    sites:
+      4: 4009
+    muts:
+      1: 383
+  90_om2121_om4:
+    sites:
+      3: 1
+      4: 2084
+    muts:
+      1: 1
+  2_om4:
+    sites:
+      2: 72
+    muts: {}
+  3_om4:
+    sites:
+      1: 2
+      2: 235
+    muts: {}
+  91_om4:
+    sites:
+      1: 2
+      2: 6769
+    muts: {}
+  95_om4:
+    sites:
+      3: 2
+      4: 323
+    muts:
+      1: 1
+      3: 16
+  72_om4_om5:
+    sites:
+      1: 2
+      2: 4034
+    muts:
+      1: 765
+  75_om2_om2121_om4_om5:
+    sites:
+      3: 1
+      8: 942
+    muts:
+      1: 1
+  76_om4_om5:
+    sites:
+      8: 1
+      9: 2
+      10: 4267
+    muts:
+      1: 3682
+      2: 578
+      3: 7
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 23
+      2: 1647
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 325
+    muts:
+      1: 1
+      3: 16
+  87_om5:
+    sites:
+      2: 255
+    muts: {}
+  88_om5:
+    sites:
+      3: 1403
+    muts:
+      1: 1402
+  90_om5:
+    sites:
+      3: 1
+      4: 2084
+    muts:
+      3: 4
+      4: 2081
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 922
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 4
+      3: 967
+    muts:
+      1: 1
+  33_om2_om2121_om275:
+    sites:
+      2: 62
+    muts:
+      1: 1
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 919
+    muts:
+      1: 1
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 768
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 323
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 4009
+    muts:
+      1: 382
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 402
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 766
+    muts:
+      1: 1
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 7643
+    muts:
+      1: 1
+  88_om2_om2121_om275_om4:
+    sites:
+      3: 1403
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 1
+      2: 2084
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 1460
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 6
+      2: 517
+    muts:
+      1: 40
+  13_om275:
+    sites:
+      1: 12
+      2: 1097
+    muts: {}
+  72_om275:
+    sites:
+      1: 3
+      2: 4032
+    muts:
+      1: 2
+  73_om275:
+    sites:
+      5: 400
+    muts:
+      1: 2
+  74_om275:
+    sites:
+      1: 4
+      2: 1825
+    muts: {}
+  75_om275:
+    sites:
+      3: 1
+      8: 942
+    muts:
+      1: 1
+  76_om275:
+    sites:
+      7: 1
+      9: 2
+      10: 4267
+    muts:
+      1: 3690
+      2: 575
+      3: 5
+  86_om275:
+    sites:
+      1: 21
+      2: 13
+      3: 1636
+    muts:
+      1: 1
+  87_om275:
+    sites:
+      2: 255
+    muts: {}
+G3_10_2020_12_23/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 1
+      2: 29
+    muts:
+      1: 6
+  76_BA1:
+    sites:
+      1: 5
+      2: 1323
+    muts: {}
+  81_BA1:
+    sites:
+      2: 290
+    muts: {}
+  72_om1:
+    sites:
+      2: 4
+      3: 5
+      5: 723
+    muts:
+      1: 34
+  73_om1:
+    sites:
+      1: 1
+      2: 29
+    muts: {}
+  75_om1:
+    sites:
+      1: 1
+      3: 1
+      4: 4
+      5: 125
+    muts: {}
+  76_om1:
+    sites:
+      8: 6
+      10: 1322
+    muts:
+      1: 158
+  77_om1:
+    sites:
+      1: 4
+      2: 75
+    muts:
+      1: 75
+  79_om1:
+    sites:
+      2: 2
+      3: 46
+    muts: {}
+  80_om1:
+    sites:
+      1: 19
+      2: 3357
+    muts: {}
+  81_om1:
+    sites:
+      2: 1
+      3: 289
+    muts: {}
+  87_om1:
+    sites:
+      1: 16
+      2: 35
+    muts: {}
+  88_om1:
+    sites:
+      2: 404
+    muts: {}
+  72_al:
+    sites:
+      1: 9
+      2: 723
+    muts:
+      1: 34
+  78_al:
+    sites:
+      2: 414
+    muts:
+      1: 4
+      2: 18
+  92_al:
+    sites:
+      1: 1
+      2: 1
+      3: 266
+    muts:
+      1: 5
+      2: 3
+      3: 18
+  93_al:
+    sites:
+      1: 157
+      2: 531
+    muts:
+      1: 23
+      2: 4
+  73_be:
+    sites:
+      2: 30
+    muts: {}
+  92_mu:
+    sites:
+      1: 2
+      2: 266
+    muts: {}
+  77_d614g:
+    sites:
+      1: 75
+    muts:
+      1: 75
+  76_AY42_de:
+    sites:
+      1: 5
+      2: 1323
+    muts: {}
+  91_AY42_de:
+    sites:
+      1: 10
+      2: 911
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 1
+      2: 1327
+    muts: {}
+  71_ga:
+    sites:
+      3: 37
+    muts: {}
+  95_ga:
+    sites:
+      2: 89
+    muts: {}
+  31_BA2:
+    sites:
+      2: 160
+    muts: {}
+  75_BA2:
+    sites:
+      2: 3
+      4: 128
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 5
+      2: 1323
+    muts: {}
+  76_om2:
+    sites:
+      6: 1
+      7: 5
+      8: 1322
+    muts:
+      1: 158
+  72_om2121:
+    sites:
+      1: 11
+      2: 721
+    muts: {}
+  76_om2121:
+    sites:
+      7: 6
+      9: 1322
+    muts:
+      1: 158
+  78_om2121:
+    sites:
+      3: 1
+      4: 413
+    muts:
+      1: 20
+  90_om2121_om4:
+    sites:
+      1: 2
+      4: 538
+    muts: {}
+  2_om4:
+    sites:
+      2: 25
+    muts:
+      1: 2
+  3_om4:
+    sites:
+      2: 39
+    muts: {}
+  91_om4:
+    sites:
+      2: 920
+    muts: {}
+  95_om4:
+    sites:
+      3: 2
+      4: 87
+    muts:
+      3: 8
+  72_om4_om5:
+    sites:
+      1: 9
+      2: 723
+    muts:
+      1: 34
+  75_om2_om2121_om4_om5:
+    sites:
+      3: 1
+      5: 2
+      6: 1
+      7: 2
+      8: 125
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 6
+      10: 1322
+    muts:
+      1: 1170
+      2: 158
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 4
+      2: 623
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 89
+    muts:
+      3: 8
+  87_om5:
+    sites:
+      1: 16
+      2: 35
+    muts: {}
+  88_om5:
+    sites:
+      2: 2
+      3: 402
+    muts:
+      1: 402
+  90_om5:
+    sites:
+      1: 2
+      4: 538
+    muts:
+      1: 2
+      4: 538
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 66
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 3
+      3: 157
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 242
+    muts:
+      1: 1
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 192
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 37
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 413
+    muts:
+      1: 20
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 47
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 289
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 8
+      2: 1097
+    muts:
+      1: 52
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 2
+      3: 402
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 2
+      2: 538
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 5
+      3: 670
+    muts:
+      1: 1
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 104
+    muts: {}
+  13_om275:
+    sites:
+      1: 5
+      2: 247
+    muts: {}
+  72_om275:
+    sites:
+      2: 727
+    muts:
+      1: 1
+  73_om275:
+    sites:
+      2: 1
+      5: 29
+    muts: {}
+  74_om275:
+    sites:
+      1: 5
+      2: 1014
+    muts: {}
+  75_om275:
+    sites:
+      3: 1
+      5: 2
+      6: 1
+      7: 2
+      8: 125
+    muts: {}
+  76_om275:
+    sites:
+      7: 4
+      8: 2
+      10: 1322
+    muts:
+      1: 1169
+      2: 158
+  86_om275:
+    sites:
+      1: 3
+      2: 1
+      3: 623
+    muts:
+      1: 1
+  87_om275:
+    sites:
+      2: 47
+    muts: {}
+F3_10_2020_12_21/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 2
+      2: 56
+    muts:
+      1: 11
+  76_BA1:
+    sites:
+      1: 2
+      2: 1334
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      2: 339
+    muts:
+      1: 1
+  72_om1:
+    sites:
+      3: 2
+      5: 374
+    muts:
+      1: 16
+  73_om1:
+    sites:
+      1: 2
+      2: 56
+    muts: {}
+  75_om1:
+    sites:
+      4: 2
+      5: 69
+    muts:
+      1: 1
+  76_om1:
+    sites:
+      6: 1
+      8: 1
+      10: 1334
+    muts:
+      1: 375
+      2: 2
+  77_om1:
+    sites:
+      1: 1
+      2: 119
+    muts:
+      1: 117
+  79_om1:
+    sites:
+      1: 2
+      2: 3
+      3: 53
+    muts: {}
+  80_om1:
+    sites:
+      1: 11
+      2: 3847
+    muts: {}
+  81_om1:
+    sites:
+      2: 1
+      3: 338
+    muts:
+      1: 1
+  87_om1:
+    sites:
+      2: 14
+    muts: {}
+  88_om1:
+    sites:
+      1: 3
+      2: 203
+    muts: {}
+  72_al:
+    sites:
+      1: 2
+      2: 374
+    muts:
+      1: 16
+  78_al:
+    sites:
+      1: 1
+      2: 191
+    muts: {}
+  92_al:
+    sites:
+      3: 131
+    muts:
+      3: 2
+  93_al:
+    sites:
+      1: 58
+      2: 231
+    muts:
+      1: 2
+      2: 6
+  73_be:
+    sites:
+      1: 1
+      2: 56
+    muts: {}
+  92_mu:
+    sites:
+      2: 131
+    muts: {}
+  77_d614g:
+    sites:
+      1: 120
+    muts:
+      1: 117
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 1334
+    muts: {}
+  91_AY42_de:
+    sites:
+      1: 222
+      2: 715
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      2: 1336
+    muts: {}
+  71_ga:
+    sites:
+      3: 54
+    muts: {}
+  95_ga:
+    sites:
+      2: 36
+    muts: {}
+  31_BA2:
+    sites:
+      1: 1
+      2: 123
+    muts: {}
+  75_BA2:
+    sites:
+      1: 1
+      4: 70
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 2
+      2: 1334
+    muts: {}
+  76_om2:
+    sites:
+      5: 1
+      7: 1
+      8: 1334
+    muts:
+      1: 376
+      2: 1
+  72_om2121:
+    sites:
+      1: 2
+      2: 374
+    muts: {}
+  76_om2121:
+    sites:
+      5: 1
+      7: 1
+      9: 1334
+    muts:
+      1: 377
+      2: 1
+  78_om2121:
+    sites:
+      3: 1
+      4: 190
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 2
+      3: 5
+      4: 645
+    muts: {}
+  2_om4:
+    sites:
+      2: 49
+    muts:
+      1: 3
+  3_om4:
+    sites:
+      1: 1
+      2: 24
+    muts: {}
+  91_om4:
+    sites:
+      1: 1
+      2: 941
+    muts:
+      1: 7
+  95_om4:
+    sites:
+      1: 3
+      3: 1
+      4: 35
+    muts:
+      3: 1
+  72_om4_om5:
+    sites:
+      1: 2
+      2: 374
+    muts:
+      1: 16
+  75_om2_om2121_om4_om5:
+    sites:
+      4: 1
+      7: 1
+      8: 69
+    muts:
+      1: 1
+  76_om4_om5:
+    sites:
+      6: 1
+      8: 1
+      10: 1334
+    muts:
+      1: 958
+      2: 377
+      3: 1
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 2
+      2: 244
+    muts:
+      1: 11
+  95_om2121_om5:
+    sites:
+      3: 36
+    muts:
+      3: 1
+  87_om5:
+    sites:
+      2: 14
+    muts: {}
+  88_om5:
+    sites:
+      1: 2
+      2: 3
+      3: 203
+    muts:
+      1: 208
+  90_om5:
+    sites:
+      1: 2
+      3: 5
+      4: 645
+    muts:
+      1: 2
+      3: 7
+      4: 643
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 87
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 13
+      3: 110
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 6
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 146
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 80
+    muts:
+      1: 4
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 54
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      2: 1
+      3: 190
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 53
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 338
+    muts:
+      1: 1
+  84_om2121_om275:
+    sites:
+      1: 13
+      2: 1477
+    muts:
+      1: 94
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 2
+      2: 3
+      3: 203
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 7
+      2: 645
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 2
+      3: 288
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      2: 47
+    muts: {}
+  13_om275:
+    sites:
+      1: 4
+      2: 212
+    muts: {}
+  72_om275:
+    sites:
+      1: 2
+      2: 373
+    muts: {}
+  73_om275:
+    sites:
+      2: 1
+      3: 1
+      5: 56
+    muts: {}
+  74_om275:
+    sites:
+      1: 7
+      2: 946
+    muts: {}
+  75_om275:
+    sites:
+      4: 1
+      7: 1
+      8: 69
+    muts: {}
+  76_om275:
+    sites:
+      5: 1
+      7: 1
+      10: 1334
+    muts:
+      1: 958
+      2: 376
+      3: 1
+  86_om275:
+    sites:
+      1: 2
+      3: 244
+    muts:
+      1: 11
+  87_om275:
+    sites:
+      2: 14
+    muts: {}
+H1_10_2020_12_20/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 11
+      2: 74
+    muts:
+      1: 26
+  76_BA1:
+    sites:
+      1: 15
+      2: 5916
+    muts:
+      1: 2
+  81_BA1:
+    sites:
+      1: 1
+      2: 907
+    muts: {}
+  72_om1:
+    sites:
+      2: 4
+      3: 4
+      5: 652
+    muts:
+      1: 1
+  73_om1:
+    sites:
+      1: 8
+      2: 74
+    muts: {}
+  75_om1:
+    sites:
+      3: 1
+      4: 9
+      5: 59
+    muts: {}
+  76_om1:
+    sites:
+      2: 2
+      5: 4
+      6: 1
+      8: 8
+      9: 1
+      10: 5915
+    muts:
+      1: 763
+  77_om1:
+    sites:
+      1: 4
+      2: 142
+    muts:
+      1: 142
+  79_om1:
+    sites:
+      1: 11
+      2: 8
+      3: 105
+    muts: {}
+  80_om1:
+    sites:
+      1: 38
+      2: 6201
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      1: 1
+      2: 18
+      3: 889
+    muts: {}
+  87_om1:
+    sites:
+      2: 60
+    muts: {}
+  88_om1:
+    sites:
+      2: 215
+    muts: {}
+  72_al:
+    sites:
+      1: 8
+      2: 652
+    muts: {}
+  78_al:
+    sites:
+      2: 428
+    muts: {}
+  92_al:
+    sites:
+      3: 89
+    muts:
+      3: 5
+  93_al:
+    sites:
+      1: 104
+      2: 295
+    muts:
+      1: 3
+      2: 4
+  73_be:
+    sites:
+      2: 81
+    muts: {}
+  92_mu:
+    sites:
+      2: 89
+    muts: {}
+  77_d614g:
+    sites:
+      1: 142
+    muts:
+      1: 142
+  76_AY42_de:
+    sites:
+      1: 4
+      2: 5924
+    muts:
+      1: 205
+  91_AY42_de:
+    sites:
+      1: 71
+      2: 1341
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 4
+      2: 5925
+    muts:
+      1: 1
+  71_ga:
+    sites:
+      2: 1
+      3: 131
+    muts: {}
+  95_ga:
+    sites:
+      2: 94
+    muts: {}
+  31_BA2:
+    sites:
+      1: 9
+      2: 263
+    muts: {}
+  75_BA2:
+    sites:
+      1: 1
+      2: 1
+      4: 67
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 5
+      2: 5924
+    muts:
+      1: 200
+  76_om2:
+    sites:
+      1: 2
+      4: 4
+      5: 1
+      7: 9
+      8: 5915
+    muts:
+      1: 761
+  72_om2121:
+    sites:
+      1: 9
+      2: 652
+    muts: {}
+  76_om2121:
+    sites:
+      2: 2
+      4: 2
+      5: 3
+      7: 2
+      8: 7
+      9: 5915
+    muts:
+      1: 762
+  78_om2121:
+    sites:
+      4: 428
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 4
+      3: 1
+      4: 3037
+    muts:
+      1: 2
+  2_om4:
+    sites:
+      2: 67
+    muts: {}
+  3_om4:
+    sites:
+      2: 10
+    muts: {}
+  91_om4:
+    sites:
+      2: 1410
+    muts: {}
+  95_om4:
+    sites:
+      2: 1
+      3: 2
+      4: 92
+    muts:
+      3: 2
+  72_om4_om5:
+    sites:
+      1: 8
+      2: 652
+    muts: {}
+  75_om2_om2121_om4_om5:
+    sites:
+      3: 1
+      5: 1
+      7: 8
+      8: 59
+    muts: {}
+  76_om4_om5:
+    sites:
+      2: 2
+      4: 2
+      6: 3
+      8: 2
+      9: 7
+      10: 5915
+    muts:
+      1: 4969
+      2: 944
+      3: 13
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 11
+      2: 324
+    muts:
+      1: 6
+  95_om2121_om5:
+    sites:
+      2: 1
+      3: 94
+    muts:
+      3: 2
+  87_om5:
+    sites:
+      2: 60
+    muts: {}
+  88_om5:
+    sites:
+      1: 59
+      3: 215
+    muts:
+      1: 274
+  90_om5:
+    sites:
+      1: 4
+      3: 1
+      4: 3037
+    muts:
+      1: 4
+      3: 6
+      4: 3032
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 117
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      1: 4
+      2: 12
+      3: 257
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 4
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 78
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 40
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 131
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 428
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      1: 5
+      2: 109
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 18
+      2: 889
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 17
+      2: 1945
+    muts: {}
+  88_om2_om2121_om275_om4:
+    sites:
+      1: 59
+      3: 215
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 5
+      2: 3037
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      2: 2
+      3: 396
+    muts:
+      1: 1
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 48
+    muts: {}
+  13_om275:
+    sites:
+      1: 9
+      2: 331
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 659
+    muts: {}
+  73_om275:
+    sites:
+      1: 3
+      2: 2
+      3: 4
+      5: 76
+    muts: {}
+  74_om275:
+    sites:
+      1: 10
+      2: 1157
+    muts: {}
+  75_om275:
+    sites:
+      3: 1
+      5: 1
+      7: 9
+      8: 58
+    muts: {}
+  76_om275:
+    sites:
+      3: 4
+      5: 1
+      7: 3
+      8: 7
+      9: 1
+      10: 5915
+    muts:
+      1: 5163
+      2: 761
+  86_om275:
+    sites:
+      1: 11
+      2: 2
+      3: 322
+    muts:
+      1: 6
+  87_om275:
+    sites:
+      2: 60
+    muts: {}
+E3_10_2020_12_19/20210129_JG6LR:
+  73_AY42:
+    sites:
+      2: 46
+    muts:
+      1: 12
+  76_BA1:
+    sites:
+      1: 8
+      2: 7478
+    muts:
+      1: 1
+  81_BA1:
+    sites:
+      2: 916
+    muts: {}
+  72_om1:
+    sites:
+      5: 576
+    muts:
+      1: 92
+  73_om1:
+    sites:
+      2: 46
+    muts: {}
+  75_om1:
+    sites:
+      4: 1
+      5: 26
+    muts: {}
+  76_om1:
+    sites:
+      8: 8
+      9: 1
+      10: 7477
+    muts:
+      1: 1323
+      2: 2
+  77_om1:
+    sites:
+      2: 237
+    muts:
+      1: 237
+  79_om1:
+    sites:
+      2: 1
+      3: 87
+    muts: {}
+  80_om1:
+    sites:
+      1: 17
+      2: 12223
+    muts:
+      1: 3
+  81_om1:
+    sites:
+      2: 21
+      3: 895
+    muts: {}
+  87_om1:
+    sites:
+      2: 27
+    muts: {}
+  88_om1:
+    sites:
+      2: 219
+    muts: {}
+  72_al:
+    sites:
+      2: 576
+    muts:
+      1: 92
+  78_al:
+    sites:
+      2: 459
+    muts: {}
+  92_al:
+    sites:
+      2: 1
+      3: 123
+    muts: {}
+  93_al:
+    sites:
+      1: 10
+      2: 342
+    muts:
+      1: 10
+      2: 6
+  73_be:
+    sites:
+      2: 46
+    muts: {}
+  92_mu:
+    sites:
+      2: 124
+    muts: {}
+  77_d614g:
+    sites:
+      1: 237
+    muts:
+      1: 237
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 7485
+    muts:
+      1: 201
+  91_AY42_de:
+    sites:
+      1: 1
+      2: 1526
+    muts:
+      1: 1
+  76_be_ga:
+    sites:
+      1: 1
+      2: 7485
+    muts:
+      1: 3
+  71_ga:
+    sites:
+      3: 128
+    muts:
+      1: 3
+  95_ga:
+    sites:
+      2: 87
+    muts: {}
+  31_BA2:
+    sites:
+      1: 4
+      2: 281
+    muts: {}
+  75_BA2:
+    sites:
+      4: 27
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 2
+      2: 7484
+    muts:
+      1: 193
+  76_om2:
+    sites:
+      7: 9
+      8: 7477
+    muts:
+      1: 1322
+      2: 2
+  72_om2121:
+    sites:
+      1: 1
+      2: 575
+    muts: {}
+  76_om2121:
+    sites:
+      7: 1
+      8: 8
+      9: 7477
+    muts:
+      1: 1323
+      2: 2
+  78_om2121:
+    sites:
+      4: 459
+    muts: {}
+  90_om2121_om4:
+    sites:
+      4: 5174
+    muts: {}
+  2_om4:
+    sites:
+      2: 66
+    muts: {}
+  3_om4:
+    sites:
+      1: 1
+      2: 9
+    muts: {}
+  91_om4:
+    sites:
+      2: 1526
+    muts: {}
+  95_om4:
+    sites:
+      4: 87
+    muts:
+      1: 1
+  72_om4_om5:
+    sites:
+      2: 576
+    muts:
+      1: 92
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 1
+      8: 26
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 1
+      9: 8
+      10: 7477
+    muts:
+      1: 5961
+      2: 1516
+      3: 9
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 4
+      2: 529
+    muts:
+      1: 21
+  95_om2121_om5:
+    sites:
+      3: 87
+    muts:
+      1: 1
+  87_om5:
+    sites:
+      2: 27
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 218
+    muts:
+      1: 218
+  90_om5:
+    sites:
+      4: 5174
+    muts:
+      3: 3
+      4: 5171
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      2: 177
+    muts:
+      1: 1
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      2: 4
+      3: 281
+    muts: {}
+  33_om2_om2121_om275:
+    sites:
+      2: 4
+    muts: {}
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 83
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 78
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 128
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 459
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 88
+    muts: {}
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 21
+      2: 895
+    muts: {}
+  84_om2121_om275:
+    sites:
+      2: 3289
+    muts:
+      1: 2
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 218
+    muts: {}
+  90_om2_om275:
+    sites:
+      2: 5174
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 352
+    muts: {}
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 1
+      2: 38
+    muts: {}
+  13_om275:
+    sites:
+      1: 11
+      2: 1088
+    muts: {}
+  72_om275:
+    sites:
+      1: 1
+      2: 575
+    muts: {}
+  73_om275:
+    sites:
+      5: 46
+    muts: {}
+  74_om275:
+    sites:
+      1: 5
+      2: 1379
+    muts: {}
+  75_om275:
+    sites:
+      7: 2
+      8: 25
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      8: 7
+      9: 2
+      10: 7476
+    muts:
+      1: 6162
+      2: 1322
+      3: 2
+  86_om275:
+    sites:
+      1: 3
+      2: 1
+      3: 529
+    muts:
+      1: 21
+  87_om275:
+    sites:
+      2: 27
+    muts: {}
+D3_10_2020_12_17/20210129_JG6LR:
+  73_AY42:
+    sites:
+      1: 2
+      2: 374
+    muts:
+      1: 108
+  76_BA1:
+    sites:
+      1: 2
+      2: 9223
+    muts:
+      1: 3
+  81_BA1:
+    sites:
+      2: 1038
+    muts: {}
+  72_om1:
+    sites:
+      3: 1
+      5: 2459
+    muts:
+      1: 313
+      2: 1
+  73_om1:
+    sites:
+      1: 2
+      2: 374
+    muts: {}
+  75_om1:
+    sites:
+      4: 5
+      5: 503
+    muts: {}
+  76_om1:
+    sites:
+      7: 1
+      8: 1
+      9: 1
+      10: 9222
+    muts:
+      1: 2151
+      2: 9
+  77_om1:
+    sites:
+      2: 600
+    muts:
+      1: 600
+  79_om1:
+    sites:
+      2: 1
+      3: 373
+    muts:
+      1: 1
+  80_om1:
+    sites:
+      1: 16
+      2: 6573
+    muts:
+      1: 1
+  81_om1:
+    sites:
+      2: 10
+      3: 1028
+    muts: {}
+  87_om1:
+    sites:
+      2: 321
+    muts: {}
+  88_om1:
+    sites:
+      2: 914
+    muts: {}
+  72_al:
+    sites:
+      1: 1
+      2: 2459
+    muts:
+      1: 240
+  78_al:
+    sites:
+      1: 1
+      2: 994
+    muts:
+      1: 1
+  92_al:
+    sites:
+      2: 1
+      3: 639
+    muts:
+      1: 1
+  93_al:
+    sites:
+      1: 45
+      2: 859
+    muts:
+      1: 14
+      2: 5
+  73_be:
+    sites:
+      2: 376
+    muts:
+      1: 1
+  92_mu:
+    sites:
+      2: 640
+    muts:
+      1: 1
+  77_d614g:
+    sites:
+      1: 600
+    muts:
+      1: 600
+  76_AY42_de:
+    sites:
+      1: 1
+      2: 9224
+    muts:
+      1: 2
+  91_AY42_de:
+    sites:
+      2: 2266
+    muts: {}
+  76_be_ga:
+    sites:
+      1: 1
+      2: 9224
+    muts:
+      1: 133
+  71_ga:
+    sites:
+      3: 217
+    muts:
+      1: 2
+  95_ga:
+    sites:
+      2: 40
+    muts: {}
+  31_BA2:
+    sites:
+      2: 471
+    muts:
+      1: 2
+  75_BA2:
+    sites:
+      4: 508
+    muts: {}
+  76_B16173_ka:
+    sites:
+      1: 1
+      2: 9224
+    muts: {}
+  76_om2:
+    sites:
+      6: 1
+      7: 2
+      8: 9222
+    muts:
+      1: 2148
+      2: 9
+  72_om2121:
+    sites:
+      1: 1
+      2: 2459
+    muts: {}
+  76_om2121:
+    sites:
+      7: 2
+      8: 1
+      9: 9222
+    muts:
+      1: 2147
+      2: 10
+  78_om2121:
+    sites:
+      1: 1
+      4: 994
+    muts: {}
+  90_om2121_om4:
+    sites:
+      1: 1
+      4: 3719
+    muts: {}
+  2_om4:
+    sites:
+      2: 116
+    muts: {}
+  3_om4:
+    sites:
+      2: 99
+    muts:
+      1: 1
+  91_om4:
+    sites:
+      1: 1
+      2: 2265
+    muts: {}
+  95_om4:
+    sites:
+      3: 4
+      4: 36
+    muts:
+      3: 10
+  72_om4_om5:
+    sites:
+      1: 1
+      2: 2459
+    muts:
+      1: 240
+  75_om2_om2121_om4_om5:
+    sites:
+      7: 5
+      8: 503
+    muts: {}
+  76_om4_om5:
+    sites:
+      8: 2
+      9: 1
+      10: 9222
+    muts:
+      1: 7057
+      2: 2154
+      3: 12
+  86_om2_om2121_om4_om5:
+    sites:
+      1: 15
+      2: 799
+    muts: {}
+  95_om2121_om5:
+    sites:
+      3: 40
+    muts:
+      3: 10
+  87_om5:
+    sites:
+      2: 321
+    muts: {}
+  88_om5:
+    sites:
+      2: 1
+      3: 913
+    muts:
+      1: 913
+  90_om5:
+    sites:
+      1: 1
+      4: 3719
+    muts:
+      1: 1
+      3: 6
+      4: 3713
+  14_om2_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 769
+    muts: {}
+  31_om2_om2121_om275_om4_om5:
+    sites:
+      3: 471
+    muts:
+      1: 2
+  33_om2_om2121_om275:
+    sites:
+      2: 31
+    muts:
+      1: 2
+  35_om2_om2121_om275_om4_om5:
+    sites:
+      2: 185
+    muts: {}
+  66_om2_om2121_om275_om4_om5:
+    sites:
+      2: 341
+    muts: {}
+  71_om2_om2121_om275_om4_om5:
+    sites:
+      2: 217
+    muts: {}
+  78_om1_om2_om275_om4_om5:
+    sites:
+      3: 994
+    muts: {}
+  79_om2_om2121_om275_om4_om5:
+    sites:
+      2: 374
+    muts:
+      1: 1
+  81_om2_om2121_om275_om4_om5:
+    sites:
+      1: 10
+      2: 1028
+    muts: {}
+  84_om2121_om275:
+    sites:
+      1: 1
+      2: 2582
+    muts:
+      1: 247
+  88_om2_om2121_om275_om4:
+    sites:
+      2: 1
+      3: 913
+    muts: {}
+  90_om2_om275:
+    sites:
+      1: 1
+      2: 3719
+    muts: {}
+  93_om1_om2_om2121_om275_om4_om5:
+    sites:
+      3: 904
+    muts:
+      1: 2
+  98_om2121_om275_om4_om5:
+    sites:
+      1: 2
+      2: 182
+    muts:
+      1: 1
+  13_om275:
+    sites:
+      1: 10
+      2: 416
+    muts: {}
+  72_om275:
+    sites:
+      1: 2
+      2: 2457
+    muts: {}
+  73_om275:
+    sites:
+      5: 376
+    muts: {}
+  74_om275:
+    sites:
+      2: 1922
+    muts: {}
+  75_om275:
+    sites:
+      7: 6
+      8: 502
+    muts: {}
+  76_om275:
+    sites:
+      7: 1
+      8: 1
+      9: 2
+      10: 9221
+    muts:
+      1: 7066
+      2: 2150
+      3: 8
+  86_om275:
+    sites:
+      1: 15
+      2: 7
+      3: 792
+    muts: {}
+  87_om275:
+    sites:
+      2: 321
+    muts: {}
+

@@ -1,0 +1,29 @@
+name: pybis
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.10
+  - pandas
+  - numpy
+  - pyyaml
+  - pip
+  - pytest
+  - texttable
+  - tabulate
+  - requests
+  - urllib3
+  - click
+  - python-dateutil
+  #- zope.interface
+  #- certifi
+  #- chardet
+  #- ipykernel
+  # for google sheet:
+  - google-api-python-client
+  - google-auth-httplib2
+  - google-auth-oauthlib
+  # pybis itself
+  - pip:
+    - pybis>=1.20.2
