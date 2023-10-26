@@ -23,7 +23,7 @@ validateBatchName() {
 
 validateProto() {
 	case "$1" in
-		v3|v4|v41)
+		v3|v4|v41|v532)
 			return
 		;;
 		*)
@@ -155,7 +155,7 @@ case "$1" in
 	;;
 
 	fetch_cooc)
-		proto=${2:-v41}
+		proto=${2:-v532}
 		validateProto "${proto}"
 		echo "fetching ${proto}:"
 

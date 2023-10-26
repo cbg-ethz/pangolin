@@ -1,3 +1,12 @@
+v532:
+  name: SARS-CoV-2 ARTIC V5.3.2
+  alias:
+    - SARS-CoV-2 ARTIC V5.3.2 NEB Ultra II
+    - SARS-CoV-2 ARTIC V5.3.2 NexteraXT
+  inserts_bedfile: references/primers/v532/SARS-CoV-2.insert.bed
+  primers_bedfile: references/primers/v532/SARS-CoV-2.primer.bed
+  primers_file: references/primers/v532/SARS-CoV-2.tsv
+  primers_fasta: references/primers/v532/SARS-CoV-2.primer.fasta
 v41:
   name: SARS-CoV-2 ARTIC V4.1
   alias:
