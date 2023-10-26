@@ -46,7 +46,7 @@ case "$1" in
 		{
 			# assemble samples.wastewateronly.tsv
 			{
-				printf '%s\n' ${sampleset}/projects.${thismonth}* ${sampleset}/projects.${lastmonth}* | grep -vF '*' | sort -r | while read p; do 
+				printf '%s\n' ${sampleset}/projects.${thismonth}*.tsv ${sampleset}/projects.${lastmonth}*.tsv | grep -vF '*' | sort -r | while read p; do
 					echo -n "${p} - ${p//projects/samples} ... " >&2
 					gawk -v projpat="${projpat}" '(FILENAME~/\/projects\./)&&($2~projpat){ww[$1]++;nww++};(FILENAME~/\/samples\./)&&(ww[$1]);END{print nww >> "/dev/stderr"}' "${p}" "${p//projects/samples}"
 				done | tee >(cut -f4 >&3) # pass the protos to the second part bellow
@@ -101,7 +101,7 @@ case "$1" in
 		if grep -qF "${BATCH}" ${working}/samples.wastewateronly${PROTO:+.${PROTO}}.tsv; then
 			echo "using:"
 			ls -l ${working}/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek,.thisweek}.tsv
-		else 
+		else
 			echo "backing up lastweek:"
 			cp -v ${working}/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek}.tsv
 		fi
@@ -136,7 +136,7 @@ case "$1" in
 		if (( overwrite )); then
 			echo "Entirely rebuilding results/ directory"
 		else
-			echo "Appending missing samples to results/ directory" 
+			echo "Appending missing samples to results/ directory"
 		fi
 
 		mkdir -p ${worktest}/results/
@@ -161,6 +161,22 @@ case "$1" in
 
 		gawk -v proto="${proto}" '$4==proto' ${worktest}/samples.tsv | while read s b o; do cat ${worktest}/results/${s}/${b}/signatures/cooc.yaml; echo -n '.' >&2; done > ${worktest}/cooc.${proto}.yaml
 		echo "done"
+	;;
+
+	export)
+		base_ww=/cluster/project/pangolin/work-vp-test
+		base_main=/cluster/project/pangolin/working
+		export_base=/cluster/project/pangolin/export
+
+		timeline="${base_ww}/variants/timeline.tsv" # TODO marge with main in the future
+		mainresults="${base_main}/samples/" # TODO switch to results in the future
+		tail -n +2 "${timeline}" | while read s b o; do
+			#mkdir -p --mode=0775 ${export_base}/{,${s}/{,${b}/{,uploads/,alignments/}}}
+			install  --preserve-timestamps --mode=0775  -D --directory "${export_base}/${s}/${b}/"{uploads,alignments}/
+			install  --preserve-timestamps --mode=0664  -D --target-directory="${export_base}/${s}/${b}/alignments/" "${mainresults}/${s}/${b}/alignments/"{dehuman.count,REF_aln_stats.yaml}
+			cp --link -vf "${mainresults}/${s}/${b}/uploads/dehuman.cram"* "${export_base}/${s}/${b}/uploads/"
+			chmod o+r "${export_base}/${s}/${b}/uploads/dehuman.cram"*
+		done
 	;;
 
 	*)
