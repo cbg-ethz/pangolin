@@ -131,11 +131,12 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 
 		# cluster status
 		stat=$(${remote_batman} job "${id}" || echo "(no answer)")
-		if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
+		# HACK leaky abstraction ; keep in sync with profiles/smk-simple-slurm/status-sacct.sh
+		if [[ ( -n "${stat}" ) && ( "${stat}" =~ ^(RUNNING|PENDING|COMPLETING|CONFIGURING|SUSPENDED|\(no answer \)).* ) ]]; then
 			# running
 			echo -n "$j : $id : $stat"
 			(( ++stillrunning ))
-			if [[ "${stat}" == 'RUN' && ( ! "$j" =~ qa$ ) ]]; then
+			if [[ "${stat}" =~ ^RUN && ( ! "$j" =~ qa$ ) ]]; then
 				echo -ne '\t'
 				${remote_batman} completion "${id}" | tail -n 1
 			else

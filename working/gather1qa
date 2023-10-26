@@ -1,25 +1,31 @@
 #!/bin/bash
-#BSUB -L /bin/bash
-#BSUB -J COVID-qa
-#BSUB -u "ivan.topolsky@bsse.ethz.ch" # singer@nexus.ethz.ch carrara@nexus.ethz.ch louis.duplessis@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch" # chaoran.chen@bsse.ethz.ch
-##### -N
-#BSUB -n 1
-#BSUB -M 4096
-#BSUB -R rusage[mem=4096]
-#BSUB -W 4:00
+#SBATCH --job-name="COVID-qa"
+#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch" # carrara@nexus.ethz.ch # singer@nexus.ethz.ch louis.duplessis@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch" # chaoran.chen@bsse.ethz.ch
+#SBATCH --mail-type=FAIL
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=4096
+#SBATCH --time="4:00:00"
 
 batches=()
 
+# if script wasn't editted on-the-fly, but parameters where passed
+#if (( ${#batches[@]} == 0 )) && (( $# )); then
+if (( $# )); then
+	batches+=( "$@" )
+fi
+
 umask 0007
 
-if (( $LSB_JOBINDEX )); then
-	echo "JobIdx $LSB_JOBINDEX"
+idx="$SLURM_ARRAY_TASK_ID"
 
-	batch=${batches[$LSB_JOBINDEX]}
+if (( $idx )); then
+	echo "JobIdx $idx"
+
+	batch=${batches[$idx]}
 
 	# check if samplename is ok
 	if [[ -z "${batch}" ]]; then
-		echo "wrong job index ${LSB_JOBINDEX}"
+		echo "wrong job index ${idx}"
 		echo "Max is ${#batches[@]}"
 		exit 1;
 	fi
@@ -31,22 +37,10 @@ if (( $LSB_JOBINDEX )); then
 	wc -l ${input_tsv}
 else
 	echo "to run with all, use:"
-	echo " - bsub -J \"COVID-qa[1-${#batches[@]}]\" < gather1qa"
+	echo " - sbatch -J  --array=1-${#batches[@]} gather1qa"
 	exit 1
 fi
 
-
-#. ../miniconda3/bin/activate 'qa'
-# channels:
-#   - conda-forge
-#   - bioconda
-#   - defaults
-# dependencies:
-#   - emboss
-#   - samtools
-
-searchsamtools=( ../snake-envs/*/bin/samtools )
-samtools=${searchsamtools[0]}
 
 return_fail=0
 
@@ -240,7 +234,6 @@ while read subject sublvl len; do
 	[[ $prinseq =~ Good\ sequences\ \(pairs\):\ ([[:digit:],]+) ]]	&& qadata['goodpairs']="${BASH_REMATCH[1]//,/}"	|| oops "missing good pairs"
 
 	# 2.2 count bamfile
-	#qadata['alnreads']=$(${samtools} view -c ${sample}/alignments/REF_aln.bam)
 	alnstat=$(<${sample}//alignments/REF_aln_stats.yaml)
 	for k in ${alnkeys[@]}; do
 		S="${alnsearch[${k}]}"

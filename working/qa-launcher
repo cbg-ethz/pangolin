@@ -1,4 +1,11 @@
 #!/bin/bash
+#SBATCH --job-name="COVID-qa"
+#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch"
+#SBATCH --mail-type=END
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=1024
+#SBATCH --time="4:00:00"
+#SBATCH --oversubscribe
 
 umask 0007
 
@@ -16,9 +23,6 @@ validateBatchName() {
 	fi
 }
 
-RXJOB='Job <([[:digit:]]+)> is submitted'
-# Generic job.
-# Job <129052039> is submitted to queue <light.5d>.
 
 
 usage() { echo "Usage: $0 [ -r | -a | <BATCHES>... ]" 1>&2; exit $1; }
@@ -53,17 +57,12 @@ echo "Total batches: ${#batches[*]}"
 # submit to LSF
 #
 
-if [[ "$(sed -r 's@^(batches=).*$@\1( "" '"$(printf '"%s" ' "${batches[@]}" )"')@' gather1qa | bsub -J "COVID-qa[1-${#batches[@]}]" | tee /dev/stderr)" =~ ${RXJOB} ]]; then
-	job="${BASH_REMATCH[1]}"
-else
-	echo "Failed job submission"
-fi
 
-# schedule a assembly no mater what happens
-echo "Waiting for ${job} to finish..."
-bwait -w "ended(${job})"
+# run sub-jobs and waits for completion
+sbatch --wait --parsable --array="1-${#batches[@]}" gather1qa "${batches[@]}"
 
 echo "Assembling..."
+# TODO this can be simplified by using xsv to merge the csv files
 ( 
 	for b in "${batches[@]}"; do
 		csv="qa/qa.${b}.csv"

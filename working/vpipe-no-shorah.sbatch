@@ -3,10 +3,9 @@
 #SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch shuqing.yu@nexus.ethz.ch schmittu@ethz.ch"
 #SBATCH --mail-type=END
 #SBATCH --mem-per-cpu=16384
-####### --partition=light
+#SBATCH --oversubscribe
 #SBATCH --time=23:00:00
-
-### 	batches	@TAG@
+#SBATCH --comment="batches	@TAG@"
 
 
 logfile=/cluster/scratch/bs-pangolin/log.$LSB_JOBID

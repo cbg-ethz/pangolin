@@ -3,7 +3,7 @@
 #SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch"
 #SBATCH --mail-type=END
 #SBATCH --mem-per-cpu=16384
-####### --partition=light
+#SBATCH --oversubscribe
 #SBATCH --time=23:00:00
 
 umask 0007
