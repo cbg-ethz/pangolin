@@ -42,4 +42,5 @@ echo "${https_proxy}"
 
 mkdir -p cluster_logs/
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/ )
-./vpipe --profile ${SNAKEMAKE_PROFILE} --configfile config.no-shorah.yaml --omit-from snv
+./vpipe --profile ${SNAKEMAKE_PROFILE}	\
+	--configfile config.no-shorah.yaml --omit-from snv

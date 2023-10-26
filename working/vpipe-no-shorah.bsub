@@ -5,8 +5,7 @@
 #BSUB -N
 #BSUB -M 16384
 #BSUB -R rusage[mem=16384]
-#BSUB -R light
-##### -q light.5d
+##### -q normal.120h
 #BSUB -W 23:0
 
 ### 	batches	@TAG@
@@ -45,4 +44,6 @@ echo "${https_proxy}"
 
 mkdir -p cluster_logs/
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/custom-lsf/)
-./vpipe --profile ${SNAKEMAKE_PROFILE} --configfile config.no-shorah.yaml --omit-from snv
+#export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/)
+exec ./vpipe --profile ${SNAKEMAKE_PROFILE}	\
+	--configfile config.no-shorah.yaml --omit-from snv
