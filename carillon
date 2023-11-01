@@ -544,9 +544,6 @@ if run_viloca; then
 							# -r "${mailfrom}"
 						fi
 					fi
-				else
-					echo "pushing VILOCA sample list failed"
-				fi
 			fi
 		else
 			echo 'No new VILOCA jobs to start'
@@ -555,7 +552,7 @@ if run_viloca; then
 		echo 'There is already A VILOCA run going on'
 	fi
 else
-	echo "Skipping VILOCA as per configuration"
+	echo 'Skipping VILOCA as per configuration'
 fi
 
 
