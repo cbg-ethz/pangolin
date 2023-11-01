@@ -499,13 +499,13 @@ if run_viloca; then
 		lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}' | tail -n 1)
 		echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
 		if [[ lastbatch_viloca != lastbatch_vpipe ]]; then
-			echo "There is a new most recent batch that VILOCA can run on!"
+			echo "There is a new most recent batch that VILOCA can run on"
 			t=${basedir}/${sampleset}/samples.${lastbatch_vpipe}.tsv
 			if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
 							echo "oops: Can't parse <${t}> ?!" > /dev/stderr
 			fi
-			echo ",sample,batch" > $viloca_staging
-			cat $t | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> $viloca_staging
+			echo ",sample,batch" > ${viloca_basedir}/$viloca_staging
+			cat $t | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${viloca_basedir}/${viloca_staging}
 			(( ++mustrun_viloca ))
 
 		else
@@ -528,7 +528,7 @@ if run_viloca; then
 				echo "BUT there is already a VILOCA instance running! Retrying during the next loop"
 			else
 				echo 'starting VILOCA jobs'
-				mv ${viloca_staging} ${viloca_samples}
+				mv ${viloca_basedir}/${viloca_staging} ${viloca_basedir}/${viloca_samples}
 				${remote_batman} viloca  > ${viloca_statusdir}/viloca.${now}	&&	\
 					if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
 						ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
