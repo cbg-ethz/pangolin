@@ -624,9 +624,9 @@ case "$1" in
 		## backup viloca results
 		if [[ "${2}" = "--batch" ]]; then
 			validateBatchName "${3}"
-			batche=${3}
+			batch=${3}
 		else
-			batche=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
+			batch=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
 		fi
 		err=0
 		rsync	\
@@ -635,7 +635,7 @@ case "$1" in
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${results_archive}/ \
+			belfry@euler.ethz.ch::${results_archive}/${batch} \
 			${viloca_basedir}/results/ || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
