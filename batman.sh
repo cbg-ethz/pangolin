@@ -236,9 +236,6 @@ case "$1" in
 		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
 	;;
 	viloca)
-		list=('viloca')
-		# start first job
-		cd ${clusterdir}/${vilocadir}/
 		. ../../miniconda3/bin/activate 'base'
 		. run_workflow.sh
 		# write job chain list
@@ -250,6 +247,15 @@ case "$1" in
 		cd ${clusterdir}/${vilocadir}/
 		. ../../miniconda3/bin/activate 'base'
 		snakemake --unlock
+	;;
+	archive_viloca_run)
+		validateBatchName $2
+		cd ${clusterdir}/work-viloca/
+		if [ ! -d results_archive ]; then
+			mkdir results_archive
+		fi
+		mkdir "results_archive/${2}"
+		mv "${clusterdir}/${vilocadir}/results/*" "${clusterdir}/work-viloca/"
 	;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
