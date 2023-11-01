@@ -603,48 +603,62 @@ case "$1" in
 		done
 		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
 	;;
-    pullsamples_viloca)
-		echo "pullsamples_viloca NOT YET IMPLEMENTED"
-		# fetch remote sheets
-		mkdir -p /tmp/belfrysheets/
-		if [[ "${2}" = "--batch" ]]; then
-			validateBatchName "${3}"
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
-		elif [[ "${2}" = "--catchup" ]]; then
-			sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
-		else
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
-		fi
+	pushsamplelist_viloca)
 		rsync	\
 			--password-file ~/rsync.pass.euler	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			"${sheets[@]}"	\
-			/tmp/belfrysheets/
-		if [[ "${2}" = "--batch" ]]; then
-			validateBatchName "${3}"
-			sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
-		elif [[ "${2}" = "--catchup" ]]; then
-			sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
-		else
-			sheets=( /tmp/belfrysheets/samples.2*.tsv )
-		fi
-		err=0
-		echo "samples:"
-		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
-			gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
-			xargs -0 -P $parallelpull -I '{@LIST@}' --	\
-				bash -c "callpullrsync_viloca {@LIST@} " || (( ++err ))
+			${viloca_basedir}/${viloca_samples} \
+			belfry@euler.ethz.ch::${viloca_processing}/ || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
-			touch ${viloca_statusdir}/pullsamples_viloca_fail
-		elif [[ "${2}" = "--catchup" ]]; then
-			echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
+			touch ${viloca_statusdir}/pushsamplelist_viloca_fail
 		else
-			touch ${viloca_statusdir}/pullsamples_viloca_success
+			touch ${viloca_statusdir}/pushsamplelist_viloca_success
 		fi
+	;;
+    pullresults_viloca)
+		echo Quack
+		## fetch remote sheets
+		#mkdir -p /tmp/belfrysheets/
+		#if [[ "${2}" = "--batch" ]]; then
+		#	validateBatchName "${3}"
+		#	sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+		#else
+		#	sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
+		#fi
+		#rsync	\
+		#	--password-file ~/rsync.pass.euler	\
+		#	-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
+		#	-izrltH --fuzzy --fuzzy --inplace	\
+		#	-p --chmod=Dg+s,ug+rw,o-rwx	\
+		#	-g --chown=:"${storgrp}"	\
+		#	"${sheets[@]}"	\
+		#	/tmp/belfrysheets/
+		#if [[ "${2}" = "--batch" ]]; then
+		#	validateBatchName "${3}"
+		#	sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
+		#elif [[ "${2}" = "--catchup" ]]; then
+		#	sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
+		#else
+		#	sheets=( /tmp/belfrysheets/samples.2*.tsv )
+		#fi
+		#err=0
+		#echo "samples:"
+		#cut -s --fields=1 "${sheets[@]}"|sort -u|	\
+		#	gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+		#	xargs -0 -P $parallelpull -I '{@LIST@}' --	\
+		#		bash -c "callpullrsync_viloca {@LIST@} " || (( ++err ))
+		#if (( err )); then
+		#	echo "Error: ${err} rsync job(s) failed"
+		#	touch ${viloca_statusdir}/pullsamples_viloca_fail
+		#elif [[ "${2}" = "--catchup" ]]; then
+		#	echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
+		#else
+		#	touch ${viloca_statusdir}/pullsamples_viloca_success
+		#fi
     ;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr

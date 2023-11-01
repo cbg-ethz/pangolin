@@ -392,7 +392,7 @@ fi
 #
 # Phase 5: run viloca on new samples if no viloca instance is running
 #
-if run_viloca; then
+if [ "$run_viloca" -eq "0" ]; then
 
 	echo "========================"
 	echo "Check current VILOCA run"
@@ -467,8 +467,8 @@ if run_viloca; then
 	    else
 	        echo not found
 	    fi
-		${scriptdir}/belfry pullsamples_viloca --recent
-		if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
+		${scriptdir}/belfry pullresults_viloca --recent
+		if [[ ( ! -e ${viloca_statusdir}/pullresults_viloca_fail ) || ( ${viloca_statusdir}/pullresults_viloca_success -nt ${viloca_statusdir}/pullresults_viloca_fail ) ]]; then
 			echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
 		else
 			echo "pulling VILOCA data failed"
@@ -529,21 +529,28 @@ if run_viloca; then
 			else
 				echo 'starting VILOCA jobs'
 				mv ${viloca_basedir}/${viloca_staging} ${viloca_basedir}/${viloca_samples}
-				${remote_batman} viloca  > ${viloca_statusdir}/viloca.${now}	&&	\
-					if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-						ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
-						cat ${viloca_statusdir}/viloca_started
-						printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
-						if [[ -n "${mailto[*]}" ]]; then
-							(
-								echo '(Possibly new) samples not having VILOCA results yet found:'
-								printf ' - %s\n' "${lastbatch_vpipe}"
-								echo -e '\nStarting VILOCA on Euler:'
-								cat ${viloca_statusdir}/viloca_started
-							) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
-							# -r "${mailfrom}"
+				echo 'Pushing the sample list to Euler'
+				${scriptdir}/belfry pushsamplelist_viloca
+				# must run
+				if [[ ( -e ${statusdir}/pushsampleset_fail ) && ( ${statusdir}/pushsampleset_fail -nt ${statusdir}/pushsampleset_success ) ]]; then
+					echo 'error: Pushing sampleset did not succeed' > /dev/stderr
+				else
+					${remote_batman} viloca  > ${viloca_statusdir}/viloca.${now}	&&	\
+						if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
+							ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
+							cat ${viloca_statusdir}/viloca_started
+							printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
+							if [[ -n "${mailto[*]}" ]]; then
+								(
+									echo '(Possibly new) samples not having VILOCA results yet found:'
+									printf ' - %s\n' "${lastbatch_vpipe}"
+									echo -e '\nStarting VILOCA on Euler:'
+									cat ${viloca_statusdir}/viloca_started
+								) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
+								# -r "${mailfrom}"
+							fi
 						fi
-					fi
+				fi
 			fi
 		else
 			echo 'No new VILOCA jobs to start'
