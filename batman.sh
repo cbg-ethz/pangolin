@@ -236,6 +236,7 @@ case "$1" in
 		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
 	;;
 	viloca)
+		cd ${clusterdir}/${vilocadir}/
 		. ../../miniconda3/bin/activate 'base'
 		. run_workflow.sh
 		# write job chain list
