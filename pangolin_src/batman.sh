@@ -1,11 +1,14 @@
 #!/bin/bash
 
-clusterdir=/cluster/project/pangolin
+scriptdir="$(dirname $(realpath $(which $0)))"
+. ${scriptdir}/config/server.conf
+
+#clusterdir=/cluster/project/pangolin
 status=${clusterdir}/status
-working=working
-sampleset=sampleset
-vilocadir=work-viloca/SARS-CoV-2-wastewater-sample-processing-VILOCA
-uploaderdir=work-uploader/
+#working=working
+#sampleset=sampleset
+vilocadir=${viloca-basedir}/${viloca_processing}
+uploaderdir=${remote_uploader_workdir}
 
 #
 # Input validator
