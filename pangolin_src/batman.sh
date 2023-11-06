@@ -1,9 +1,11 @@
 #!/bin/bash
 
 clusterdir=/cluster/project/pangolin
+status=${clusterdir}/status
 working=working
 sampleset=sampleset
 vilocadir=work-viloca/SARS-CoV-2-wastewater-sample-processing-VILOCA
+uploaderdir=work-uploader/
 
 #
 # Input validator
@@ -22,6 +24,24 @@ validateTags() {
         for b in $2; do
                 validateBatchName "${b}"
         done
+}
+
+#
+# sync helper
+#
+checksyncoutput() {
+    local new="${status}/sync${1}_new"
+    local last="${status}/sync${1}_last"
+
+    if [[ "${2}" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
+        echo "Newfiles downloaded"
+        echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${last}
+        flock -x -o ${last} -c "sleep 1"
+        echo "${BASH_REMATCH[3]}" > ${new}
+    else
+        echo "No files to sync found"
+        touch ${last}
+    fi 2>&1
 }
 
 
@@ -240,10 +260,8 @@ case "$1" in
                 exit 2
         ;;
 	viloca)
-		list=('viloca')
-		# start first job
 		cd ${clusterdir}/${vilocadir}/
-		. ../../miniconda3/bin/activate 'base'
+		. ${clusterdir}/miniconda3/bin/activate 'base'
 		. run_workflow.sh
 		# write job chain list
 		for v in "${list[@]}"; do
@@ -252,7 +270,125 @@ case "$1" in
 	;;
 	unlock_viloca)
 		cd ${clusterdir}/${vilocadir}/
-		. ../../miniconda3/bin/activate 'base'
+		. ${clusterdir}/miniconda3/bin/activate 'base'
 		snakemake --unlock
 	;;
+	archive_viloca_run)
+		validateBatchName $2
+		cd ${clusterdir}/work-viloca/
+		if [ ! -d results_archive ]; then
+			mkdir results_archive
+		fi
+		mkdir "results_archive/${2}"
+		mv "${clusterdir}/${vilocadir}/results/*" "${clusterdir}/work-viloca/"
+	;;
+	sync_fgcz)
+		bfabricdir=${clusterdir}/bfabric-downloads
+		cd ${bfabricdir}
+		sync_fgcz_statusdir=${status}/sync
+		mkdir -p $sync_fgcz_statusdir
+		fgcz_config=${bfabricdir}/config
+
+		echo "Sync FGCZ - bfabric"
+		. ${clusterdir}/miniconda3/bin/activate 'base'
+		. <(grep '^projlist=' ${fgcz_config}/fgcz.conf)
+		if [[ "${2}" = "--recent" ]]; then
+			limitlast='3 weeks ago'
+			${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config}/fgcz.conf -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
+			param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
+			echo -ne "syncing recent: ${limitlast}\texcluding: "
+			wc -l ${sync_fgcz_statusdir}/fgcz.exclude.lst
+		else
+			param=( "${projlist[@]}" )
+		fi
+		syncoutput="$(${clusterdir}/sync_sftp.sh -c config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
+		checksyncoutput "fgcz" "$syncoutput"
+		mamba deactivate
+	;;
+	sortsamples)
+		. ${clusterdir}/miniconda3/bin/activate pybis
+		cd ${clusterdir}
+                sortsamples_statusdir=${status}/sortsamples
+		mkdir -p $sortsamples_statusdir
+		summary=""
+		recent=""
+		shrtrecent=""
+		force="${sort_force}"
+		while [[ -n $2 ]]; do
+			case "$2" in
+				--summary)
+					summary='--summary'
+				;;
+				--force)
+					force='--force'
+				;;
+				--recent)
+					recent="--recent=${lastmonth}"
+					shrtrecent="-r ${lastmonth}"
+				;;
+				*)
+					echo "Unkown parameter ${2}" > /dev/stderr
+					exit 2
+				;;
+			esac
+			shift
+		done
+		fail=0
+		if  (( ${lab[gfb]} )); then
+			${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+		else
+			echo "Skipping gfb"
+		fi
+		if  (( ${lab[fgcz]} )); then
+			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
+ 
+			(( google_sheet_patches )) && ${clusterdir}/google_sheet_patches.py
+ 			${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+		else
+			echo "Skipping fgcz"
+		fi
+		if  (( ${lab[h2030]} )) && [[ -e ${clusterdir}/synch2030_ended && -e ${clusterdir}/synch2030_started && ${clusterdir}/synch2030_ended -nt ${clusterdir}/synch2030_started ]]; then
+			# NOTE always recent/based on last sync), no support for --force, move done immediately/no separate movedatafiles.sh
+			# TODO support for protocols
+			${clusterdir}/sort_h2030 -c ${clusterdir}/config/h2030.conf $(< ${clusterdir}/synch2030_started ) || fail=1
+		else
+			echo "Skipping h2030"
+		fi
+		if  (( ${lab[viollier]} )); then
+			# NOTE always --force, short options only
+			# HACK hardcoded paths due to multiple directories
+			${clusterdir}/sort_viollier -c ${clusterdir}/config/viollier.conf -4 ${clusterdir}/${working}/${protocolyaml} ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${clusterdir}/$movedatafiles.sh || fail=1
+		else
+			echo "Skipping viollier"
+		fi
+		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
+		conda deactivate
+	;;
+        scanmissingsamples)
+                sample_list=$2
+                while read sample batch other; do
+                        # look for only guaranteed samples
+                        [[ $sample =~ $rxsample ]] || continue
+                        # check the presence of fasta on each sample
+                        echo ls ${clusterdir}/${working}/samples/${sample}/${batch}
+                        ls ${clusterdir}/${working}/samples/${sample}/${batch}
+                        if [[ -e ${clusterdir}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
+                            # this will check for:
+                            #  - references/ref_majority.fasta
+                            #  - references/consensus.bcftools.fasta & .chain
+                            #  - references/frameshift_deletions_check.tsv
+                            #  etc.
+                            #  see V-pipe's rule 'prepare_upload' in publish.smk
+                            echo -n '.'
+                        else
+                            echo -e "\r+${batch/_/:}\t!${sample}\e[K"
+                            true
+                            return 0
+                        fi;
+                done < $1
+                false
+        ;;
+        listsampleset)
+                ls ${clusterdir}/${sampleset}/samples.20*.tsv
+        ;;
 esac

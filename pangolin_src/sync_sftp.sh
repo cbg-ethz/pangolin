@@ -35,7 +35,7 @@ shift $((OPTIND-1))
 : ${retries:=10}
 : ${iotimeout:=300}
 
-. /home/bs-pangolin/wastewater_setup/secrets/${fileserver}
+. /home/bs-pangolin/.ssh/${fileserver}
 
 # add host rsa key if not done yet:
 grep --silent ${fileserver}:${srvport} ~/.ssh/known_hosts || { ssh-keyscan -t rsa -p ${srvport} ${fileserver} >> ~/.ssh/known_hosts; }

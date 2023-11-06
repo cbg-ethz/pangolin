@@ -1,0 +1,20 @@
+From the gitlab repository for sendCrypt, commit c203a915 (https://gitlab.sib.swiss/clinbio/sendcrypt/sendcrypt-cli)
+
+sh -c "$(wget -qO- https://gitlab.sib.swiss/clinbio/sendcrypt/sendcrypt-cli/-/raw/main/tools/install.sh)"
+
+echo -e 'export PATH="$HOME/.sendcrypt:$PATH"' >> ~/.bashrc
+cp secrets default.sendcrypt-profile ~/.sendcrypt/profiles
+
+gpg --import secrets <key>
+gpg --edit-key <key> trust
+#set trust level to 5
+
+gpg --full-generate-key
+#use "RSA and RSA" and "4096"
+#the expiry date has been set to two years (22 Sep 2025)
+#the name associated to the kay has been set to XXX
+#the address associated to the key has been set to bs-pangolin@ethz.ch
+
+#send key to openPGP server
+gpg --send-keys <key>
+

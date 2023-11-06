@@ -1,0 +1,10 @@
+name: sendcli
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python 
+  - pandas
+  - numpy
+ 

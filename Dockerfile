@@ -1,12 +1,24 @@
 FROM debian:buster-slim
 
-RUN echo 'Acquire::http::Proxy "http://proxy.ethz.ch:3128/";' > /etc/apt/apt.conf.d/proxy.conf
-RUN apt-get update && apt-get install -y vim ssh faketime wget dnsutils lftp rsync gawk
-RUN mkdir -p /root/pangolin/setup
-COPY pangolin_src/setup /root/pangolin/setup
-RUN /root/pangolin/setup/setup.sh
+RUN addgroup --gid 1029 bs-pangolin && adduser --ingroup bs-pangolin --uid 542576 bs-pangolin
 
-COPY pangolin_src /root/pangolin
-WORKDIR /root/pangolin
+WORKDIR /root
 
-ENTRYPOINT ["/root/pangolin/entrypoint.sh"]
+RUN mkdir /home/bs-pangolin/.ssh
+
+RUN chown -R bs-pangolin:bs-pangolin /home/bs-pangolin/.ssh
+
+RUN apt-get update && apt-get install -y vim wget lftp rsync gawk ssh git gpg expect
+
+USER bs-pangolin
+WORKDIR /app/
+RUN mkdir -p setup
+COPY pangolin_src/setup /app/setup
+RUN /app/setup/setup.sh
+
+COPY pangolin_src /app/pangolin_src
+WORKDIR /app/pangolin_src
+
+
+#ENTRYPOINT ["/root/pangolin/entrypoint.sh"]
+ENTRYPOINT [ "sleep", "10d" ]
