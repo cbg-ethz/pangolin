@@ -5,3 +5,13 @@
                  - batman.sh
                  - V-pipe (cloned from https://github.com/cbg-ethz/V-pipe.git, rubicon branch)
                  - miniconda
+                    - env conda_sync
+                    - env conda_sendcrypt
+                 - rsyncd.conf
+                 - fgcz.conf
+                 - secret fgcz-gstore.uzh.ch
+                 - secret gpg keys
+                 - gpg_key_secrets
+                 - id_ed25519_wisedb.pub
+                    - Add the public key to the list of authorized keys
+                 - 
