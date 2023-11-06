@@ -179,7 +179,7 @@ callpullrsync_viloca() {
 
 	local arglist=( )
 	if (( ${#@} )); then
-		arglist=( "${@/#/belfry@euler.ethz.ch::${work-viloca}/${viloca_results}}" )
+		arglist=( "${@/#/belfry@euler.ethz.ch::${work_viloca}/${viloca_results}}" )
 	else
 		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 		echo "rsync job didn't receive list"
@@ -201,7 +201,7 @@ callpullrsync_rsync() {
 
 	local arglist=( )
 	if (( ${#@} )); then
-		arglist=( "${@/#/belfry@euler.ethz.ch::${bfabric-downloads}}" )
+		arglist=( "${@/#/belfry@euler.ethz.ch::${bfabric_downloads}}" )
 	else
 		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
 		echo "rsync job didn't receive list"
@@ -678,7 +678,7 @@ case "$1" in
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${bfabric-downloads}/ \
+			belfry@euler.ethz.ch::${bfabric_downloads}/ \
 			${backupdir}/${sync_backup_subdir}/ || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
@@ -739,7 +739,7 @@ case "$1" in
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${work-viloca}/${viloca_processing}/${viloca_results} \
+			belfry@euler.ethz.ch::${work_viloca}/${viloca_processing}/${viloca_results} \
 			${backupdir}/${viloca_backup_subdir}/ || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
@@ -768,7 +768,7 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
 			${uploaddir}/${uploadlist} \
-			belfry@euler.ethz.ch::${work-uploader}/ || (( ++err ))
+			belfry@euler.ethz.ch::${work_uploader}/ || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
 			touch ${uploader_statusdir}/push_upload_list_fail
