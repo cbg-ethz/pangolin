@@ -286,7 +286,7 @@ case "$1" in
 		fgcz_config=${bfabricdir}/config
 
 		echo "Sync FGCZ - bfabric"
-		. ${clusterdir}/miniconda3/bin/activate 'base'
+		. ${clusterdir}/miniconda3/bin/activate ''
 		. <(grep '^projlist=' ${fgcz_config}/fgcz.conf)
 		if [[ "${2}" = "--recent" ]]; then
 			limitlast='3 weeks ago'
@@ -299,7 +299,7 @@ case "$1" in
 		fi
 		syncoutput="$(${clusterdir}/sync_sftp.sh -c config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
 		checksyncoutput "fgcz" "$syncoutput"
-		mamba deactivate
+		conda deactivate
 	;;
 	sortsamples)
 		. ${clusterdir}/miniconda3/bin/activate pybis
