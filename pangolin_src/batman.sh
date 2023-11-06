@@ -255,10 +255,6 @@ case "$1" in
                 done
                 mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
         ;;
-        *)
-                echo "Unkown sub-command ${1}" > /dev/stderr
-                exit 2
-        ;;
 	viloca)
 		cd ${clusterdir}/${vilocadir}/
 		. ${clusterdir}/miniconda3/bin/activate 'base'
@@ -390,5 +386,9 @@ case "$1" in
         ;;
         listsampleset)
                 ls ${clusterdir}/${sampleset}/samples.20*.tsv
+        ;;
+                *)
+                echo "Unkown sub-command ${1}" > /dev/stderr
+                exit 2
         ;;
 esac

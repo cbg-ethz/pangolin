@@ -1,6 +1,6 @@
 #!/bin/bash
 
-configfile=config/server.conf
+configfile=config/fgcz.conf
 
 usage() { echo "Usage: $0 [-c <configfile>] [ -N <newerthan> ] [ -e <exclude-rx-file> ] [filter [...]]" 1>&2; exit $1; }
 

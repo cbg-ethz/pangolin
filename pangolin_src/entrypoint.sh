@@ -35,6 +35,6 @@ EOF
 echo "Setting up the credentials"
 cp /run/secrets/bs-pangolin_login ${HOME}/.ssh/bs-pangolin@euler.ethz.ch
 cp /run/secrets/fgcz_login ~/.ssh/fgcz-gstore.uzh.ch
-cp /run/secrets/id_ed25519_wisedb /app/resources/config /app/resources/known_hosts /app/resources/id_ed25519_wisedb.pub /run/secrets/.ssh/rsync.pass.euler ~/.ssh
+cp /run/secrets/id_ed25519_wisedb /app/resources/config /app/resources/known_hosts /app/resources/id_ed25519_wisedb.pub /run/secrets/rsync.pass.euler ~/.ssh
 
 sleep 10d
