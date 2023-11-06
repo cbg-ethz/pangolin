@@ -1,4 +1,4 @@
-name: sendcli
+name: sendcrypt
 channels:
   - defaults
   - conda-forge

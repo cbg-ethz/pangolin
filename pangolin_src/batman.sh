@@ -10,6 +10,8 @@ status=${clusterdir}/status
 vilocadir=${viloca-basedir}/${viloca_processing}
 uploaderdir=${remote_uploader_workdir}
 
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+
 #
 # Input validator
 #
@@ -260,17 +262,19 @@ case "$1" in
         ;;
 	viloca)
 		cd ${clusterdir}/${vilocadir}/
-		. ${clusterdir}/miniconda3/bin/activate 'base'
+		conda activate 'viloca'
 		. run_workflow.sh
 		# write job chain list
 		for v in "${list[@]}"; do
 			printf "%s\t%s\n" "${v}" "${job[$v]}"
 		done
+                conda deactivate
 	;;
 	unlock_viloca)
 		cd ${clusterdir}/${vilocadir}/
-		. ${clusterdir}/miniconda3/bin/activate 'base'
+		conda activate 'viloca'
 		snakemake --unlock
+                conda deactivate
 	;;
 	archive_viloca_run)
 		validateBatchName $2
@@ -289,10 +293,10 @@ case "$1" in
 		fgcz_config=${bfabricdir}/config
 
 		echo "Sync FGCZ - bfabric"
-		. ${clusterdir}/miniconda3/bin/activate ''
+		conda activate sync
 		. <(grep '^projlist=' ${fgcz_config}/fgcz.conf)
 		if [[ "${2}" = "--recent" ]]; then
-			limitlast='3 weeks ago'
+			limitlast='2 weeks ago'
 			${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config}/fgcz.conf -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
 			param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
 			echo -ne "syncing recent: ${limitlast}\texcluding: "
@@ -300,12 +304,12 @@ case "$1" in
 		else
 			param=( "${projlist[@]}" )
 		fi
-		syncoutput="$(${clusterdir}/test_automation/pangolin/pangolin_src/sync_sftp.sh -c config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
+		syncoutput="$(${clusterdir}/test_automation/pangolin/pangolin_src/sync_sftp.sh -c ${clusterdir}/test_automation/pangolin/pangolin_src/config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
 		checksyncoutput "fgcz" "$syncoutput"
 		conda deactivate
 	;;
 	sortsamples)
-		. ${clusterdir}/miniconda3/bin/activate pybis
+		conda activate pybis
 		cd ${clusterdir}
                 sortsamples_statusdir=${status}/sortsamples
 		mkdir -p $sortsamples_statusdir

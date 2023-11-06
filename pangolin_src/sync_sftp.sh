@@ -1,7 +1,5 @@
 #!/bin/bash
 
-configfile=config/fgcz.conf
-
 usage() { echo "Usage: $0 [-c <configfile>] [ -N <newerthan> ] [ -e <exclude-rx-file> ] [filter [...]]" 1>&2; exit $1; }
 
 
@@ -35,7 +33,7 @@ shift $((OPTIND-1))
 : ${retries:=10}
 : ${iotimeout:=300}
 
-. /home/bs-pangolin/.ssh/${fileserver}
+. /cluster/home/${cluster_user}/.ssh/${fileserver}
 
 # add host rsa key if not done yet:
 grep --silent ${fileserver}:${srvport} ~/.ssh/known_hosts || { ssh-keyscan -t rsa -p ${srvport} ${fileserver} >> ~/.ssh/known_hosts; }
