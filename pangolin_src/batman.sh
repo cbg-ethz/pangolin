@@ -300,7 +300,7 @@ case "$1" in
 		else
 			param=( "${projlist[@]}" )
 		fi
-		syncoutput="$(${clusterdir}/sync_sftp.sh -c config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
+		syncoutput="$(${clusterdir}/test_automation/pangolin/pangolin_src/sync_sftp.sh -c config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)"
 		checksyncoutput "fgcz" "$syncoutput"
 		conda deactivate
 	;;
