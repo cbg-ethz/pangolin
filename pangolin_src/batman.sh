@@ -7,7 +7,7 @@ scriptdir="$(dirname $(realpath $(which $0)))"
 status=${clusterdir}/status
 #working=working
 #sampleset=sampleset
-vilocadir=${viloca-basedir}/${viloca_processing}
+vilocadir=${remote_viloca_basedir}/${viloca_processing}
 uploaderdir=${remote_uploader_workdir}
 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
@@ -261,7 +261,8 @@ case "$1" in
                 mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
         ;;
 	viloca)
-		cd ${clusterdir}/${vilocadir}/
+		cd ${vilocadir}/
+                ls
 		conda activate 'viloca'
 		. run_workflow.sh
 		# write job chain list
@@ -285,6 +286,14 @@ case "$1" in
 		mkdir "results_archive/${2}"
 		mv "${clusterdir}/${vilocadir}/results/*" "${clusterdir}/work-viloca/"
 	;;
+        create_sample_list_viloca)
+                validateBatchName $2
+                echo ",sample,batch" > ${remote_viloca_basedir}/${viloca_staging}
+                cat ${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${remote_viloca_basedir}/${viloca_staging}
+        ;;
+        finalize_staging_viloca)
+                mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
+        ;;
 	sync_fgcz)
 		bfabricdir=${clusterdir}/bfabric-downloads
 		cd ${bfabricdir}
@@ -394,8 +403,12 @@ case "$1" in
         listsampleset)
                 ls ${clusterdir}/${sampleset}/samples.20*.tsv
         ;;
+        list_batch_samples)
+                validateBatchName "$2"
+                cat ${clusterdir}/${sampleset}/samples.${2}.tsv
+        ;;
         queue_upload)
-                echo "Pushing to remote the list of new samples to upload"
+                echo "Creating on remote the list of new samples to upload"
         	    validateBatchName "$2"
                 cd ${clusterdir}/${uploader_workdir}
         	    # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads

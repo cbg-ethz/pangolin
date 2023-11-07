@@ -747,35 +747,11 @@ case "$1" in
 			touch ${viloca_statusdir}/pullresults_viloca_success
 		fi
     ;;
-    queue_upload)
-        echo "Pushing to remote the list of new samples to upload"
-	    validateBatchName "$2"
-        cd ${uploaddir}
-	    # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
-        cat ${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${uploadlist} > ${uploadlist}_temp.txt && \
-	    mv ${uploadlist}_temp.txt ${uploadlist}
-	    # Remove possible duplicates after updating the upload list
-        cat -n ${uploadlist} | sort -uk2 | sort -n | cut -f2- > .working_${uploadlist}
-        mv .working_${uploadlist} ${uploadlist}
+    upload)
+        echo "Starting sample upload"
+        
     ;;
-    push_upload_list)
-        err=0
-		rsync	\
-			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
-			${uploaddir}/${uploadlist} \
-			belfry@euler.ethz.ch::${work_uploader}/ || (( ++err ))
-		if (( err )); then
-			echo "Error: ${err} rsync job(s) failed"
-			touch ${uploader_statusdir}/push_upload_list_fail
-		else
-			touch ${uploader_statusdir}/push_upload_list_success
-		fi
-    ;;
-    pull_uploader)
+    pulldata_uploader)
         echo "Backup of the uploader archive"
         err=0
 		rsync	\

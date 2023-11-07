@@ -1,8 +1,8 @@
 name: viloca
 channels:
-  - defaults
   - conda-forge
   - bioconda
+  - defaults
 dependencies:
-  - python>=3.10
-  - snakemake
+  - libshorah
+  - snakemake=7.30.2
