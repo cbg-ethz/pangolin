@@ -18,7 +18,7 @@ umask 0007
 
 idx="$SLURM_ARRAY_TASK_ID"
 
-if (( $idx )); then
+if [[ "$idx" =~ ^[0-9]+$ ]] && (( idx >= 0 )); then
 	echo "JobIdx $idx"
 
 	batch=${batches[$idx]}
@@ -32,12 +32,13 @@ if (( $idx )); then
 	input_tsv="${TMPDIR:+$TMPDIR/}samples.qa-${batch}.tsv"
 	output_csv="qa/qa.${batch}.csv"
 	echo "batch: ${batch}"
+	echo "output: ${output_csv}"
 	gawk -v b="${batch}" '$2==b' < samples.tsv > ${input_tsv}
 	echo "tsv: ${input_tsv}"
 	wc -l ${input_tsv}
 else
 	echo "to run with all, use:"
-	echo " - sbatch -J  --array=1-${#batches[@]} gather1qa"
+	echo " - sbatch --array=$(( ${batch[0]:--1} * -1))-$(( ${#batches[@]} - 1)) gather1qa $*"
 	exit 1
 fi
 
