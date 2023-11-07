@@ -394,6 +394,17 @@ case "$1" in
         listsampleset)
                 ls ${clusterdir}/${sampleset}/samples.20*.tsv
         ;;
+        queue_upload)
+                echo "Pushing to remote the list of new samples to upload"
+        	    validateBatchName "$2"
+                cd ${clusterdir}/${uploader_workdir}
+        	    # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
+                cat ${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${clusterdir}/${uploader_workdir}/${uploaderlist} > ${clusterdir}/${uploader_workdir}/${uploaderlist}_temp.txt && \
+        	    mv ${clusterdir}/${uploader_workdir}/${uploaderlist}_temp.txt ${clusterdir}/${uploader_workdir}/${uploaderlist}
+        	    # Remove possible duplicates after updating the upload list
+                cat -n ${clusterdir}/${uploader_workdir}/${uploaderlist} | sort -uk2 | sort -n | cut -f2- > ${clusterdir}/${uploader_workdir}/.working_${uploaderlist}
+                mv ${clusterdir}/${uploader_workdir}/.working_${uploaderlist} ${clusterdir}/${uploader_workdir}/${uploaderlist}
+        ;;
                 *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2

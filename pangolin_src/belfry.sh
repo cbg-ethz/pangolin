@@ -16,7 +16,6 @@ declare -A lab
 : ${download:?}
 : ${sampleset:=sampleset}
 : ${working:=working}
-: ${releasedir:?}
 : ${storgrp:?}
 : ${parallel:=16}
 : ${parallelpull:=${parallel}}
@@ -99,7 +98,7 @@ callpushrsync() {
         fi
         exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync   --timeout=${iotimeout}  \
-                --password-file ~/rsync.pass.euler      \
+                --password-file ${rsync_pass}      \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
                 -izrltH --fuzzy --fuzzy --inplace       \
                 -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x        \
@@ -123,7 +122,7 @@ callpullrsync() {
         fi
         exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync   --timeout=${iotimeout}  \
-                --password-file ~/rsync.pass.euler      \
+                --password-file ${rsync_pass}      \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
                 -izrltH --fuzzy --fuzzy --inplace       \
                 --link-dest=${basedir}/${sampleset}/    \
@@ -156,7 +155,7 @@ callpullrsync_noshorah() {
         fi
         exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync   --timeout=${iotimeout}  \
-                --password-file ~/rsync.pass.euler      \
+                --password-file ${rsync_pass}      \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
                 -izrltH --fuzzy --fuzzy --inplace       \
                 --link-dest=${backupdir}/${sampleset}/    \
@@ -187,7 +186,7 @@ callpullrsync_viloca() {
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
-		--password-file ~/rsync.pass.euler	\
+		--password-file ${rsync_pass}	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		--link-dest=${$backupdir}/${viloca_backup_subdir}/	\
@@ -209,7 +208,7 @@ callpullrsync_rsync() {
 	fi
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
-		--password-file ~/rsync.pass.euler	\
+		--password-file ${rsync_pass}	\
 		-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		--link-dest=${backupdir}/${sync_backup_subdir}	\
@@ -655,7 +654,7 @@ case "$1" in
         echo "Pulling the updated status of the raw data sync"
         err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
@@ -673,7 +672,7 @@ case "$1" in
 	    echo "backup of the FGCZ raw data"
 		err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
@@ -691,7 +690,7 @@ case "$1" in
         echo "Pulling the updated status of the sortsamples procedure"
         err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
@@ -709,7 +708,7 @@ case "$1" in
         echo "Pushing the VILOCA sample list to the remote"
 		err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
@@ -734,7 +733,7 @@ case "$1" in
 		fi
 		err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
@@ -762,7 +761,7 @@ case "$1" in
     push_upload_list)
         err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
@@ -780,7 +779,7 @@ case "$1" in
         echo "Backup of the uploader archive"
         err=0
 		rsync	\
-			--password-file ~/rsync.pass.euler	\
+			--password-file ${rsync_pass}	\
 			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\

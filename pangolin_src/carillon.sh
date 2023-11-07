@@ -27,7 +27,7 @@ mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 viloca_statusdir="${viloca_basedir}/viloca_status"
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 viloca_staging=${viloca_samples}.staging
-uploader_statusdir="${basedir}/uploader/status"
+uploader_statusdir="${basedir}/work-uploader/status"
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 lockfile=${statusdir}/carillon_lock
 
@@ -51,12 +51,12 @@ set -e
 [[ -n $skipsync ]] && echo "${skipsync} will be skipped."
 
 [[ $skipsync != fgcz ]] && ${remote_batman} sync_fgcz --recent
-${scriptdir}/belfry pull_sync_status
+${scriptdir}/belfry.sh pull_sync_status
 if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
     echo "\e[31;1Pulling sync status files failed\e[0m"
 	echo "The automation will not be aware of any new deliveries"
 else
-	${scriptdir}/belfry pull_fgcz_data
+	${scriptdir}/belfry.sh pull_fgcz_data
 	if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
     	echo "\e[31;1Backup of fgcz raw data failed\e[0m"
 		echo "The system will retry next loop"
