@@ -418,6 +418,15 @@ case "$1" in
                 cat -n ${clusterdir}/${uploader_workdir}/${uploaderlist} | sort -uk2 | sort -n | cut -f2- > ${clusterdir}/${uploader_workdir}/.working_${uploaderlist}
                 mv ${clusterdir}/${uploader_workdir}/.working_${uploaderlist} ${clusterdir}/${uploader_workdir}/${uploaderlist}
         ;;
+        upload)
+                echo "uploading ${uploader_sample_number} samples from the list of samples to upload"
+                conda activate sendcrypt
+                cd ${clusterdir}/${uploader_workdir}
+                . next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
+
+                
+
+        ;;
                 *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
