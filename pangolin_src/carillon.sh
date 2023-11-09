@@ -22,18 +22,11 @@ fi
 
 umask 0002
 
-statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
-viloca_statusdir="${viloca_basedir}/viloca_status"
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
-viloca_staging=${viloca_samples}.staging
-uploader_statusdir="${basedir}/work-uploader/status"
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
-lockfile=${statusdir}/carillon_lock
-
 
 touch ${statusdir}/oh_hai_im_looping
-
 
 source /home/bs-pangolin/.ssh/${cluster_user}@${cluster}
 remote_batman="ssh -o StrictHostKeyChecking=no -ni ${privkey} ${cluster_user}@${cluster} --"
@@ -56,10 +49,14 @@ if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_stat
     echo "\e[31;1Pulling sync status files failed\e[0m"
     echo "The automation will not be aware of any new deliveries"
 else
-    ${scriptdir}/belfry.sh pull_fgcz_data
+    if [ $backup_fgcz_raw -eq "1" ]; then
+        ${scriptdir}/belfry.sh pull_fgcz_data
     if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
-        echo "\e[31;1Backup of fgcz raw data failed\e[0m"
-        echo "The system will retry next loop"
+            echo "\e[31;1Backup of fgcz raw data failed\e[0m"
+            echo "The system will retry next loop"
+        fi
+    else
+        echo "\e[33;1mBakup of FGCZ raw data DISABLED\e[0m"
     fi
 fi
 ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
@@ -121,11 +118,15 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 
         case "$j" in
             seqqa)
-                ${scriptdir}/belfry.sh pullsamples_noshorah --recent
-                if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
-                    echo "pulling data failed"
-                    (( ++stillrunning ))
-                    continue
+                if [ $backup_vpipe -eq "1" ]; then
+                    ${scriptdir}/belfry.sh pullsamples_noshorah --recent
+                    if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
+                        echo "\e[31;1mpulling data failed\e[0m"
+                        (( ++stillrunning ))
+                        continue
+                    fi
+                else
+                    echo "\e[33;1mBackup of V-PIPE data DISABLED\e[0m"
                 fi
             ;;
         esac
@@ -135,17 +136,20 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
     echo done
 
     if (( stillrunning == 0 )); then
-        ${scriptdir}/belfry.sh pullsamples_noshorah --recent
-        if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
-            echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
-            vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
-            vpipe_enddate=${vpipe_enddate#*.}
-            lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
-            # queue the samples for upload. This will be handled in a dedicated section
-            ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
+        if [ $backup_vpipe -eq "1" ]; then
+            ${scriptdir}/belfry.sh pullsamples_noshorah --recent
+            if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
+                echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
+                vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
+                vpipe_enddate=${vpipe_enddate#*.}
+                lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
+                # queue the samples for upload. This will be handled in a dedicated section
+                ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
+            else
+                echo "\e[31;1mpulling data failed\e[0m"
+            fi
         else
-            echo "pulling data failed"
-        fi
+            echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
     fi
 else
     echo 'No current run.'
@@ -396,11 +400,15 @@ if [ "$run_viloca" -eq "1" ]; then
             echo not found
         fi
         lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-        ${scriptdir}/belfry pullresults_viloca --batch ${lastbatch_viloca}
-        if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
-            echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
+        if [ $backup_viloca -eq "1" ]; then
+            ${scriptdir}/belfry pullresults_viloca --batch ${lastbatch_viloca}
+            if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
+                echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
+            else
+                echo "\e[31;1mpulling VILOCA data failed\e[0m"
+            fi
         else
-            echo "pulling VILOCA data failed"
+            echo "\e[33;1mBackup of VILOCA data DISABLED\e[0m"
         fi
         
     else
@@ -536,13 +544,15 @@ if [ $run_uploader -eq "1" ]; then
             echo "${id}" > ${uploader_statusdir}/uploader_${j}_ended
         done < ${uploader_statusdir}/uploader_started
 
-
-        ${scriptdir}/belfry pulldata_uploader --recent
-        if [[ ( ! -e ${uploader_statusdir}/pulldata_uploader_fail ) || ( ${uploader_statusdir}/pulldata_uploader_success -nt ${uploader_statusdir}/pulldata_uploader_fail ) ]]; then
-            echo "$(basename $(realpath ${uploader_statusdir}/uploader_started))" > ${uploader_statusdir}/uploader_ended
+        if [ $backup_uploader -eq "1" ]; then
+            ${scriptdir}/belfry pulldata_uploader --recent
+            if [[ ( ! -e ${uploader_statusdir}/pulldata_uploader_fail ) || ( ${uploader_statusdir}/pulldata_uploader_success -nt ${uploader_statusdir}/pulldata_uploader_fail ) ]]; then
+                echo "$(basename $(realpath ${uploader_statusdir}/uploader_started))" > ${uploader_statusdir}/uploader_ended
+            else
+                echo "\e[31;1mpulling UPLOADER data failed\e[0m"
+            fi
         else
-            echo "pulling UPLOADER data failed"
-        fi
+            echo "\e[33;1mBackup of uploader data DISABLED\e[0m"
         
     else
         echo 'No current UPLOADER run.'
@@ -597,7 +607,7 @@ if [ $run_uploader -eq "1" ]; then
                         fi
                     fi
                 else
-                    echo "pushing UPLOADER sample list failed"
+                    echo "\e[31;1mpushing UPLOADER sample list failed\e[0m"
                 fi
             fi
         else

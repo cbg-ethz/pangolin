@@ -13,7 +13,7 @@ X() {
 	ALLOK=0
 }
 
-cd /links/shared/covid19-pangolin/backup
+cd /cluster/project/pangolin
 
 # sanity checks
 [[ -d 'openbis-downloads' ]] || fail 'No download directory:' 'openbis-downloads'
