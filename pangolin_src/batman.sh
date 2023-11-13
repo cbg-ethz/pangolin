@@ -303,7 +303,7 @@ case "$1" in
 		. <(grep '^projlist=' ${fgcz_config})
 		if [[ "${2}" = "--recent" ]]; then
 			limitlast='3 weeks ago'
-			${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config}/fgcz.conf -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
+			${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config} -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
 			param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
 			echo -ne "syncing recent: ${limitlast}\texcluding: "
 			wc -l ${sync_fgcz_statusdir}/fgcz.exclude.lst
