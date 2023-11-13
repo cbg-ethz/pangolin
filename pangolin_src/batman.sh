@@ -292,15 +292,15 @@ case "$1" in
                 mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
         ;;
 	sync_fgcz)
-		bfabricdir=${clusterdir}/bfabric-downloads
+		bfabricdir=${clusterdir_old}/bfabric-downloads
 		cd ${bfabricdir}
 		sync_fgcz_statusdir=${status}/sync
 		mkdir -p $sync_fgcz_statusdir
-		fgcz_config=${bfabricdir}/config
+		fgcz_config=${clusterdir}/config/fgcz.conf
 
 		echo "Sync FGCZ - bfabric"
 		conda activate sync
-		. <(grep '^projlist=' ${fgcz_config}/fgcz.conf)
+		. <(grep '^projlist=' ${fgcz_config})
 		if [[ "${2}" = "--recent" ]]; then
 			limitlast='3 weeks ago'
 			${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config}/fgcz.conf -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
@@ -311,7 +311,7 @@ case "$1" in
 			param=( "${projlist[@]}" )
 		fi
                 fail=0
-		syncoutput="$(${clusterdir}/test_automation/pangolin/pangolin_src/sync_sftp.sh -c ${clusterdir}/test_automation/pangolin/pangolin_src/config/fgcz.conf ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
+		syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
 		checksyncoutput "fgcz" "$syncoutput"
                 (( fail == 0 )) &&  touch ${sync_fgcz_statusdir}/sync_fgcz_success || touch ${sync_fgcz_statusdir}/sync_fgcz_fail
 		conda deactivate
