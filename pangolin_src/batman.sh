@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scriptdir="$(dirname $(realpath $(which $0)))"
+scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir}/status

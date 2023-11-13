@@ -82,7 +82,7 @@ ring_carillon() {
 	else
 		echo "Aargh: problem writing on storage !!!"
 		# TODO use carillon phases
-		scriptdir="$(dirname $(which $0))"
+		scriptdir=/app/pangolin_src
 		${scriptdir}/belfry.sh  df
 		cluster_user="${USER%%@*}"
 		cluster_user=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^cluster_user=).*$' config/server.conf)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-scriptdir="$(dirname $(realpath $(which $0)))"
+scriptdir=/app/pangolin_src
 
 if [[ $(uname) == Darwin ]]; then
     date=gdate

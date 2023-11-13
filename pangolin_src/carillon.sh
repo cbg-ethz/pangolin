@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scriptdir="$(dirname $(realpath $(which $0)))"
+scriptdir=/app/pangolin_src
 
 set -e
 
