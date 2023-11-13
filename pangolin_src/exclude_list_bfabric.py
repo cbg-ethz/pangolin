@@ -51,11 +51,11 @@ forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_'][
 '''folders to use even with missing order'''
 
 
-rxbatchdate=re.compile('batch\.(?P<date>\d+)_[^.]+\.yaml$')
-rxdatelike=re.compile('_(?P<year>2\d{3})-(?P<month>[01]?\d)-(?P<day>[0-3]?\d)--') 
+rxbatchdate=re.compile(r'batch\.(?P<date>\d+)_[^.]+\.yaml$')
+rxdatelike=re.compile(r'_(?P<year>2\d{3})-(?P<month>[01]?\d)-(?P<day>[0-3]?\d)--') 
 
 # glob all projects
-if re.search('/p\d+/?$', expname):
+if re.search(r'/p\d+/?$', expname):
 	# project name included in the SFTP path, we don't need to scan
 	projects=''
 	extrapath=0
