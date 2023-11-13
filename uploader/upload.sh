@@ -77,9 +77,6 @@ while read samplename batch; do
   fi
 done
 
-# fix pending spaces:
-sed $tsv -i"" -e "s/ \t/\t/g"
-
 echo $tsv
 
 ls -l $target
