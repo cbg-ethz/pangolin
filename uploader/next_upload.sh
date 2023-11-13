@@ -26,7 +26,7 @@ set -uo pipefail
 
 ./prepare.sh -N $sample_number
 
-archive_now="${archivedir}/$(date +"%Y-%m-%d"-%H-%M-%S)"
+archive_now="${clusterdir}/${uploader_archive}/$(date +"%Y-%m-%d"-%H-%M-%S)"
 mkdir -p $archive_now
 
 ${clusterdir}/uploader/upload.sh ${archive_now}

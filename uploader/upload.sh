@@ -1,4 +1,6 @@
 #/usr/bin/env bash
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+conda activate sendcrypt
 
 set -eu
 
@@ -28,20 +30,25 @@ function bash_traceback() {
 # propagate ERR trap handler functions, expansions and subshells
 set -o errtrace
 
-source vars.sh
-export TMPDIR=${tempdir}
+. /cluster/project/pangolin/pangolin_src/config/server.conf
+export TMPDIR=${uploader_tempdir}
 
 echo "Creating the necessary files and directories"
-if [ -f ${tempdir}/uploaded_run.txt ]
+if [ -f ${TMPDIR}/uploaded_run.txt ]
 then
-	rm ${tempdir}/uploaded_run.txt
+	rm ${TMPDIR}/uploaded_run.txt
 fi
-if [ -d $staging ]
+if [ -d $uploader_staging ]
 then
-	rm -rf $staging
+	rm -rf $uploader_staging
 fi
-mkdir -p $staging/{bacteria,viruses,logs,sent}
+mkdir -p ${uploader_staging}/{bacteria,viruses,logs,sent}
 
+export target=${TMPDIR}/target
+if [ -d $target ]
+then
+  rm -rf $target
+fi
 mkdir -p $target
 tsv=$target/meta_data.tsv
 echo $tsv
@@ -51,23 +58,22 @@ echo "Initializing the submission metadata"
 echo -e "is_assembly_update\tspecies\tstrain_name\tisolation_date\tlocation_general\tlocation_city\tlocation_geocoordinates\tisolation_source_description\tisolation_source_detailed\tisolation_source_name\tisolation_source_size_catchment_area\tisolation_source_population_size_catchment_area\tisolation_source_regions_catchment_area\tsequencing_purpose\tsequencing_investigation_type\torig_fastq_name_forward\tlibrary_preparation_kit\tsequencing_lab_name\tsequencing_platform\tassembly_method\traw_dataset_coverage\treporting_lab_name\tcollecting_lab_name\treporting_authors\traw_dataset_embargo\tgenbank_identifier\tENA_accession"> $tsv
 
 echo "Retrieving CRAM files and adding their metadata line"
-cat ${tempdir}/to_upload.txt |
+cat ${TMPDIR}/to_upload.txt |
 while read samplename batch; do
-  echo $samplename
   samplename=$(echo $samplename | tr -d '"')
   if [[ $samplename =~ [A-H][0-9]_24_.* ]]; then
-    echo "skipped ski resort $samplename" >> ${archive_now}/not_found.txt
+    echo "skipped ski resort $samplename" | tee -a ${archive_now}/not_found.txt
     continue
   fi
   batch=$(echo $batch | tr -d '"')
   echo "$samplename $batch"
-  X=${fldr}/${samplename}/${batch}/uploads/dehuman.cram
+  X=${clusterdir}/${working}/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
     ln $(realpath $X) $target/${samplename}.cram
-    python3 ${maindir}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv
+    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv
     echo $samplename >> ${archive_now}/uploaded_run.txt
   else
-    echo "not found $samplename" >> ${archive_now}/not_found.txt
+    echo "not found $samplename" | tee -a ${archive_now}/not_found.txt
   fi
 done
 

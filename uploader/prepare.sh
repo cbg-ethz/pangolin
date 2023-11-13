@@ -25,25 +25,24 @@ set -eu
 
 if [ -f ${uploader_tempdir}/to_upload.txt ]
 then
-	rm "${uploader_tempdir}/to_upload.txt"
+        rm "${uploader_tempdir}/to_upload.txt"
 fi
- TODO HERE
 echo "Preparing the list of files to upload for this batch"
-{ python3 - <(grep -v \# $sampleset_batch | cut -f 1 | tr -d '"') ${uploaded} ${batch_to_upload} ${tempdir}/to_upload.txt <<EOF
+{ python3 - ${clusterdir}/${remote_uploader_workdir}/${uploaderlist} ${clusterdir}/${uploader_uploaded} ${sample_number} ${clusterdir}/${uploader_tempdir}/to_upload.txt <<EOF
 import sys
 try:
-	with open(sys.argv[1]) as f:
-		current = [ element.strip() for element in f.readlines() ]
-	with open(sys.argv[2]) as f:
-		all = [ element.strip() for element in f.readlines() ]
-	current = list(set(current) - set(all))
-	current = [ element + "\t" + sys.argv[3] for element in current ]
-	with open(sys.argv[4],'w') as f:
-		for item in current:
-			f.write(item+"\n")
+    with open(sys.argv[1]) as f:
+        all_to_upload = [ element.strip() for element in f.readlines() ]
+    with open(sys.argv[2]) as f:
+        uploaded = [ element.strip() for element in f.readlines() ]
+    current = list(set(all_to_upload) - set(uploaded))
+    current = current[:int(sys.argv[3])]
+    with open(sys.argv[4],'w') as f:
+        for item in current:
+            f.write(item+"\n")
 except IOError:
-        # fixes BrokenPipe
-        sys.stdout.flush()
+    # fixes BrokenPipe
+    print("ERROR")
+    sys.stdout.flush()
 EOF
-} 
-
+}

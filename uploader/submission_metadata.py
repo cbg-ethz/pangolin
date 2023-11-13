@@ -216,15 +216,15 @@ authors = {
 }
 seqplatform = "Combination Illumina MiSeq and Illumina NovaSeq 5000/6000"
 reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Mattenstrasse 26, 4058 Basel"
-qafile = "/mnt/cluster/working/qa.csv"
+qafile = "/cluster/project/pangolin/working/qa.csv"
 seqcenter = {
   "fgcz": "Functional Genomics Center Zurich",
 }
 centerused = "fgcz"
-locations = "/mnt/cluster/work-vp-test/ww_locations.tsv"
-basedir = "/home/bs-pangolin/wastewater_setup/uploader"
-samplesfolder = "working/samples"
-timelinefile = "/mnt/cluster/work-vp-test/variants/timeline.tsv"
+locations = "/cluster/project/pangolin/work-vp-test/ww_locations.tsv"
+basedir = "/cluster/project/pangolin/test_automation/pangolin/uploader"
+samplesfolder = "/cluster/project/pangolin/working/samples"
+timelinefile = "/cluster/project/pangolin//work-vp-test/variants/timeline.tsv"
 assembly = "V-pipe"
 embargo = ""
 projyears = ["2020", "2021", "2022", "2023"]
