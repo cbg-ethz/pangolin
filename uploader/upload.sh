@@ -30,7 +30,7 @@ function bash_traceback() {
 # propagate ERR trap handler functions, expansions and subshells
 set -o errtrace
 
-. /cluster/project/pangolin/pangolin_src/config/server.conf
+. /cluster/project/pangolin/test_automation/pangolin/pangolin_src/config/server.conf
 export TMPDIR=${uploader_tempdir}
 
 echo "Creating the necessary files and directories"

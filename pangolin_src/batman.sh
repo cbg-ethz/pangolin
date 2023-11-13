@@ -421,7 +421,7 @@ case "$1" in
                 echo "uploading ${uploader_sample_number} samples from the list of samples to upload"
                 conda activate sendcrypt
                 cd ${clusterdir}/${uploader_workdir}
-                . next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
+                . ${clusterdir}/uploader/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
 
                 
 
