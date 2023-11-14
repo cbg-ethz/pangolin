@@ -196,7 +196,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         echo $flowcell
         if [[ -n "${flowcell[$f]}" ]]; then
             echo "error: Duplicate flowcell $f : ${flowcell[$f]} vs $b" > /dev/stderr
-            #exit 2
+            exit 2
         else
             flowcell[$f]=$b
         fi
