@@ -3,7 +3,7 @@
 scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
-status=${clusterdir}/status
+status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 uploaderdir=${remote_uploader_workdir}
 
@@ -55,6 +55,7 @@ now=$(date '+%Y%m%d')
 lastmonth=$(date '+%Y%m' --date='-1 month')
 thismonth=$(date '+%Y%m')
 twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
+lastyear=$(date '+%Y%m' --date='-1 year')
 
 if [[ "$1" == "--limited" ]]; then
         shift
@@ -346,7 +347,7 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[gfb]} == 1 )); then
-			${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+			${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir_old}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping gfb"
 		fi
@@ -354,7 +355,7 @@ case "$1" in
 			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
  
 			(( google_sheet_patches )) && ${clusterdir}/google_sheet_patches.py
- 			${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+ 			${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping fgcz"
 		fi
@@ -381,30 +382,41 @@ case "$1" in
                         # look for only guaranteed samples
                         [[ $sample =~ $rxsample ]] || continue
                         # check the presence of fasta on each sample
-                        echo ls ${clusterdir}/${working}/samples/${sample}/${batch}
-                        ls ${clusterdir}/${working}/samples/${sample}/${batch}
-                        if [[ -e ${clusterdir}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
+                        echo ls ${clusterdi_oldr}/${working}/samples/${sample}/${batch}
+                        #ls ${clusterdir_old}/${working}/samples/${sample}/${batch}
+                        if [[ -e ${clusterdir_old}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
                             # this will check for:
                             #  - references/ref_majority.fasta
                             #  - references/consensus.bcftools.fasta & .chain
                             #  - references/frameshift_deletions_check.tsv
                             #  etc.
                             #  see V-pipe's rule 'prepare_upload' in publish.smk
-                            echo -n '.'
+                            echo '.'
                         else
                             echo -e "\r+${batch/_/:}\t!${sample}\e[K"
                             true
                             return 0
-                        fi;
-                done < $1
+                        fi
+                done < $sample_list
                 false
         ;;
         listsampleset)
-                ls ${clusterdir}/${sampleset}/samples.20*.tsv
+                case "$2" in
+                        --recent)
+                                ls -latr ${clusterdir_old}/${sampleset}/samples.20*.tsv | tail -n 12
+                        ;;
+                        --all)
+                                ls ${clusterdir_old}/${sampleset}/samples.20*.tsv
+                        ;;
+                        *)
+                                echo "Unkown parameter ${2}" > /dev/stderr
+                                exit 2
+                        ;;
+                esac
         ;;
         list_batch_samples)
                 validateBatchName "$2"
-                cat ${clusterdir}/${sampleset}/samples.${2}.tsv
+                cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv
         ;;
         queue_upload)
                 echo "Creating on remote the list of new samples to upload"

@@ -60,7 +60,7 @@ else
     fi
 fi
 ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
-${scriptdir}/belfry pull_sortsamples_status
+${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"
     echo "The automation will not be aware of any new deliveries"
@@ -150,33 +150,10 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
             fi
         else
             echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
+        fi
     fi
 else
     echo 'No current run.'
-fi
-
-
-#
-# Phase 3: Reports and sequences
-#
-
-echo "================"
-echo "Results handling"
-echo "================"
-
-if [[ ( -e ${statusdir}/pullsamples_noshorah_success || -e ${statusdir}/pullsamples_success ) && ( ( ! -e ${statusdir}/qa_report_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/qa_report_success ) || (  ${statusdir}/pullsamples_success -nt ${statusdir}/qa_report_success ) ) ]]; then
-    # ${scriptdir}/belfry.sh qa_report
-    :
-else
-    echo 'no newer results'
-fi
-
-if [[ ( -e ${statusdir}/qa_report_success ) && ( ( ! -e ${statusdir}/pushseq_success ) || ( ${statusdir}/qa_report_fail -nt ${statusdir}/pushseq_success ) ) ]]; then
-    echo push data to viollier -- deactivated
-    #${scriptdir}/belfry.sh pushseq
-    #${scriptdir}/belfry.sh gitaddseq
-else
-    echo 'no upload needed'
 fi
 
 #
@@ -205,7 +182,8 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
     limit=$(date --date='2 weeks ago' '+%Y%m%d')
     echo "Check batch against ${ref}:"
     #for t in ${cluster_mount}/${sampleset}/samples.20*.tsv; do
-    for t in $($remote_batman listsampleset)
+    for t in $(${remote_batman} listsampleset --recent)
+    do
         if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
             echo "oops: Can't parse <${t}> ?!" > /dev/stderr
         fi
@@ -213,9 +191,12 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         # check Duplicates
         b="${BASH_REMATCH[1]}"
         f="${BASH_REMATCH[2]}"
+        echo $b
+        echo $f
+        echo $flowcell
         if [[ -n "${flowcell[$f]}" ]]; then
             echo "error: Duplicate flowcell $f : ${flowcell[$f]} vs $b" > /dev/stderr
-            exit 2
+            #exit 2
         else
             flowcell[$f]=$b
         fi
@@ -229,7 +210,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
             echo "!$b:$f"
             (( ++mustrun ))
             runreason+=( "${b}_${f}" )
-        elif [[ "$limit" < "$b"  ]] && ${remote_batman} scanmissingsamples $t; then
+        elif [[ "$limit" < "$b"  ]] && $(${remote_batman} scanmissingsamples $t); then
             (( ++mustrun ))
             runreason+=( "${b}_${f}" )
         else
@@ -287,30 +268,26 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         fi
 
         # must run
-        if [[ ( -e ${statusdir}/pushsampleset_fail ) && ( ${statusdir}/pushsampleset_fail -nt ${statusdir}/pushsampleset_success ) ]]; then
-            echo 'error: Pushing sampleset did not succeed' > /dev/stderr
+        echo 'starting jobs'
+        if (( run_shorah )); then
+            shorah=""
         else
-            echo 'starting jobs'
-            if (( run_shorah )); then
-                shorah=""
-            else
-                shorah="--no-shorah"
-            fi
-            # ${remote_batman} addsamples --recent #   && \
-            ${remote_batman} vpipe ${shorah} --recent --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} #  &&  \
-            if [[ -s ${statusdir}/vpipe.${now} ]]; then
-                ln -sf ${statusdor}/vpipe.${now} ${statusdir}/vpipe_started
-                cat ${statusdir}/vpipe_started
-                printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
-                if [[ -n "${mailto[*]}" ]]; then
-                    (
-                        echo '(Possibly new) samples not having consensus sequences yet found in batches:'
-                        printf ' - %s\n' "${runreason[@]}"
-                        echo -e '\nStarting V-pipe on Euler:'
-                        cat ${statusdir}/vpipe_started
-                    ) | mail -s '[Automation-carillon] Starting V-pipe on Euler' "${mailto[@]}"
-                    # -r "${mailfrom}"
-                fi
+            shorah="--no-shorah"
+        fi
+        # ${remote_batman} addsamples --recent #   && \
+        ${remote_batman} vpipe ${shorah} --recent --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} #  &&  \
+        if [[ -s ${statusdir}/vpipe.${now} ]]; then
+            ln -sf ${statusdor}/vpipe.${now} ${statusdir}/vpipe_started
+            cat ${statusdir}/vpipe_started
+            printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
+            if [[ -n "${mailto[*]}" ]]; then
+                (
+                    echo '(Possibly new) samples not having consensus sequences yet found in batches:'
+                    printf ' - %s\n' "${runreason[@]}"
+                    echo -e '\nStarting V-pipe on Euler:'
+                    cat ${statusdir}/vpipe_started
+                ) | mail -s '[Automation-carillon] Starting V-pipe on Euler' "${mailto[@]}"
+                # -r "${mailfrom}"
             fi
         fi
     else
