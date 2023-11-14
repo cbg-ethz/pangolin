@@ -382,7 +382,7 @@ case "$1" in
                         # look for only guaranteed samples
                         [[ $sample =~ $rxsample ]] || continue
                         # check the presence of fasta on each sample
-                        echo ls ${clusterdi_oldr}/${working}/samples/${sample}/${batch}
+                        echo ${clusterdir_old}/${working}/samples/${sample}/${batch}
                         #ls ${clusterdir_old}/${working}/samples/${sample}/${batch}
                         if [[ -e ${clusterdir_old}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
                             # this will check for:
@@ -395,15 +395,14 @@ case "$1" in
                         else
                             echo -e "\r+${batch/_/:}\t!${sample}\e[K"
                             true
-                            return 0
+                            return 1
                         fi
                 done < $sample_list
-                false
         ;;
         listsampleset)
                 case "$2" in
                         --recent)
-                                ls -latr ${clusterdir_old}/${sampleset}/samples.20*.tsv | tail -n 12
+                                ls -tr ${clusterdir_old}/${sampleset}/samples.20*.tsv | tail -n 12
                         ;;
                         --all)
                                 ls ${clusterdir_old}/${sampleset}/samples.20*.tsv

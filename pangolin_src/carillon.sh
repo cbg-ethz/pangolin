@@ -56,7 +56,7 @@ else
             echo "The system will retry next loop"
         fi
     else
-        echo "\e[33;1mBakup of FGCZ raw data DISABLED\e[0m"
+        echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
     fi
 fi
 ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
@@ -182,7 +182,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
     limit=$(date --date='2 weeks ago' '+%Y%m%d')
     echo "Check batch against ${ref}:"
     #for t in ${cluster_mount}/${sampleset}/samples.20*.tsv; do
-    for t in $(${remote_batman} listsampleset --recent)
+    for t in $(${remote_batman} listsampleset --all)
     do
         if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
             echo "oops: Can't parse <${t}> ?!" > /dev/stderr
@@ -210,7 +210,8 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
             echo "!$b:$f"
             (( ++mustrun ))
             runreason+=( "${b}_${f}" )
-        elif [[ "$limit" < "$b"  ]] && $(${remote_batman} scanmissingsamples $t); then
+        elif [[ "$limit" < "$b"  ]]; then
+            if ${remote_batman} scanmissingsamples $t; then
             (( ++mustrun ))
             runreason+=( "${b}_${f}" )
         else
@@ -277,7 +278,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         # ${remote_batman} addsamples --recent #   && \
         ${remote_batman} vpipe ${shorah} --recent --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} #  &&  \
         if [[ -s ${statusdir}/vpipe.${now} ]]; then
-            ln -sf ${statusdor}/vpipe.${now} ${statusdir}/vpipe_started
+            ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
             cat ${statusdir}/vpipe_started
             printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
             if [[ -n "${mailto[*]}" ]]; then
@@ -530,7 +531,7 @@ if [ $run_uploader -eq "1" ]; then
             fi
         else
             echo "\e[33;1mBackup of uploader data DISABLED\e[0m"
-        
+        fi
     else
         echo 'No current UPLOADER run.'
     fi
@@ -560,14 +561,10 @@ if [ $run_uploader -eq "1" ]; then
             echo "Daily sample number: ${uploaded_number}/${upload_number_quota}"
             echo "Daily size: ${uploaded_size}/${upload_size_quota} GB"
             echo "----"
-            if [ ((${uploaded_number} + ${upload_avg_number} > ${upload_number_quota}))  || ((${uploaded_size} + ${upload_avg_size} > ${upload_size_quota})) ]; then
-                
-
+            #if [ ((${uploaded_number} + ${upload_avg_number} > ${upload_number_quota}))  || ((${uploaded_size} + ${upload_avg_size} > ${upload_size_quota})) ]; then
             echo 'New UPLOADER job waiting. Checking if Uploader is already running...'
             if [[ ( -e ${uploader_statusdir}/uploader_started ) && ( ( ! -e ${uploader_statusdir}/uploader_ended ) || ( ${uploader_statusdir}/uploader_started -nt ${uploader_statusdir}/uploader_ended ) ) ]]; then
                 echo "BUT there is already an UPLOADER instance running! Retrying during the next loop"
-            elif []; then
-
             else
                 echo 'starting UPLOADER job'
                 ${remote_batman} upload  > ${uploader_statusdir}/uploader.${now}    &&    \
@@ -583,9 +580,6 @@ if [ $run_uploader -eq "1" ]; then
                             # -r "${mailfrom}"
                         fi
                     fi
-                else
-                    echo "\e[31;1mpushing UPLOADER sample list failed\e[0m"
-                fi
             fi
         else
             echo 'No new UPLOADER jobs to start'

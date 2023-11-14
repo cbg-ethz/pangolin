@@ -14,6 +14,8 @@ while getopts "sh" o; do
 	esac
 done
 
+scriptdir=/app/pangolin_src
+. ${scriptdir}/config/server.conf
 runtimeout=3600
 shorttimeout=300
 
@@ -82,7 +84,6 @@ ring_carillon() {
 	else
 		echo "Aargh: problem writing on storage !!!"
 		# TODO use carillon phases
-		scriptdir=/app/pangolin_src
 		${scriptdir}/belfry.sh  df
 		cluster_user="${USER%%@*}"
 		cluster_user=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^cluster_user=).*$' config/server.conf)
@@ -93,9 +94,9 @@ ring_carillon() {
 	fi
 	# run the carrillon script
 	echo "Starting loop for: $runtimeout sec"
-	timeout -k 5 -s INT $runtimeout ./carillon
+	timeout -k 5 -s INT $runtimeout ${scriptdir}/carillon.sh
 	local retval=$?
-	timeout -k 5 -s INT $shorttimeout touch $(dirname $(which $0))/status/loop_done
+	timeout -k 5 -s INT $shorttimeout touch ${statusdir}/loop_done
 
 	# report NFS status
 	#dmesg -LTk| grep -P 'nfs:.*server \S* (OK|not responding)' --colour=always|tail -n 1
@@ -104,7 +105,7 @@ ring_carillon() {
 }
 
 
-stopfile="$(dirname $(which $0))/status/stop"
+stopfile="${statusdir}/stop"
 
 # remove previous abort file
 if [[ -e "${stopfile}" ]]; then

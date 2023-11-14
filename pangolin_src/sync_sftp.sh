@@ -49,9 +49,9 @@ umask 0002
 
 
 connect="connect sftp://${user}:${password}@${fileserver}:${srvport}"
-echo $connect
+echo "connect sftp://${user}:<PASSWORD>@${fileserver}:${srvport}"
 settings="set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}"
 mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
 
-echo lftp -c "$settings; $connect; $mirror"
+echo lftp -c "$settings; connect sftp://${user}:<PASSWORD>@${fileserver}:${srvport}; $mirror"
 exec lftp -c "$settings; $connect; $mirror"
