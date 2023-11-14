@@ -22,6 +22,8 @@ fi
 
 umask 0002
 
+now=$(date '+%Y%m%d')
+
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
@@ -178,7 +180,6 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
     declare -A flowcell
     # if test -e ${statusdir}/vpipe_started; then
     ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
-    now=$(date '+%Y%m%d')
     limit=$(date --date='2 weeks ago' '+%Y%m%d')
     echo "Check batch against ${ref}:"
     #for t in ${cluster_mount}/${sampleset}/samples.20*.tsv; do
@@ -558,28 +559,35 @@ if [ $run_uploader -eq "1" ]; then
         elif (( mustrun_uploader )); then
             echo "Checking the upload quotas:"
             echo "----"
+            uploaded_number=$(cat ${uploader_number_status}.${now})
             echo "Daily sample number: ${uploaded_number}/${upload_number_quota}"
-            echo "Daily size: ${uploaded_size}/${upload_size_quota} GB"
+            echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} GB"
             echo "----"
-            #if [ ((${uploaded_number} + ${upload_avg_number} > ${upload_number_quota}))  || ((${uploaded_size} + ${upload_avg_size} > ${upload_size_quota})) ]; then
-            echo 'New UPLOADER job waiting. Checking if Uploader is already running...'
-            if [[ ( -e ${uploader_statusdir}/uploader_started ) && ( ( ! -e ${uploader_statusdir}/uploader_ended ) || ( ${uploader_statusdir}/uploader_started -nt ${uploader_statusdir}/uploader_ended ) ) ]]; then
-                echo "BUT there is already an UPLOADER instance running! Retrying during the next loop"
+            next_number=$((${uploaded_number} + ${uploader_sample_number}))
+            if [ (( ${next_number} > ${upload_number_quota}))  || ((${next_number} * ${upload_avg_size} > ${upload_size_quota})) ]; then
+                echo "New UPLOADER jobs to be submitted, BUT we reached the daily submission quota imposed by SPSP. Resuming tomorrow"
+                touch ${uploader_statusdir}/uploader_quota_hit.${now}
             else
-                echo 'starting UPLOADER job'
-                ${remote_batman} upload  > ${uploader_statusdir}/uploader.${now}    &&    \
-                    if [[ -s ${uploader_statusdir}/uploader.${now} ]]; then
-                        ln -sf uploader.${now} ${uploader_statusdir}/uploader_started
-                        cat ${uploader_statusdir}/uploader_started
-                        printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${uploader_statusdir}/uploader_new.${now}
-                        if [[ -n "${mailto[*]}" ]]; then
-                            (
-                                echo -e '\nStarting UPLOADER on Euler:'
-                                cat ${uploader_statusdir}/uploader_started
-                            ) | mail -s '[Automation-carillon] Starting UPLOADER on Euler' "${mailto[@]}"
-                            # -r "${mailfrom}"
+                echo 'New UPLOADER job waiting. Checking if Uploader is already running...'
+                if [[ ( -e ${uploader_statusdir}/uploader_started ) && ( ( ! -e ${uploader_statusdir}/uploader_ended ) || ( ${uploader_statusdir}/uploader_started -nt ${uploader_statusdir}/uploader_ended ) ) ]]; then
+                    echo "BUT there is already an UPLOADER instance running! Retrying during the next loop"
+                else
+                    echo 'starting UPLOADER job'
+                    ${remote_batman} upload  > ${uploader_statusdir}/uploader.${now}    &&    \
+                        if [[ -s ${uploader_statusdir}/uploader.${now} ]]; then
+                            ln -sf uploader.${now} ${uploader_statusdir}/uploader_started
+                            cat ${uploader_statusdir}/uploader_started
+                            printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${uploader_statusdir}/uploader_new.${now}
+                            echo $(( $(cat ${uploaded_number}) + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
+                            if [[ -n "${mailto[*]}" ]]; then
+                                (
+                                    echo -e '\nStarting UPLOADER on Euler:'
+                                    cat ${uploader_statusdir}/uploader_started
+                                ) | mail -s '[Automation-carillon] Starting UPLOADER on Euler' "${mailto[@]}"
+                                # -r "${mailfrom}"
+                            fi
                         fi
-                    fi
+                fi
             fi
         else
             echo 'No new UPLOADER jobs to start'
