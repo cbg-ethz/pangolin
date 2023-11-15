@@ -22,7 +22,7 @@ X() {
 }
 
 # sanity checks
-if [[ ! -d "cluster/project/pangolin/sampleset" ]]; then
+if [[ ! -d "/cluster/project/pangolin/sampleset" ]]; then
     fail 'No sampleset directory:' "cluster/project/pangolin/sampleset"
 fi
 if [[ ! -d "/cluster/project/pangolin/bfabric-downloads" ]]; then

@@ -22,5 +22,5 @@ RUN /app/setup/setup.sh
 WORKDIR /app/pangolin_src
 
 
-ENTRYPOINT ["/root/pangolin/entrypoint.sh"]
+ENTRYPOINT ["/app/pangolin_src/entrypoint.sh"]
 #ENTRYPOINT [ "sleep", "10d" ]

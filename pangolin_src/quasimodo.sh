@@ -133,5 +133,4 @@ while sleep 1200; do
 	fi
 
 	date -R;
-	klist;
 done

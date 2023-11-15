@@ -213,8 +213,9 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
             runreason+=( "${b}_${f}" )
         elif [[ "$limit" < "$b"  ]]; then
             if ${remote_batman} scanmissingsamples $t; then
-            (( ++mustrun ))
-            runreason+=( "${b}_${f}" )
+                (( ++mustrun ))
+                runreason+=( "${b}_${f}" )
+            fi
         else
             if  [[ "$limit" < "$b"  ]]; then
                 echo -e "\r($b:$f)\e[K"
@@ -564,7 +565,7 @@ if [ $run_uploader -eq "1" ]; then
             echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} GB"
             echo "----"
             next_number=$((${uploaded_number} + ${uploader_sample_number}))
-            if [ (( ${next_number} > ${upload_number_quota}))  || ((${next_number} * ${upload_avg_size} > ${upload_size_quota})) ]; then
+            if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
                 echo "New UPLOADER jobs to be submitted, BUT we reached the daily submission quota imposed by SPSP. Resuming tomorrow"
                 touch ${uploader_statusdir}/uploader_quota_hit.${now}
             else
