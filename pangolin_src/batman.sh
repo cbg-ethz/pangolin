@@ -132,21 +132,21 @@ case "$1" in
                 done
                 # start first job
                 cd ${clusterdir_old}/${working}/
-                # use -H to put on hold for analysis
-                if [[ "$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.bsub | bsub -J "COVID-vpipe-<${tag}>-cons" ${hold})" =~ ${RXJOB} ]]; then
-                        job['seq']=${BASH_REMATCH[1]}
+                job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
-                        [[ "$(sed "s/@TAG@/<${tag}>/g" qa-launcher | bsub -J "COVID-vpipe-<${tag}>-qa" ${hold} -w "ended(${job['seq']})")" =~ ${RXJOB} ]] && job['seqqa']=${BASH_REMATCH[1]}
+                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
                         # if no fail schedule a full job with snv
-                        if (( shorah )) && [[ "$(bsub ${hold} -w "done(${job['seq']})" -ti < vpipe.bsub)"  =~ ${RXJOB} ]]; then
-                                job['snv']=${BASH_REMATCH[1]}
-                                # schedule a gatherqa no matter what happens to snv
-                                [[ "$(bsub ${hold} -w "done(${job['seq']})&&ended(${job['snv']})"  < qa-launcher)" =~ ${RXJOB} ]] && job['snvqa']=${BASH_REMATCH[1]}
-                                # schedule a hugemem job if snvjob failed
-                                if [[ "$(bsub ${hold} -w "done(${job['seq']})&&exit(${job['snv']})" -ti < vpipe-hugemem.bsub)" =~ ${RXJOB} ]]; then
-                                        job['hugemem']=${BASH_REMATCH[1]}
+                        if (( shorah )); then
+                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
+                                if [[ -n "${job['snv']}" ]]; then
+                                        # schedule a gatherqa no matter what happens to snv
+                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                        # schedule a hugemem job if snvjob failed
+                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
                                         # schedule a qa afterward
-                                        [[ "$(bsub -w "done(${job['seq']})&&exit(${job['snv']})&&ended(${job['hugemem']})" -ti  < qa-launcher)" =~ ${RXJOB} ]] && job['hugememqa']=${BASH_REMATCH[1]}
+                                        [[ -n "${job['hugemem']}" ]]    && \
+                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
                                 fi
                         fi
                 fi >&2
@@ -157,10 +157,12 @@ case "$1" in
         ;;
         job)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
-                        bjobs $2 | gawk -v I=$2 '$1==I{print $3}'
+                        read output other < <(sacct -j "$2" --format State --noheader)
+                        echo "${output}"
                 else
-                        bjobs
+                        squeue
                 fi
+
         ;;
         purgelogs)
                 find ${clusterdir_old}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
@@ -227,7 +229,7 @@ case "$1" in
         ;;
         completion)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
-                        bpeek $2 | gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:]]+%\) done$/{print $0 "\t" date}'
+                        gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir}/${working}/slurm-${2}.out"
                 fi
         ;;
         df)
