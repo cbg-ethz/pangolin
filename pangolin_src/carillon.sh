@@ -297,7 +297,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         echo 'No new jobs to start'
     fi
 else
-    echo 'There is already run going on'
+    echo 'There is already a vpipe run going on'
 fi
 
 #

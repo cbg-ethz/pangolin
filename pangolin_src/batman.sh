@@ -80,10 +80,10 @@ case "$1" in
                 ~/log/rotate
         ;;
         addsamples)
-                lst="${clusterdir}/${working}/samples.tsv"
+                lst="${clusterdir_old}/${working}/samples.tsv"
                 case "$2" in
                         --recent)
-                                lst="${clusterdir}/${working}/samples.recent.tsv"
+                                lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"
                         ;;
                         *)
@@ -91,11 +91,11 @@ case "$1" in
                                 exit 2
                         ;;
                 esac
-                mkdir -p --mode=2770 "${clusterdir}/${working}/samples/"
+                mkdir -p --mode=2770 "${clusterdir_old}/${working}/samples/"
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-                cat ${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir}/${working}/samples.recent.tsv"
-                sort -u ${clusterdir}/${sampleset}/samples.*.tsv > "${clusterdir}/${working}/samples.tsv"
-                cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir}/${sampleset}/{}/" "${clusterdir}/${working}/samples/"
+                cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
+                cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/${working}/samples/"
         ;;
         vpipe)
                 declare -A job
@@ -131,7 +131,7 @@ case "$1" in
                         shift
                 done
                 # start first job
-                cd ${clusterdir}/${working}/
+                cd ${clusterdir_old}/${working}/
                 # use -H to put on hold for analysis
                 if [[ "$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.bsub | bsub -J "COVID-vpipe-<${tag}>-cons" ${hold})" =~ ${RXJOB} ]]; then
                         job['seq']=${BASH_REMATCH[1]}
@@ -163,7 +163,7 @@ case "$1" in
                 fi
         ;;
         purgelogs)
-                find ${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
+                find ${clusterdir_old}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
         ;;
         scratch)
                 temp_scratch="${SCRATCH}/pangolin/temp"
@@ -205,7 +205,7 @@ case "$1" in
                 count_old=0
                 while read s; do
                         (( ++count_all ))
-                        if [[ -r "${clusterdir}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
+                        if [[ -r "${clusterdir_old}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
                                 (( ++count_old ))
                                 if (( purge )); then
                                         rm -rvf  "${temp_scratch}/samples/${s}"
@@ -231,13 +231,13 @@ case "$1" in
                 fi
         ;;
         df)
-                #df ${clusterdir} ${SCRATCH}
-                lquota -2 ${clusterdir}
+                #df ${clusterdir_old} ${SCRATCH}
+                lquota -2 ${clusterdir_old}
                 lquota -2 ${SCRATCH}
         ;;
         garbage)
                 validateBatchName "$2"
-                cd ${clusterdir}
+                cd ${clusterdir_old}
 
                 for f in ${sampleset}/*/${2}; do
                         garbage=$(dirname "${f//${sampleset}/garbage}")
@@ -270,24 +270,24 @@ case "$1" in
                 conda deactivate
 	;;
 	unlock_viloca)
-		cd ${clusterdir}/${vilocadir}/
+		cd ${clusterdir_old}/${vilocadir}/
 		conda activate 'viloca'
 		snakemake --unlock
                 conda deactivate
 	;;
 	archive_viloca_run)
 		validateBatchName $2
-		cd ${clusterdir}/work-viloca/
+		cd ${remote_viloca_basedir}
 		if [ ! -d results_archive ]; then
 			mkdir results_archive
 		fi
 		mkdir "results_archive/${2}"
-		mv "${clusterdir}/${vilocadir}/results/*" "${clusterdir}/work-viloca/"
+		mv "${vilocadir}/results/*" "results_archive/${2}"
 	;;
         create_sample_list_viloca)
                 validateBatchName $2
                 echo ",sample,batch" > ${remote_viloca_basedir}/${viloca_staging}
-                cat ${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${remote_viloca_basedir}/${viloca_staging}
+                cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${remote_viloca_basedir}/${viloca_staging}
         ;;
         finalize_staging_viloca)
                 mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
@@ -420,18 +420,18 @@ case "$1" in
         queue_upload)
                 echo "Creating on remote the list of new samples to upload"
         	    validateBatchName "$2"
-                cd ${clusterdir}/${uploader_workdir}
+                cd ${uploaderdir}
         	    # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
-                cat ${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${clusterdir}/${uploader_workdir}/${uploaderlist} > ${clusterdir}/${uploader_workdir}/${uploaderlist}_temp.txt && \
-        	    mv ${clusterdir}/${uploader_workdir}/${uploaderlist}_temp.txt ${clusterdir}/${uploader_workdir}/${uploaderlist}
+                cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${uploaderdir}/${uploaderlist} > ${uploaderdir}/${uploaderlist}_temp.txt && \
+        	    mv ${uploaderdir}/${uploaderlist}_temp.txt ${uploaderdir}/${uploaderlist}
         	    # Remove possible duplicates after updating the upload list
-                cat -n ${clusterdir}/${uploader_workdir}/${uploaderlist} | sort -uk2 | sort -n | cut -f2- > ${clusterdir}/${uploader_workdir}/.working_${uploaderlist}
-                mv ${clusterdir}/${uploader_workdir}/.working_${uploaderlist} ${clusterdir}/${uploader_workdir}/${uploaderlist}
+                cat -n ${uploaderdir}/${uploaderlist} | sort -uk2 | sort -n | cut -f2- > ${uploaderdir}/.working_${uploaderlist}
+                mv ${uploaderdir}/.working_${uploaderlist} ${uploaderdir}/${uploaderlist}
         ;;
         upload)
                 echo "uploading ${uploader_sample_number} samples from the list of samples to upload"
                 conda activate sendcrypt
-                cd ${clusterdir}/${uploader_workdir}
+                cd ${uploaderdir}
                 . ${clusterdir}/uploader/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
 
                 

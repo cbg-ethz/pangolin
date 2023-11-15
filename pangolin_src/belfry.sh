@@ -43,11 +43,8 @@ set -e
 
 umask 0002
 
-statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
-viloca_statusdir="${basedir}/viloca_status"
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
-uploader_statusdir="${basedir}/uploader_status"
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 
 timeoutforeground=
