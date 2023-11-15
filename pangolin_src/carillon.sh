@@ -175,7 +175,6 @@ join_by() { local IFS="$1"; shift; echo "$*"; }
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
     echo check missing samples
     clearline=0
-    mustrun=0
     runreason=( )
     declare -A flowcell
     # if test -e ${statusdir}/vpipe_started; then
@@ -192,9 +191,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         # check Duplicates
         b="${BASH_REMATCH[1]}"
         f="${BASH_REMATCH[2]}"
-        echo $b
-        echo $f
-        echo $flowcell
+
         if [[ -n "${flowcell[$f]}" ]]; then
             echo "error: Duplicate flowcell $f : ${flowcell[$f]} vs $b" > /dev/stderr
             exit 2

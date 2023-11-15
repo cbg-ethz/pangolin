@@ -384,7 +384,7 @@ case "$1" in
                         # look for only guaranteed samples
                         [[ $sample =~ $rxsample ]] || continue
                         # check the presence of fasta on each sample
-                        echo ${clusterdir_old}/${working}/samples/${sample}/${batch}
+                        echo -n ${sample}/${batch}
                         #ls ${clusterdir_old}/${working}/samples/${sample}/${batch}
                         if [[ -e ${clusterdir_old}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
                             # this will check for:
@@ -393,13 +393,14 @@ case "$1" in
                             #  - references/frameshift_deletions_check.tsv
                             #  etc.
                             #  see V-pipe's rule 'prepare_upload' in publish.smk
-                            echo '.'
+                            echo ' -  .'
                         else
                             echo -e "\r+${batch/_/:}\t!${sample}\e[K"
                             true
-                            return 1
+                            exit 0
                         fi
                 done < $sample_list
+                exit 1
         ;;
         listsampleset)
                 case "$2" in
