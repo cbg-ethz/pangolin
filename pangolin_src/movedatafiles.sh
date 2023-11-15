@@ -1800,11 +1800,11 @@ if (( !ALLOK )); then
 fi;
 
 
-mv -v cluster/project/pangolin/sampleset/samples.20231013_HLLJMDRX3.tsv.staging cluster/project/pangolin/sampleset/samples.20231013_HLLJMDRX3.tsv
-mv -v cluster/project/pangolin/sampleset/samples.20231020_HLNKVDRX3.tsv.staging cluster/project/pangolin/sampleset/samples.20231020_HLNKVDRX3.tsv
-mv -v cluster/project/pangolin/sampleset/samples.20231006_HLLLTDRX3.tsv.staging cluster/project/pangolin/sampleset/samples.20231006_HLLLTDRX3.tsv
-mv -v cluster/project/pangolin/sampleset/samples.20231103_HLTHYDRX3.tsv.staging cluster/project/pangolin/sampleset/samples.20231103_HLTHYDRX3.tsv
-mv -v cluster/project/pangolin/sampleset/samples.20231110_HKHFMDRX3.tsv.staging cluster/project/pangolin/sampleset/samples.20231110_HKHFMDRX3.tsv
+mv -v /cluster/project/pangolin/sampleset/samples.20231013_HLLJMDRX3.tsv.staging /cluster/project/pangolin/sampleset/samples.20231013_HLLJMDRX3.tsv
+mv -v /cluster/project/pangolin/sampleset/samples.20231020_HLNKVDRX3.tsv.staging /cluster/project/pangolin/sampleset/samples.20231020_HLNKVDRX3.tsv
+mv -v /cluster/project/pangolin/sampleset/samples.20231006_HLLLTDRX3.tsv.staging /cluster/project/pangolin/sampleset/samples.20231006_HLLLTDRX3.tsv
+mv -v /cluster/project/pangolin/sampleset/samples.20231103_HLTHYDRX3.tsv.staging /cluster/project/pangolin/sampleset/samples.20231103_HLTHYDRX3.tsv
+mv -v /cluster/project/pangolin/sampleset/samples.20231110_HKHFMDRX3.tsv.staging /cluster/project/pangolin/sampleset/samples.20231110_HKHFMDRX3.tsv
 
 echo All Ok
 exit 0

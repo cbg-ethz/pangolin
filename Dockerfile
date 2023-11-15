@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y vim wget lftp rsync gawk ssh git gpg ex
 USER bs-pangolin
 WORKDIR /app/
 RUN mkdir -p setup
-RUN /app/pangolin_src/setup/setup.sh
+COPY pangolin_src/setup /app/setup
+RUN /app/setup/setup.sh
 
 USER root
-COPY pangolin_src /app/pangolin_src
-RUN chown -R bs-pangolin:bs-pangolin /app
+COPY --chown=bs-pangolin:bs-pangolin pangolin_src /app/pangolin_src
 USER bs-pangolin
 
 WORKDIR /app/pangolin_src
