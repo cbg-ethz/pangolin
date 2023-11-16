@@ -109,7 +109,8 @@ case "$1" in
                                         shorah=0
                                 ;;
                                 --hold)
-                                        hold='-H'
+					# use --hold to put on hold for analysis
+					hold='--hold'
                                 ;;
                                 --tag)
                                         shift

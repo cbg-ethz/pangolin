@@ -143,3 +143,16 @@ while read old batch len proto; do
 	printf "%s\t%s\t%u\t%s\n" "${new}" "${batch}" "${len}" "${proto}"
 done < "${sampleset}/samples.${batchname}.tsv.old" > "${sampleset}/samples.${batchname}.tsv"
 #rm "${sampleset}/samples.${batchname}.tsv.old"
+
+# patch projects tsv list
+mv "${sampleset}/projects.${batchname}.tsv"{,.old}
+while read old project order folder plate; do
+	new="${old}"
+	if [[ -z ${map[$old]} ]]; then
+		oops "tsv $new not in patch list"
+	else
+		new="${map[$old]}"
+	fi
+	printf "%s\t%s\t%s\t%s\t%s\n" "${new}" "${project}" "${order}" "${folder}" "${plate}"
+done < "${sampleset}/projects.${batchname}.tsv.old" > "${sampleset}/projects.${batchname}.tsv"
+#rm "${sampleset}/projects.${batchname}.tsv.old"
