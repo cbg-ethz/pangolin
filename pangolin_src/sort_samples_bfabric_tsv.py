@@ -502,7 +502,7 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 
 
 # shell script file with all moving instructions inside
-sh=open(os.path.join(basedir_test,sampleset,'movedatafiles.sh'), 'wt')
+sh=open(os.path.join(basedir_test,'movedatafiles.sh'), 'wt')
 
 # generic header: only for stand-alone files.
 print(r'''
