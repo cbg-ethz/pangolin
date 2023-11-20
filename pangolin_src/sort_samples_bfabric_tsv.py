@@ -83,6 +83,7 @@ with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
 lab={os.path.splitext(os.path.basename(args.config))[0]}
 basedir=/cluster/project/pangolin
+basedir_test=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
 sampleset=/cluster/project/pangolin/sampleset
 download=/cluster/project/pangolin/bfabric-downloads
 link=--link
@@ -499,7 +500,7 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 
 
 # shell script file with all moving instructions inside
-sh=open(os.path.join(basedir,sampleset,'movedatafiles.sh'), 'wt')
+sh=open(os.path.join(basedir_test,sampleset,'movedatafiles.sh'), 'wt')
 
 # generic header: only for stand-alone files.
 print(r'''
