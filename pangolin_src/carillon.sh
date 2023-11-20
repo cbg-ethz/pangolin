@@ -153,7 +153,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
         # queue the samples for upload. This will be handled in a dedicated section
-        ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
+        ${remote_batman} queue_upload ${lastbatch_vpipe}
     fi
 else
     echo 'No current run.'
