@@ -101,6 +101,8 @@ lab=config['_']['lab'].strip("\"'")
 '''name of the lab, to put in the batch YAML'''
 basedir=config['_']['basedir'].strip("\"'")
 '''base dircetory'''
+basedir_test=config['_']['basedir_conf'].strip("\"'")
+'''test base directory'''
 expname=config['_']['expname'].strip("\"'")
 '''projects name in SFTP'''
 download=config['_']['download'].strip("\"'")
