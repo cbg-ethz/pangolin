@@ -142,18 +142,18 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         if [ $backup_vpipe -eq "1" ]; then
             ${scriptdir}/belfry.sh pullsamples_noshorah --recent
             if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
-                echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
-                vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
-                vpipe_enddate=${vpipe_enddate#*.}
-                lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
-                # queue the samples for upload. This will be handled in a dedicated section
-                ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
+                echo "Pulling data success!"
             else
                 echo "\e[31;1mpulling data failed\e[0m"
             fi
         else
             echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
         fi
+        echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
+        vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
+        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
+        # queue the samples for upload. This will be handled in a dedicated section
+        ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
     fi
 else
     echo 'No current run.'
@@ -381,14 +381,14 @@ if [ "$run_viloca" -eq "1" ]; then
         if [ $backup_viloca -eq "1" ]; then
             ${scriptdir}/belfry pullresults_viloca --batch ${lastbatch_viloca}
             if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
-                echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
+                echo "Pulling VILOCA data success!"
             else
                 echo "\e[31;1mpulling VILOCA data failed\e[0m"
             fi
         else
             echo "\e[33;1mBackup of VILOCA data DISABLED\e[0m"
         fi
-        
+        echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
     else
         echo 'No current VILOCA run.'
     fi
