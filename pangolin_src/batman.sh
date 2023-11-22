@@ -230,7 +230,7 @@ case "$1" in
         ;;
         completion)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
-                        gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir}/${working}/slurm-${2}.out"
+                        gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir_old}/${working}/slurm-${2}.out"
                 fi
         ;;
         df)
