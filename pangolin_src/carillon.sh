@@ -150,7 +150,8 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
             echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
         fi
         echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
-        vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
+        vpipe_lastfile=$(cat ${statusdir}/vpipe_ended)
+        vpipe_enddate=${vpipe_lastfile##*.}
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
         # queue the samples for upload. This will be handled in a dedicated section
         ${remote_batman} queue_upload ${lastbatch_vpipe}
@@ -410,11 +411,11 @@ if [ "$run_viloca" -eq "1" ]; then
         echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
         if [[ $lastbatch_viloca != $lastbatch_vpipe ]]; then
             echo "There is a new most recent batch that VILOCA can run on"
-            t=$(${remote_batman} listsampleset | grep samples.${lastbatch_vpipe}.tsv)
+            t=$(${remote_batman} listsampleset --all | grep samples.${lastbatch_vpipe}.tsv)
             if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
                             echo "oops: Can't parse <${t}> ?!" > /dev/stderr
             fi
-            ${remote_batman} create_sample_list_viloca
+            ${remote_batman} create_sample_list_viloca ${lastbatch_vpipe}
             (( ++mustrun_viloca ))
         else
             echo "No new batch to run VILOCA on"
