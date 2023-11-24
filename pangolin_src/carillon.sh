@@ -357,7 +357,7 @@ if [ "$run_viloca" -eq "1" ]; then
             if grep -rq snake.err -e "JOB.*CANCELLED.*DUE TO TIME LIMIT"; then
                 echo "Previous VILOCA run cancelled due to time limit. Restarting it"
                 ${remote_batman} unlock_viloca && \
-                ${remote_batman} viloca --recent --tag "${lastbatch_vpipe}" > ${viloca_statusdir}/viloca.${now}    &&    \
+                ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
                 if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
                     ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
                     cat ${viloca_statusdir}/viloca_started
@@ -442,7 +442,7 @@ if [ "$run_viloca" -eq "1" ]; then
 				# and VILOCA will run only on the latest once it restarts
 				${remote_batman} finalize_staging_viloca
                 # must run
-                ${remote_batman} viloca  > ${viloca_statusdir}/viloca.${now}    &&    \
+                ${remote_batman} viloca  => ${viloca_statusdir}/viloca.${now}    &&    \
                     if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
                         ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
                         cat ${viloca_statusdir}/viloca_started
@@ -460,7 +460,7 @@ if [ "$run_viloca" -eq "1" ]; then
                     fi
             fi
         else
-            echo 'Configuration error. Please set either donotsubmit_viloca or mustrunviloca'
+            echo 'No new VILOCA run to submit'
         fi
     else
         echo 'There is already A VILOCA run going on'

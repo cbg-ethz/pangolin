@@ -263,8 +263,7 @@ case "$1" in
         ;;
 	viloca)
 		cd ${vilocadir}/
-                ls
-		conda activate 'viloca'
+                conda activate 'viloca'
 		. run_workflow.sh
 		# write job chain list
 		for v in "${list[@]}"; do
