@@ -311,46 +311,28 @@ if [ "$run_viloca" -eq "1" ]; then
 
     if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
         stillrunning=0
-        while read j id; do
-            # skip missing
-            if [[ -z "${id}" ]]; then
-                echo "VILOCA - $j : (not started)"
-                continue
+        # skip missing
+        if [[ -z "${id}" ]]; then
+            echo "VILOCA - $id : (not started)"
+        fi
+        # skip already finished
+        if [[ ( -e ${viloca_statusdir}/viloca_${j}_ended ) && ( ${viloca_statusdir}/viloca_${j}_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
+            old="$(<${viloca_statusdir}/viloca_${j}_ended)"
+            if [[ "${id}" == "${old}" ]]; then
+                echo "VILOCA : $id already finished"
+                stillrunning=0
+            else
+                echo "VILOCA : mismatch $id vs $old"
             fi
-
-            # skip already finished
-            if [[ ( -e ${viloca_statusdir}/viloca_${j}_ended ) && ( ${viloca_statusdir}/viloca_${j}_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
-                old="$(<${viloca_statusdir}/viloca_${j}_ended)"
-                if [[ "${id}" == "${old}" ]]; then
-                    echo "VILOCA - $j : $id already finished"
-                else
-                    echo "VILOCA - $j : mismatch $id vs $old"
-                fi
-                continue
-            fi
-
-            # cluster status
-            stat=$(${remote_batman} job "${id}" || echo "(no answer)")
-            if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
-                # running
-                echo -n "VILOCA - $j : $id : $stat"
-                (( ++stillrunning ))
-                if [[ "${stat}" == 'RUN' && ( ! "$j" =~ qa$ ) ]]; then
-                    echo -ne '\t'
-                    ${remote_batman} completion "${id}" | tail -n 1
-                else
-                    echo ''
-                fi
-                sleep 1
-                continue
-            fi
-
-            # not running
-            echo "VILOCA - $j : $id finishing"
-            lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-            ${remote_batman} archive_viloca_run ${lastbatch_viloca} || echo -e '...\e[33;1mFAILED TO ARCHIVE THE VILOCA RUN on batch ${lastbatch_viloca}\e[0m'
-            echo "${id}" > ${viloca_statusdir}/viloca_${j}_ended
-        done < ${viloca_statusdir}/viloca_started
+        fi
+        # cluster status
+        stat=$(${remote_batman} job "${id}" || echo "(no answer)")
+        if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
+            # running
+            echo -n "VILOCA : $id : $stat\n"
+            echo "VILOCA : $id still running"
+            (( ++stillrunning ))
+        fi
 
         if (( stillrunning == 0 )); then
             echo "No VILOCA running. Checking if the run was successful or if it ended prematurely due to the time limit"
@@ -359,7 +341,7 @@ if [ "$run_viloca" -eq "1" ]; then
                 ${remote_batman} unlock_viloca && \
                 ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
                 if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-                    ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
+                    cat viloca.${now} > ${viloca_statusdir}/viloca_started
                     cat ${viloca_statusdir}/viloca_started
                     printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
                     if [[ -n "${mailto[*]}" ]]; then
@@ -372,24 +354,27 @@ if [ "$run_viloca" -eq "1" ]; then
                         # -r "${mailfrom}"
                     fi
                 fi
-                continue
+            else
+                lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
+                echo "Archiving the VILOCA run on batch ${lastbatch_viloca} to make space in the results directory for a new run"
+                ${remote_batman} archive_viloca_run ${lastbatch_viloca} || echo -e '...\e[33;1mFAILED TO ARCHIVE THE VILOCA RUN on batch ${lastbatch_viloca}\e[0m'
+                echo "${id}" > ${viloca_statusdir}/viloca_${j}_ended
+                echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
             fi
-            echo found
         else
-            echo not found
+            echo VILOCA still running
         fi
         lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-        if [ $backup_viloca -eq "1" ]; then
-            ${scriptdir}/belfry pullresults_viloca --batch ${lastbatch_viloca}
-            if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
-                echo "Pulling VILOCA data success!"
-            else
-                echo "\e[31;1mpulling VILOCA data failed\e[0m"
-            fi
-        else
-            echo "\e[33;1mBackup of VILOCA data DISABLED\e[0m"
-        fi
-        echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
+        #if [ $backup_viloca -eq "1" ]; then
+        #    ${scriptdir}/belfry pullresults_viloca --batch ${lastbatch_viloca}
+        #    if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
+        #        echo "Pulling VILOCA data success!"
+        #    else
+        #        echo "\e[31;1mpulling VILOCA data failed\e[0m"
+        #    fi
+        #else
+        #    echo "\e[33;1mBackup of VILOCA data DISABLED\e[0m"
+        #fi
     else
         echo 'No current VILOCA run.'
     fi
@@ -444,8 +429,7 @@ if [ "$run_viloca" -eq "1" ]; then
                 # must run
                 ${remote_batman} viloca  => ${viloca_statusdir}/viloca.${now}    &&    \
                     if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-                        ln -sf viloca.${now} ${viloca_statusdir}/viloca_started
-                        cat ${viloca_statusdir}/viloca_started
+                        cat viloca.${now} | tee ${viloca_statusdir}/viloca_started
                         echo ${lastbatch_vpipe} > ${viloca_statusdir}/viloca_new.${now}
                         printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
                         if [[ -n "${mailto[*]}" ]]; then
@@ -483,10 +467,10 @@ if [ $run_uploader -eq "1" ]; then
 
     if [[ ( -e ${uploader_statusdir}/uploader_started ) && ( ( ! -e ${uploader_statusdir}/uploader_ended ) || ( ${uploader_statusdir}/uploader_started -nt ${uploader_statusdir}/uploader_ended ) ) ]]; then
         stillrunning=0
-        while read j id; do
+        while read j k l id; do
             # skip missing
             if [[ -z "${id}" ]]; then
-                echo "UPLOADER - $j : (not started)"
+                echo "UPLOADER - $id : (not started)"
                 continue
             fi
 
@@ -494,9 +478,9 @@ if [ $run_uploader -eq "1" ]; then
             if [[ ( -e ${uploader_statusdir}/uploader_${j}_ended ) && ( ${uploader_statusdir}/viloca_${j}_ended -nt ${uploader_statusdir}/uploader_started ) ]]; then
                 old="$(<${uploader_statusdir}/uploader_${j}_ended)"
                 if [[ "${id}" == "${old}" ]]; then
-                    echo "UPLOADER - $j : $id already finished"
+                    echo "UPLOADER : $id already finished"
                 else
-                    echo "UPLOADER - $j : mismatch $id vs $old"
+                    echo "UPLOADER : mismatch $id vs $old"
                 fi
                 continue
             fi
@@ -505,22 +489,16 @@ if [ $run_uploader -eq "1" ]; then
             stat=$(${remote_batman} job "${id}" || echo "(no answer)")
             if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
                 # running
-                echo -n "UPLOADER - $j : $id : $stat"
+                echo -n "UPLOADER : $id : $stat"
                 (( ++stillrunning ))
-                if [[ "${stat}" == 'RUN' && ( ! "$j" =~ qa$ ) ]]; then
-                    echo -ne '\t'
-                    ${remote_batman} completion "${id}" | tail -n 1
-                else
-                    echo ''
-                fi
                 sleep 1
                 continue
             fi
 
             # not running
-            echo "UPLOADER - $j : $id finishing"
+            echo "UPLOADER : $id finishing"
 
-            echo "${id}" > ${uploader_statusdir}/uploader_${j}_ended
+            echo "${id}" > ${uploader_statusdir}/uploader_${id}_ended
         done < ${uploader_statusdir}/uploader_started
 
         if [ $backup_uploader -eq "1" ]; then
@@ -559,13 +537,17 @@ if [ $run_uploader -eq "1" ]; then
         elif (( mustrun_uploader )); then
             echo "Checking the upload quotas:"
             echo "----"
+            if [[ ! -f ${uploader_number_status}.${now} ]]; then
+                echo "No status file with the amount of samples uploaded found. Assuming first run of the day"
+                echo 0 > ${uploader_number_status}.${now}
+            fi
             uploaded_number=$(cat ${uploader_number_status}.${now})
             echo "Daily sample number: ${uploaded_number}/${upload_number_quota}"
-            echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} GB"
+            echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} MB"
             echo "----"
             next_number=$((${uploaded_number} + ${uploader_sample_number}))
             if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
-                echo "New UPLOADER jobs to be submitted, BUT we reached the daily submission quota imposed by SPSP. Resuming tomorrow"
+                echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
                 touch ${uploader_statusdir}/uploader_quota_hit.${now}
             else
                 echo 'New UPLOADER job waiting. Checking if Uploader is already running...'
@@ -575,8 +557,7 @@ if [ $run_uploader -eq "1" ]; then
                     echo 'starting UPLOADER job'
                     ${remote_batman} upload  > ${uploader_statusdir}/uploader.${now}    &&    \
                         if [[ -s ${uploader_statusdir}/uploader.${now} ]]; then
-                            ln -sf uploader.${now} ${uploader_statusdir}/uploader_started
-                            cat ${uploader_statusdir}/uploader_started
+                            cat uploader.${now} | tee ${uploader_statusdir}/uploader_started
                             printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${uploader_statusdir}/uploader_new.${now}
                             echo $(( $(cat ${uploaded_number}) + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
                             if [[ -n "${mailto[*]}" ]]; then
