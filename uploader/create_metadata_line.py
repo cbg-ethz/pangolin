@@ -29,13 +29,13 @@ def load_locations(locationfile):
         #locations = file.readlines()
         myline = [line.rstrip() for line in file]
         myline = [ " ".join(element.split()) for element in myline ]
-    locations = [re.split('\t|\s', line) for line in myline]
+    locations = [re.split(r'\t|\s', line) for line in myline]
     return locations
 
 def load_timeline(timelinefile, samplename):
     with open(timelinefile, "r") as file:
         myline = [line.rstrip() for line in file]
-        timeline = [re.split('\t', line) for line in myline]
+        timeline = [re.split(r'\t', line) for line in myline]
         for line in timeline:
             if (samplename in line):
                 timeinfo = line
@@ -44,7 +44,7 @@ def load_timeline(timelinefile, samplename):
 def read_qa(samplename, qafile):
     with open(qafile, 'r') as file:
         myline = [line.rstrip() for line in file]
-    sampleline = [re.split(',', line) for line in myline]
+    sampleline = [re.split(r',', line) for line in myline]
     for line in sampleline:
         if (samplename in line):
             samplecov = line
@@ -155,9 +155,9 @@ def get_authors_by_date(meta, collectingcode, center, ethz, date):
     try:
         ethzauthorcode
     except:
-        sys.exit("Error: no date range available for authors of " + ethz + " for date " + str(date)) 
+        sys.exit("Error: no date range available for authors of " + ethz + " for date " + str(date))
     return [collectingauthorcode, centerauthorcode, ethzauthorcode]
-            
+
 def main():
     args = parse_args()
     if (args.samplename == "" or args.batchname == "" or args.outfile == ""):
@@ -176,7 +176,7 @@ def main():
         #locations[locations.index(['Ba', 'Basel', '(catchment', 'area', 'ARA', 'Basel)'])] = ['Ba', 'Basel', '(BS)']
     except:
         sys.exit("We have exceptions in place for KLZHCov, KLZHCov_Promega. It looks like one of them is not anymore in the location list")
-    
+
     try:
         mydata = load_timeline(meta.timelinefile, args.samplename)
     except:
@@ -212,7 +212,7 @@ def main():
         collectinglab = meta.collectinglab[collectingcode]
     except:
         sys.exit("Error: the provided lab code " + collectingcode + " has no associated collecting lab name in the configuration")
-    
+
     authorscode = get_authors_by_date(meta, collectingcode, meta.centerused, "ethz", mydata[5].replace("-",""))
 
     try:

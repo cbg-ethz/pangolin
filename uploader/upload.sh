@@ -36,11 +36,11 @@ export TMPDIR=${uploader_tempdir}
 echo "Creating the necessary files and directories"
 if [ -f ${TMPDIR}/uploaded_run.txt ]
 then
-	rm ${TMPDIR}/uploaded_run.txt
+        rm ${TMPDIR}/uploaded_run.txt
 fi
 if [ -d $uploader_staging ]
 then
-	rm -rf $uploader_staging
+        rm -rf $uploader_staging
 fi
 mkdir -p ${uploader_staging}/{bacteria,viruses,logs,sent}
 
@@ -67,7 +67,7 @@ while read samplename batch; do
   fi
   batch=$(echo $batch | tr -d '"')
   echo "$samplename $batch"
-  X=${clusterdir}/${working}/samples/${samplename}/${batch}/uploads/dehuman.cram
+  X=${clusterdir_old}/${working}/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
     ln $(realpath $X) $target/${samplename}.cram
     python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv
@@ -88,9 +88,9 @@ echo "Running sendCrypt"
 sendcrypt version | tee ${archive_now}/sencrypt_version_used.txt
 
 sendcrypt send ${target} && \
-	cp ${tsv} ${archive_now} && \
-	cp -r ${staging}/sent ${archive_now}/ && \
-	cp -r ${staging}/logs ${archive_now}/ || \
-	echo "ERROR: the upload failed" && \
-	exit 1
+        cp ${tsv} ${archive_now} && \
+        cp -r ${staging}/sent ${archive_now}/ && \
+        cp -r ${staging}/logs ${archive_now}/ || \
+        echo "ERROR: the upload failed" && \
+        exit 1
 
