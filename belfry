@@ -18,6 +18,9 @@ declare -A lab
 : ${retries:=10}
 : ${iotimeout:=300}
 : ${protocolyaml:=/references/primers.yaml}
+: ${viloca_basedir:?}
+: ${viloca_samples:?}
+: ${viloca_results:?}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
 	echo "$scriptdir vs $basedir"
@@ -36,6 +39,8 @@ umask 0002
 
 statusdir="${basedir}/status"
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
+viloca_statusdir="${viloca_basedir}/viloca_status"
+mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 
 baseconda=$HOME/
 timeoutforeground=
@@ -158,6 +163,30 @@ callpullrsync_noshorah() {
 		${basedir}/${working}/samples/
 }
 export -f callpullrsync_noshorah
+
+
+callpullrsync_viloca() {
+	. server.conf
+
+	local arglist=( )
+	if (( ${#@} )); then
+		arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+	else
+		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+		echo "rsync job didn't receive list"
+		exit 1;
+	fi
+	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
+		rsync	--timeout=${iotimeout}	\
+		--password-file ~/rsync.pass.euler	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
+		-izrltH --fuzzy --fuzzy --inplace	\
+		--link-dest=${viloca_remote_basedir}/${viloca_remote_results}/	\
+		"${arglist[@]}"	\
+		--exclude='alignment/'	\
+		${viloca_results}/
+}
+export -f callpullrsync_viloca
 
 
 #
@@ -574,6 +603,47 @@ case "$1" in
 		done
 		mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
 	;;
+	pushsamplelist_viloca)
+		err=0
+		rsync	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
+			${viloca_basedir}/${viloca_samples} \
+			belfry@euler.ethz.ch::${viloca_processing}/ || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync job(s) failed"
+			touch ${viloca_statusdir}/pushsamplelist_viloca_fail
+		else
+			touch ${viloca_statusdir}/pushsamplelist_viloca_success
+		fi
+	;;
+    pullresults_viloca)
+		## backup viloca results
+		if [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			batch=${3}
+		else
+			batch=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
+		fi
+		err=0
+		rsync	\
+			--password-file ~/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
+			belfry@euler.ethz.ch::${results_archive}/${batch} \
+			${viloca_basedir}/results/ || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync job(s) failed"
+			touch ${viloca_statusdir}/pullresults_viloca_fail
+		else
+			touch ${viloca_statusdir}/pullresults_viloca_success
+		fi
+    ;;
 	*)
 		echo "Unkown sub-command ${1}" > /dev/stderr
 		exit 2
