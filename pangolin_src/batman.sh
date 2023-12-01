@@ -294,13 +294,15 @@ case "$1" in
         finalize_staging_viloca)
                 mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
         ;;
-        list_viloca_processed)
-		cd ${remote_viloca_basedir}
-		if [ ! -d results_archive ]; then
-			echo "ERROR: cannot find the archive ${remote_viloca_basedir}"
-                        exit 2
-		fi
-		ls -d "${vilocadir}/results/"
+        scanmissingsamples_viloca)
+                validateBatchName "$2"
+                for i in $(cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv | awk '{print $1}')
+                do
+                        if [ ! -d ${remote_viloca_basedir}/results_archive/${2}/${i} ]
+                        then
+                                echo ${i}
+                        fi
+                done
 	;;
 	sync_fgcz)
 		bfabricdir=${clusterdir_old}/bfabric-downloads
