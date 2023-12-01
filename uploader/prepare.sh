@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-usage() { echo "Usage: $0 [-c <configfile>] [ -N <sample_number> ] [ -a <archivedir> ] [ -l <uploadlist> ] [ -u uploaded ]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-c <configfile>] [ -N <sample_number> ]" 1>&2; exit $1; }
 
 
 while getopts "c:N:a:h" o; do
@@ -11,7 +11,6 @@ while getopts "c:N:a:h" o; do
                 usage 1
             fi
             ;;
-        a)  arhivedir="${OPTARG}"    ;;
         N)  sample_number="${OPTARG}"   ;;
         h)  usage 0 ;;
         *)  usage 1 ;;
