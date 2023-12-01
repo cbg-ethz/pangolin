@@ -294,6 +294,14 @@ case "$1" in
         finalize_staging_viloca)
                 mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
         ;;
+        list_viloca_processed)
+		cd ${remote_viloca_basedir}
+		if [ ! -d results_archive ]; then
+			echo "ERROR: cannot find the archive ${remote_viloca_basedir}"
+                        exit 2
+		fi
+		ls -d "${vilocadir}/results/"
+	;;
 	sync_fgcz)
 		bfabricdir=${clusterdir_old}/bfabric-downloads
 		cd ${bfabricdir}
@@ -436,11 +444,8 @@ case "$1" in
                 conda activate sendcrypt
                 cd ${uploaderdir}
                 . ${clusterdir}/uploader/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
-
-                
-
         ;;
-                *)
+        *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
         ;;
