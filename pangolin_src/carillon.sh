@@ -436,9 +436,9 @@ if [ "$run_viloca" -eq "1" ]; then
 				# and VILOCA will run only on the latest once it restarts
 				${remote_batman} finalize_staging_viloca
                 # must run
-                ${remote_batman} viloca  => ${viloca_statusdir}/viloca.${now}    &&    \
+                ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
                     if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-                        cat viloca.${now} | tee ${viloca_statusdir}/viloca_started
+                        cat ${viloca_statusdir}/viloca.${now} | tee ${viloca_statusdir}/viloca_started
                         echo ${lastbatch_vpipe} > ${viloca_statusdir}/viloca_new.${now}
                         printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
                         if [[ -n "${mailto[*]}" ]]; then
@@ -450,6 +450,8 @@ if [ "$run_viloca" -eq "1" ]; then
                             ) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
                             # -r "${mailfrom}"
                         fi
+                    else
+                        echo "ERROR: could not create ${viloca_statusdir}/viloca.${now}"
                     fi
             fi
         else
