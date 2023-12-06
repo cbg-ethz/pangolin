@@ -456,7 +456,7 @@ case "$1" in
                         mkdir ${remote_amplicon_coverage_workdir}/${2}
                         python ${remote_amplicon_coverage_code}/amplicon_covs.py \
                         -pv \
-                        -s ${clusterdir_old}/${sampleset}/sample.${2}.tsv \
+                        -s ${clusterdir_old}/${sampleset}/samples.${2}.tsv \
                         -r ${remote_primers_bed} \
                         -o ${remote_amplicon_coverage_workdir}/${2} \
                         -f ${clusterdir_old}/${working}/samples || rmdir ${remote_amplicon_coverage_workdir}/${2}
