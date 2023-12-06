@@ -447,6 +447,19 @@ case "$1" in
                 cd ${uploaderdir}
                 . ${clusterdir}/uploader/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
         ;;
+        amplicon_coverage)
+                validateBatchName "$2"
+                echo "Running amplicon coverage on batch $2"
+                conda activate amplicon_coverage
+                cd ${amplicon_coverage_workdir}
+                if [ ! -d ${remote_amplicon_coverage_workdir}/${2} ]; then
+                        mkdir ${remote_amplicon_coverage_workdir}/${2}
+                        python ./amplicon_covs.py -pv -s ${clusterdir_old}/${sampleset}/sample.${2}.tsv -r ${remote_primers_bed} -o ${remote_amplicon_coverage_workdir}/${2}
+                else
+                        echo "ERROR: the amplicon coverage output directory ${remote_amplicon_coverage_workdir}/${2} already exists. SKIPPING"
+                        exit 5
+                fi
+        ;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2

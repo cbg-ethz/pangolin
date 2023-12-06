@@ -27,6 +27,7 @@ now=$(date '+%Y%m%d')
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
+mkdir ${mode:+--mode=${mode}} -p ${amplicon_coverage_statusdir}
 
 touch ${statusdir}/oh_hai_im_looping
 
@@ -589,6 +590,26 @@ if [ $run_uploader -eq "1" ]; then
     fi
 else
     echo "Skipping UPLOADER as per configuration"
+fi
+
+if [ $run_amplicon_coverage -eq "1" ]; then
+    echo "===================="
+    echo "Start new AMPLICON COVERAGE run"
+    echo "===================="
+    lastbatch_amplicon_coverage=$(cat $(ls -Art ${amplicon_coverage_statusdir}/amplicon_coverage_new* | tail -n 1) | head -n 1)
+    echo "Last batch analysed by AMPLICON COVERAGE is ${lastbatch_amplicon_coverage}"
+    vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
+    vpipe_enddate=${vpipe_enddate#*.}
+    lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}' | tail -n 1)
+    echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
+    if [[ $lastbatch_amplicon_coverage != $lastbatch_vpipe ]]; then
+        echo "There is a new most recent batch that AMPLICON COVERAGE can run on"
+        ${remote_batman} amplicon_coverage ${lastbatch_vpipe}
+    else
+        echo "No new batch to run AMPLICON COVERAGE on"
+    fi
+else
+    echo "Skipping AMPLICON COVERAGE as per configuration"
 fi
 
 

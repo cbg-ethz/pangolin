@@ -1,5 +1,5 @@
 services:
-  pangolin:
+  pangolin_dev:
     build:
       context: /data/projects/wastewater_automation/pangolin 
     volumes:
