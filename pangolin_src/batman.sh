@@ -476,12 +476,7 @@ case "$1" in
                                         amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
                                         amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
                                 ;;
-                                *)
-                                        echo "Unkown option ${2}" > /dev/stderr
-                                        exit 2
-                                ;;
                         esac
-                        shift
                 done
                 conda activate amplicon_coverage
                 cd ${remote_amplicon_coverage_workdir}
