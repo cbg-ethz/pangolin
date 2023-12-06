@@ -484,10 +484,10 @@ case "$1" in
                         -pv \
                         -s ${amplicon_coverage_sample_list} \
                         -r ${remote_primers_bed} \
-                        -o ${remote_amplicon_coverage_workdir}/${2} \
+                        -o ${amplicon_coverage_outdir}} \
                         -f ${clusterdir_old}/${working}/samples || rmdir ${amplicon_coverage_outdir}
                 else
-                        echo "ERROR: the amplicon coverage output directory ${remote_amplicon_coverage_workdir}/${2} already exists. SKIPPING"
+                        echo "ERROR: the amplicon coverage output directory ${amplicon_coverage_outdir} already exists. SKIPPING"
                         exit 5
                 fi
         ;;
