@@ -454,7 +454,7 @@ case "$1" in
                 cd ${amplicon_coverage_workdir}
                 if [ ! -d ${remote_amplicon_coverage_workdir}/${2} ]; then
                         mkdir ${remote_amplicon_coverage_workdir}/${2}
-                        python ./amplicon_covs.py -pv -s ${clusterdir_old}/${sampleset}/sample.${2}.tsv -r ${remote_primers_bed} -o ${remote_amplicon_coverage_workdir}/${2}
+                        python ${remote_amplicon_coverage_code}/amplicon_covs.py -pv -s ${clusterdir_old}/${sampleset}/sample.${2}.tsv -r ${remote_primers_bed} -o ${remote_amplicon_coverage_workdir}/${2} -r ${clusterdir_old}/${working}/samples
                 else
                         echo "ERROR: the amplicon coverage output directory ${remote_amplicon_coverage_workdir}/${2} already exists. SKIPPING"
                         exit 5
