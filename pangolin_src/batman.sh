@@ -448,36 +448,34 @@ case "$1" in
                 . ${clusterdir}/uploader/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
         ;;
         amplicon_coverage)
-                while [[ -n $2 ]]; do
-                        case "$2" in
-                                --batch)
-                                        validateBatchName "$3"
-                                        echo "Running amplicon coverage on batch $3"
-                                        amplicon_coverage_sample_list=${clusterdir_old}/${sampleset}/samples.${3}.tsv
-                                        amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/${3}
-                                ;;
-                                --timeframe)
-                                        echo "Running amplicon coverage for any sample within the timeframe $3"
-                                        startdate=${3%%-*}
-                                        enddate=${3##*-}
-                                        amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
-                                        if [ -f ${amplicon_coverage_sample_list} ]; then
-                                                rm "${amplicon_coverage_sample_list}"
-                                        fi
-                                        alldates=$(cat ${clusterdir_old}/${working}/samples.tsv | awk '{print $2}' |  awk -F'_' '{print $1}' | awk -v var=$enddate 'NR==1 { print } NR != 1 && $1 <= var { print }' | awk -v var=$startdate 'NR==1 { print } NR != 1 && $1 >= var { print }' | sort | uniq)
-                                        for i in $alldates; do
-                                                grep ${i} ${clusterdir_old}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
-                                        done
-                                        amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
-                                ;;
-                                --libkit)
-                                        echo "Running amplicon coverage for any sample with library kit $3"
-                                        grep v532 ${clusterdir_old}/${working}/samples.wastewateronly.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
-                                        amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
-                                        amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
-                                ;;
-                        esac
-                done
+                case "$2" in
+                        --batch)
+                                validateBatchName "$3"
+                                echo "Running amplicon coverage on batch $3"
+                                amplicon_coverage_sample_list=${clusterdir_old}/${sampleset}/samples.${3}.tsv
+                                amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/${3}
+                        ;;
+                        --timeframe)
+                                echo "Running amplicon coverage for any sample within the timeframe $3"
+                                startdate=${3%%-*}
+                                enddate=${3##*-}
+                                amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
+                                if [ -f ${amplicon_coverage_sample_list} ]; then
+                                        rm "${amplicon_coverage_sample_list}"
+                                fi
+                                alldates=$(cat ${clusterdir_old}/${working}/samples.tsv | awk '{print $2}' |  awk -F'_' '{print $1}' | awk -v var=$enddate 'NR==1 { print } NR != 1 && $1 <= var { print }' | awk -v var=$startdate 'NR==1 { print } NR != 1 && $1 >= var { print }' | sort | uniq)
+                                for i in $alldates; do
+                                        grep ${i} ${clusterdir_old}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
+                                done
+                                amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
+                        ;;
+                        --libkit)
+                                echo "Running amplicon coverage for any sample with library kit $3"
+                                grep v532 ${clusterdir_old}/${working}/samples.wastewateronly.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
+                                amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
+                                amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
+                        ;;
+                esac
                 conda activate amplicon_coverage
                 cd ${remote_amplicon_coverage_workdir}
                 if [ ! -d ${amplicon_coverage_outdir} ]; then
