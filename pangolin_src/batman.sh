@@ -484,7 +484,7 @@ case "$1" in
                         -pv \
                         -s ${amplicon_coverage_sample_list} \
                         -r ${remote_primers_bed} \
-                        -o ${amplicon_coverage_outdir}} \
+                        -o ${amplicon_coverage_outdir} \
                         -f ${clusterdir_old}/${working}/samples || rmdir ${amplicon_coverage_outdir}
                 else
                         echo "ERROR: the amplicon coverage output directory ${amplicon_coverage_outdir} already exists. SKIPPING"
