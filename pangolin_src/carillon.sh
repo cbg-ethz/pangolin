@@ -604,7 +604,7 @@ if [ $run_amplicon_coverage -eq "1" ]; then
     echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
     if [[ $lastbatch_amplicon_coverage != $lastbatch_vpipe ]]; then
         echo "There is a new most recent batch that AMPLICON COVERAGE can run on"
-        ${remote_batman} amplicon_coverage ${lastbatch_vpipe} && echo ${lastbatch_vpipe} > ${amplicon_coverage_statusdir}/amplicon_coverage_new.${now}
+        ${remote_batman} amplicon_coverage --batch ${lastbatch_vpipe} && echo ${lastbatch_vpipe} > ${amplicon_coverage_statusdir}/amplicon_coverage_new.${now}
     else
         echo "No new batch to run AMPLICON COVERAGE on"
     fi
