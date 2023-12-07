@@ -312,6 +312,7 @@ case "$1" in
 		fgcz_config=${clusterdir}/config/fgcz.conf
 
 		echo "Sync FGCZ - bfabric"
+                echo "Syncing from node $(hostname)"
 		conda activate sync
 		. <(grep '^projlist=' ${fgcz_config})
 		if [[ "${2}" = "--recent" ]]; then
