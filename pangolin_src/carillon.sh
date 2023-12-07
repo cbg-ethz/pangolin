@@ -244,7 +244,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         echo 'Will start new job'
 
         # Sanity check
-        if [[ ( -e ${statusdir}/sortsamples_fail ) && ( ${statusdir}/sortsamples_fail -nt  ${statusdir}/sortsamples_success ) ]]; then
+        if [[ ( -e ${statusdir}/remote_sortsamples/sortsamples_fail ) && ( ${statusdir}/remote_sortsamples/sortsamples_fail -nt  ${statusdir}/remote_sortsamples/sortsamples_success ) ]]; then
             if (( staging )); then
                 echo -e '\e[33;1mwarning: sampleset data not successfully fetched yet, using staging\e[0m' > /dev/stderr
             else
@@ -266,7 +266,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
                 lastrun="${lastsync[0]}"
             else
                 # last fall back: sort success
-                lastrun=${statusdir}/sortsamples_success
+                lastrun=${statusdir}/remote_sortsamples/sortsamples_success
             fi
         fi
 

@@ -657,7 +657,7 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
 			belfry@euler.ethz.ch::${remote_status}/sync/ \
-			${statusdir}/ || (( ++err ))
+			${statusdir}/remote_sync || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
 			touch ${statusdir}/pull_sync_status_fail
@@ -693,7 +693,7 @@ case "$1" in
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
 			belfry@euler.ethz.ch::${remote_status}/sortsamples/* \
-			${statusdir}/ || (( ++err ))
+			${statusdir}/remote_sortsamples || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
 			touch ${statusdir}/pull_sortsamples_status_fail
