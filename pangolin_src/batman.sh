@@ -272,7 +272,7 @@ case "$1" in
                 conda deactivate
 	;;
 	unlock_viloca)
-		cd ${clusterdir_old}/${vilocadir}/
+		cd ${vilocadir}/
 		conda activate 'viloca'
 		snakemake --unlock
                 conda deactivate
