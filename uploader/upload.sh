@@ -38,11 +38,6 @@ if [ -f ${TMPDIR}/uploaded_run.txt ]
 then
         rm ${TMPDIR}/uploaded_run.txt
 fi
-if [ -d $uploader_staging ]
-then
-        rm -rf $uploader_staging
-fi
-mkdir -p ${uploader_staging}/{bacteria,viruses,logs,sent}
 
 export target=${TMPDIR}/target
 if [ -d $target ]
@@ -58,6 +53,7 @@ echo "Initializing the submission metadata"
 echo -e "is_assembly_update\tspecies\tstrain_name\tisolation_date\tlocation_general\tlocation_city\tlocation_geocoordinates\tisolation_source_description\tisolation_source_detailed\tisolation_source_name\tisolation_source_size_catchment_area\tisolation_source_population_size_catchment_area\tisolation_source_regions_catchment_area\tsequencing_purpose\tsequencing_investigation_type\torig_fastq_name_forward\tlibrary_preparation_kit\tsequencing_lab_name\tsequencing_platform\tassembly_method\traw_dataset_coverage\treporting_lab_name\tcollecting_lab_name\treporting_authors\traw_dataset_embargo\tgenbank_identifier\tENA_accession"> $tsv
 
 echo "Retrieving CRAM files and adding their metadata line"
+
 cat ${TMPDIR}/to_upload.txt |
 while read samplename batch; do
   samplename=$(echo $samplename | tr -d '"')
@@ -67,7 +63,7 @@ while read samplename batch; do
   fi
   batch=$(echo $batch | tr -d '"')
   echo "$samplename $batch"
-  X=${clusterdir_old}/${working}/samples/${samplename}/${batch}/uploads/dehuman.cram
+  X=${uploader_dataset}/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
     ln $(realpath $X) $target/${samplename}.cram
     python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv
@@ -87,10 +83,8 @@ echo "Running sendCrypt"
 
 sendcrypt version | tee ${archive_now}/sencrypt_version_used.txt
 
-sendcrypt send ${target} && \
-        cp ${tsv} ${archive_now} && \
-        cp -r ${staging}/sent ${archive_now}/ && \
-        cp -r ${staging}/logs ${archive_now}/ || \
-        echo "ERROR: the upload failed" && \
-        exit 1
+(sendcrypt send ${target} | tee ${archive_now}/sencrypt.log && \
+        cp ${tsv} ${archive_now}) || \
+        (echo "ERROR: the upload failed" && \
+        exit 1)
 

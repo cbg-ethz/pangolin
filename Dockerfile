@@ -17,11 +17,12 @@ RUN /app/setup/setup.sh
 
 USER root
 COPY --chown=bs-pangolin:bs-pangolin pangolin_src /app/pangolin_src
+COPY --chown=bs-pangolin:bs-pangolin uploader /app/uploader
 USER bs-pangolin
 
 WORKDIR /app/pangolin_src
 
 
 
-ENTRYPOINT ["/app/pangolin_src/entrypoint.sh"]
-#ENTRYPOINT [ "sleep", "10d" ]
+#ENTRYPOINT ["/app/pangolin_src/entrypoint.sh"]
+ENTRYPOINT [ "sleep", "10d" ]

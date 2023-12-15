@@ -122,15 +122,21 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 
         case "$j" in
             seqqa)
-                if [ $backup_vpipe -eq "1" ]; then
-                    ${scriptdir}/belfry.sh pullsamples_noshorah --recent
-                    if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
-                        echo "\e[31;1mpulling data failed\e[0m"
-                        (( ++stillrunning ))
-                        continue
-                    fi
-                else
-                    echo "\e[33;1mBackup of V-PIPE data DISABLED\e[0m"
+                #if [ $backup_vpipe -eq "1" ]; then
+                #    ${scriptdir}/belfry.sh pullsamples_noshorah --recent
+                #    if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
+                #        echo "\e[31;1mpulling data failed\e[0m"
+                #        (( ++stillrunning ))
+                #        continue
+                #    fi
+                #else
+                #    echo "\e[33;1mBackup of V-PIPE data DISABLED\e[0m"
+                #fi
+                ${scriptdir}/belfry.sh pullsamples_upload --recent
+                if [[ ( -e ${statusdir}/pullsamples_upload_fail ) && ( ${statusdir}/pullsamples_upload_fail -nt ${statusdir}/pullsamples_upload_success ) ]]; then
+                    echo "\e[31;1mpulling data failed\e[0m"
+                    (( ++stillrunning ))
+                    continue
                 fi
             ;;
         esac
@@ -140,22 +146,29 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
     echo done
 
     if (( stillrunning == 0 )); then
-        if [ $backup_vpipe -eq "1" ]; then
-            ${scriptdir}/belfry.sh pullsamples_noshorah --recent
-            if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
-                echo "Pulling data success!"
-            else
-                echo "\e[31;1mpulling data failed\e[0m"
-            fi
+        #if [ $backup_vpipe -eq "1" ]; then
+        #    ${scriptdir}/belfry.sh pullsamples_noshorah --recent
+        #    if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
+        #        echo "Pulling data success!"
+        #    else
+        #        echo "\e[31;1mpulling data failed\e[0m"
+        #    fi
+        #else
+        #    echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
+        #fi
+        ${scriptdir}/belfry.sh pullsamples_upload --recent
+        if [[ ( ! -e ${statusdir}/pullsamples_upload_success ) || ( ${statusdir}/pullsamples_upload_success -nt ${statusdir}/pullsamples_upload_fail ) ]]; then
+            echo "Pulling data success!"
         else
-            echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
+            echo "\e[31;1mpulling data failed\e[0m"
         fi
+        
         echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
         vpipe_lastfile=$(cat ${statusdir}/vpipe_ended)
         vpipe_enddate=${vpipe_lastfile##*.}
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
         # queue the samples for upload. This will be handled in a dedicated section
-        ${remote_batman} queue_upload ${lastbatch_vpipe}
+        ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
     fi
 else
     echo 'No current run.'
@@ -472,121 +485,41 @@ fi
 #
 if [ $run_uploader -eq "1" ]; then
 
-    echo "========================"
-    echo "Check current UPLOADER run"
-    echo "========================"
-
-
-    if [[ ( -e ${uploader_statusdir}/uploader_started ) && ( ( ! -e ${uploader_statusdir}/uploader_ended ) || ( ${uploader_statusdir}/uploader_started -nt ${uploader_statusdir}/uploader_ended ) ) ]]; then
-        stillrunning=0
-        while read j k l id; do
-            # skip missing
-            if [[ -z "${id}" ]]; then
-                echo "UPLOADER - $id : (not started)"
-                continue
-            fi
-
-            # skip already finished
-            if [[ ( -e ${uploader_statusdir}/uploader_${j}_ended ) && ( ${uploader_statusdir}/viloca_${j}_ended -nt ${uploader_statusdir}/uploader_started ) ]]; then
-                old="$(<${uploader_statusdir}/uploader_${j}_ended)"
-                if [[ "${id}" == "${old}" ]]; then
-                    echo "UPLOADER : $id already finished"
-                else
-                    echo "UPLOADER : mismatch $id vs $old"
-                fi
-                continue
-            fi
-
-            # cluster status
-            stat=$(${remote_batman} job "${id}" || echo "(no answer)")
-            if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
-                # running
-                echo -n "UPLOADER : $id : $stat"
-                (( ++stillrunning ))
-                sleep 1
-                continue
-            fi
-
-            # not running
-            echo "UPLOADER : $id finishing"
-
-            echo "${id}" > ${uploader_statusdir}/uploader_${id}_ended
-        done < ${uploader_statusdir}/uploader_started
-
-        if [ $backup_uploader -eq "1" ]; then
-            ${scriptdir}/belfry pulldata_uploader --recent
-            if [[ ( ! -e ${uploader_statusdir}/pulldata_uploader_fail ) || ( ${uploader_statusdir}/pulldata_uploader_success -nt ${uploader_statusdir}/pulldata_uploader_fail ) ]]; then
-                echo "$(basename $(realpath ${uploader_statusdir}/uploader_started))" > ${uploader_statusdir}/uploader_ended
-            else
-                echo "\e[31;1mpulling UPLOADER data failed\e[0m"
-            fi
-        else
-            echo "\e[33;1mBackup of uploader data DISABLED\e[0m"
-        fi
-    else
-        echo 'No current UPLOADER run.'
-    fi
-
     #
-    # Phase 8: Start an UPLOADER chunk if new samples
+    # Phase 7: Start an UPLOADER chunk if new samples
     #
 
     echo "===================="
     echo "Start new UPLOADER run"
     echo "===================="
-    mustrun_uploader=0
-    if [[ ( ( ! -e ${uploader_statusdir}/uploader_ended ) && ( ! -e ${uploader_statusdir}/uploader_started ) ) || ( ${uploader_statusdir}/uploader_ended -nt ${uploader_statusdir}/uploader_started ) ]]; then
-        # are we allowed to submit jobs ?
-        if (( donotsubmit_uploader )); then
-            echo -e '\e[35;1mWill NOT submit UPLOADER jobs\e[0m...' > /dev/stderr
-            if (( mustrun_uploader )); then
-                echo 'UPLOADER submit blocked' > ${uploader_statusdir}/uploader_submit_fail
-                echo -e '...\e[33;1mbut there are new UPLOADER jobs that should be started !!!\e[0m' > /dev/stderr
-            else
-                echo '...and there is nothing UPLOADER-related to run anyway' > /dev/stderr
-            fi
-        # start jobs ?
-        elif (( mustrun_uploader )); then
-            echo "Checking the upload quotas:"
-            echo "----"
-            if [[ ! -f ${uploader_number_status}.${now} ]]; then
-                echo "No status file with the amount of samples uploaded found. Assuming first run of the day"
-                echo 0 > ${uploader_number_status}.${now}
-            fi
-            uploaded_number=$(cat ${uploader_number_status}.${now})
-            echo "Daily sample number: ${uploaded_number}/${upload_number_quota}"
-            echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} MB"
-            echo "----"
-            next_number=$((${uploaded_number} + ${uploader_sample_number}))
-            if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
-                echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
-                touch ${uploader_statusdir}/uploader_quota_hit.${now}
-            else
-                echo 'New UPLOADER job waiting. Checking if Uploader is already running...'
-                if [[ ( -e ${uploader_statusdir}/uploader_started ) && ( ( ! -e ${uploader_statusdir}/uploader_ended ) || ( ${uploader_statusdir}/uploader_started -nt ${uploader_statusdir}/uploader_ended ) ) ]]; then
-                    echo "BUT there is already an UPLOADER instance running! Retrying during the next loop"
-                else
-                    echo 'starting UPLOADER job'
-                    ${remote_batman} upload  > ${uploader_statusdir}/uploader.${now}    &&    \
-                        if [[ -s ${uploader_statusdir}/uploader.${now} ]]; then
-                            cat uploader.${now} | tee ${uploader_statusdir}/uploader_started
-                            printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${uploader_statusdir}/uploader_new.${now}
-                            echo $(( $(cat ${uploaded_number}) + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
-                            if [[ -n "${mailto[*]}" ]]; then
-                                (
-                                    echo -e '\nStarting UPLOADER on Euler:'
-                                    cat ${uploader_statusdir}/uploader_started
-                                ) | mail -s '[Automation-carillon] Starting UPLOADER on Euler' "${mailto[@]}"
-                                # -r "${mailfrom}"
-                            fi
-                        fi
-                fi
-            fi
-        else
-            echo 'No new UPLOADER jobs to start'
-        fi
+    echo "Checking the upload quotas:"
+    echo "----"
+    if [[ ! -f ${uploader_number_status}.${now} ]]; then
+        echo "No status file with the amount of samples uploaded found. Assuming first run of the day"
+        echo 0 > ${uploader_number_status}.${now}
+    fi
+    uploaded_number=$(cat ${uploader_number_status}.${now})
+    echo "Daily sample number: ${uploaded_number}/${upload_number_quota}"
+    echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} MB"
+    echo "----"
+    next_number=$((${uploaded_number} + ${uploader_sample_number}))
+    if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
+        echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
+        touch ${uploader_statusdir}/uploader_quota_hit.${now}
     else
-        echo 'There is already an UPLOADER run going on'
+        echo 'starting UPLOADER job'
+        ${scriptdir}/belfry.sh upload && \
+        echo $(( $(cat ${uploaded_number}) + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
+        if [[ -n "${mailto[*]}" ]]; then
+            (
+                echo -e '\nNew batch uploaded:'
+            ) | mail -s '[Automation-carillon] Starting UPLOADER' "${mailto[@]}"
+            # -r "${mailfrom}"
+        fi
+        if [ ${clean_sendcrypt_temp} -eq "1" ]; then
+            echo "Cleaning the temporary folders generated by SendCrypt"
+            ${scriptdir}/belfry.sh clean_sendcrypt_temp
+        fi
     fi
 else
     echo "Skipping UPLOADER as per configuration"

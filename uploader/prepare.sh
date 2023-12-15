@@ -27,7 +27,7 @@ then
         rm "${uploader_tempdir}/to_upload.txt"
 fi
 echo "Preparing the list of files to upload for this batch"
-{ python3 - ${remote_uploader_workdir}/${uploaderlist} ${uploader_uploaded} ${sample_number} ${uploader_tempdir}/to_upload.txt <<EOF
+{ python3 - ${uploader_workdir}/${uploaderlist} ${uploader_uploaded} ${sample_number} ${uploader_tempdir}/to_upload.txt <<EOF
 import sys
 try:
     with open(sys.argv[1]) as f:

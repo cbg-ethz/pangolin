@@ -5,7 +5,6 @@ scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
 
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
-uploaderdir=${remote_uploader_workdir}
 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
@@ -430,23 +429,6 @@ case "$1" in
         list_batch_samples)
                 validateBatchName "$2"
                 cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv
-        ;;
-        queue_upload)
-                echo "Creating on remote the list of new samples to upload"
-        	    validateBatchName "$2"
-                cd ${uploaderdir}
-        	    # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
-                cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${uploaderdir}/${uploaderlist} > ${uploaderdir}/${uploaderlist}_temp.txt && \
-        	    mv ${uploaderdir}/${uploaderlist}_temp.txt ${uploaderdir}/${uploaderlist}
-        	    # Remove possible duplicates after updating the upload list
-                cat -n ${uploaderdir}/${uploaderlist} | sort -uk2 | sort -n | cut -f2- > ${uploaderdir}/.working_${uploaderlist}
-                mv ${uploaderdir}/.working_${uploaderlist} ${uploaderdir}/${uploaderlist}
-        ;;
-        upload)
-                echo "uploading ${uploader_sample_number} samples from the list of samples to upload"
-                conda activate sendcrypt
-                cd ${uploaderdir}
-                . ${clusterdir}/uploader/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
         ;;
         amplicon_coverage)
                 case "$2" in

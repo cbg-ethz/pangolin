@@ -1,25 +1,17 @@
 services:
-  pangolin:
+  pangolin_dev:
     build:
       context: /data/projects/wastewater_automation/pangolin 
     volumes:
       - /data/projects/wastewater_automation/workdir:/app/workdir:rw
       - /data/projects/wastewater_automation/resources:/app/resources:ro
+      - /data/projects/dataset:/app/dataset:rw
     secrets:
-      - ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
-      - 494B38B5ACAC90BD1580CC19BE3D145420D2F095.gpg
-      - bs-pangolin_gpg_private_key_password
       - bs-pangolin_login
       - fgcz_login
       - id_ed25519_wisedb
       - rsync.pass.euler
 secrets:
-  ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc:
-    file: /data/projects/wastewater_automation/secrets/ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
-  494B38B5ACAC90BD1580CC19BE3D145420D2F095.gpg:
-    file: /data/projects/wastewater_automation/secrets/494B38B5ACAC90BD1580CC19BE3D145420D2F095.gpg
-  bs-pangolin_gpg_private_key_password:
-    file: /data/projects/wastewater_automation/secrets/gpg_key_secrets
   bs-pangolin_login:
     file: /data/projects/wastewater_automation/secrets/bs-pangolin@euler.ethz.ch
   fgcz_login:

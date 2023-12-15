@@ -10,6 +10,7 @@ fi
 
 
 declare -A lab
+scriptdir=/app/pangolin_src
 . ${scriptdir}/config/server.conf
 
 : ${basedir:=$(pwd)}
@@ -83,7 +84,8 @@ validateBatchName() {
 # rsync parallel helpers
 #
 callpushrsync() {
-        . server.conf
+        scriptdir=/app/pangolin_src
+        . ${scriptdir}/config/server.conf
 
         local arglist=( )
         if (( ${#@} )); then
@@ -107,7 +109,8 @@ export -f callpushrsync
 
 
 callpullrsync() {
-        . server.conf
+        scriptdir=/app/pangolin_src
+        . ${scriptdir}/config/server.conf
 
         local arglist=( )
         if (( ${#@} )); then
@@ -139,8 +142,42 @@ callpullrsync() {
 export -f callpullrsync
 
 
+callpullrsync_upload() {
+        scriptdir=/app/pangolin_src
+        . ${scriptdir}/config/server.conf
+
+        local arglist=( )
+        if (( ${#@} )); then
+                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+        else
+                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+                echo "rsync job didn't receive list"
+                exit 1;
+        fi
+        exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+                rsync   --timeout=${iotimeout}  \
+                --password-file ${rsync_pass}      \
+                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+                -izrltH --fuzzy --fuzzy --inplace       \
+                --link-dest=${uploader_dataset}/${sampleset}/    \
+                "${arglist[@]}" \
+                --exclude='alginments/*'   \
+                --exclude='raw_uploads/*' \
+                --exclude='raw_data/*'   \
+                --exclude='extracted_data/*'    \
+                --exclude='preprocessed_data/*' \
+                --exclude='variants/*'   \
+                --exclude='visualization/*'      \
+                --exclude='*.out.log'   \
+                --exclude='*.err.log'   \
+                --exclude='*.benchmark' \
+                ${uploader_dataset}/${working}/samples
+}
+export -f callpullrsync_upload
+
 callpullrsync_noshorah() {
-        . server.conf
+        scriptdir=/app/pangolin_src
+        . ${scriptdir}/config/server.conf
 
         local arglist=( )
         if (( ${#@} )); then
@@ -171,7 +208,8 @@ callpullrsync_noshorah() {
 export -f callpullrsync_noshorah
 
 callpullrsync_viloca() {
-	. server.conf
+    scriptdir=/app/pangolin_src
+	. ${scriptdir}/config/server.conf
 
 	local arglist=( )
 	if (( ${#@} )); then
@@ -193,7 +231,8 @@ callpullrsync_viloca() {
 export -f callpullrsync_viloca
 
 callpullrsync_rsync() {
-	. server.conf
+    scriptdir=/app/pangolin_src
+	. ${scriptdir}/config/server.conf
 
 	local arglist=( )
 	if (( ${#@} )); then
@@ -413,6 +452,67 @@ case "$1" in
         #    -g \
         #    --list-only \
         #    belfry@euler.ethz.ch::${working}/samples/
+    ;;
+    pullsamples_upload)
+        # fetch remote sheets
+		mkdir -p ${uploader_sampleset}/
+        if [[ "${2}" = "--recent" ]]; then
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
+        elif [[ "${2}" = "--batch" ]]; then
+	    unused
+            validateBatchName "${3}"
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+        elif [[ "${2}" = "--catchup" ]]; then
+	    unused
+			sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
+        else
+	    unused
+			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
+        fi
+		rsync	\
+			--password-file ${HOME}/.ssh/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
+			"${sheets[@]}"	\
+			${uploader_sampleset}/
+		if [[ "${2}" = "--recent" ]]; then
+			sheets=( ${uploader_sampleset}/samples.${lastmonth}*.tsv ${uploader_sampleset}/samples.${thismonth}*.tsv )
+			# BUG: will generate non-globed pattern if months are missing
+			echo "pulling recent: ${param[*]##/}"
+		elif [[ "${2}" = "--batch" ]]; then
+			validateBatchName "${3}"
+			sheets=( "${uploader_sampleset}/samples.${3}.tsv"  )
+		elif [[ "${2}" = "--catchup" ]]; then
+			sheets=( "${uploader_sampleset}/samples.catchup.tsv"  )
+		else
+			sheets=( ${uploader_sampleset}/samples.2*.tsv )
+		fi
+		err=0
+		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
+			rsync	--timeout=${iotimeout}	\
+			--password-file ${HOME}/.ssh/rsync.pass.euler	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
+			-izrlt --fuzzy --fuzzy --inplace	\
+			--exclude='*.out.log'	\
+			--exclude='*.err.log'	\
+			--exclude='*.benchmark'	\
+			belfry@euler.ethz.ch::${working}/{qa.csv,variants}	\
+			${uploader_dataset}/${working}/ || (( ++err ))
+		echo "samples:"
+		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
+			gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
+			xargs -0 -P $parallelpull -I '{@LIST@}' --	\
+				bash -c "callpullrsync_upload {@LIST@} " || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync job(s) failed"
+			touch ${statusdir}/pullsamples_upload_fail
+		elif [[ "${2}" = "--catchup" ]]; then
+			echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
+		else
+			touch ${statusdir}/pullsamples_upload_success
+		fi        
     ;;
     pullsamples_noshorah)
         # fetch remote sheets
@@ -744,23 +844,36 @@ case "$1" in
 			touch ${viloca_statusdir}/pullresults_viloca_success
 		fi
     ;;
-    pulldata_uploader)
-        echo "Backup of the uploader archive"
-        err=0
-		rsync	\
-			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${uploader_archive}/${batch} \
-			${backupdir}/${uploader_backup_subdir}/ || (( ++err ))
-		if (( err )); then
-			echo "Error: ${err} rsync job(s) failed"
-			touch ${uploader_statusdir}/pull_uploader_fail
-		else
-			touch ${uploader_statusdir}/pull_uploader_success
-		fi
+    queue_upload)
+        echo "Adding new samples to the upload list"
+        validateBatchName "$2"
+        cd ${uploader_workdir}
+        if [ -f ${uploader_sampleset} ]; then
+            # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
+            cat ${uploader_sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${uploader_workdir}/${uploaderlist} > ${uploader_workdir}/${uploaderlist}_temp.txt && \
+            mv ${uploader_workdir}/${uploaderlist}_temp.txt ${uploader_workdir}/${uploaderlist} && \
+            # Remove possible duplicates after updating the upload list
+            cat -n ${uploader_workdir}/${uploaderlist} | sort -uk2 | sort -n | cut -f2- > ${uploader_workdir}/.working_${uploaderlist} && \
+            mv ${uploader_workdir}/.working_${uploaderlist} ${uploader_workdir}/${uploaderlist}
+        else
+            echo "WARNING: the sampleset for the selected batch has not been synced yet.\nPossible causes: the sample is not complete; errors in the sync process; the name is incorrect."
+        fi
+    ;;
+    upload)
+        echo "uploading ${uploader_sample_number} samples from the list of samples to upload"
+        conda activate sendcrypt
+        cd ${uploader_workdir}
+        . ${uploader_code}/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
+    ;;
+    clean_sendcrypt_temp)
+        echo "Clearning the sendcrypt temporary directories in ${uploader_tempdir}"
+        dir=$(ls -d ${uploader_tempdir}/*)
+        for i in $(find ${uploader_tempdir} -iname sendcrypt.*); do
+            if [ -d ${i} ]; then
+                echo "deleting ${i}"
+                rm -r ${i}
+            fi
+        done
     ;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
