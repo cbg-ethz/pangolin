@@ -80,6 +80,9 @@ echo
 echo
 
 echo "Running sendCrypt"
+if [ $update_sendcrypt -eq "1" ]; then
+  sendcrypt update
+fi
 
 sendcrypt version | tee ${archive_now}/sencrypt_version_used.txt
 
