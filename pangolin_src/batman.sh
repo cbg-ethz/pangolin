@@ -270,6 +270,10 @@ case "$1" in
 		#done
                 conda deactivate
 	;;
+        check_viloca)
+                cd ${vilocadir}/
+                grep -rq snake.err -e "JOB.*CANCELLED.*DUE TO TIME LIMIT"
+        ;;
 	unlock_viloca)
 		cd ${vilocadir}/
 		conda activate 'viloca'

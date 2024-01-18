@@ -328,6 +328,8 @@ if [ "$run_viloca" -eq "1" ]; then
     if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
         stillrunning=0
         # skip missing
+        id=$(cat ${viloca_statusdir}/viloca_started)
+        id=${id#"Submitted batch job "}
         if [[ -z "${id}" ]]; then
             echo "VILOCA - $id : (not started)"
         fi
@@ -343,7 +345,7 @@ if [ "$run_viloca" -eq "1" ]; then
         fi
         # cluster status
         stat=$(${remote_batman} job "${id}" || echo "(no answer)")
-        if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE) ) ]]; then
+        if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE|COMPLETED) ) ]]; then
             # running
             echo -n "VILOCA : $id : $stat\n"
             echo "VILOCA : $id still running"
@@ -352,7 +354,8 @@ if [ "$run_viloca" -eq "1" ]; then
 
         if (( stillrunning == 0 )); then
             echo "No VILOCA running. Checking if the run was successful or if it ended prematurely due to the time limit"
-            if grep -rq snake.err -e "JOB.*CANCELLED.*DUE TO TIME LIMIT"; then
+            ${remote_batman} check_viloca
+            if ${remote_batman} check_viloca; then
                 echo "Previous VILOCA run cancelled due to time limit. Restarting it"
                 ${remote_batman} unlock_viloca && \
                 ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
