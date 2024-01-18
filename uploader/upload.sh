@@ -1,4 +1,9 @@
 #/usr/bin/env bash
+
+if [ -z $1 ] || [ ! -d $1 ]; then
+  echo "ERROR: the script uploader.sh requires the archive folder as parameter. Parameter not set of directory no found."
+  exit 1
+
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 conda activate sendcrypt
 

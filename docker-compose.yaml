@@ -7,16 +7,22 @@ services:
       - /data/projects/wastewater_automation/resources:/app/resources:ro
       - /data/projects/dataset:/app/dataset:rw
     secrets:
-      - bs-pangolin_login
+      - bs-pangolin_login_euler
+      - bs-pangolin_login_backups
       - fgcz_login
       - id_ed25519_wisedb
+      - id_ed25519_wisedb_backups
       - rsync.pass.euler
 secrets:
-  bs-pangolin_login:
+  bs-pangolin_login_euler:
     file: /data/projects/wastewater_automation/secrets/bs-pangolin@euler.ethz.ch
+  bs-pangolin_login_backups:
+    file: /data/projects/wastewater_automation/secrets/bs-pangolin@d@bs-bewi08
   fgcz_login:
     file: /data/projects/wastewater_automation/secrets/fgcz-gstore.uzh.ch
   id_ed25519_wisedb:
     file: /data/projects/wastewater_automation/secrets/id_ed25519_wisedb
+  id_ed25519_wisedb_backups:
+    file: /data/projects/wastewater_automation/secrets/id_ed25519_wisedb_backups
   rsync.pass.euler:
     file: /data/projects/wastewater_automation/secrets/rsync.pass.euler

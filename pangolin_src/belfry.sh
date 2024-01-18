@@ -108,7 +108,74 @@ callpushrsync() {
 export -f callpushrsync
 
 
-callpullrsync() {
+#callpullrsync() {
+#        scriptdir=/app/pangolin_src
+#        . ${scriptdir}/config/server.conf
+#
+#        local arglist=( )
+#        if (( ${#@} )); then
+#                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+#        else
+#                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+#                echo "rsync job didn't receive list"
+#                exit 1;
+#        fi
+#        exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+#                rsync   --timeout=${iotimeout}  \
+#                --password-file ${rsync_pass}      \
+#                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+#                -izrltH --fuzzy --fuzzy --inplace       \
+#                --link-dest=${basedir}/${sampleset}/    \
+#                "${arglist[@]}" \
+#                --exclude='uploads/*'   \
+#                --exclude='raw_uploads/*.tmp.*' \
+#                --exclude='raw_data/*_R[12].fastq.gz'   \
+#                --exclude='extracted_data/R[12]_fastqc.html'    \
+#                --exclude='variants/SNVs/REGION_*/reads.fas'    \
+#                --exclude='variants/SNVs/REGION_*/w-*.reads.fas'        \
+#                --exclude='variants/SNVs/REGION_*/raw_reads/w-*.reads.fas.gz'   \
+#                --exclude='*.out.log'   \
+#                --exclude='*.err.log'   \
+#                --exclude='*.benchmark' \
+#                ${basedir}/${working}/samples/
+#}
+#export -f callpullrsync
+
+
+#callpullrsync_upload() {
+#        scriptdir=/app/pangolin_src
+#        . ${scriptdir}/config/server.conf
+#
+#        local arglist=( )
+#        if (( ${#@} )); then
+#                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+#        else
+#                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+#                echo "rsync job didn't receive list"
+#                exit 1;
+#        fi
+#        exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+#                rsync   --timeout=${iotimeout}  \
+#                --password-file ${rsync_pass}      \
+#                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+#                -izrltH --fuzzy --fuzzy --inplace       \
+#                --link-dest=${uploader_dataset}/${sampleset}/    \
+#                "${arglist[@]}" \
+#                --exclude='alginments/*'   \
+#                --exclude='raw_uploads/*' \
+#                --exclude='raw_data/*'   \
+#                --exclude='extracted_data/*'    \
+#                --exclude='preprocessed_data/*' \
+#                --exclude='variants/*'   \
+#                --exclude='visualization/*'      \
+#                --exclude='*.out.log'   \
+#                --exclude='*.err.log'   \
+#                --exclude='*.benchmark' \
+#                ${uploader_dataset}/${working}/samples
+#}
+#export -f callpullrsync_upload
+
+callpullrsync_fordb() {
         scriptdir=/app/pangolin_src
         . ${scriptdir}/config/server.conf
 
@@ -124,88 +191,25 @@ callpullrsync() {
                 rsync   --timeout=${iotimeout}  \
                 --password-file ${rsync_pass}      \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-                -izrltH --fuzzy --fuzzy --inplace       \
-                --link-dest=${basedir}/${sampleset}/    \
+                -izrltHLK --fuzzy --fuzzy --inplace       \
+                --link-dest=${local_dataset}/${working}/samples    \
                 "${arglist[@]}" \
-                --exclude='uploads/*'   \
-                --exclude='raw_uploads/*.tmp.*' \
-                --exclude='raw_data/*_R[12].fastq.gz'   \
-                --exclude='extracted_data/R[12]_fastqc.html'    \
-                --exclude='variants/SNVs/REGION_*/reads.fas'    \
-                --exclude='variants/SNVs/REGION_*/w-*.reads.fas'        \
-                --exclude='variants/SNVs/REGION_*/raw_reads/w-*.reads.fas.gz'   \
-                --exclude='*.out.log'   \
-                --exclude='*.err.log'   \
-                --exclude='*.benchmark' \
-                ${basedir}/${working}/samples/
-}
-export -f callpullrsync
-
-
-callpullrsync_upload() {
-        scriptdir=/app/pangolin_src
-        . ${scriptdir}/config/server.conf
-
-        local arglist=( )
-        if (( ${#@} )); then
-                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
-        else
-                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
-                echo "rsync job didn't receive list"
-                exit 1;
-        fi
-        exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-                rsync   --timeout=${iotimeout}  \
-                --password-file ${rsync_pass}      \
-                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-                -izrltH --fuzzy --fuzzy --inplace       \
-                --link-dest=${uploader_dataset}/${sampleset}/    \
-                "${arglist[@]}" \
-                --exclude='alginments/*'   \
-                --exclude='raw_uploads/*' \
-                --exclude='raw_data/*'   \
-                --exclude='extracted_data/*'    \
-                --exclude='preprocessed_data/*' \
-                --exclude='variants/*'   \
-                --exclude='visualization/*'      \
-                --exclude='*.out.log'   \
-                --exclude='*.err.log'   \
-                --exclude='*.benchmark' \
-                ${uploader_dataset}/${working}/samples
-}
-export -f callpullrsync_upload
-
-callpullrsync_noshorah() {
-        scriptdir=/app/pangolin_src
-        . ${scriptdir}/config/server.conf
-
-        local arglist=( )
-        if (( ${#@} )); then
-                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
-        else
-                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
-                echo "rsync job didn't receive list"
-                exit 1;
-        fi
-        exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-                rsync   --timeout=${iotimeout}  \
-                --password-file ${rsync_pass}      \
-                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-                -izrltH --fuzzy --fuzzy --inplace       \
-                --link-dest=${backupdir}/${sampleset}/    \
-                "${arglist[@]}" \
-                --exclude='uploads/*'   \
-                --exclude='raw_uploads/*.tmp.*' \
-                --exclude='raw_data/*_R[12].fastq.gz'   \
-                --exclude='extracted_data/R[12]_fastqc.html'    \
+                --exclude='alignments/'    \
+                --exclude='extracted_data/'    \
+                --exclude='preprocessed_data/'    \
+                --exclude='raw_data/'   \
+                --exclude='raw_uploads/'    \
+                --exclude='references/'    \
                 --exclude='variants/'   \
                 --exclude='visualization/'      \
                 --exclude='*.out.log'   \
                 --exclude='*.err.log'   \
                 --exclude='*.benchmark' \
-                ${backupdir}/${working}/samples/
+                --exclude='dehuman.cram' \
+                --exclude='*fastq.gz' \
+                ${local_dataset}/${working}/samples/
 }
-export -f callpullrsync_noshorah
+export -f callpullrsync_fordb
 
 callpullrsync_viloca() {
     scriptdir=/app/pangolin_src
@@ -382,8 +386,8 @@ case "$1" in
         ${scriptdir}/handle_request_raw_viollier -c config/viollier.conf
         mamba deactivate
     ;;
-    fixopenbisrights)
-        validateBatchDate "$2"
+    #fixopenbisrights)
+    #    validateBatchDate "$2"
         # NOTE ACLs should autopropagate
 
         #dir=( ${basedir}/${download}/${2}* )
@@ -396,305 +400,52 @@ case "$1" in
         #   #echo 'group'
         #   #chgrp -R "${storgrp}" "${dir[@]}"
         #fi
-    ;;
-    pushsampleset)
-        if [[ "${2}" = "--recent" ]]; then
-            sheets=( ${basedir}/${sampleset}/samples.${lastmonth}*.tsv ${basedir}/${sampleset}/samples.${thismonth}*.tsv )
-            # BUG: will generate non-globed pattern if months are missing
-            echo "pushing recent: ${param[*]##/}"
-        elif [[ "${2}" = "--batch" ]]; then
-            validateBatchName "${3}"
-            sheets=( "${basedir}/${sampleset}/samples.${3}.tsv"  )
-        else
-            sheets=( ${basedir}/${sampleset}/samples.*.tsv )
-        fi
-	echo ${sheets[@]}
-        err=0
-	source ${baseconda}/secrets/${cluster_user}@${cluster}
-        remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
-	shopt -s nullglob
-	to_sync="${basedir}/${sampleset}/samples.*.tsv ${basedir}/${sampleset}/projects.*.tsv ${basedir}/${sampleset}/patch.*.tsv"
-	if [ ! $(find ${basedir}/${sampleset}/ -iname batch.*.yaml | wc -l) -eq 0 ]
-	then
-		to_sync="$to_sync ${basedir}/${sampleset}/batch.*.yaml"
-	fi
-	if [ ! $(find ${basedir}/${sampleset}/ -iname missing.*.yaml | wc -l) -eq 0 ]
-        then
-                to_sync="$to_sync ${basedir}/${sampleset}/missing.*.yaml"
-	fi
-        timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-            #rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
-	    rsync \
-            -izrltH --fuzzy --fuzzy --inplace   \
-            -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x    \
-            -g \
-	    $to_sync \
-	    ${cluster_mount}/${sampleset} || (( ++err ))
-        cut -s --fields=1 "${sheets[@]}"|sort -u|   \
-            gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'| \
-            xargs -0 -P $parallel -I '{@LIST@}' --  \
-                bash -c "callpushrsync {@LIST@} " || (( ++err ))
-        if (( err )); then
-            echo "Error: ${err} rsync job(s) failed"
-            touch ${statusdir}/pushsampleset_fail
-        else
-	    echo "push succeeded"
-            touch ${statusdir}/pushsampleset_success
-        fi
-	exit
-    ;;
-    listsamples)
-        ls ${cluster_mount}/${working}/samples/
-        #timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-        #    rsync   --timeout=${iotimeout}  \
-        #    -iPzrltH --fuzzy --fuzzy --inplace  \
-        #    -p --chmod=Dg+s,ug+rw,o-rwx \
-        #    -g \
-        #    --list-only \
-        #    belfry@euler.ethz.ch::${working}/samples/
-    ;;
-    pullsamples_upload)
-        # fetch remote sheets
-		mkdir -p ${uploader_sampleset}/
-        if [[ "${2}" = "--recent" ]]; then
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
-        elif [[ "${2}" = "--batch" ]]; then
-	    unused
-            validateBatchName "${3}"
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
-        elif [[ "${2}" = "--catchup" ]]; then
-	    unused
-			sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
-        else
-	    unused
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
-        fi
-		rsync	\
-			--password-file ${HOME}/.ssh/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
-			"${sheets[@]}"	\
-			${uploader_sampleset}/
-		if [[ "${2}" = "--recent" ]]; then
-			sheets=( ${uploader_sampleset}/samples.${lastmonth}*.tsv ${uploader_sampleset}/samples.${thismonth}*.tsv )
-			# BUG: will generate non-globed pattern if months are missing
-			echo "pulling recent: ${param[*]##/}"
-		elif [[ "${2}" = "--batch" ]]; then
-			validateBatchName "${3}"
-			sheets=( "${uploader_sampleset}/samples.${3}.tsv"  )
-		elif [[ "${2}" = "--catchup" ]]; then
-			sheets=( "${uploader_sampleset}/samples.catchup.tsv"  )
-		else
-			sheets=( ${uploader_sampleset}/samples.2*.tsv )
-		fi
-		err=0
-		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-			rsync	--timeout=${iotimeout}	\
-			--password-file ${HOME}/.ssh/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
-			-izrlt --fuzzy --fuzzy --inplace	\
-			--exclude='*.out.log'	\
-			--exclude='*.err.log'	\
-			--exclude='*.benchmark'	\
-			belfry@euler.ethz.ch::${working}/{qa.csv,variants}	\
-			${uploader_dataset}/${working}/ || (( ++err ))
-		echo "samples:"
-		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
-			gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
-			xargs -0 -P $parallelpull -I '{@LIST@}' --	\
-				bash -c "callpullrsync_upload {@LIST@} " || (( ++err ))
-		if (( err )); then
-			echo "Error: ${err} rsync job(s) failed"
-			touch ${statusdir}/pullsamples_upload_fail
-		elif [[ "${2}" = "--catchup" ]]; then
-			echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
-		else
-			touch ${statusdir}/pullsamples_upload_success
-		fi        
-    ;;
-    pullsamples_noshorah)
-        # fetch remote sheets
-		mkdir -p ${basedir}/tmp/belfrysheets/
-        if [[ "${2}" = "--recent" ]]; then
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
-        elif [[ "${2}" = "--batch" ]]; then
-	    unused
-            validateBatchName "${3}"
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
-        elif [[ "${2}" = "--catchup" ]]; then
-	    unused
-			sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
-        else
-	    unused
-			sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
-        fi
-		rsync	\
-			--password-file ${HOME}/.ssh/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
-			"${sheets[@]}"	\
-			${basedir}/tmp/belfrysheets/
-		if [[ "${2}" = "--recent" ]]; then
-			sheets=( ${basedir}/tmp/belfrysheets/samples.${lastmonth}*.tsv ${basedir}/tmp/belfrysheets/samples.${thismonth}*.tsv )
-			# BUG: will generate non-globed pattern if months are missing
-			echo "pulling recent: ${param[*]##/}"
-		elif [[ "${2}" = "--batch" ]]; then
-			validateBatchName "${3}"
-			sheets=( "${basedir}/tmp/belfrysheets/samples.${3}.tsv"  )
-		elif [[ "${2}" = "--catchup" ]]; then
-			sheets=( "${basedir}/tmp/belfrysheets/samples.catchup.tsv"  )
-		else
-			sheets=( ${basedir}/tmp/belfrysheets/samples.2*.tsv )
-		fi
-		err=0
-		timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-			rsync	--timeout=${iotimeout}	\
-			--password-file ${HOME}/.ssh/rsync.pass.euler	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
-			-izrlt --fuzzy --fuzzy --inplace	\
-			--exclude='*.out.log'	\
-			--exclude='*.err.log'	\
-			--exclude='*.benchmark'	\
-			belfry@euler.ethz.ch::${working}/{qa.csv,variants}	\
-			${backupdir}/${working}/ || (( ++err ))
-		echo "samples:"
-		cut -s --fields=1 "${sheets[@]}"|sort -u|	\
-			gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|	\
-			xargs -0 -P $parallelpull -I '{@LIST@}' --	\
-				bash -c "callpullrsync_noshorah {@LIST@} " || (( ++err ))
-		if (( err )); then
-			echo "Error: ${err} rsync job(s) failed"
-			touch ${statusdir}/pullsamples_noshorah_fail
-		elif [[ "${2}" = "--catchup" ]]; then
-			echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
-		else
-			touch ${statusdir}/pullsamples_noshorah_success
-		fi
-    ;;
-    #pullsamples)
-    #    # fetch remote sheets
-    #    if [[ "${2}" = "--recent" ]]; then
-    #        sheets=( "${sampleset}/samples.${lastmonth}*.tsv" "${sampleset}/samples.${thismonth}*.tsv" )
-    #    elif [[ "${2}" = "--batch" ]]; then
-    #        validateBatchName "${3}"
-    #        sheets=( "${sampleset}/samples.${3}.tsv"  )
-    #    elif [[ "${2}" = "--catchup" ]]; then
-    #        sheets=( "catchup/samples.catchup.tsv"  )
-    #    else
-    #        sheets=( "${sampleset}/samples.2*.tsv" )
-    #    fi
-	#target_dir=$(mktemp -d)
-	#echo "pull samples to ${target_dir}"
-    #    rsync   \
-    #        -e "ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}" \
-	#    --itemize-changes \
-	#    --compress \
-	#    --recursive \
-	#    --links \
-	#    --times \
-	#    --hard-links \
-    #        --fuzzy \
-	#    --fuzzy \
-	#    --inplace \
-	#    --perms \
-	#    --group \
-    #        --chmod=Dg+s,ug+rw,o-rwx \
-    #        "${sheets[@]}"  \
-	#    ${target_dir}
-    #    if [[ "${2}" = "--recent" ]]; then
-    #        sheets=( ${target_dir}/samples.${lastmonth}*.tsv ${target_dir}/samples.${thismonth}*.tsv )
-    #        # BUG: will generate non-globed pattern if months are missing
-    #        echo "pulling recent: ${param[*]##/}"
-    #    elif [[ "${2}" = "--batch" ]]; then
-    #        validateBatchName "${3}"
-    #        sheets=( "${target_dir}/samples.${3}.tsv" )
-    #    elif [[ "${2}" = "--catchup" ]]; then
-    #        sheets=( "${target_dir}/samples.catchup.tsv" )
-    #    else
-    #        sheets=( ${taget_dir}/samples.2*.tsv )
-    #    fi
-    #    err=0
-    #    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-    #        rsync  --timeout=${iotimeout}  \
-    #        -e "ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}" \
-    #        -izrlt --fuzzy --fuzzy --inplace    \
-    #        --exclude='*.out.log'   \
-    #        --exclude='*.err.log'   \
-    #        --exclude='*.benchmark' \
-    #        ${working}/{qa.csv,variants}  \
-    #        ${basedir}/${working}/ || (( ++err ))
-    #    echo "samples:"
-    #    cut -s --fields=1 "${sheets[@]}"|sort -u|   \
-    #        gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|  \
-    #        xargs -0 -P $parallelpull -I '{@LIST@}' --  \
-    #            bash -c "callpullrsync {@LIST@} " || (( ++err ))
-    #    if (( err )); then
-    #        echo "Error: ${err} rsync job(s) failed"
-    #        touch ${statusdir}/pullsamples_fail
-    #    elif [[ "${2}" = "--catchup" ]]; then
-    #        echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
-    #    else
-    #        touch ${statusdir}/pullsamples_success
-    #    fi
     #;;
-    #
-    #old_pullsamples)
-    #    # fetch remote sheets
-    #    mkdir -p /tmp/belfrysheets/
+    #pushsampleset)
     #    if [[ "${2}" = "--recent" ]]; then
-    #        sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
-    #    elif [[ "${2}" = "--batch" ]]; then
-    #        validateBatchName "${3}"
-    #        sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
-    #    elif [[ "${2}" = "--catchup" ]]; then
-    #        sheets=( "belfry@euler.ethz.ch::catchup/samples.catchup.tsv"  )
-    #    else
-    #        sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
-    #    fi
-    #    rsync   \
-    #        -izrltH --fuzzy --fuzzy --inplace   \
-    #        -p --chmod=Dg+s,ug+rw,o-rwx \
-    #        -g \
-    #        "${sheets[@]}"  \
-    #        /tmp/belfrysheets/
-    #    if [[ "${2}" = "--recent" ]]; then
-    #        sheets=( /tmp/belfrysheets/samples.${lastmonth}*.tsv /tmp/belfrysheets/samples.${thismonth}*.tsv )
+    #        sheets=( ${basedir}/${sampleset}/samples.${lastmonth}*.tsv ${basedir}/${sampleset}/samples.${thismonth}*.tsv )
     #        # BUG: will generate non-globed pattern if months are missing
-    #        echo "pulling recent: ${param[*]##/}"
+    #        echo "pushing recent: ${param[*]##/}"
     #    elif [[ "${2}" = "--batch" ]]; then
     #        validateBatchName "${3}"
-    #        sheets=( "/tmp/belfrysheets/samples.${3}.tsv"  )
-    #    elif [[ "${2}" = "--catchup" ]]; then
-    #        sheets=( "/tmp/belfrysheets/samples.catchup.tsv"  )
+    #        sheets=( "${basedir}/${sampleset}/samples.${3}.tsv"  )
     #    else
-    #        sheets=( /tmp/belfrysheets/samples.2*.tsv )
+    #        sheets=( ${basedir}/${sampleset}/samples.*.tsv )
     #    fi
+	#echo ${sheets[@]}
     #    err=0
+	#source ${baseconda}/secrets/${cluster_user}@${cluster}
+    #    remote_batman="ssh -o StrictHostKeyChecking=no -i ${privkey} ${cluster_user}@${cluster}"
+	#shopt -s nullglob
+	#to_sync="${basedir}/${sampleset}/samples.*.tsv ${basedir}/${sampleset}/projects.*.tsv ${basedir}/${sampleset}/patch.*.tsv"
+	#if [ ! $(find ${basedir}/${sampleset}/ -iname batch.*.yaml | wc -l) -eq 0 ]
+	#then
+	#	to_sync="$to_sync ${basedir}/${sampleset}/batch.*.yaml"
+	#fi
+	#if [ ! $(find ${basedir}/${sampleset}/ -iname missing.*.yaml | wc -l) -eq 0 ]
+    #    then
+    #            to_sync="$to_sync ${basedir}/${sampleset}/missing.*.yaml"
+	#fi
     #    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-    #        rsync   --timeout=${iotimeout}  \
-    #        -izrlt --fuzzy --fuzzy --inplace    \
-    #        --exclude='*.out.log'   \
-    #        --exclude='*.err.log'   \
-    #        --exclude='*.benchmark' \
-    #        belfry@euler.ethz.ch::${working}/{qa.csv,variants}  \
-    #        ${basedir}/${working}/ || (( ++err ))
-    #    echo "samples:"
+    #        #rsync -e "${remote_batman} -oConnectTimeout=${contimeout} rsync" \
+	#    rsync \
+    #        -izrltH --fuzzy --fuzzy --inplace   \
+    #        -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x    \
+    #        -g \
+	#    $to_sync \
+	#    ${cluster_mount}/${sampleset} || (( ++err ))
     #    cut -s --fields=1 "${sheets[@]}"|sort -u|   \
-    #        gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'|  \
-    #        xargs -0 -P $parallelpull -I '{@LIST@}' --  \
-    #            bash -c "callpullrsync {@LIST@} " || (( ++err ))
+    #        gawk -v P=$(( parallel * 4 ))  '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'| \
+    #        xargs -0 -P $parallel -I '{@LIST@}' --  \
+    #            bash -c "callpushrsync {@LIST@} " || (( ++err ))
     #    if (( err )); then
     #        echo "Error: ${err} rsync job(s) failed"
-    #        touch ${statusdir}/pullsamples_fail
-    #    elif [[ "${2}" = "--catchup" ]]; then
-    #        echo -e '\n\e[38;5;45;1mFor the good of all of us\e[0m\n\e[38;5;208;1mExcept the ones who are dead\e[0m'
+    #        touch ${statusdir}/pushsampleset_fail
     #    else
-    #        touch ${statusdir}/pullsamples_success
+	#    echo "push succeeded"
+    #        touch ${statusdir}/pushsampleset_success
     #    fi
+	#exit
     #;;
     qa_report)
         . $baseconda/mambaforge/bin/activate qa_report
@@ -765,24 +516,6 @@ case "$1" in
 			touch ${statusdir}/pull_sync_status_success
 		fi
     ;;
-    pull_fgcz_data)
-	    echo "backup of the FGCZ raw data"
-		err=0
-		rsync	\
-			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${bfabric_downloads}/ \
-			${backupdir}/${sync_backup_subdir}/ || (( ++err ))
-		if (( err )); then
-			echo "Error: ${err} rsync job(s) failed"
-			touch ${status}/pull_fgcz_fail
-		else
-			touch ${status}/pull_fgcz_success
-		fi
-    ;;
     pull_sortsamples_status)
         echo "Pulling the updated status of the sortsamples procedure"
         err=0
@@ -819,31 +552,6 @@ case "$1" in
 			touch ${viloca_statusdir}/pushsamplelist_viloca_success
 		fi
 	;;
-    pullresults_viloca)
-	    echo "backup of the VILOCA results"
-		## backup viloca results
-		if [[ "${2}" = "--batch" ]]; then
-			validateBatchName "${3}"
-			batch=${3}
-		else
-			batch=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-		fi
-		err=0
-		rsync	\
-			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
-			-izrltH --fuzzy --fuzzy --inplace	\
-			-p --chmod=Dg+s,ug+rw,o-rwx	\
-			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${work_viloca}/${viloca_processing}/${viloca_results} \
-			${backupdir}/${viloca_backup_subdir}/ || (( ++err ))
-		if (( err )); then
-			echo "Error: ${err} rsync job(s) failed"
-			touch ${viloca_statusdir}/pullresults_viloca_fail
-		else
-			touch ${viloca_statusdir}/pullresults_viloca_success
-		fi
-    ;;
     queue_upload)
         echo "Adding new samples to the upload list"
         validateBatchName "$2"
@@ -873,7 +581,84 @@ case "$1" in
                 echo "deleting ${i}"
                 rm -r ${i}
             fi
+        rm -r ${uploader_tempdir}/${target}/*
         done
+    ;;
+    pullsamples_for_db)
+        shopt -s globstar
+        # fetch remote sheets
+        mkdir -p ${basedir}/tmp/belfrysheets/
+        if [[ "${2}" = "--recent" ]]; then
+            sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
+        elif [[ "${2}" = "--batch" ]]; then
+            validateBatchName "${3}"
+            sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+        else
+            sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
+        fi
+        rsync \
+            --password-file ${HOME}/.ssh/rsync.pass.euler \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
+            -izrltHLK --fuzzy --fuzzy --inplace \
+            "${sheets[@]}" \
+            ${basedir}/tmp/belfrysheets/
+        if [[ "${2}" = "--recent" ]]; then
+            sheets=( ${basedir}/tmp/belfrysheets/samples.${lastmonth}*.tsv ${basedir}/tmp/belfrysheets/samples.${thismonth}*.tsv )
+            # BUG: will generate non-globed pattern if months are missing
+            echo "pulling recent: ${sheets[*]##/}"
+        elif [[ "${2}" = "--batch" ]]; then
+            validateBatchName "${3}"
+            sheets=( "${basedir}/tmp/belfrysheets/samples.${3}.tsv"  )
+            echo "pulling batch: ${sheets[*]##/}"
+        else
+            sheets=( ${basedir}/tmp/belfrysheets/samples.2*.tsv )
+        fi
+        err=0
+        #timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+        #    rsync --timeout=${iotimeout} \
+        #        --password-file ${HOME}/.ssh/rsync.pass.euler \
+        #        -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}" \
+        #        -izrltLK --fuzzy --fuzzy --inplace \
+        #        --exclude='alignments/'    \
+        #        --exclude='extracted_data/'    \
+        #        --exclude='preprocessed_data/'    \
+        #        --exclude='raw_data/'   \
+        #        --exclude='raw_uploads/'    \
+        #        --exclude='references/'    \
+        #        --exclude='variants/'   \
+        #        --exclude='visualization/'      \
+        #        --exclude='*.out.log'   \
+        #        --exclude='*.err.log'   \
+        #        --exclude='*.benchmark' \
+        #        --exclude='dehuman.cram' \
+        #        --exclude='*fastq.gz' \
+        #        -R belfry@euler.ethz.ch::${working}/samples/**/**/uploads \
+        #        ${local_dataset}/${working}/ || (( ++err ))
+        echo "samples:"
+        cut -s --fields=1 "${sheets[@]}"|sort -u| \
+            gawk -v P=$(( parallelpull * 4 )) '{i=(NR-1);b=i%P;o[b]=(o[b] " \"" $1 "\"")};END{for(i=0;i<P;i++){printf("%s\0",o[i])}}'| \
+            xargs -0 -P $parallelpull -I '{@LIST@}' -- \
+            bash -c "callpullrsync_fordb {@LIST@} " || (( ++err ))
+        if (( err )); then
+            echo "FAILED" | tee ${statusdir}/pullsamples_for_db_${now}
+        else
+            echo "SUCCESS" | tee ${statusdir}/pullsamples_for_db_${now}
+        fi
+    ;;
+    pusharchive_uploader)
+        echo "Pushing uploader archives to bs-bewi08"
+        err=0
+	    rsync	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} "	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+            ${uploader_archive}    \
+			bs-pangolin@d@bs-bewi08.ethz.ch:${remote_uploader_backup_dir} || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} rsync of uploader archive to bs-bewi08 failed"
+			touch ${statusdir}/push_archive_uploader_fail
+		else
+			touch ${statusdir}/push_archive_uploader_success
+		fi
     ;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr

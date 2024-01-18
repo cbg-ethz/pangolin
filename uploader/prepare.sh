@@ -34,7 +34,7 @@ try:
         all_to_upload = [ element.strip() for element in f.readlines() ]
     with open(sys.argv[2]) as f:
         uploaded = [ element.strip() for element in f.readlines() ]
-    current = list(set(all_to_upload) - set(uploaded))
+    current = [ entry for entry in all_to_upload if entry.split("\t")[0] not in uploaded ]
     current = current[:int(sys.argv[3])]
     with open(sys.argv[4],'w') as f:
         for item in current:

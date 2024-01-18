@@ -32,7 +32,9 @@ mkdir ${mode:+--mode=${mode}} -p ${amplicon_coverage_statusdir}
 touch ${statusdir}/oh_hai_im_looping
 
 source /home/bs-pangolin/.ssh/${cluster_user}@${cluster}
+source /home/bs-pangolin/.ssh/${bck_user}@${bckhost}
 remote_batman="ssh -o StrictHostKeyChecking=no -ni ${privkey} ${cluster_user}@${cluster} --"
+remote_backup="ssh -o StrictHostKeyChecking=no -ni ${bck_privkey} ${bck_user}@${bckhost} --"
 
 #
 # Phase 1: periodic data sync
@@ -53,8 +55,8 @@ if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_stat
     echo "The automation will not be aware of any new deliveries"
 else
     if [ $backup_fgcz_raw -eq "1" ]; then
-        ${scriptdir}/belfry.sh pull_fgcz_data
-    if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
+        ${remote_backup} pull_fgcz_data
+        if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
             echo "\e[31;1Backup of fgcz raw data failed\e[0m"
             echo "The system will retry next loop"
         fi
@@ -122,19 +124,19 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 
         case "$j" in
             seqqa)
-                #if [ $backup_vpipe -eq "1" ]; then
-                #    ${scriptdir}/belfry.sh pullsamples_noshorah --recent
-                #    if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
-                #        echo "\e[31;1mpulling data failed\e[0m"
-                #        (( ++stillrunning ))
-                #        continue
-                #    fi
-                #else
-                #    echo "\e[33;1mBackup of V-PIPE data DISABLED\e[0m"
-                #fi
-                ${scriptdir}/belfry.sh pullsamples_upload --recent
-                if [[ ( -e ${statusdir}/pullsamples_upload_fail ) && ( ${statusdir}/pullsamples_upload_fail -nt ${statusdir}/pullsamples_upload_success ) ]]; then
-                    echo "\e[31;1mpulling data failed\e[0m"
+                if [ $backup_vpipe -eq "1" ]; then
+                    ${remote_backup} pullsamples_noshorah --recent
+                    if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
+                        echo "\e[31;1mpulling data for database failed\e[0m"
+                        (( ++stillrunning ))
+                        continue
+                    fi
+                else
+                    echo "\e[33;1mBackup of V-PIPE data DISABLED\e[0m"
+                fi
+                ${scriptdir}/belfry.sh pullsamples_for_db --recent
+                if [[ ( -e ${statusdir}/pullsamples_for_db_fail ) && ( ${statusdir}/pullsamples_for_db_fail -nt ${statusdir}/pullsamples_for_db_success ) ]]; then
+                    echo "\e[31;1mpulling data for database failed\e[0m"
                     (( ++stillrunning ))
                     continue
                 fi
@@ -146,21 +148,21 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
     echo done
 
     if (( stillrunning == 0 )); then
-        #if [ $backup_vpipe -eq "1" ]; then
-        #    ${scriptdir}/belfry.sh pullsamples_noshorah --recent
-        #    if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
-        #        echo "Pulling data success!"
-        #    else
-        #        echo "\e[31;1mpulling data failed\e[0m"
-        #    fi
-        #else
-        #    echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
-        #fi
-        ${scriptdir}/belfry.sh pullsamples_upload --recent
-        if [[ ( ! -e ${statusdir}/pullsamples_upload_success ) || ( ${statusdir}/pullsamples_upload_success -nt ${statusdir}/pullsamples_upload_fail ) ]]; then
-            echo "Pulling data success!"
+        if [ $backup_vpipe -eq "1" ]; then
+            ${remote_backup} pullsamples_noshorah --recent
+            if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
+                echo "Pulling data success!"
+            else
+                echo "\e[31;1mpulling data failed\e[0m"
+            fi
         else
-            echo "\e[31;1mpulling data failed\e[0m"
+            echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
+        fi
+        ${scriptdir}/belfry.sh pullsamples_for_db --recent
+        if [[ ( ! -e ${statusdir}/pullsamples_for_db_success ) || ( ${statusdir}/pullsamples_for_db_success -nt ${statusdir}/pullsamples_for_db_fail ) ]]; then
+            echo "Pulling data for database success!"
+        else
+            echo "\e[31;1mpulling data for database failed\e[0m"
         fi
         
         echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
@@ -379,16 +381,16 @@ if [ "$run_viloca" -eq "1" ]; then
             echo VILOCA still running
         fi
         lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-        #if [ $backup_viloca -eq "1" ]; then
-        #    ${scriptdir}/belfry pullresults_viloca --batch ${lastbatch_viloca}
-        #    if [[ ( ! -e ${viloca_statusdir}/pullsamples_viloca_fail ) || ( ${viloca_statusdir}/pullsamples_viloca_success -nt ${viloca_statusdir}/pullsamples_viloca_fail ) ]]; then
-        #        echo "Pulling VILOCA data success!"
-        #    else
-        #        echo "\e[31;1mpulling VILOCA data failed\e[0m"
-        #    fi
-        #else
-        #    echo "\e[33;1mBackup of VILOCA data DISABLED\e[0m"
-        #fi
+        if [ $backup_viloca -eq "1" ]; then
+            ${remote_backup} pullresults_viloca --batch ${lastbatch_viloca} > ${viloca_statusdir}/backup_viloca_status_${now}
+            if [[ ( ! -e ${viloca_statusdir}/backup_viloca_status_${now} ) || $(cat ${viloca_statusdir}/backup_viloca_status_${now}) -eq "SUCCESS" ]]; then
+                echo "Backup of VILOCA results on bs-bewi08 success!"
+            else
+                echo "\e[31;1mBackup of VILOCA results on bs-bewi08 failed\e[0m"
+            fi
+        else
+            echo "\e[33;1mBackup of VILOCA results on bs-bewi08 DISABLED\e[0m"
+        fi
     else
         echo 'No current VILOCA run.'
     fi
@@ -521,6 +523,17 @@ if [ $run_uploader -eq "1" ]; then
             ${scriptdir}/belfry.sh clean_sendcrypt_temp
         fi
     fi
+
+    if [ $backup_uploader -eq "1" ]; then
+        ${scriptdir}/belfry.sh pusharchive_uploader > ${uploader_statusdir}/backup_uploader_status_${now}
+        if [[ ( ! -e ${uploader_statusdir}/backup_uploader_status_${now} ) || $(cat ${uploader_statusdir}/backup_uploader_status_${now}) -eq "SUCCESS" ]]; then
+            echo "Backup of VILOCA results on bs-bewi08 success!"
+        else
+            echo "\e[31;1mBackup of UPLOADER results on bs-bewi08 failed\e[0m"
+        fi
+    else
+        echo "\e[33;1mBackup of UPLOADER results on bs-bewi08 DISABLED\e[0m"
+    fi 
 else
     echo "Skipping UPLOADER as per configuration"
 fi
@@ -541,6 +554,16 @@ if [ $run_amplicon_coverage -eq "1" ]; then
     else
         echo "No new batch to run AMPLICON COVERAGE on"
     fi
+    if [ ${backup_amplicon_cov} -eq "1" ]; then
+        ${remote_backup} pullresults_amplicon_cov > ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now}
+        if [[ ( ! -e ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} ) || $(cat ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now}) -eq "SUCCESS" ]]; then
+            echo "Backup of AMPLICON COVERAGE results on bs-bewi08 success!"
+        else
+            echo "\e[31;1mBackup of AMPLICON COVERAGE results on bs-bewi08 failed\e[0m"
+        fi
+    else
+        echo "\e[33;1mBackup of AMPLICON COVERAGE results on bs-bewi08 DISABLED\e[0m"
+    fi 
 else
     echo "Skipping AMPLICON COVERAGE as per configuration"
 fi
