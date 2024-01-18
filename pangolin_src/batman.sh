@@ -265,9 +265,9 @@ case "$1" in
                 conda activate 'viloca'
 		. run_workflow.sh
 		# write job chain list
-		for v in "${list[@]}"; do
-			printf "%s\t%s\n" "${v}" "${job[$v]}"
-		done
+		#for v in "${list[@]}"; do
+		#	printf "%s\t%s\n" "${v}" "${job[$v]}"
+		#done
                 conda deactivate
 	;;
 	unlock_viloca)
