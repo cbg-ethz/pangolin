@@ -315,14 +315,18 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			namematch={}
 
 	with open(j, 'rt') as f:
-		stats = json.loads(f.read());
+		try:
+			stats = json.loads(f.read());
+		except json.JSONDecodeError as e:
+			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
+			continue
 
 	# parse flowcell
 	try:
 		m=rxcell.search(stats['Flowcell']).groupdict()
 		flowcell=m['cell']
 	except:
-		print(f"{name} cannot parse: {stats['Flowcell']}")
+		print(f"{name} cannot parse: {stats.get('Flowcell')}")
 		continue
 
 	# parse run folder
@@ -331,7 +335,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		m=rxrun.search(runfolder).groupdict()
 		rundate=f"20{m['date']}" # NOTE runfolders are yymmdd, not yyyymmdd
 		if flowcell != m['cell']:
-			print(f"{name} Warning: cell missmatch: {flowcell} vs {m['cell']}")
+			print(f"{name} Warning: cell missmatch: {flowcell} vs {m.get('cell')}")
 	except:
 		print(f"{name} cannot parse: {runfolder}")
 		continue
