@@ -347,11 +347,11 @@ if [ "$run_viloca" -eq "1" ]; then
         # cluster status
         stat=$(${remote_batman} job "${id}" || echo "(no answer)")
         if [[ ( -n "${stat}" ) && ( "${stat}" =~ ^(RUNNING|PENDING|COMPLETING|CONFIGURING|SUSPENDED|\(no answer \)).* ) ]]; then            # running
-            echo -n "VILOCA : $id : $stat\n"
+            echo -n "VILOCA : $id : $stat"
             echo "VILOCA : $id still running"
             (( ++stillrunning ))
         fi
-        if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ ^( TIMEOUT ) ) ]]; then
+        if [[ ( -n "${stat}" ) && ( "${stat}" =~ ^( TIMEOUT ) ) ]]; then
             echo -n "VILOCA : $id : $stat\n"
             echo "VILOCA : $id reached time limit"
             (( ++timelimit_reached ))
