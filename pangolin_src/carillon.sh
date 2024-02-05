@@ -546,7 +546,7 @@ if [ $run_amplicon_coverage -eq "1" ]; then
     fi
     if [ ${backup_amplicon_cov} -eq "1" ]; then
         ${remote_backup} pullresults_amplicon_cov > ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now}
-        if [[ ( ! -e ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} ) || $(cat ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now}) -eq "SUCCESS" ]]; then
+        if [[ ( ! -e ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} ) || $(cat ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} | tail -n 1) -eq "SUCCESS" ]]; then
             echo "Backup of AMPLICON COVERAGE results on bs-bewi08 success!"
         else
             echo "\e[31;1mBackup of AMPLICON COVERAGE results on bs-bewi08 failed\e[0m"
