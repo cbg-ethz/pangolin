@@ -24,13 +24,13 @@ set -uo pipefail
 
 . ${configfile}
 
-${uploader_code}/prepare.sh -N $sample_number -c ${configfile}
+#${uploader_code}/prepare.sh -N $sample_number -c ${configfile}
 
 archive_now="${uploader_archive}/$(date +"%Y-%m-%d"-%H-%M-%S)"
 mkdir -p $archive_now
 
-${uploader_code}/upload.sh ${archive_now} && cat ${archive_now}/uploaded_run.txt >> ${uploader_uploaded}
+${uploader_code}/upload.sh ${archive_now} && \
+cat ${archive_now}/uploaded_run.txt >> ${uploader_uploaded} && \
+rm -r ${local_dataset}/${working}/samples/*
 
-
-echo ${batch_to_upload}
 

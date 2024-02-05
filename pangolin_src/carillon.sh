@@ -55,7 +55,7 @@ if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_stat
     echo "The automation will not be aware of any new deliveries"
 else
     if [ $backup_fgcz_raw -eq "1" ]; then
-        ${remote_backup} pull_fgcz_data
+        ${remote_backup} pull_fgcz_data --recent
         if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
             echo "\e[31;1Backup of fgcz raw data failed\e[0m"
             echo "The system will retry next loop"
@@ -134,12 +134,12 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
                 else
                     echo "\e[33;1mBackup of V-PIPE data DISABLED\e[0m"
                 fi
-                ${scriptdir}/belfry.sh pullsamples_for_db --recent
-                if [[ ( -e ${statusdir}/pullsamples_for_db_fail ) && ( ${statusdir}/pullsamples_for_db_fail -nt ${statusdir}/pullsamples_for_db_success ) ]]; then
-                    echo "\e[31;1mpulling data for database failed\e[0m"
-                    (( ++stillrunning ))
-                    continue
-                fi
+                #${scriptdir}/belfry.sh pullsamples_for_db --recent
+                #if [[ ( -e ${statusdir}/pullsamples_for_db_fail ) && ( ${statusdir}/pullsamples_for_db_fail -nt ${statusdir}/pullsamples_for_db_success ) ]]; then
+                #    echo "\e[31;1mpulling data for database failed\e[0m"
+                #    (( ++stillrunning ))
+                #    continue
+                #fi
             ;;
         esac
 
@@ -158,12 +158,12 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         else
             echo "\e[33;1mBackup of VPIPE data DISABLED\e[0m"
         fi
-        ${scriptdir}/belfry.sh pullsamples_for_db --recent
-        if [[ ( ! -e ${statusdir}/pullsamples_for_db_success ) || ( ${statusdir}/pullsamples_for_db_success -nt ${statusdir}/pullsamples_for_db_fail ) ]]; then
-            echo "Pulling data for database success!"
-        else
-            echo "\e[31;1mpulling data for database failed\e[0m"
-        fi
+        #${scriptdir}/belfry.sh pullsamples_for_db --recent
+        #if [[ ( ! -e ${statusdir}/pullsamples_for_db_success ) || ( ${statusdir}/pullsamples_for_db_success -nt ${statusdir}/pullsamples_for_db_fail ) ]]; then
+        #    echo "Pulling data for database and uploads success!"
+        #else
+        #    echo "\e[31;1mpulling data for database and uploads failed\e[0m"
+        #fi
         
         echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
         vpipe_lastfile=$(cat ${statusdir}/vpipe_ended)
@@ -327,6 +327,7 @@ if [ "$run_viloca" -eq "1" ]; then
 
     if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
         stillrunning=0
+        timelimit_reached=0
         # skip missing
         id=$(cat ${viloca_statusdir}/viloca_started)
         id=${id#"Submitted batch job "}
@@ -345,33 +346,25 @@ if [ "$run_viloca" -eq "1" ]; then
         fi
         # cluster status
         stat=$(${remote_batman} job "${id}" || echo "(no answer)")
-        if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ (EXIT|DONE|COMPLETED) ) ]]; then
-            # running
+        if [[ ( -n "${stat}" ) && ( "${stat}" =~ ^(RUNNING|PENDING|COMPLETING|CONFIGURING|SUSPENDED|\(no answer \)).* ) ]]; then            # running
             echo -n "VILOCA : $id : $stat\n"
             echo "VILOCA : $id still running"
             (( ++stillrunning ))
         fi
-
+        if [[ ( -n "${stat}" ) && ( ! "${stat}" =~ ^( TIMEOUT ) ) ]]; then
+            echo -n "VILOCA : $id : $stat\n"
+            echo "VILOCA : $id reached time limit"
+            (( ++timelimit_reached ))
+        fi
         if (( stillrunning == 0 )); then
-            echo "No VILOCA running. Checking if the run was successful or if it ended prematurely due to the time limit"
-            ${remote_batman} check_viloca
-            if ${remote_batman} check_viloca; then
+            if (( timelimit_reached > 0)); then
                 echo "Previous VILOCA run cancelled due to time limit. Restarting it"
                 ${remote_batman} unlock_viloca && \
                 ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
                 if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-                    cat viloca.${now} > ${viloca_statusdir}/viloca_started
+                    cat ${viloca_statusdir}/viloca.${now} > ${viloca_statusdir}/viloca_started
                     cat ${viloca_statusdir}/viloca_started
                     printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
-                    if [[ -n "${mailto[*]}" ]]; then
-                        (
-                            echo '(Possibly new) samples not having VILOCA results yet found:'
-                            printf ' - %s\n' "${runreason[@]}"
-                            echo -e '\nStarting VILOCA on Euler:'
-                            cat ${viloca_statusdir}/viloca_started
-                        ) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
-                        # -r "${mailfrom}"
-                    fi
                 fi
             else
                 lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
@@ -379,20 +372,19 @@ if [ "$run_viloca" -eq "1" ]; then
                 ${remote_batman} archive_viloca_run ${lastbatch_viloca} || echo -e '...\e[33;1mFAILED TO ARCHIVE THE VILOCA RUN on batch ${lastbatch_viloca}\e[0m'
                 echo "${id}" > ${viloca_statusdir}/viloca_${j}_ended
                 echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
+                if [ $backup_viloca -eq "1" ]; then
+                    ${remote_backup} pullresults_viloca --batch ${lastbatch_viloca} > ${viloca_statusdir}/backup_viloca_status_${now}
+                    if [[ ( ! -e ${viloca_statusdir}/backup_viloca_status_${now} ) || $(cat ${viloca_statusdir}/backup_viloca_status_${now}) -eq "SUCCESS" ]]; then
+                        echo "Backup of VILOCA results on bs-bewi08 success!"
+                    else
+                        echo "\e[31;1mBackup of VILOCA results on bs-bewi08 failed\e[0m"
+                    fi
+                else
+                    echo "\e[33;1mBackup of VILOCA results on bs-bewi08 DISABLED\e[0m"
+                fi
             fi
         else
             echo VILOCA still running
-        fi
-        lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-        if [ $backup_viloca -eq "1" ]; then
-            ${remote_backup} pullresults_viloca --batch ${lastbatch_viloca} > ${viloca_statusdir}/backup_viloca_status_${now}
-            if [[ ( ! -e ${viloca_statusdir}/backup_viloca_status_${now} ) || $(cat ${viloca_statusdir}/backup_viloca_status_${now}) -eq "SUCCESS" ]]; then
-                echo "Backup of VILOCA results on bs-bewi08 success!"
-            else
-                echo "\e[31;1mBackup of VILOCA results on bs-bewi08 failed\e[0m"
-            fi
-        else
-            echo "\e[33;1mBackup of VILOCA results on bs-bewi08 DISABLED\e[0m"
         fi
     else
         echo 'No current VILOCA run.'
@@ -508,19 +500,14 @@ if [ $run_uploader -eq "1" ]; then
     echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} MB"
     echo "----"
     next_number=$((${uploaded_number} + ${uploader_sample_number}))
+    echo "asked to upload ${next_number} new samples, consisting of about $((${next_number} * ${upload_avg_size})) MB"
     if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
         echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
         touch ${uploader_statusdir}/uploader_quota_hit.${now}
     else
         echo 'starting UPLOADER job'
         ${scriptdir}/belfry.sh upload && \
-        echo $(( $(cat ${uploaded_number}) + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
-        if [[ -n "${mailto[*]}" ]]; then
-            (
-                echo -e '\nNew batch uploaded:'
-            ) | mail -s '[Automation-carillon] Starting UPLOADER' "${mailto[@]}"
-            # -r "${mailfrom}"
-        fi
+        echo $(( ${uploaded_number} + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
         if [ ${clean_sendcrypt_temp} -eq "1" ]; then
             echo "Cleaning the temporary folders generated by SendCrypt"
             ${scriptdir}/belfry.sh clean_sendcrypt_temp
@@ -528,9 +515,9 @@ if [ $run_uploader -eq "1" ]; then
     fi
 
     if [ $backup_uploader -eq "1" ]; then
-        ${scriptdir}/belfry.sh pusharchive_uploader > ${uploader_statusdir}/backup_uploader_status_${now}
+        ${scriptdir}/belfry.sh backup_uploader > ${uploader_statusdir}/backup_uploader_status_${now}
         if [[ ( ! -e ${uploader_statusdir}/backup_uploader_status_${now} ) || $(cat ${uploader_statusdir}/backup_uploader_status_${now}) -eq "SUCCESS" ]]; then
-            echo "Backup of VILOCA results on bs-bewi08 success!"
+            echo "Backup of UPLADER results on bs-bewi08 success!"
         else
             echo "\e[31;1mBackup of UPLOADER results on bs-bewi08 failed\e[0m"
         fi

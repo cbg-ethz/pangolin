@@ -1,10 +1,14 @@
 #/usr/bin/env bash
+scriptdir=/app/pangolin_src
 
 if [ -z $1 ] || [ ! -d $1 ]; then
   echo "ERROR: the script uploader.sh requires the archive folder as parameter. Parameter not set of directory no found."
   exit 1
+fi
 
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+. ${scriptdir}/config/server.conf
+cd ${uploader_code}
+source ${baseconda}/etc/profile.d/conda.sh
 conda activate sendcrypt
 
 set -eu
@@ -22,9 +26,9 @@ function bash_traceback() {
     # Print out the stack trace described by $function_stack
     echo "Traceback of ${BASH_SOURCE[1]} (most recent call last):" >&2
     for ((i=0; i < ${#FUNCNAME[@]} - 1; i++)); do
-    local funcname="${FUNCNAME[$i]}"
-    [ "$i" -eq "0" ] && funcname=$bash_command
-    echo -e "  ${BASH_SOURCE[$i+1]}:${BASH_LINENO[$i]}\\t$funcname" >&2
+      local funcname="${FUNCNAME[$i]}"
+      [ "$i" -eq "0" ] && funcname=$bash_command
+      echo -e "  ${BASH_SOURCE[$i+1]}:${BASH_LINENO[$i]}\\t$funcname" >&2
     done
   fi
   echo "Exiting with status ${code}" >&2
@@ -35,22 +39,19 @@ function bash_traceback() {
 # propagate ERR trap handler functions, expansions and subshells
 set -o errtrace
 
-. /cluster/project/pangolin/test_automation/pangolin/pangolin_src/config/server.conf
 export TMPDIR=${uploader_tempdir}
 
 echo "Creating the necessary files and directories"
-if [ -f ${TMPDIR}/uploaded_run.txt ]
-then
-        rm ${TMPDIR}/uploaded_run.txt
+if [ -f ${TMPDIR}/uploaded_run.txt ]; then
+  rm ${TMPDIR}/uploaded_run.txt
 fi
 
 export target=${TMPDIR}/target
-if [ -d $target ]
-then
+if [ -d $target ]; then
   rm -rf $target
 fi
 mkdir -p $target
-tsv=$target/meta_data.tsv
+tsv=${target}/meta_data.tsv
 echo $tsv
 archive_now=$1
 
@@ -68,9 +69,9 @@ while read samplename batch; do
   fi
   batch=$(echo $batch | tr -d '"')
   echo "$samplename $batch"
-  X=${uploader_dataset}/${samplename}/${batch}/uploads/dehuman.cram
+  X=${uploader_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
-    ln $(realpath $X) $target/${samplename}.cram
+    cp $(realpath $X) $target/${samplename}.cram
     python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv
     echo $samplename >> ${archive_now}/uploaded_run.txt
   else
@@ -93,6 +94,6 @@ sendcrypt version | tee ${archive_now}/sencrypt_version_used.txt
 
 (sendcrypt send ${target} | tee ${archive_now}/sencrypt.log && \
         cp ${tsv} ${archive_now}) || \
-        (echo "ERROR: the upload failed" && \
+        (echo "ERROR: the upload failed" | tee ${archive_now}/sendcrypt_failed && \
         exit 1)
 

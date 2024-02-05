@@ -155,6 +155,7 @@ case "$1" in
                         printf "%s\t%s\n" "${v}" "${job[$v]}"
                 done
         ;;
+        
         job)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
                         read output other < <(sacct -j "$2" --format State --noheader)

@@ -6,7 +6,7 @@ import os
 import argparse
 import sys
 import re
-sys.path.append("/data/projects/wastewater_automation/pangolin/uploader")
+sys.path.append("/app/uploader")
 import submission_metadata as meta
 
 # parse command line

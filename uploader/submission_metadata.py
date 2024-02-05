@@ -214,17 +214,17 @@ authors = {
   "ethz_20000101_25000101": "Katharina Jahn, Pelin Burcak Icer, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Kim Philipp Jablonski, Anika John, Matteo Carrara, Franziska Singer, Chaoran Chen, Sarah Nadeau, Niko Beerenwinkel, Tanja Stadler",
   "fgcz_20000101_25000101": "Catharine Aquino, Lennart Opitz, Tim Sykes",
 }
-seqplatform = "Combination Illumina MiSeq and Illumina NovaSeq 5000/6000"
+seqplatform = "Combination Illumina MiSeq, Illumina NovaSeq 5000/6000, NextSeq2000"
 reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Mattenstrasse 26, 4058 Basel"
-qafile = "/data/projects/wastewater_automation/workdir/uploader/resources/qa.csv"
+qafile = "/app/dataset/working/qa.csv"
 seqcenter = {
   "fgcz": "Functional Genomics Center Zurich",
 }
 centerused = "fgcz"
-locations = "/data/projects/wastewater_automation/workdir/uploader/resources/ww_locations.tsv"
-basedir = "/data/projects/wastewater_automation/pangolin/uploader"
-samplesfolder = "/data/projects/dataset/cluster/project/pangolin/working/samples"
-timelinefile = "/data/projects/wastewater_automation/workdir/uploader/resources/timeline.tsv"
+locations = "/app/workdir/uploader/resources/ww_locations.tsv"
+basedir = "/app/uploader"
+samplesfolder = "/app/dataset/working/samples"
+timelinefile = "/app/dataset/working/timeline.tsv"
 assembly = "V-pipe"
 embargo = ""
 projyears = ["2020", "2021", "2022", "2023"]
