@@ -441,6 +441,7 @@ case "$1" in
         echo "Backup of uploader archives to bs-bewi08"
         err=0
 	    rsync	\
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
 			-izrltH --fuzzy --fuzzy --inplace	\
             ${uploader_archive}    \
 			bs-pangolin@d@bs-bewi08.ethz.ch:${remote_uploader_backup_dir} || (( ++err ))
