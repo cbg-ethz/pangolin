@@ -500,7 +500,7 @@ if [ $run_uploader -eq "1" ]; then
     echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} MB"
     echo "----"
     next_number=$((${uploaded_number} + ${uploader_sample_number}))
-    echo "asked to upload ${next_number} new samples, consisting of about $((${next_number} * ${upload_avg_size})) MB"
+    echo "asked to upload ${uploader_sample_number} new samples, consisting of about $((${uploader_sample_number} * ${upload_avg_size})) MB"
     if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
         echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
         touch ${uploader_statusdir}/uploader_quota_hit.${now}

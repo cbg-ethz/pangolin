@@ -323,7 +323,14 @@ case "$1" in
         echo "Adding new samples to the upload list"
         validateBatchName "$2"
         cd ${uploader_workdir}
-        if [ -f ${uploader_sampleset} ]; then
+        sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${2}.tsv"  )
+        rsync \
+            --password-file ${HOME}/.ssh/rsync.pass.euler \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
+            -izrltHLK --fuzzy --fuzzy --inplace \
+            "${sheets[@]}" \
+            ${basedir}/tmp/belfrysheets/
+        if [ -f ${uploader_sampleset}/samples.${2}.tsv ]; then
             # Add the new batch on top of the list. This ensures that the most recent batches are uploaded first, in case of retrospective uploads
             cat ${uploader_sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | sed -e 's/ /\t/' | cat - ${uploader_workdir}/${uploaderlist} > ${uploader_workdir}/${uploaderlist}_temp.txt && \
             mv ${uploader_workdir}/${uploaderlist}_temp.txt ${uploader_workdir}/${uploaderlist} && \
@@ -349,7 +356,7 @@ case "$1" in
             echo "${line2}/uploads/dehuman.cram" >> ${uploader_tempdir}/cram_to_download.txt
         done < "${uploader_tempdir}/to_upload.txt"
         echo "Downloading from Euler the necessary cram files"
-            rsync   \
+        rsync   \
             --password-file ${rsync_pass}	\
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrltHLK --fuzzy --fuzzy --inplace       \
@@ -369,19 +376,33 @@ case "$1" in
             --exclude='*fastq.gz' \
             belfry@euler.ethz.ch::${working}/samples \
             ${local_dataset}/${working}/samples/
-            rsync \
+        rsync \
             --password-file ${rsync_pass}	\
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrltHLK --fuzzy --fuzzy --inplace       \
             belfry@euler.ethz.ch::lollipop/variants/timeline.tsv \
             ${local_dataset}/${working}
-            rsync \
+        rsync \
             --password-file ${rsync_pass}	\
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrltHLK --fuzzy --fuzzy --inplace       \
             belfry@euler.ethz.ch::${working}/qa.csv \
             ${local_dataset}/${working}
-        . ${uploader_code}/next_upload.sh -N ${uploader_sample_number} -a ${uploader_archive} -c ${scriptdir}/config/server.conf
+            archive_now="${uploader_archive}/$(date +"%Y-%m-%d"-%H-%M-%S)"
+            mkdir -p $archive_now
+        ( ${uploader_code}/upload.sh ${archive_now} && \
+            echo "Running sendCrypt" && \
+            ${sendcrypt_exec} update && \
+            ${sendcrypt_exec} version | tee ${archive_now}/sencrypt_version_used.txt && \
+            ${sendcrypt_exec} send ${uploader_target} | tee ${archive_now}/sencrypt.log) || \
+            (echo "ERROR: the upload failed" | tee ${archive_now}/sendcrypt_failed && \
+            exit 1)
+        cat ${archive_now}/uploaded_run.txt >> ${uploader_uploaded} && \
+            cp ${uploader_target}/meta_data.tsv ${archive_now}
+        for i in $(find ${local_dataset}/${working} -iname *cram)
+        do
+            rm $i
+        done
     ;;
     clean_sendcrypt_temp)
         echo "Clearning the sendcrypt temporary directories in ${uploader_tempdir}"
@@ -391,7 +412,7 @@ case "$1" in
                 echo "deleting ${i}"
                 rm -r ${i}
             fi
-        rm -r ${uploader_tempdir}/${target}/*
+        rm -r ${uploader_tempdir}/target/*
         done
     ;;
     pullsamples_for_db)
@@ -440,12 +461,12 @@ case "$1" in
     backup_uploader)
         echo "Backup of uploader archives to bs-bewi08"
         err=0
-	    rsync	\
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
-			-izrltH --fuzzy --fuzzy --inplace	\
+        rsync	\
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb" \
+            -izrltH --fuzzy --fuzzy --inplace	\
             ${uploader_archive}    \
-			bs-pangolin@d@bs-bewi08.ethz.ch:${remote_uploader_backup_dir} || (( ++err ))
-		if (( err )); then
+            bs-pangolin@d@bs-bewi08.ethz.ch:${remote_uploader_backup_dir} || (( ++err ))
+        if (( err )); then
 			echo "Error: ${err} rsync of uploader archive to bs-bewi08 failed"
 			touch ${statusdir}/push_archive_uploader_fail
 		else

@@ -220,7 +220,12 @@ def main():
     except:
         sys.exit("Error: the authors list cannot be completed, either for a missing collecting lab code (" + collectingcode + "), a missing sequencing center (" + meta["centerused"] + ") or a missing entry for ETHZ")
 
-    fullline = args.update+"\t2697049\t"+strain+"\t"+mydata[5]+"\tEurope/Switzerland/"+mydata[6].split(" ")[1].replace("(","").replace(")","")+"\t"+mydata[6]+"\t\tEnvironment\tWastewater treatment plant\t"+sourcename+"\t"+str(round(float(meta.size[mydata[4]])))+"\t"+meta.population[mydata[4]]+"\t"+meta.region[mydata[4]]+"\tSurveillance\tMetagenome\t"+cram+"\t"+sampleinfo+"\t"+meta.seqcenter[meta.centerused]+"\t"+meta.seqplatform+"\t"+meta.assembly+"\t"+samplecov+"\t"+meta.reportinglab+"\t"+collectinglab+"\t"+authors+"\t"+meta.embargo+"\t\t\n"
+    try:
+        catchment_size = str(round(float(meta.size[mydata[4]])))
+    except ValueError:
+        catchment_size = ""
+
+    fullline = args.update+"\t2697049\t"+strain+"\t"+mydata[5]+"\tEurope/Switzerland/"+mydata[6].split(" ")[1].replace("(","").replace(")","")+"\t"+mydata[6]+"\t\tEnvironment\tWastewater treatment plant\t"+sourcename+"\t"+catchment_size+"\t"+meta.population[mydata[4]]+"\t"+meta.region[mydata[4]]+"\tSurveillance\tMetagenome\t"+cram+"\t"+sampleinfo+"\t"+meta.seqcenter[meta.centerused]+"\t"+meta.seqplatform+"\t"+meta.assembly+"\t"+samplecov+"\t"+meta.reportinglab+"\t"+collectinglab+"\t"+authors+"\t"+meta.embargo+"\t\t\n"
     verify_mandatory_fields(fullline, meta, args.samplename)
 
     try:

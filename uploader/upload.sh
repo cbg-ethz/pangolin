@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 scriptdir=/app/pangolin_src
 
 if [ -z $1 ] || [ ! -d $1 ]; then
@@ -83,17 +83,5 @@ echo $tsv
 
 ls -l $target
 echo
-echo
-
-echo "Running sendCrypt"
-if [ $update_sendcrypt -eq "1" ]; then
-  sendcrypt update
-fi
-
-sendcrypt version | tee ${archive_now}/sencrypt_version_used.txt
-
-(sendcrypt send ${target} | tee ${archive_now}/sencrypt.log && \
-        cp ${tsv} ${archive_now}) || \
-        (echo "ERROR: the upload failed" | tee ${archive_now}/sendcrypt_failed && \
-        exit 1)
+echo "Everything is ready to run sendCrypt"
 

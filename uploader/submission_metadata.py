@@ -227,5 +227,5 @@ samplesfolder = "/app/dataset/working/samples"
 timelinefile = "/app/dataset/working/timeline.tsv"
 assembly = "V-pipe"
 embargo = ""
-projyears = ["2020", "2021", "2022", "2023"]
+projyears = ["2020", "2021", "2022", "2023", "2024"]
 submitting = "ETHZ"
