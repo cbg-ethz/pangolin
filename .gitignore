@@ -1,4 +1,5 @@
 ssh
 .*.sw?
 secrets
-pangolin_src/fgcz-gstore.uzh.ch 
+pangolin_src/fgcz-gstore.uzh.ch
+uploader/__pycache__ 

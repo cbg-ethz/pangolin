@@ -177,7 +177,7 @@ else
 fi
 
 #
-# Phase 4: restart runs if new data
+# Phase 3: restart runs if new data
 #
 
 echo "============="
@@ -316,7 +316,7 @@ else
 fi
 
 #
-# Phase 5: run viloca on new samples if no viloca instance is running
+# Phase 4: run viloca on new samples if no viloca instance is running
 #
 if [ "$run_viloca" -eq "1" ]; then
 
@@ -391,7 +391,7 @@ if [ "$run_viloca" -eq "1" ]; then
     fi
 
     #
-    # Phase 6: restart VILOCA runs if new data
+    # Phase 5: restart VILOCA runs if new data
     #
 
     echo "===================="
@@ -478,13 +478,10 @@ fi
 
 
 #
-# Phase 7: run uploader on new chunk if no chunks are running
+# Phase 6: run uploader on new chunk
 #
 if [ $run_uploader -eq "1" ]; then
 
-    #
-    # Phase 7: Start an UPLOADER chunk if new samples
-    #
 
     echo "===================="
     echo "Start new UPLOADER run"
@@ -528,6 +525,10 @@ else
     echo "Skipping UPLOADER as per configuration"
 fi
 
+
+#
+# Phase 7: run amplicon coverage on new batch
+#
 if [ $run_amplicon_coverage -eq "1" ]; then
     echo "===================="
     echo "Start new AMPLICON COVERAGE run"
