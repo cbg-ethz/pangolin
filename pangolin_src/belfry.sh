@@ -473,6 +473,12 @@ case "$1" in
 			touch ${statusdir}/push_archive_uploader_success
 		fi
     ;;
+    get_pangolin_commit)
+        cd ${scriptdir}
+        branch=$(git status | head -n 1 | sed -e 's/# On branch //')
+        commit=$(git log -n 1 ${branch} | head -n 1)
+        echo "Branch: ${branch}\n${commit}"
+    ;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
         exit 2

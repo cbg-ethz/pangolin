@@ -36,6 +36,9 @@ source /home/bs-pangolin/.ssh/${bck_user}@${bckhost}
 remote_batman="ssh -o StrictHostKeyChecking=no -ni ${privkey} ${cluster_user}@${cluster} --"
 remote_backup="ssh -o StrictHostKeyChecking=no -ni ${bck_privkey} ${bck_user}@${bckhost} --"
 
+echo "The current automation run is based on: "
+${scriptdir}/belfry.sh get_pangolin_commit
+
 #
 # Phase 1: periodic data sync
 #
