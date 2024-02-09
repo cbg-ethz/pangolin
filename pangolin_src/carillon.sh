@@ -168,7 +168,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         echo "$(basename $(realpath ${statusdir}/vpipe_started))" > ${statusdir}/vpipe_ended
         vpipe_lastfile=$(cat ${statusdir}/vpipe_ended)
         vpipe_enddate=${vpipe_lastfile##*.}
-        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}')
+        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}')
         # queue the samples for upload. This will be handled in a dedicated section
         ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
     fi
@@ -298,6 +298,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
             ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
             cat ${statusdir}/vpipe_started
             printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
+            ${remote_batman} get_vpipe_commit | tee -a ${statusdir}/vpipe_new.${now}
             if [[ -n "${mailto[*]}" ]]; then
                 (
                     echo '(Possibly new) samples not having consensus sequences yet found in batches:'
@@ -365,6 +366,7 @@ if [ "$run_viloca" -eq "1" ]; then
                     cat ${viloca_statusdir}/viloca.${now} > ${viloca_statusdir}/viloca_started
                     cat ${viloca_statusdir}/viloca_started
                     printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
+                    ${remote_batman} get_viloca_commit | tee -a ${viloca_statusdir}/viloca_new.${now}
                 fi
             else
                 lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
@@ -403,7 +405,7 @@ if [ "$run_viloca" -eq "1" ]; then
         echo "Last batch analysed by VILOCA is ${lastbatch_viloca}"
         vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
         vpipe_enddate=${vpipe_enddate#*.}
-        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}' | tail -n 1)
+        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
         echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
         if [[ $lastbatch_viloca != $lastbatch_vpipe ]]; then
             echo "There is a new most recent batch that VILOCA can run on"
@@ -452,6 +454,7 @@ if [ "$run_viloca" -eq "1" ]; then
                         cat ${viloca_statusdir}/viloca.${now} | tee ${viloca_statusdir}/viloca_started
                         echo ${lastbatch_vpipe} > ${viloca_statusdir}/viloca_new.${now}
                         printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
+                        ${remote_batman} get_viloca_commit | tee -a ${viloca_statusdir}/viloca_new.${now}
                         if [[ -n "${mailto[*]}" ]]; then
                             (
                                 echo '(Possibly new) samples not having VILOCA results yet found:'
@@ -537,7 +540,7 @@ if [ $run_amplicon_coverage -eq "1" ]; then
     echo "Last batch analysed by AMPLICON COVERAGE is ${lastbatch_amplicon_coverage}"
     vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
     vpipe_enddate=${vpipe_enddate#*.}
-    lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | awk '{print $1}' | tail -n 1)
+    lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
     echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
     if [[ $lastbatch_amplicon_coverage != $lastbatch_vpipe ]]; then
         echo "There is a new most recent batch that AMPLICON COVERAGE can run on"

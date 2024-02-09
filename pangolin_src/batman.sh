@@ -479,6 +479,18 @@ case "$1" in
                         exit 5
                 fi
         ;;
+        get_vpipe_commit)
+                cd ${vpipe_code}
+                branch=$(git status | head -n 1 | sed -e 's/# On branch //')
+                commit=$(git log -n 1 ${branch} | head -n 1)
+                echo "Branch: ${branch}\n${commit}"
+        ;;
+        get_viloca_commit)
+                cd ${remote_viloca_basedir}/${viloca_processing}
+                branch=$(git status | head -n 1 | sed -e 's/# On branch //')
+                commit=$(git log -n 1 ${branch} | head -n 1)
+                echo "Branch: ${branch}\n${commit}"
+        ;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
