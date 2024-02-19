@@ -181,16 +181,19 @@ def main():
         mydata = load_timeline(meta.timelinefile, args.samplename)
     except:
         sys.exit("Error: cannot load the timeline file")
-    if (mydata[6] == "Basel (catchment area ARA Basel)"):
-        mydata[6] = "Basel (BS)"
-    if (mydata[6] == "Kanton Zürich"):
-        mydata[6] = "Zürich (ZH)"
-    if (mydata[6] == "Kanton Zürich/Promega"):
-        mydata[6] = "Zürich (ZH)"
+    if (len(mydata) == 5) and (mydata[4] == "624801"):
+        mydata.append("Sierre/Noes (VS)")
+    else:
+        if (mydata[6] == "Basel (catchment area ARA Basel)"):
+            mydata[6] = "Basel (BS)"
+        if (mydata[6] == "Kanton Zürich"):
+            mydata[6] = "Zürich (ZH)"
+        if (mydata[6] == "Kanton Zürich/Promega"):
+            mydata[6] = "Zürich (ZH)"
 
     cram = args.samplename+".cram"
 
-    strain = 'hCoV-19/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[4]+mydata[5].replace("-","")+"/"+mydata[5].split("-")[0]
+    strain = 'hCoV-19/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","")+"/"+mydata[5].split("-")[0]
     verify_strain_name(strain, meta)
     sourcename = mydata[6]
     try:
