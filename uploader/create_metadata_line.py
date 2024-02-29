@@ -181,7 +181,7 @@ def main():
         mydata = load_timeline(meta.timelinefile, args.samplename)
     except:
         sys.exit("Error: cannot load the timeline file")
-    if (len(mydata) == 5) and (mydata[4] == "624801"):
+    if (len(mydata) == 6) and (mydata[4] == "624801"):
         mydata.append("Sierre/Noes (VS)")
     else:
         if (mydata[6] == "Basel (catchment area ARA Basel)"):

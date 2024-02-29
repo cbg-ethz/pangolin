@@ -6,6 +6,7 @@ services:
       - /data/projects/wastewater_automation/workdir:/app/workdir:rw
       - /data/projects/wastewater_automation/resources:/app/resources:ro
       - /data/projects/dataset:/app/dataset:rw
+      - /data/projects/wastewater_automation/pangolin:/app/codebase:ro
     secrets:
       - bs-pangolin_login_euler
       - bs-pangolin_login_backups

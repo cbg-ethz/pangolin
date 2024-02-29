@@ -422,7 +422,7 @@ if [ "$run_viloca" -eq "1" ]; then
             echo "No new batch to run VILOCA on"
             echo "Checking if the previous batch was successful"
             not_processed=($(${remote_batman} scanmissingsamples_viloca $lastbatch_viloca))
-            if [ "${not_processed}" -gt "0"]; then
+            if [ "${not_processed}" -gt "0" ]; then
                 echo "Not all samples have been successfully completed. Repeating the run"
                 (( ++mustrun_viloca ))
             else
