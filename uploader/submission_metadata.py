@@ -184,7 +184,7 @@ region = {
 collectinglab = {
   "eawag": "Eawag, Swiss Federal Institute of Aquatic Science and Technology",
   "basel": "State Laboratory of Basel-Stadt, Basel, Switzerland; University of Basel, Basel, Switzerland; Division of Infectious Diseases and Hospital Epidemiology, University Hospital Basel, Basel, Switzerland",
-  "microsynth": "Microsynth AG",
+  "microsynth": "Microsynth AG, Schützenstrasse 15, 9436 Balgach, Switzerland",
   "kzurich": "Cantonal laboratory Zurich",
 }
 ## for eawag we have changes in authors depending on date. What we have is eawag_<date> where <date> indicates that any entry oldere than that should have that specific list
