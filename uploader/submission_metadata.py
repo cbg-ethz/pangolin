@@ -229,3 +229,4 @@ assembly = "V-pipe"
 embargo = ""
 projyears = ["2020", "2021", "2022", "2023", "2024"]
 submitting = "ETHZ"
+exceptions = {"558600":"Lausanne (VD)", "624801":"Sierre/Noes (VS)", "680000":"Porrentruy (JU)"}
