@@ -67,6 +67,10 @@ while read samplename batch; do
     echo "skipped ski resort $samplename" | tee -a ${archive_now}/not_found.txt
     continue
   fi
+  if grep -q ${samplename} ${uploader_blacklist}; then
+    echo "skipping ${samplename} as per blacklist"
+    continue
+  fi
   batch=$(echo $batch | tr -d '"')
   echo "$samplename $batch"
   X=${uploader_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
