@@ -1,12 +1,12 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
+scriptdir=/cluster/project/pangolin/biofilms_automation/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/biofilms_automation/miniconda3/bin/conda shell.bash hook)"
 
 #
 # Input validator
