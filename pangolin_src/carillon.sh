@@ -67,7 +67,7 @@ else
         echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
     fi
 fi
-${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+${remote_batman} sortsamples --year $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"
@@ -295,7 +295,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             shorah="--no-shorah"
         fi
-        ${remote_batman} addsamples --recent && \
+        ${remote_batman} addsamples --year && \
         ${remote_batman} vpipe ${shorah} --recent --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} &&  \
         if [[ -s ${statusdir}/vpipe.${now} ]]; then
             ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started

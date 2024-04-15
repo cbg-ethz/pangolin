@@ -54,6 +54,7 @@ now=$(date '+%Y%m%d')
 lastmonth=$(date '+%Y%m' --date='-1 month')
 thismonth=$(date '+%Y%m')
 twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
+year=$(date '+%Y')
 lastyear=$(date '+%Y%m' --date='-1 year')
 
 if [[ "$1" == "--limited" ]]; then
@@ -85,6 +86,9 @@ case "$1" in
                                 lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"
                         ;;
+                        --year)
+                                lst="${clusterdir_old}/${working}/samples.recent.tsv"
+                                echo "syncing year: ${year}"
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
@@ -355,6 +359,9 @@ case "$1" in
 					recent="--recent=${lastmonth}"
 					shrtrecent="-r ${lastmonth}"
 				;;
+                                --year)
+                                        recent="--recent=${year}"
+                                        shrtrecent="-r ${year}"
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
 					exit 2
