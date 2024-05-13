@@ -85,10 +85,13 @@ case "$1" in
                         --recent)
                                 lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"
+                                cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
                         --year)
                                 lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing year: ${year}"
+                                cat ${clusterdir_old}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                        ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
@@ -96,7 +99,6 @@ case "$1" in
                 esac
                 mkdir -p --mode=2770 "${clusterdir_old}/${working}/samples/"
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-                cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                 sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
                 cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/${working}/samples/"
         ;;
@@ -362,6 +364,7 @@ case "$1" in
                                 --year)
                                         recent="--recent=${year}"
                                         shrtrecent="-r ${year}"
+                                ;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
 					exit 2
