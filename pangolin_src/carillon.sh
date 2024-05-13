@@ -5,6 +5,7 @@ scriptdir=/app/pangolin_src
 set -e
 
 . ${scriptdir}/config/server.conf
+cat ${scriptdir}/config/server.conf
 
 : ${run_shorah:=0}
 : ${staging:=1}

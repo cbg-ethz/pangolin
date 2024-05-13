@@ -6,7 +6,8 @@ scriptdir=/cluster/project/pangolin/biofilms_automation/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-eval "$(/cluster/project/pangolin/biofilms_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+conda activate biofilms
 
 #
 # Input validator
