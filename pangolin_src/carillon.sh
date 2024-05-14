@@ -172,8 +172,10 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         vpipe_lastfile=$(cat ${statusdir}/vpipe_ended)
         vpipe_enddate=${vpipe_lastfile##*.}
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}')
-        # queue the samples for upload. This will be handled in a dedicated section
-        ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
+        if [ $run_uploader -eq "1" ]; then
+            # queue the samples for upload. This will be handled in a dedicated section
+            ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
+        fi
     fi
 else
     echo 'No current run.'
@@ -486,7 +488,7 @@ fi
 #
 # Phase 6: run uploader on new chunk
 #
-if [ $run_uploader -eq "1" ]; then
+if [ ${donotsubmit_uploader} -eq "0" ]; then
 
 
     echo "===================="
