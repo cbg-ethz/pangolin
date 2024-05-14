@@ -241,9 +241,12 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 					if 'barcode2' in r:
 						barcode2 = len(f"{r['barcode2']}")
 				# build the stats filename based on the barcode lengths
-				j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.json')
+				j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
 				if not os.path.isfile(j):
-					continue
+					# After 13-05-2024 FGCZ updated the filename structure of the Stats json file
+					j = os.path.join(srch, 'DmxStats', f'Stats_L1_i1-{barcode1}_i2-{barcode2}.json')
+					if not os.path.isfile(j):
+						continue
 
 	if name in badlist:
 		print(f"\x1b[35;1mskipping {name} in bad list\x1b[0m")
