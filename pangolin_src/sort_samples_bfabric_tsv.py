@@ -228,7 +228,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		if not os.path.isfile(j):
 			# (newest style) multiple stat files, one for each barcode format in the run
 			# We need to identify which one is related to our files based on dataset.tsv
-			statsfiles = glob.glob(os.path.join(srch,'DmxStats','Stats_*.standard.json'))
+			statsfiles = glob.glob(os.path.join(srch,'DmxStats','Stats_*.json'))
 			if len(statsfiles) == 0:
 				continue
 			else:
