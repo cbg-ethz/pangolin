@@ -241,7 +241,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 					if 'barcode2' in r:
 						barcode2 = len(f"{r['barcode2']}")
 				# build the stats filename based on the barcode lengths
-				j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
+				j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.json')
 				if not os.path.isfile(j):
 					continue
 
