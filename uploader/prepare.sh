@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-usage() { echo "Usage: $0 [-c <configfile>] [ -N <sample_number> ]" 1>&2; exit $1; }
+usage() { echo "Usage: $0 [-c <configfile>] [ -N <sample_number> ] [-b <blacklist>]" 1>&2; exit $1; }
 
 
-while getopts "c:N:a:h" o; do
+while getopts "c:N:b:h" o; do
     case "${o}" in
         c)  configfile=${OPTARG}
             if [[ ! -r ${configfile} ]]; then
@@ -12,6 +12,7 @@ while getopts "c:N:a:h" o; do
             fi
             ;;
         N)  sample_number="${OPTARG}"   ;;
+        b)  blacklist="${OPTARG}"   ;;
         h)  usage 0 ;;
         *)  usage 1 ;;
     esac
@@ -27,14 +28,17 @@ then
         rm "${uploader_tempdir}/to_upload.txt"
 fi
 echo "Preparing the list of files to upload for this batch"
-{ python3 - ${uploader_workdir}/${uploaderlist} ${uploader_uploaded} ${sample_number} ${uploader_tempdir}/to_upload.txt <<EOF
+{ python3 - ${uploader_workdir}/${uploaderlist} ${uploader_uploaded} ${sample_number} ${uploader_tempdir}/to_upload.txt ${blacklist} <<EOF
 import sys
 try:
     with open(sys.argv[1]) as f:
         all_to_upload = [ element.strip() for element in f.readlines() ]
     with open(sys.argv[2]) as f:
         uploaded = [ element.strip() for element in f.readlines() ]
-    current = [ entry for entry in all_to_upload if entry.split("\t")[0] not in uploaded ]
+    with open(sys.argv[5]) as f:
+        blacklisted = [ element.strip().split("\t")[0] for element in f.readlines() ]
+    current_tmp = [ entry for entry in all_to_upload if entry.split("\t")[0] not in uploaded ]
+    current = [ entry for entry in current_tmp if entry.split("\t")[0] not in blacklisted]
     current = current[:int(sys.argv[3])]
     with open(sys.argv[4],'w') as f:
         for item in current:

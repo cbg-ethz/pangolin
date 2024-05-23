@@ -174,6 +174,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}')
         if [ $run_uploader -eq "1" ]; then
             # queue the samples for upload. This will be handled in a dedicated section
+            echo Queueing last vpipe batch ${lastbatch_vpipe} for upload
             ${scriptdir}/belfry.sh queue_upload ${lastbatch_vpipe}
         fi
     fi

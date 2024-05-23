@@ -342,12 +342,12 @@ case "$1" in
         fi
     ;;
     upload)
-        ${scriptdir}/config/server.conf
+        . ${scriptdir}/config/server.conf
         echo "uploading ${uploader_sample_number} samples from the list of samples to upload"
         source ${baseconda}/etc/profile.d/conda.sh
         conda activate sendcrypt
         cd ${uploader_workdir}
-        . ${uploader_code}/prepare.sh -N ${uploader_sample_number} -c ${scriptdir}/config/server.conf
+        . ${uploader_code}/prepare.sh -N ${uploader_sample_number} -c ${scriptdir}/config/server.conf -b ${uploader_blacklist}
         if [ -f ${uploader_tempdir}/cram_to_download.txt ]; then
             rm ${uploader_tempdir}/cram_to_download.txt
         fi

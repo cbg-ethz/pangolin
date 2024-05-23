@@ -37,16 +37,34 @@ validateProto() {
 
 lastmonth=$(date '+%Y%m' --date='-1 month')
 thismonth=$(date '+%Y%m')
+thisyear=$(date '+%Y')
 
 case "$1" in
 	autoaddww|autoaddwastewater)
+                if [[ -z "$2" ]] || [[ "$2" != "last_month" &&  "$2" != "this_month" && "$2" != "year" && "$2" != "all" ]]; then
+                        echo "Usage: $0 $1 <TIMEFRAME>" 1>&2;
+			echo "Accepted timeframes: last_month, this_month, year, all"
+                        exit 0
+                fi
+		
+		timeframe=$2
+		if [[ "$timeframe" == "last_month" ]]; then
+			custom_date=$lastmonth
+		elif [[ "$timeframe" == "this_month" ]]; then
+                        custom_date=$thismonth
+		elif [[ "$timeframe" == "year" ]]; then
+			custom_date=$thisyear
+		elif [[ "$timeframe" == "all" ]]; then
+                        custom_date="2"
+		fi
+
 		projects=( 'p23224' 'p24991' 'p26177' 'p30045' )
 		projpat="$( ( IFS='|';echo "${projects[*]}" ) )"
-		gawk -v d="${lastmonth}" '$2<d' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.tsv.old
+		gawk -v d="${custom_date}" '$2<d' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.tsv.old
 		{
 			# assemble samples.wastewateronly.tsv
 			{
-				printf '%s\n' ${sampleset}/projects.${thismonth}*.tsv ${sampleset}/projects.${lastmonth}*.tsv | grep -vF '*' | sort -r | while read p; do
+				printf '%s\n' ${sampleset}/projects.${custom_date}*.tsv | grep -vF '*' | sort -r | while read p; do
 					echo -n "${p} - ${p//projects/samples} ... " >&2
 					gawk -v projpat="${projpat}" '(FILENAME~/\/projects\./)&&($2~projpat){ww[$1]++;nww++};(FILENAME~/\/samples\./)&&(ww[$1]);END{print nww >> "/dev/stderr"}' "${p}" "${p//projects/samples}"
 				done | tee >(cut -f4 >&3) # pass the protos to the second part bellow
@@ -150,7 +168,11 @@ case "$1" in
 			fi
 
 			mkdir -p ${worktest}/results/${s}/${b}/
-			cp -alv ${working}/samples/${s}/${b}/{references,alignments} ${worktest}/results/${s}/${b}/
+			if grep -q ${s} lollipop_blacklist.txt || grep -q ${b} lollipop_blacklist.txt; then
+				echo "Skipping ${worktest}/results/${s}/${b}/ in lollipop_blacklist.txt"
+			else
+				cp -alv ${working}/samples/${s}/${b}/{references,alignments} ${worktest}/results/${s}/${b}/
+			fi
 		done < ${worktest}/${TSV}
 	;;
 
