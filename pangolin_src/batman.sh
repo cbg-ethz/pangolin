@@ -108,6 +108,7 @@ case "$1" in
                 shorah=1
                 hold=
                 tag=
+                aviti=
                 while [[ -n $2 ]]; do
                         case "$2" in
                                 --no-shorah)
@@ -125,10 +126,12 @@ case "$1" in
                                         fi
                                         tag="${2%;}"
                                 ;;
-                                 --recent)
+                                --recent)
 #                                        # TODO switch between full cohort and only recent
 #                                         #recent="..."
-                                 ;;
+                                ;;
+                                --aviti)
+                                        aviti=1
                                 *)
                                         echo "Unkown parameter ${2}" > /dev/stderr
                                         exit 2
@@ -144,17 +147,30 @@ case "$1" in
                         job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
                         # if no fail schedule a full job with snv
                         if (( shorah )); then
-                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
-                                if [[ -n "${job['snv']}" ]]; then
-                                        # schedule a gatherqa no matter what happens to snv
-                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                        # schedule a hugemem job if snvjob failed
-                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
-                                        # schedule a qa afterward
-                                        [[ -n "${job['hugemem']}" ]]    && \
-                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                if (( aviti )); then
+                                        job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe_aviti.sbatch)"
+                                        if [[ -n "${job['snv']}" ]]; thenVVV
+                                                # schedule a gatherqa no matter what happens to snv
+                                                job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                                # schedule a hugemem job if snvjob failed
+                                                job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
+                                                # schedule a qa afterward
+                                                [[ -n "${job['hugemem']}" ]]    && \
+                                                        job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                        fi
+                                else
+                                                                        job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
+                                        if [[ -n "${job['snv']}" ]]; then
+                                                # schedule a gatherqa no matter what happens to snv
+                                                job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                                # schedule a hugemem job if snvjob failed
+                                                job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
+                                                # schedule a qa afterward
+                                                [[ -n "${job['hugemem']}" ]]    && \
+                                                        job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                        fi
                                 fi
-                        fi
+                        fi      
                 fi >&2
                 # write job chain list
                 for v in "${list[@]}"; do
@@ -322,10 +338,16 @@ case "$1" in
 		fgcz_config=${clusterdir}/config/fgcz.conf
 
 		echo "Sync FGCZ - bfabric"
+                if ${2} == "https":
+                        echo "Protocol: HTTPS"
+                elif ${2} == "ftp":
+                        echo "Protocol: FTP"
+                else:
+                        sys.exit("ERROR: Protocol " + ${2} + " not recognized")
                 echo "Syncing from node $(hostname)"
 		conda activate sync
 		. <(grep '^projlist=' ${fgcz_config})
-		if [[ "${2}" = "--recent" ]]; then
+		if [[ "${3}" = "--recent" ]]; then
 			limitlast='3 weeks ago'
 			${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config} -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
 			param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
@@ -335,7 +357,11 @@ case "$1" in
 			param=( "${projlist[@]}" )
 		fi
                 fail=0
-		syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
+                if ${2} == "https"; then
+                        syncoutput="$(${clusterdir}/sync_sftp.sh -H -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
+                else
+		        syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
+                fi
 		checksyncoutput "fgcz" "$syncoutput"
                 (( fail == 0 )) &&  touch ${sync_fgcz_statusdir}/sync_fgcz_success || touch ${sync_fgcz_statusdir}/sync_fgcz_fail
 		conda deactivate
