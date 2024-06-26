@@ -390,19 +390,27 @@ case "$1" in
             ${local_dataset}/${working}
             archive_now="${uploader_archive}/$(date +"%Y-%m-%d"-%H-%M-%S)"
             mkdir -p $archive_now
-        ( ${uploader_code}/upload.sh ${archive_now} && \
-            echo "Running sendCrypt" && \
+        ${uploader_code}/upload.sh ${archive_now}
+        
+        metadata_len=$(wc -l ${uploader_target}/meta_data.tsv)
+        if [ "${metadata_len}" == "1" ]; then
+            echo "Nothing to upload" | tee ${archive_now}/sencrypt.log
+        elif [ "${metadata_len}" == "0" ]; then
+            echo "ERROR: empty metadata file. Exiting."
+            exit 1
+        else:
+            ( echo "Running sendCrypt" && \
             ${sendcrypt_exec} update && \
             ${sendcrypt_exec} version | tee ${archive_now}/sencrypt_version_used.txt && \
             ${sendcrypt_exec} send ${uploader_target} | tee ${archive_now}/sencrypt.log) || \
             (echo "ERROR: the upload failed" | tee ${archive_now}/sendcrypt_failed && \
             exit 1)
-        cat ${archive_now}/uploaded_run.txt >> ${uploader_uploaded} && \
+            cat ${archive_now}/uploaded_run.txt >> ${uploader_uploaded} && \
             cp ${uploader_target}/meta_data.tsv ${archive_now}
-        for i in $(find ${local_dataset}/${working} -iname *cram)
-        do
-            rm $i
-        done
+            for i in $(find ${local_dataset}/${working} -iname *cram); do
+                rm $i
+            done
+        fi
     ;;
     clean_sendcrypt_temp)
         echo "Clearning the sendcrypt temporary directories in ${uploader_tempdir}"
