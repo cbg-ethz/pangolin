@@ -246,7 +246,10 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 					# After 13-05-2024 FGCZ updated the filename structure of the Stats json file
 					j = os.path.join(srch, 'DmxStats', f'Stats_L1_i1-{barcode1}_i2-{barcode2}.json')
 					if not os.path.isfile(j):
-						continue
+						#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
+						j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
+						if not os.path.isfile(j):
+							continue
 
 	if name in badlist:
 		print(f"\x1b[35;1mskipping {name} in bad list\x1b[0m")
@@ -329,19 +332,29 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		m=rxcell.search(stats['Flowcell']).groupdict()
 		flowcell=m['cell']
 	except:
-		print(f"{name} cannot parse: {stats.get('Flowcell')}")
-		continue
+		try:
+			m=rxcell.search(stats['FlowCellID']).groupdict()
+			flowcell=m['cell']
+		except:
+			print(f"{name} cannot parse: {stats.get('Flowcell')}")
+			continue
 
 	# parse run folder
-	runfolder=stats['RunId']
+	try:
+		runfolder=stats['RunId']
+	except:
+		runfolder=stats['RunID']
 	try:
 		m=rxrun.search(runfolder).groupdict()
 		rundate=f"20{m['date']}" # NOTE runfolders are yymmdd, not yyyymmdd
 		if flowcell != m['cell']:
 			print(f"{name} Warning: cell missmatch: {flowcell} vs {m.get('cell')}")
 	except:
-		print(f"{name} cannot parse: {runfolder}")
-		continue
+		try:
+			rundate=name.replace("-","").split("_")[2]
+		except:
+			print(f"{name} cannot parse: {runfolder}")
+			continue
 	order2runfolders[order]=list(set([runfolder] + order2runfolders.get(order, [])))
 
 	# skip older
@@ -357,19 +370,38 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 
 	# parse information about reads
 	lane={}
-	for l in stats['ReadInfosForLanes']: # lane
-		lanenum=l['LaneNumber']
+	try:
+		laneinfo=stats['ReadInfosForLanes']
+	except:
+		laneinfo=stats["Lanes"]
+	for l in laneinfo: # lane
+		try:
+			lanenum=l['LaneNumber']
+		except:
+			lanenum=l["Lane"]
 		ends=rlen=0
-		for r in l['ReadInfos']: # read phases (indexes, reads)
-			if r['IsIndexedRead']: continue 
+		try:
+			readinfo=l['ReadInfos']
+		except:
+			readinfo=l["Reads"]
+		for r in readinfo: # read phases (indexes, reads)
+			try:
+				if r['IsIndexedRead']: continue
+			except:
+				if args.verbose:
+					print("Cannot find field 'IsIndexedRead' in the Stats file. If this is Aviti, this is not an error")
 
 			# sanity check
-			if rlen and rlen != r['NumCycles']:
+			try:
+				ncycles=r['NumCycles']
+			except:
+				ncycles=len(r['Cycles'])
+			if rlen and rlen != ncycles:
 				print(f"{name} Warning: read lenght changes from {rlen} to {r['NumCycles']} we currently only support symetric read lenghts")
 
 			# gather info
 			ends+=1
-			if rlen < r['NumCycles']: rlen=r['NumCycles']
+			if rlen < ncycles: rlen=ncycles
 		
 		# sanity check
 		if ends < 1 or ends > 2:
@@ -381,6 +413,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	samples={}
 	badyield=0
 	badsamples=set()
+
 	for l in stats['ConversionResults']: # lane
 		lanenum=l['LaneNumber']
 		ends=lane[lanenum]['ends']

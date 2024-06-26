@@ -6,7 +6,7 @@ scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"q
 
 #
 # Input validator
@@ -343,7 +343,9 @@ case "$1" in
                 elif ${2} == "ftp":
                         echo "Protocol: FTP"
                 else:
-                        sys.exit("ERROR: Protocol " + ${2} + " not recognized")
+                        echo "ERROR: Protocol " + ${2} + " not recognized"
+                        exit 1
+                fi
                 echo "Syncing from node $(hostname)"
 		conda activate sync
 		. <(grep '^projlist=' ${fgcz_config})
