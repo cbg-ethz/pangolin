@@ -130,8 +130,6 @@ case "$1" in
 #                                        # TODO switch between full cohort and only recent
 #                                         #recent="..."
                                 ;;
-                                --aviti)
-                                        aviti=1
                                 *)
                                         echo "Unkown parameter ${2}" > /dev/stderr
                                         exit 2
