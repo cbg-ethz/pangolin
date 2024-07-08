@@ -81,6 +81,7 @@ case "$1" in
         ;;
         addsamples)
                 lst="${clusterdir_old}/${working}/samples.tsv"
+                aviti=0
                 case "$2" in
                         --recent)
                                 lst="${clusterdir_old}/${working}/samples.recent.tsv"
@@ -96,11 +97,24 @@ case "$1" in
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
                         ;;
+
                 esac
                 mkdir -p --mode=2770 "${clusterdir_old}/${working}/samples/"
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
                 sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
                 cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/${working}/samples/"
+                lst="${clusterdir_old}/${working}/samples.tsv"
+                # Add abstractions and generalized to allow for new sequencing methods
+                mv ${clusterdir_old}/${working}/samples_aviti.tsv ${clusterdir_old}/${working}/samples_aviti.tsv.old
+                touch ${clusterdir_old}/${working}/samples_aviti.tsv 
+                mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
+                while IFS=$'\t' read -r col1 col2 col3 col4; do
+                        if [ "${#col2}" -eq 19 ]; then 
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
+                        else
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples.tsv
+                        fi
+                done < ${clusterdir_old}/${working}/samples.tsv_old
         ;;
         vpipe)
                 declare -A job
@@ -108,7 +122,7 @@ case "$1" in
                 shorah=1
                 hold=
                 tag=
-                aviti=
+                aviti=0
                 while [[ -n $2 ]]; do
                         case "$2" in
                                 --no-shorah)
@@ -130,43 +144,35 @@ case "$1" in
 #                                        # TODO switch between full cohort and only recent
 #                                         #recent="..."
                                 ;;
-                                *)
-                                        echo "Unkown parameter ${2}" > /dev/stderr
-                                        exit 2
+                                --aviti)
+                                        aviti=1
+                                        shorah=0
                                 ;;
                         esac
                         shift
                 done
                 # start first job
                 cd ${clusterdir_old}/${working}/
-                job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                if (( aviti )); then
+                        echo "Processing Aviti"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+                else
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
                         job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
                         # if no fail schedule a full job with snv
                         if (( shorah )); then
-                                if (( aviti )); then
-                                        job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe_aviti.sbatch)"
-                                        if [[ -n "${job['snv']}" ]]; thenVVV
-                                                # schedule a gatherqa no matter what happens to snv
-                                                job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                                # schedule a hugemem job if snvjob failed
-                                                job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
-                                                # schedule a qa afterward
-                                                [[ -n "${job['hugemem']}" ]]    && \
-                                                        job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                        fi
-                                else
-                                        job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
-                                        if [[ -n "${job['snv']}" ]]; then
-                                                # schedule a gatherqa no matter what happens to snv
-                                                job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                                # schedule a hugemem job if snvjob failed
-                                                job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
-                                                # schedule a qa afterward
-                                                [[ -n "${job['hugemem']}" ]]    && \
-                                                        job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                        fi
+                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
+                                if [[ -n "${job['snv']}" ]]; then
+                                        # schedule a gatherqa no matter what happens to snv
+                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                        # schedule a hugemem job if snvjob failed
+                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
+                                        # schedule a qa afterward
+                                        [[ -n "${job['hugemem']}" ]]    && \
+                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
                                 fi
                         fi      
                 fi >&2
@@ -329,6 +335,21 @@ case "$1" in
                 done
 	;;
 	sync_fgcz)
+        	while [[ -n $2 ]]; do
+			case "$2" in
+				--https)
+					summary='--summary'
+				;;
+				--ftp)
+					force='--force'
+				;;
+				*)
+					echo "Unkown parameter ${2}" > /dev/stderr
+					exit 2
+				;;
+			esac
+			shift
+		done
 		bfabricdir=${clusterdir_old}/bfabric-downloads
 		cd ${bfabricdir}
 		sync_fgcz_statusdir=${status}/sync
@@ -336,14 +357,7 @@ case "$1" in
 		fgcz_config=${clusterdir}/config/fgcz.conf
 
 		echo "Sync FGCZ - bfabric"
-                if ${2} == "https":
-                        echo "Protocol: HTTPS"
-                elif ${2} == "ftp":
-                        echo "Protocol: FTP"
-                else:
-                        echo "ERROR: Protocol " + ${2} + " not recognized"
-                        exit 1
-                fi
+
                 echo "Syncing from node $(hostname)"
 		conda activate sync
 		. <(grep '^projlist=' ${fgcz_config})

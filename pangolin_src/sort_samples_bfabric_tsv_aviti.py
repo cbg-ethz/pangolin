@@ -51,20 +51,15 @@ def load_proto(protoyaml):
 	"""load a protocols YAML file and build a mapping of full name strings to the short keys"""
 	with open(protoyaml) as f:
 		py = yaml.load(f, Loader=yaml.BaseLoader)
-
 	pmap = {}
-
 	for k, p in py.items():
-
 		if "name" in p:
 			pmap[p.get("name")] = k
-
 		for a in p.get("alias", []):
 			assert (
 				a not in pmap
 			), f"duplicate alias <{a}> in protocols YAML file <{protoyaml}>, last see in <{pmap[a]}>"
 			pmap[a] = k
-
 	return pmap
 
 
@@ -174,7 +169,6 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	if name in badlist:
 		print(f"skipping {name} in bad list")
 		continue
-
 	t = os.path.join(d,'input_dataset.tsv'); 
 	# FastQC_Result also listed dataset.tsv of Fastqc_ directories
 	if not (os.path.isdir(os.path.join(d,'FastQC_Result')) and 
@@ -182,7 +176,6 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 		if args.verbose:
 			print(f"{name} no FastQC_Result")
 		continue
-
 	f = os.path.join(d.split(os.sep)[-1],'FastQC_Result')	# Holds the _fastqc.html files
 	with open(t,'rt',encoding='utf-8', newline='') as tf:	# this file has the same content as the original experiment
 		o=None	# keep tracking of the order -> FastQC mapping
@@ -191,14 +184,12 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 			fastqc_samples[f][r['Name']] = True
 			if (not o) and ('Order Id [B-Fabric]' in r):
 				o = r['Order Id [B-Fabric]']
-
 		if o:
 			# match by Order Id, but not all have it
 			fastqc[o]=f
 			if args.verbose:
 				print(f"{name} - order {o}")
 			continue
-
 	# match by (input_) dataset.tsv content
 	md5_hash = hashlib.md5(usedforsecurity=False)
 	with open(t,'rb') as tf:
@@ -206,7 +197,7 @@ for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	fastqc[md5_hash.digest()]=f
 	if args.verbose:
 		print(f"{name} - checksum {md5_hash.digest()}")
- 
+
 # Samples
 if args.verbose:
 	print("\x1b[37;1mLooking for sample folders\x1b[31;0m")
@@ -216,11 +207,12 @@ order2runs={} # table that keeps track of orders and how many runs each has.
 order2runfolders={}
 plate2runs={} # table that leeps track of which run each plate has ended up in.
 for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
+	if "Aviti" in srch:
+		print(srch, f"\x1b[32;1mDetected Aviti sample\x1b[0m")
 	pathparts = srch.split(os.sep)
 	path = os.sep.join(pathparts)
 	name = pathparts[-1]
 	prj = pathparts[-2] if extrapath else ''
-
 	# (new style) look for bcl2fastq's json file
 	j = os.path.join(srch, 'Stats','Stats.json')
 	if not os.path.isfile(j):
@@ -241,26 +233,30 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						barcode1 = len(f"{r['barcode1']}")
 					if 'barcode2' in r:
 						barcode2 = len(f"{r['barcode2']}")
-				# build the stats filename based on the barcode lengths
-				j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
-				if not os.path.isfile(j):
-					# After 13-05-2024 FGCZ updated the filename structure of the Stats json file
-					j = os.path.join(srch, 'DmxStats', f'Stats_L1_i1-{barcode1}_i2-{barcode2}.json')
+				if "Aviti" in srch:
+					#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
+					j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
 					if not os.path.isfile(j):
-						#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
-						j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
+						print(j, "Cannot find the Stats file")
+						continue
+				else:
+					# build the stats filename based on the barcode lengths
+					j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
+					if not os.path.isfile(j):
+						# After 13-05-2024 FGCZ updated the filename structure of the Stats json file
+						j = os.path.join(srch, 'DmxStats', f'Stats_L1_i1-{barcode1}_i2-{barcode2}.json')
 						if not os.path.isfile(j):
-							continue
-
+							#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
+							j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
+							if not os.path.isfile(j):
+								print(srch, "Cannot find the Stats file")
+								continue
 	if name in badlist:
 		print(f"\x1b[35;1mskipping {name} in bad list\x1b[0m")
 		continue
-
 	order=name # default for corner cases when we don't have an actual order
-
 	# Load the order2runs.tsv file to find out if this order is spead over many runs...
 	o2rt = os.path.join(srch, 'order2runs.txt')
-	
 	plates=None
 	if os.path.isfile(o2rt):
 		with open(o2rt,'rt',encoding='utf-8') as tf:
@@ -281,7 +277,6 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 				for p in o2r_plates:
 					plate2runs[p] = list(set(r['Run'].split(';') + plate2runs.get(p, [])))
 			order2runs[order]=o2r_runs
-
 	# try parsing order from path string
 	try:
 		m=rxorder.search(name).groupdict()
@@ -301,13 +296,11 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		else:
 			print(f"\x1b[31;1mcan't parse {name}\x1b[0m")
 			continue
-
 	########################################
 	#                                      #
 	#   Parse the Demultiplex stats JSON   #
 	#                                      #
 	########################################
-
 	# first, retrieve the bfabric ID - sample name matches from dataset.tsv
 	# This must happen only if the columns exist, as older or malformed dataset.tsv files can lack the required columns
 	t=os.path.join(path,'dataset.tsv')
@@ -320,114 +313,133 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		if args.verbose:
 			print("problems with the column matching in dataset.tsv. Excluding the bfabric ID conversion")
 			namematch={}
-
 	with open(j, 'rt') as f:
 		try:
 			stats = json.loads(f.read());
 		except json.JSONDecodeError as e:
 			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
 			continue
-
 	# parse flowcell
-	try:
-		m=rxcell.search(stats['Flowcell']).groupdict()
-		flowcell=m['cell']
-	except:
+	if "Aviti" in srch:
 		try:
 			m=rxcell.search(stats['FlowCellID']).groupdict()
 			flowcell=m['cell']
 		except:
 			print(f"{name} cannot parse: {stats.get('Flowcell')}")
 			continue
-
-	# parse run folder
-	try:
-		runfolder=stats['RunId']
-	except:
-		runfolder=stats['RunID']
-	try:
-		m=rxrun.search(runfolder).groupdict()
-		rundate=f"20{m['date']}" # NOTE runfolders are yymmdd, not yyyymmdd
-		if flowcell != m['cell']:
-			print(f"{name} Warning: cell missmatch: {flowcell} vs {m.get('cell')}")
-	except:
+	else:
 		try:
-			rundate=name.replace("-","").split("_")[2]
+			m=rxcell.search(stats['Flowcell']).groupdict()
+			flowcell=m['cell']
+		except:
+			print(f"{name} cannot parse: {stats.get('Flowcell')}")
+			continue
+	# parse run folder
+	if "Aviti" in srch:
+		runfolder=stats['RunID']
+		try:
+			with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
+				with io.TextIOWrapper(zf.open("reports_L1_L2_i1-"+str(barcode1)+"_i2-"+str(barcode2)+"/RunParameters.json")) as f:
+					try:
+						stats_zip = json.loads(f.read());
+					except json.JSONDecodeError as e:
+						print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
+						continue
+			rundate=stats_zip["Date"].replace("-","").split("T")[0]
 		except:
 			print(f"{name} cannot parse: {runfolder}")
 			continue
+	else:
+		runfolder=stats['RunId']
+		try:
+			m=rxrun.search(runfolder).groupdict()
+			rundate=f"20{m['date']}" # NOTE runfolders are yymmdd, not yyyymmdd
+			if flowcell != m['cell']:
+				print(f"{name} Warning: cell missmatch: {flowcell} vs {m.get('cell')}")
+		except:
+			continue
 	order2runfolders[order]=list(set([runfolder] + order2runfolders.get(order, [])))
-
 	# skip older
 	if args.recent:
 		if rundate < args.recent:
-			#print(f"Skipping {rundate} {order} {flowcell}")
+			print(f"Skipping {rundate} {order} {flowcell}")
 			continue
 			# NOTE for this skip to work, all recplicate of an order must be in the fuselist, otherwise merge can be accidentally missed if the replicate span across a month border
-
 	# not skipped, advertise libkit forcing
 	if (prj, order) in libkitoverride:
 		print(name, f"\x1b[32;1mforcing {lib_column} of {order} {name} as {libkitoverride[(prj, order)]}\x1b[0m")
-
 	# parse information about reads
 	lane={}
-	try:
-		laneinfo=stats['ReadInfosForLanes']
-	except:
+	if "Aviti" in srch:
 		laneinfo=stats["Lanes"]
+	else:
+		laneinfo=stats['ReadInfosForLanes']
 	for l in laneinfo: # lane
-		try:
-			lanenum=l['LaneNumber']
-		except:
-			lanenum=l["Lane"]
-		ends=rlen=0
-		try:
-			readinfo=l['ReadInfos']
-		except:
+		if "Aviti" in srch:
+			lanenum=l['Lane']
 			readinfo=l["Reads"]
+		else:
+			lanenum=l["LaneNumber"]
+			readinfo=l['ReadInfos']
+		ends=rlen=0	
 		for r in readinfo: # read phases (indexes, reads)
-			try:
-				if r['IsIndexedRead']: continue
-			except:
+			if "Aviti" in srch:
+				ncycles=len(r['Cycles'])
 				try:
 					if "I" in r['Read']: continue
 				except:
-					print(f"\x1b[31;1mError: Invalid indication if the read is indexed or not\x1b[0m")			# sanity check
-			try:
+					print(f"\x1b[31;1mError: Invalid indication if the read is indexed or not\x1b[0m")	
+			else:
+				if r['IsIndexedRead']: continue
 				ncycles=r['NumCycles']
-			except:
-				ncycles=len(r['Cycles'])
 			if rlen and rlen != ncycles:
 				print(f"{name} Warning: read lenght changes from {rlen} to {r['NumCycles']} we currently only support symetric read lenghts")
-
 			# gather info
 			ends+=1
 			if rlen < ncycles: rlen=ncycles
-		
 		# sanity check
 		if ends < 1 or ends > 2:
 			print(f"{name} Error: we currently only support single or paired ends, but found {ends} reads")
-
 		lane[lanenum]={'ends': ends, 'rlen': rlen-1}
-
 	# parse info about samples
 	samples={}
 	badyield=0
 	badsamples=set()
-
-	with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
-		with io.TextIOWrapper(zf.open("reports_L1_L2_i1-"+str(barcode1)+"_i2-"+str(barcode2)+"/RunParameters.json")) as f:
-			try:
-				stats_zip = json.loads(f.read());
-			except json.JSONDecodeError as e:
-				print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
+	#with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
+	#	with io.TextIOWrapper(zf.open("reports_L1_L2_i1-"+str(barcode1)+"_i2-"+str(barcode2)+"/RunParameters.json")) as f:
+	#		try:
+	#			stats_zip = json.loads(f.read());
+	#		except json.JSONDecodeError as e:
+	#			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
+	#			continue
+	if "Aviti" in srch:
+		try:
+			if len(stats['Lanes']) > 1:
+				print("ERROR: multiple lanes processing is not implemented yet for Aviti")
 				continue
-	try:
+			for l in stats['Lanes']:
+				lanenum=l['Lane']
+				ends=lane[lanenum]['ends']
+				rlen=lane[lanenum]['rlen']
+			for s in stats['SampleStats']: # sample in lane
+				samname=s['SampleName']
+				# In case the json file is listing using the bfabric IDs instead of the sample names, convert
+				if samname in namematch:
+					samname = namematch[samname]
+				# filter out fastq files with zero reads
+				if s['NumPolonies'] == 0:
+					badyield+=1;
+					badsamples.add(samname)
+					continue
+				samples[samname]={'ends': ends, 'rlen': rlen}
+				totsam+=1
+		except:
+			continue
+	else:
 		for l in stats['ConversionResults']: # lane
 			lanenum=l['LaneNumber']
 			ends=lane[lanenum]['ends']
 			rlen=lane[lanenum]['rlen']
-
 			for s in l['DemuxResults']: # sample in lane
 				samname=s['SampleName']
 				# In case the json file is listing using the bfabric IDs instead of the sample names, convert
@@ -438,43 +450,18 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 					badyield+=1;
 					badsamples.add(samname)
 					continue
-
 				samples[samname]={'ends': ends, 'rlen': rlen}
 				totsam+=1
-	except:
-		for l in stats['lane']:
-			anenum=l['Lane']
-			ends=lane[lanenum]['ends']
-			rlen=lane[lanenum]['rlen']
-			for s in l['SampleStats']: # sample in lane
-				samname=s['SampleName']
-				# In case the json file is listing using the bfabric IDs instead of the sample names, convert
-				if samname in namematch:
-					samname = namematch[samname]
-				# filter out fastq files with zero reads
-				if s['NumPolonies'] == 0:
-					badyield+=1;
-					badsamples.add(samname)
-					continue
-
-				samples[samname]={'ends': ends, 'rlen': rlen}
-				totsam+=1
-
-
-
 	# Check readcounts
 	if badyield:
 		print(name, f"\x1b[33;1m{badyield} samples with bad yield !\x1b[0m", sep='\t')
-
 	# Need multiple samples
 	if len(samples) < 2:
 		print(name, f"\x1b[31;1mOnly {len(samples)}!\x1b[0m", sep='\t')
 		continue
-
 	#
 	#   dataset.tsv
 	#
-
 	t=os.path.join(path,'dataset.tsv')
 	to=None
 	tplates=None
@@ -490,19 +477,15 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		# and now check for order column
 		if 'Order Id [B-Fabric]' in r:
 			to = r['Order Id [B-Fabric]']
-
 	#
 	#   Build per batch / samples data
 	#
-
 	b={'name':name, 'prj': prj, 'path':path, 'dataset':t, 'flowcell': flowcell, 'runfolder': runfolder,'rundate':rundate,'samples':samples,'badyield':badyield,'badsamples':badsamples}
-
 	# add plates, which ever method managed to find them
 	if tplates is not None and len(tplates)>0:
 		b.update({ 'plates':tplates })
 	elif plates is not None and len(plates)>0:
 		b.update({ 'plates':plates })
-
 	# if both attempts at counting plates were successfull, check if they agree
 	if tplates is not None and plates is not None:
 		diff=list(set(tplates).symmetric_difference(set(plates)))
@@ -511,12 +494,10 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 				print(name, f"\x1b[33mnon-concording plates list: dataset <{';'.join(list(set(tplates).difference(set(plates))))}<  and order2run >{';'.join(list(set(plates).difference(set(tplates))))}>\x1b[0m")
 			else:
 				print(name, f"\x1b[33mnon-concording plates list: between dataset and order2run\x1b[0m")
-
 	# handle orders replicate and fuse them
 	if order in batches:
 		key=f"{order}:{name}"
 		days=abs(datetime.datetime.strptime(rundate, '%Y%m%d').date()-datetime.datetime.strptime(batches[order]['rundate'], '%Y%m%d').date()) //  datetime.timedelta(days=1)
-
 		# single scenario / ultra-simple fuse logic: is it in list? (No more autoguessing)
 		if name in fuselist or batches[order]['name'] in fuselist:
 			print(name, f"\x1b[36;1m{rundate}_{flowcell} is REPLICATE of order {order}'s {batches[order]['name']} - {batches[order]['rundate']}_{batches[order]['flowcell']} (reason: in fuse list)\x1b[0m (note: {days} days appart)")
@@ -526,9 +507,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			print(name, f"\x1b[36mnot fusing {rundate}_{flowcell} with {order}'s {batches[order]['rundate']}_{batches[order]['flowcell']}: not in fuse list {days}\x1b[0m (note: {days} days appart)")
 	else:
 		key=order
-
 	# Now, link with FastQC, based on dataset.tsv and...
-
 	# ...based on order column if present ?
 	if to is not None:
 			# sanity check: is the folder the same?
@@ -542,7 +521,6 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			if args.verbose:
 				print(f"{name}: {order} - {runfolder}")
 			continue
-
 	# ...match by (input_) dataset.tsv content
 	md5_hash = hashlib.md5(usedforsecurity=False)
 	with open(t,'rb') as tf:
@@ -834,8 +812,8 @@ cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(s
 print(f"""
 echo -e '\\r\\e[K[{bar(128)}] done.'
 if (( !ALLOK )); then
-        echo Some errors
-        exit 1
+		echo Some errors
+		exit 1
 fi;
 
 """, file=sh)
