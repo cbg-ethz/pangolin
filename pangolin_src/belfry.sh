@@ -392,7 +392,7 @@ case "$1" in
             mkdir -p $archive_now
         ${uploader_code}/upload.sh ${archive_now}
         
-        metadata_len=$(wc -l ${uploader_target}/meta_data.tsv)
+        metadata_len=$(wc -l ${uploader_target}/meta_data.tsv | awk '{print $1}')
         if [ "${metadata_len}" == "1" ]; then
             echo "Nothing to upload" | tee ${archive_now}/sencrypt.log
         elif [ "${metadata_len}" == "0" ]; then

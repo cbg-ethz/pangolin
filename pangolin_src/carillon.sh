@@ -49,22 +49,26 @@ echo '========='
 
 set -e
 
-[[ -n $skipsync ]] && echo "${skipsync} will be skipped."
+if [[ -n $skipsync ]]; then
+    echo "${skipsync} will be skipped."
+fi
 
-[[ $skipsync != fgcz ]] && ${remote_batman} sync_fgcz --ftp
-${scriptdir}/belfry.sh pull_sync_status
-if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
-    echo "\e[31;1Pulling sync status files failed\e[0m"
-    echo "The automation will not be aware of any new deliveries"
-else
-    if [ $backup_fgcz_raw -eq "1" ]; then
-        ${remote_backup} pull_fgcz_data --recent
-        if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
-            echo "\e[31;1Backup of fgcz raw data failed\e[0m"
-            echo "The system will retry next loop"
-        fi
+if [[ "${skipsync}" != "fgcz" ]]; then
+    ${remote_batman} sync_fgcz --ftp
+    ${scriptdir}/belfry.sh pull_sync_status
+    if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
+        echo "\e[31;1Pulling sync status files failed\e[0m"
+        echo "The automation will not be aware of any new deliveries"
     else
-        echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
+        if [ $backup_fgcz_raw -eq "1" ]; then
+            ${remote_backup} pull_fgcz_data --recent
+            if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
+                echo "\e[31;1Backup of fgcz raw data failed\e[0m"
+                echo "The system will retry next loop"
+            fi
+        else
+            echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
+        fi
     fi
 fi
 ${remote_batman} sortsamples --year $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
@@ -298,7 +302,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             shorah="--no-shorah"
         fi
-        if [ ${now} -ge aviti_date ]; then
+        if [ ${now} -ge ${aviti_date} ]; then
             aviti="--aviti"
         else
             aviti=""
