@@ -110,3 +110,44 @@ The automation loop is started by `quasimodo.sh` which is in charge of running `
 7. Amplicon coverage:
     - If the Vpipe logs shows a new batch successfully analysed by Vpipe, the automation triggers the scripts necessary to calculate the amplicons coverage using a forced commands
     - The results (a csv table of the coverage per amplicon and a heatmap visualization of the table) are backupped on bs-bewi08
+
+# Processing
+## Sample collection
+Samples from the WWTPs under surveillance are collected by Eawag during a week, usually from Tuesday afternoon to the next Tuesday morning. Frequency of collection and number of WWTPs under surveillance depend on the current terms of agreement. Eawag prepares the samples and ships them to the sequencing center (FGCZ) on Tuesday.
+
+## Sequencing
+FGCZ receives the samples, completes the library prepapration and the sequencing. The sequencing platform and library prep kit used change depending on the available technologies and the scientific evidence on the detection efficiency of SARS-CoV-2.
+
+## Raw data retrieval
+Raw sequencing results are delivered by FGCZ to their LFTP server. The automation regularly checks the server for new data to process. If new data is available, the entire delivery is mirrored on Euler, checked for consistency with the metadata, and V-pipe is ran on the samples. The automation is able to differentiate between Aviti and NextSeq sequencing and run V-pipe with the specific settings.
+
+## Lollipop (temporary)
+The current automated V-pipe analysis does not include the Lollipop deconvolution steps. Until those steps are integrated in the automated V-pipe run, Lollipop needs to be manually ran.
+
+To do so, a user is required to wait for the automated Slurm email confirming that a run on a new batch has successfully completed, then run the script `cowabunga.sh` to hardlink the necessary data to the dedicated Lollipop directory. More specifically, the two commands to run are:
+- `./cowabunga.sh autoaddwastewater year` to list all batches received in the current year and update the sample list with the samples from the new batches
+- `./cowabung.sh bring_results` to hardlink the necessary V-pipe output to the Lollipop directory `work-vp-test` in preparation of the Lollipop run
+
+After running `cowabunga.sh`, the user can navigate to the working directory `work-vp-test` and run Lollipop using the command `sbatch vpipe-test.sbatch`.
+
+## Postprocessing
+Lollipop results need to be postprocessed to generate and visualize the curves, as well as share the results with BAG.
+
+Similarly to the automated V-pipe step, Lollipop reports the status of a run through automated slurm emails. If a Lollipop run is succesful, the post-processing can start.
+
+All postprocessing happens on a dedicated machine called `jupyterhub05`. The machine runs a jupyter notebook server pre-configured with the necessary kernels. Kernels definitions are available on the server. The necessary notebooks are `ww_cov_uploader_V-pipe` and `ww_cov_SwitzerlandMap`.
+
+- `ww_cov_uploader_V-pipe` loads the deconvolution and tallymut results, processing them for plotting and upload
+    - A user needs first to run the notebook up until the cell `Multiple choice time`. The curves preview should then be shared for review before proceeding
+        - If the review finds abnormalities, the cell `db.rollback()` should be run to cancel any update to the cov-spectrum database
+        - If the review finds no abnormalities, the cell `db.rollback()` should be *skipped* and the remainder of the notebook can be run, committing the changes to the cov-spectrum database and uploading the results on Polybox for BAG and for the public
+- `ww_cov_SwitzerlandMap` loads the deconvolution and tallymut results, processing them for plotting cake plots with the average relative abundances for the week on each WWTP on a map of Switzerland
+    - The plot needs to be included in the email reports. The plot caption can be copy-pasted from previous weeks unless the method or the WWTPs change
+
+After running both notebooks, the email report can be written. The mandatory content is as follows:
+- Last collection date available for each WWTP. This information is provided as output of the early cells of the notebook `ww_cov_uploader_V-pipe`
+- Comment on the current status, mentioning the dominant variant (if any) and the observable relative abundance trends
+- Signature
+- Switzerland map plot with its caption
+
+The email report must be reviewed by an additional person before submission. Submission should be done by sending the email to the dedicated mailing list.

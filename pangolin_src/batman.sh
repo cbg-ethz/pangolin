@@ -338,10 +338,10 @@ case "$1" in
         	while [[ -n $2 ]]; do
 			case "$2" in
 				--https)
-					summary='--summary'
+					type='https'
 				;;
 				--ftp)
-					force='--force'
+					type='ftp'
 				;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
@@ -371,7 +371,7 @@ case "$1" in
 			param=( "${projlist[@]}" )
 		fi
                 fail=0
-                if ${2} == "https"; then
+                if ${type} == "https"; then
                         syncoutput="$(${clusterdir}/sync_sftp.sh -H -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
                 else
 		        syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
