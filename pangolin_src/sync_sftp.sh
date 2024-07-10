@@ -48,7 +48,7 @@ fi
 
 umask 0002
 
-if https; then
+if (( https )); then
     for i in "${projlist[@]}"
     do
         exrx=$(tr '\n' ',' < ${exrxfile} | sed 's/.$//')
