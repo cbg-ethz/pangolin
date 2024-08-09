@@ -541,29 +541,6 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 		pass
 
 
-# generic header: only for stand-alone files.
-print(r'''
-link='%(link)s'
-mode='%(mode)s' # e.g.: --mode=0770
-
-# Helper
-fail() {
-	printf '\e[31;1mArgh: %%s\e[0m\n'	"$1"	1>&2
-	[[ -n "$2" ]] && echo "$2" 1>&2
-	exit 1
-}
-
-warn() {
-	printf '\e[33;1mArgh: %%s\e[0m\n'	"$1"	1>&2
-	[[ -n "$2" ]] && echo "$2" 1>&2
-}
-
-
-# sanity checks
-[[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
-''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
-
 # helper function to handle items that can be either single string or list (or empty)
 listify = lambda x: x if type(x) is list else [] if x is None else [x]
 delistify = lambda x: x if type(x) is str else None if len(x) == 0 else next(iter(x)) if len(x) == 1 else sorted(x, reverse=True)
@@ -607,11 +584,9 @@ for b in batches:
 		order=b
 		batch=f"{rundate}_{flowcell}"
 
-	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
 	qcdir=None
 	if (not args.nofqc) and (not dupe) and ('fastqc' in batches[b]):
 		qcdir=batches[b]['fastqc']
-		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
 
 	# patch file exist ?
 	patchmap = { }
@@ -710,7 +685,6 @@ for b in batches:
 			# progress
 			prgbar=math.floor(cursam*128/totsam)
 			if lastbar != prgbar:
-				print(f"echo -ne '\\r[{bar(prgbar)}]\\r'", file=sh)
 				lastbar=prgbar
 			cursam+=1
 
@@ -777,8 +751,8 @@ for b in batches:
 						tf += [proto[library]]
 					elif fallbackproto:
 						tf += [fallbackproto]
+				print(*tf, sep="\t", file=tsv)
 
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
-
 

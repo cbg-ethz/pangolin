@@ -146,6 +146,7 @@ else:
 rxorder=re.compile(r'(?:^|/|_)(?P<order>o\d+)') # match the order patter either after a "_", at the start of the string (wether it's the actual start or the initial part after a path)
 rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
 rxcell=re.compile('(?:0+-)?(?P<cell>\w+(?:-\d+)?)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX' or 'BPA73113-1417'
+rxcell_aviti=re.compile('^[a-z0-9]{10}$')
 rxsuffix=re.compile('(?:_S\d+)?(?:_L\d+)?$') # e.g.: ..._Plate_2_011120EG27_A4_S5_L001
 rxfqext=re.compile('\.fastq\.gz$') 
 
@@ -235,10 +236,16 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						barcode2 = len(f"{r['barcode2']}")
 				if "Aviti" in srch:
 					#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
-					j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
-					if not os.path.isfile(j):
+					j = os.path.join(srch, 'DmxStats', f'Stats_L1_*i1-{barcode1}_i2-{barcode2}.json')
+					j = glob.glob(j)
+					if len(j) > 1:
+						print("ERROR: found multiple Stats files for delivery" + srch)
+						continue
+					if len(j) == 0:
 						print(j, "Cannot find the Stats file")
 						continue
+					j=j[0]
+					barcode_postfix=j.split(os.sep)[-1].split(".json")[0].split("Stats_")[1]
 				else:
 					# build the stats filename based on the barcode lengths
 					j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
@@ -322,8 +329,9 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# parse flowcell
 	if "Aviti" in srch:
 		try:
-			m=rxcell.search(stats['FlowCellID']).groupdict()
-			flowcell=m['cell']
+			#m=rxcell_aviti.search(stats['FlowCellID']).groupdict()
+			m=re.match('^[a-z0-9]{10}$', stats['FlowCellID'])
+			flowcell=m.group()
 		except:
 			print(f"{name} cannot parse: {stats.get('Flowcell')}")
 			continue
@@ -339,7 +347,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		runfolder=stats['RunID']
 		try:
 			with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
-				with io.TextIOWrapper(zf.open("reports_L1_L2_i1-"+str(barcode1)+"_i2-"+str(barcode2)+"/RunParameters.json")) as f:
+				with io.TextIOWrapper(zf.open("reports_"+barcode_postfix+"/RunParameters.json")) as f:
 					try:
 						stats_zip = json.loads(f.read());
 					except json.JSONDecodeError as e:
@@ -547,30 +555,6 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 	except FileExistsError:
 		pass
 
-
-# generic header: only for stand-alone files.
-print(r'''
-link='%(link)s'
-mode='%(mode)s' # e.g.: --mode=0770
-
-# Helper
-fail() {
-	printf '\e[31;1mArgh: %%s\e[0m\n'	"$1"	1>&2
-	[[ -n "$2" ]] && echo "$2" 1>&2
-	exit 1
-}
-
-warn() {
-	printf '\e[33;1mArgh: %%s\e[0m\n'	"$1"	1>&2
-	[[ -n "$2" ]] && echo "$2" 1>&2
-}
-
-
-# sanity checks
-[[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
-[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
-''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
-
 # helper function to handle items that can be either single string or list (or empty)
 listify = lambda x: x if type(x) is list else [] if x is None else [x]
 delistify = lambda x: x if type(x) is str else None if len(x) == 0 else next(iter(x)) if len(x) == 1 else sorted(x, reverse=True)
@@ -614,11 +598,9 @@ for b in batches:
 		order=b
 		batch=f"{rundate}_{flowcell}"
 
-	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
 	qcdir=None
 	if (not args.nofqc) and (not dupe) and ('fastqc' in batches[b]):
 		qcdir=batches[b]['fastqc']
-		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
 
 	# patch file exist ?
 	patchmap = { }
@@ -717,7 +699,6 @@ for b in batches:
 			# progress
 			prgbar=math.floor(cursam*128/totsam)
 			if lastbar != prgbar:
-				print(f"echo -ne '\\r[{bar(prgbar)}]\\r'", file=sh)
 				lastbar=prgbar
 			cursam+=1
 
@@ -784,36 +765,8 @@ for b in batches:
 						tf += [proto[library]]
 					elif fallbackproto:
 						tf += [fallbackproto]
+				print(*tf, sep="\t", file=tsv)
 
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
 
-			# move script
-			print(r'''
-mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
-cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
-			if ends==2:
-				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
-			if qcdir and fulname in fastqc_samples[qcdir]:
-				fqc=rxfqext.sub('_fastqc.html',r1)
-				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
-				if ends==2:
-					fqc=rxfqext.sub('_fastqc.html',r2)
-					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
-
-print(f"""
-echo -e '\\r\\e[K[{bar(128)}] done.'
-if (( !ALLOK )); then
-		echo Some errors
-		exit 1
-fi;
-
-""", file=sh)
-
-for b in otsv.keys():
-	print(f"mv -v {sampleset}/samples.{b}.tsv.staging {sampleset}/samples.{b}.tsv", file=sh)
-
-print("""
-echo All Ok
-exit 0
-""", file=sh)
