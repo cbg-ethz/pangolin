@@ -11,8 +11,8 @@ services:
       - bs-pangolin_login_euler
       - bs-pangolin_login_backups
       - fgcz_login
-      - id_ed25519_wisedb
-      - id_ed25519_wisedb_backups
+      - id_ed25519_rsv
+      - id_ed25519_rsv_backups
       - rsync.pass.euler
       - spsp_gpg_key
       - bs_pangolin_gpg_key
@@ -26,10 +26,10 @@ secrets:
     file: /data/projects/rsv_automation/secrets/bs-pangolin@d@bs-bewi08
   fgcz_login:
     file: /data/projects/rsv_automation/secrets/fgcz-gstore.uzh.ch
-  id_ed25519_wisedb:
-    file: /data/projects/rsv_automation/secrets/id_ed25519_wisedb
-  id_ed25519_wisedb_backups:
-    file: /data/projects/rsv_automation/secrets/id_ed25519_wisedb_backups
+  id_ed25519_rsv:
+    file: /data/projects/rsv_automation/secrets/id_ed25519_rsv
+  id_ed25519_rsv_backups:
+    file: /data/projects/rsv_automation/secrets/id_ed25519_rsv_backups
   rsync.pass.euler:
     file: /data/projects/rsv_automation/secrets/rsync.pass.euler
   spsp_uploads_ssh_private_key:
