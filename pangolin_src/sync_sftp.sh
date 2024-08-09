@@ -13,7 +13,7 @@ while getopts "c:e:N:H:h" o; do
             ;;
         e)  exrxfile="${OPTARG}"    ;;
         N)  newerthan="${OPTARG}"   ;;
-        H)  https=True ;;
+        H)  https=1 ;;
         h)  usage 0 ;;
         *)  usage 1 ;;
     esac
@@ -55,13 +55,14 @@ if (( https )); then
 else
 	protocol="sftp"
 	srvport=${srvport_sftp}
-    connect_prepass="connect ${protocol}://${user}"
-    connect_postpass="@${fileserver}${srvport:+:${srvport}}"
-    connect="${connect_prepass}${password:+:${password}}${connect_postpass}"
-    connect_echo="${connect_prepass}${password:+:<PASSWORD>}${connect_postpass}"
-    echo "${connect_echo}"
-    settings="set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}"
-    mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
-    echo lftp -c "$settings; ${connect_echo}; cd $expname; $mirror"
-    exec lftp -c "$settings; $connect; cd $expname; $mirror"
 fi
+connect_prepass="connect ${protocol}://${user}"
+connect_postpass="@${fileserver}${srvport:+:${srvport}}"
+connect="${connect_prepass}${password:+:${password}}${connect_postpass}"
+connect_echo="${connect_prepass}${password:+:<PASSWORD>}${connect_postpass}"
+echo "${connect_echo}"
+settings="set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}"
+mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
+echo lftp -c "$settings; ${connect_echo}; cd $expname; $mirror"
+exec lftp -c "$settings; $connect; cd $expname; $mirror"
+

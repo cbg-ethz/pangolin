@@ -6,7 +6,7 @@ scriptdir=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-eval "$(/cluster/project/pangolin/rsv_pipeline/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
 #
 # Input validator
@@ -372,7 +372,7 @@ case "$1" in
 		fi
                 fail=0
                 if [[ "${type}" = "https" ]]; then
-                        syncoutput="$(${clusterdir}/sync_sftp.sh -H -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
+                        syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} -H "${param[@]}"|tee /dev/stderr)" || fail=1
                 else
 		        syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
                 fi

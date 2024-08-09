@@ -541,9 +541,6 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 		pass
 
 
-# shell script file with all moving instructions inside
-sh=open(os.path.join(basedir_test,'movedatafiles.sh'), 'wt')
-
 # generic header: only for stand-alone files.
 print(r'''
 link='%(link)s'
@@ -561,10 +558,6 @@ warn() {
 	[[ -n "$2" ]] && echo "$2" 1>&2
 }
 
-ALLOK=1
-X() {
-	ALLOK=0
-}
 
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
@@ -784,37 +777,8 @@ for b in batches:
 						tf += [proto[library]]
 					elif fallbackproto:
 						tf += [fallbackproto]
-				print(*tf, sep="\t", file=tsv)
 
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
 
-			# move script
-			print(r'''
-mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
-cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
-			if ends==2:
-				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
-			if qcdir and fulname in fastqc_samples[qcdir]:
-				fqc=rxfqext.sub('_fastqc.html',r1)
-				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
-				if ends==2:
-					fqc=rxfqext.sub('_fastqc.html',r2)
-					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
 
-print(f"""
-echo -e '\\r\\e[K[{bar(128)}] done.'
-if (( !ALLOK )); then
-        echo Some errors
-        exit 1
-fi;
-
-""", file=sh)
-
-for b in otsv.keys():
-	print(f"mv -v {sampleset}/samples.{b}.tsv.staging {sampleset}/samples.{b}.tsv", file=sh)
-
-print("""
-echo All Ok
-exit 0
-""", file=sh)

@@ -548,9 +548,6 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 		pass
 
 
-# shell script file with all moving instructions inside
-sh=open(os.path.join(basedir_test,'movedatafiles.sh'), 'wt')
-
 # generic header: only for stand-alone files.
 print(r'''
 link='%(link)s'
@@ -568,10 +565,6 @@ warn() {
 	[[ -n "$2" ]] && echo "$2" 1>&2
 }
 
-ALLOK=1
-X() {
-	ALLOK=0
-}
 
 # sanity checks
 [[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
@@ -791,7 +784,6 @@ for b in batches:
 						tf += [proto[library]]
 					elif fallbackproto:
 						tf += [fallbackproto]
-				print(*tf, sep="\t", file=tsv)
 
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
