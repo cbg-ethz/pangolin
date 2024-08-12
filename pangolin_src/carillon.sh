@@ -54,7 +54,7 @@ if [[ -n $skipsync ]]; then
 fi
 
 if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz --ftp
+    ${remote_batman} sync_fgcz
     ${scriptdir}/belfry.sh pull_sync_status
     if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
         echo "\e[31;1Pulling sync status files failed\e[0m"
@@ -71,7 +71,7 @@ if [[ "${skipsync}" != "fgcz" ]]; then
         fi
     fi
 fi
-${remote_batman} sortsamples --year $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"
