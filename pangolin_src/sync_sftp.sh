@@ -13,7 +13,7 @@ while getopts "c:e:N:H:h" o; do
             ;;
         e)  exrxfile="${OPTARG}"    ;;
         N)  newerthan="${OPTARG}"   ;;
-        H)  https=True ;;
+        H)  https=1 ;;
         h)  usage 0 ;;
         *)  usage 1 ;;
     esac
@@ -49,7 +49,7 @@ fi
 
 umask 0002
 
-if (( https )); then
+if [[ "$https" -eq "1" ]]; then
 	protocol="https"
 	srvport=${srvport_https}
 else

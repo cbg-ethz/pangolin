@@ -174,6 +174,13 @@ case "$1" in
 				cp -alv ${working}/samples/${s}/${b}/{references,alignments} ${worktest}/results/${s}/${b}/
 			fi
 		done < ${worktest}/${TSV}
+        for i in $(cat lollipop_blacklist.txt); do
+            while read -r line
+            do
+                [[ ! $line =~ $i ]] && echo "$line"
+            done <${worktest}/${TSV} > ${worktest}/${TSV}_temp
+            mv ${worktest}/${TSV}_temp ${worktest}/${TSV}
+        done
 	;;
 
 	fetch_cooc)
