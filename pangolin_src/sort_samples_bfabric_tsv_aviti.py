@@ -78,10 +78,10 @@ config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in s
 with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
 lab={os.path.splitext(os.path.basename(args.config))[0]}
-basedir=/cluster/project/pangolin
-basedir_test=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
-sampleset=/cluster/project/pangolin/sampleset
-download=/cluster/project/pangolin/bfabric-downloads
+basedir=/cluster/project/pangolin/rsv_pipeline
+basedir_test=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
+sampleset=/cluster/project/pangolin/rsv_pipeline/sampleset
+download=/cluster/project/pangolin/rsv_pipeline/bfabric-downloads
 link=--link
 mode=
 badlist=
@@ -165,7 +165,7 @@ if args.verbose:
 	print("\x1b[37;1mLooking for FastQC folders\x1b[31;0m")
 fastqc={} # maps orders to FastQC directories (or in the absence of order number: checksum of the input_dataset)
 fastqc_samples={} # maps which samples are present in which FastQC directory (some might be missing)
-for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
+for d in glob.glob(os.path.join(basedir,download,projects,'*Fastqc_*')):
 	name = d.split(os.sep)[-1]
 	if name in badlist:
 		print(f"skipping {name} in bad list")
@@ -254,7 +254,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						j = os.path.join(srch, 'DmxStats', f'Stats_L1_i1-{barcode1}_i2-{barcode2}.json')
 						if not os.path.isfile(j):
 							#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
-							j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
+							j = os.path.join(srch, 'DmxStats', f'Stats_L1_*i1-{barcode1}_i2-{barcode2}.json')
 							if not os.path.isfile(j):
 								print(srch, "Cannot find the Stats file")
 								continue
@@ -769,4 +769,32 @@ for b in batches:
 
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
+			#softlink raw files with in sampleset to create a restructured input folder
+			sampledir = os.path.join(basedir,sampleset,r["Name"])
+			batchdir = os.path.join(basedir,sampleset,r["Name"],(batches[b]["rundate"] + "_" + batches[b]["flowcell"]))
+			r1filedest = os.path.join(batchdir, r["Read1 [File]"].split("/")[-1])
+			r2filedest = os.path.join(batchdir, r["Read2 [File]"].split("/")[-1])
+			if(os.path.isfile(r1filedest) and os.path.isfile(r2filedest)):
+				continue
+			try:
+				if(not os.path.isdir(sampledir)):
+					os.mkdir(sampledir)
+				if(not os.path.isdir(batchdir)):
+					os.mkdir(batchdir)
+				if(not os.path.isfile(r1filedest)):
+					os.symlink(os.path.join(download, r["Read1 [File]"]), r1filedest)
+				if(not os.path.isfile(r2filedest)):
+					os.symlink(os.path.join(download, r["Read2 [File]"]), r2filedest)
+			except:
+				print(f"cannot create symlinks for batch <{batches[b]['rundate']}>_<{batches[b]['flowcell']}>, sample <{r['Name']}>")
+				if(os.path.isfile(r1filedest)):
+					os.unlink(r1filedest)
+				if(os.path.isfile(r2filedest)):
+					os.unlink(r2filedest)
+				if(os.path.isdir(batchdir)):
+					os.rmdir(batchdir)
+				if(os.path.isdir(sampledir)):
+					os.rmdir(sampledir)
+				continue
+		os.rename(os.path.join(basedir,sampleset,f'samples.{batch}.tsv.staging'), os.path.join(basedir,sampleset,f'samples.{batch}.tsv'))
 

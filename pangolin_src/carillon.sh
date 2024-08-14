@@ -54,7 +54,7 @@ if [[ -n $skipsync ]]; then
 fi
 
 if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz --ftp
+    ${remote_batman} sync_fgcz
     ${scriptdir}/belfry.sh pull_sync_status
     if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
         echo "\e[31;1Pulling sync status files failed\e[0m"
@@ -307,7 +307,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             aviti=""
         fi
-        ${remote_batman} addsamples --recent && \
+        #${remote_batman} addsamples --recent && \
         ${remote_batman} vpipe ${shorah} ${aviti} --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} &&  \
         if [[ -s ${statusdir}/vpipe.${now} ]]; then
             ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
