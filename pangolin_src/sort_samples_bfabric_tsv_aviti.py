@@ -100,6 +100,8 @@ basedir=config['_']['basedir'].strip("\"'")
 '''base dircetory'''
 basedir_test=config['_']['basedir_test'].strip("\"'")
 '''test base directory'''
+rawdir=config['_']['rawdir'].strip("\"'")
+'''sampleset raw data subdirectory'''
 expname=config['_']['expname'].strip("\"'")
 '''projects name in SFTP'''
 download=config['_']['download'].strip("\"'")
