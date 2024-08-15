@@ -83,6 +83,7 @@ basedir_test=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 sampleset=/cluster/project/pangolin/rsv_pipeline/sampleset
 download=/cluster/project/pangolin/rsv_pipeline/bfabric-downloads
 rawdir=raw_data
+extracteddir=extracted_data
 link=--link
 mode=
 badlist=
@@ -102,6 +103,8 @@ basedir_test=config['_']['basedir_test'].strip("\"'")
 '''test base directory'''
 rawdir=config['_']['rawdir'].strip("\"'")
 '''sampleset raw data subdirectory'''
+extracteddir=config['_']['extracteddir'].strip("\"'")
+'''sampleset extracted data subdirectory'''
 expname=config['_']['expname'].strip("\"'")
 '''projects name in SFTP'''
 download=config['_']['download'].strip("\"'")
@@ -787,6 +790,8 @@ for b in batches:
 					os.mkdir(batchdir)
 				if(not os.path.isdir(rawdir)):
 					os.mkdir(rawdir)
+				if(not os.path.isdir(extracteddir)):
+					os.mkdir(extracteddir)
 				if(not os.path.isfile(r1filedest)):
 					os.symlink(os.path.join(download, r["Read1 [File]"]), r1filedest)
 				if(not os.path.isfile(r2filedest)):
