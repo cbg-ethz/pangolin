@@ -40,6 +40,13 @@ echo "The current automation run is based on: "
 ${scriptdir}/belfry.sh get_pangolin_commit
 
 #
+# Phase 0: General information
+#
+echo '========='
+echo 'This is the RSV automation'
+echo '========='
+
+#
 # Phase 1: periodic data sync
 #
 

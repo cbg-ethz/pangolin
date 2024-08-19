@@ -778,9 +778,10 @@ for b in batches:
 			#softlink raw files with in sampleset to create a restructured input folder
 			sampledir = os.path.join(basedir, sampleset, r["Name"])
 			batchdir = os.path.join(sampledir, (batches[b]["rundate"] + "_" + batches[b]["flowcell"]))
-			rawdir = os.path.join(batchdir, rawdir)
-			r1filedest = os.path.join(rawdir, r["Read1 [File]"].split("/")[-1])
-			r2filedest = os.path.join(rawdir, r["Read2 [File]"].split("/")[-1])
+			rawdir_sample = os.path.join(batchdir, rawdir_sample)
+			extracteddir_sample = os.path.join(batchdir, extracteddir_sample)
+			r1filedest = os.path.join(rawdir_sample, r["Read1 [File]"].split("/")[-1])
+			r2filedest = os.path.join(rawdir_sample, r["Read2 [File]"].split("/")[-1])
 			if(os.path.isfile(r1filedest) and os.path.isfile(r2filedest)):
 				continue
 			try:
@@ -788,10 +789,10 @@ for b in batches:
 					os.mkdir(sampledir)
 				if(not os.path.isdir(batchdir)):
 					os.mkdir(batchdir)
-				if(not os.path.isdir(rawdir)):
-					os.mkdir(rawdir)
-				if(not os.path.isdir(extracteddir)):
-					os.mkdir(extracteddir)
+				if(not os.path.isdir(rawdir_sample)):
+					os.mkdir(rawdir_sample)
+				if(not os.path.isdir(extracteddir_sample)):
+					os.mkdir(extracteddir_sample)
 				if(not os.path.isfile(r1filedest)):
 					os.symlink(os.path.join(download, r["Read1 [File]"]), r1filedest)
 				if(not os.path.isfile(r2filedest)):
@@ -802,8 +803,10 @@ for b in batches:
 					os.unlink(r1filedest)
 				if(os.path.isfile(r2filedest)):
 					os.unlink(r2filedest)
-				if(os.path.isdir(rawdir)):
-					os.rmdir(rawdir)
+				if(os.path.isdir(rawdir_sample)):
+					os.rmdir(rawdir_sample)
+				if(os.path.isdir(extracteddir_sample)):
+					os.rmdir(extracteddir_sample)
 				if(os.path.isdir(batchdir)):
 					os.rmdir(batchdir)
 				if(os.path.isdir(sampledir)):
