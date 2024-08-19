@@ -52,8 +52,8 @@ The automation relies on a set of resources and secret to successfully connect t
 - a `resource` directory with the files
     - `config`, the ssh config file with an entry for the FGCZ sftp server
     - `id_ed25519_spsp_uploads.pub`, the public key to connect to SPSP for the uploads
-    - `id_ed25519_wisedb_backups.pub`, the public key to connect to bs-bewi08 for the backups
-    - `id_ed25519_wisedb.pub`, the main public key used by the container to connect to external services
+    - `id_ed25519_rsv_backups.pub`, the public key to connect to bs-bewi08 for the backups
+    - `id_ed25519_rsv.pub`, the main public key used by the container to connect to external services
     - `id_euler_ed25519.pub`, the public key to connect to Euler's rsync daemon
     - `known_hosts`, the ssh file containing the accepted public keys of the FGCZ SFTP server, euler and bs-bewi08. The remaining hosts are automatically added during the container deployment
 - a `secrets` directory with the files
@@ -65,8 +65,8 @@ The automation relies on a set of resources and secret to successfully connect t
     - `fgcz-gstore.uzh.ch`, a file with the credentials to login to the FGCZ SFTP server
     - `gpg_key_secrets`, a file containing the password of the local GPG key for the SPSP uploads
     - `id_ed25519_spsp_uploads`, the private key to connect to SPSP for the uploads
-    - `id_ed25519_wisedb` the main private key to connect to external services
-    - `id_ed25519_wisedb_backups`, the private key to connect to bs-bewi08 for the backups
+    - `id_ed25519_rsv` the main private key to connect to external services
+    - `id_ed25519_rsv_backups`, the private key to connect to bs-bewi08 for the backups
     - `id_euler_ed25519`, the private key to connect to Euler
     - `rsync.pass.euler`, the password to access the rsync daemon on Euler
 
