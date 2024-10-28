@@ -302,7 +302,9 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             shorah="--no-shorah"
         fi
-        if [ ${now} -ge ${aviti_date} ]; then
+        if (( skipaviti )); then
+            aviti=""
+        elif [ ${now} -ge ${aviti_date} ]; then
             aviti="--aviti"
         else
             aviti=""

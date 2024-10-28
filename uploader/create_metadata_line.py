@@ -176,13 +176,22 @@ def main():
         #locations[locations.index(['Ba', 'Basel', '(catchment', 'area', 'ARA', 'Basel)'])] = ['Ba', 'Basel', '(BS)']
     except:
         sys.exit("We have exceptions in place for KLZHCov, KLZHCov_Promega. It looks like one of them is not anymore in the location list")
-
     try:
         mydata = load_timeline(meta.timelinefile, args.samplename)
     except:
         sys.exit("Error: cannot load the timeline file")
     if (len(mydata) == 6) and (mydata[4] in meta.exceptions.keys()):
         mydata.append(meta.exceptions[mydata[4]])
+    elif (len(mydata) == 4) and (mydata[0].split("_")[0] in meta.exceptions.keys()):
+        name = mydata[0].split("_")[0]
+        date_list = list(args.batchname.split("_")[0])
+        date = ""
+        for i in range(0, len(date_list)):
+            if i in [4, 6]:
+                date = date + "-" + date_list[i]
+            else:
+                date = date + date_list[i]
+        mydata.extend([name, date, meta.exceptions[name]])
     else:
         if (mydata[6] == "Basel (catchment area ARA Basel)"):
             mydata[6] = "Basel (BS)"
@@ -190,10 +199,8 @@ def main():
             mydata[6] = "Zürich (ZH)"
         if (mydata[6] == "Kanton Zürich/Promega"):
             mydata[6] = "Zürich (ZH)"
-
     cram = args.samplename+".cram"
-
-    strain = 'hCoV-19/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","")+"/"+mydata[5].split("-")[0]
+    strain = 'hCoV-19/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","").replace("-","")+"/"+mydata[5].split("-")[0]
     verify_strain_name(strain, meta)
     sourcename = mydata[6]
     try:

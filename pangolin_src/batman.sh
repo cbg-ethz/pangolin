@@ -107,14 +107,19 @@ case "$1" in
                 # Add abstractions and generalized to allow for new sequencing methods
                 mv ${clusterdir_old}/${working}/samples_aviti.tsv ${clusterdir_old}/${working}/samples_aviti.tsv.old
                 touch ${clusterdir_old}/${working}/samples_aviti.tsv 
-                mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
+                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
                 while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then 
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
+                        if [ "${#col2}" -eq 19 ]; then
+                                batch_date=${col2%%_*}
+                                if [ "$batch_date" -gt $aviti_date ]; then
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
+                                else
+                                        echo "skipping Aviti batch ${col2} as too old"
+                                fi
                         else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples.tsv
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_pre-aviti.tsv
                         fi
-                done < ${clusterdir_old}/${working}/samples.tsv_old
+                done < ${clusterdir_old}/${working}/samples.tsv
         ;;
         vpipe)
                 declare -A job
