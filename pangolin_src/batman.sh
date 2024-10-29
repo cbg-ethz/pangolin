@@ -155,9 +155,9 @@ case "$1" in
                 cd ${clusterdir_old}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
@@ -389,6 +389,8 @@ case "$1" in
 		recent=""
 		shrtrecent=""
 		force="${sort_force}"
+                aviti = 0
+                if 
 		while [[ -n $2 ]]; do
 			case "$2" in
 				--summary)
@@ -397,6 +399,11 @@ case "$1" in
 				--force)
 					force='--force'
 				;;
+                                --aviti)
+                                        recent="--recent=${lastmonth}"
+                                        shrtrecent="-r ${lastmonth}"
+                                        aviti=1
+                                ;;
 				--recent)
 					recent="--recent=${lastmonth}"
 					shrtrecent="-r ${lastmonth}"
@@ -417,7 +424,11 @@ case "$1" in
 			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
  
 			(( google_sheet_patches )) && ${clusterdir}/google_sheet_patches.py
-          		${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} || fail=1
+                        if [[ "$aviti" == "0" ]]; then
+          		        ${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} || fail=1
+                        else
+          		        ${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} || fail=1
+                        fi
 
 		else
 			echo "Skipping fgcz"

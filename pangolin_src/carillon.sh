@@ -78,7 +78,16 @@ if [[ "${skipsync}" != "fgcz" ]]; then
         fi
     fi
 fi
-${remote_batman} sortsamples --year $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+if (( skipaviti )); then
+    echo "Skipping aviti as per config"
+    ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+elif [ ${now} -ge ${aviti_date} ]; then
+    echo "Sorting Aviti samples"
+    ${remote_batman} sortsamples --aviti $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+else
+    echo "Sorting Illumina samples"
+    ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+fi
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"
@@ -309,18 +318,21 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             shorah="--no-shorah"
         fi
-        if [ ${now} -ge ${aviti_date} ]; then
+        if (( skipaviti )); then
+            aviti=""
+        elif [ ${now} -ge ${aviti_date} ]; then
             aviti="--aviti"
         else
             aviti=""
         fi
-        #${remote_batman} addsamples --recent && \
+        ${remote_batman} addsamples --recent && \
         ${remote_batman} vpipe ${shorah} ${aviti} --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} &&  \
         if [[ -s ${statusdir}/vpipe.${now} ]]; then
             ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
             cat ${statusdir}/vpipe_started
-            printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now}
-            ${remote_batman} get_vpipe_commit | tee -a ${statusdir}/vpipe_new.${now}
+            printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${statusdir}/vpipe_new.${now} |
+            #${remote_batman} get_vpipe_commit | 
+                tee -a ${statusdir}/vpipe_new.${now}
             if [[ -n "${mailto[*]}" ]]; then
                 (
                     echo '(Possibly new) samples not having consensus sequences yet found in batches:'
