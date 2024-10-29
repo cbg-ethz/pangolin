@@ -389,8 +389,7 @@ case "$1" in
 		recent=""
 		shrtrecent=""
 		force="${sort_force}"
-                aviti = 0
-                if 
+                aviti=0
 		while [[ -n $2 ]]; do
 			case "$2" in
 				--summary)
@@ -424,7 +423,7 @@ case "$1" in
 			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
  
 			(( google_sheet_patches )) && ${clusterdir}/google_sheet_patches.py
-                        if [[ "$aviti" == "0" ]]; then
+                        if [[ "$aviti" == "1" ]]; then
           		        ${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} || fail=1
                         else
           		        ${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} || fail=1
