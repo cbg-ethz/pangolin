@@ -82,8 +82,6 @@ basedir=/cluster/project/pangolin/rsv_pipeline
 basedir_test=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 sampleset=/cluster/project/pangolin/rsv_pipeline/sampleset
 download=/cluster/project/pangolin/rsv_pipeline/bfabric-downloads
-rawdir=raw_data
-extracteddir=extracted_data
 link=--link
 mode=
 badlist=
@@ -101,10 +99,6 @@ basedir=config['_']['basedir'].strip("\"'")
 '''base dircetory'''
 basedir_test=config['_']['basedir_test'].strip("\"'")
 '''test base directory'''
-rawdir_sample=config['_']['rawdir'].strip("\"'")
-'''sampleset raw data subdirectory'''
-extracteddir_sample=config['_']['extracteddir'].strip("\"'")
-'''sampleset extracted data subdirectory'''
 expname=config['_']['expname'].strip("\"'")
 '''projects name in SFTP'''
 download=config['_']['download'].strip("\"'")
@@ -171,7 +165,7 @@ if args.verbose:
 	print("\x1b[37;1mLooking for FastQC folders\x1b[31;0m")
 fastqc={} # maps orders to FastQC directories (or in the absence of order number: checksum of the input_dataset)
 fastqc_samples={} # maps which samples are present in which FastQC directory (some might be missing)
-for d in glob.glob(os.path.join(basedir,download,projects,'*Fastqc_*')):
+for d in glob.glob(os.path.join(basedir,download,projects,'Fastqc_*')):
 	name = d.split(os.sep)[-1]
 	if name in badlist:
 		print(f"skipping {name} in bad list")
@@ -242,7 +236,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						barcode2 = len(f"{r['barcode2']}")
 				if "Aviti" in srch:
 					#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
-					j = os.path.join(srch, 'DmxStats', f'Stats_L1_*i1-{barcode1}_i2-{barcode2}.json')
+					j = os.path.join(srch, 'DmxStats', f'Stats_*i1-{barcode1}_i2-{barcode2}.json')
 					j = glob.glob(j)
 					if len(j) > 1:
 						print("ERROR: found multiple Stats files for delivery" + srch)
@@ -260,7 +254,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						j = os.path.join(srch, 'DmxStats', f'Stats_L1_i1-{barcode1}_i2-{barcode2}.json')
 						if not os.path.isfile(j):
 							#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
-							j = os.path.join(srch, 'DmxStats', f'Stats_L1_*i1-{barcode1}_i2-{barcode2}.json')
+							j = os.path.join(srch, 'DmxStats', f'Stats_L1_L2_i1-{barcode1}_i2-{barcode2}.json')
 							if not os.path.isfile(j):
 								print(srch, "Cannot find the Stats file")
 								continue
@@ -561,6 +555,37 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 	except FileExistsError:
 		pass
 
+
+# shell script file with all moving instructions inside
+sh=open(os.path.join(basedir_test,'movedatafiles.sh'), 'wt')
+
+# generic header: only for stand-alone files.
+print(r'''
+link='%(link)s'
+mode='%(mode)s' # e.g.: --mode=0770
+
+# Helper
+fail() {
+	printf '\e[31;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+	exit 1
+}
+
+warn() {
+	printf '\e[33;1mArgh: %%s\e[0m\n'	"$1"	1>&2
+	[[ -n "$2" ]] && echo "$2" 1>&2
+}
+
+ALLOK=1
+X() {
+	ALLOK=0
+}
+
+# sanity checks
+[[ -d '%(sampleset)s' ]] || fail 'No sampleset directory:' '%(sampleset)s'
+[[ -d '%(download)s' ]] || fail 'No download directory:' '%(download)s'
+''' % {'link':link,'mode':(f"--mode={mkdirmode:04o}" if mkdirmode else ''), 'sampleset':sampleset,'download':download}, file=sh)
+
 # helper function to handle items that can be either single string or list (or empty)
 listify = lambda x: x if type(x) is list else [] if x is None else [x]
 delistify = lambda x: x if type(x) is str else None if len(x) == 0 else next(iter(x)) if len(x) == 1 else sorted(x, reverse=True)
@@ -604,9 +629,11 @@ for b in batches:
 		order=b
 		batch=f"{rundate}_{flowcell}"
 
+	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
 	qcdir=None
 	if (not args.nofqc) and (not dupe) and ('fastqc' in batches[b]):
 		qcdir=batches[b]['fastqc']
+		print(r"[[ -d '%(download)s/%(prj)s/%(qc)s' ]] || fail 'No download directory:' '%(download)s/%(prj)s/%(qc)s'" % {'download':download,'prj':prj,'qc': qcdir}, file=sh)
 
 	# patch file exist ?
 	patchmap = { }
@@ -705,6 +732,7 @@ for b in batches:
 			# progress
 			prgbar=math.floor(cursam*128/totsam)
 			if lastbar != prgbar:
+				print(f"echo -ne '\\r[{bar(prgbar)}]\\r'", file=sh)
 				lastbar=prgbar
 			cursam+=1
 
@@ -775,42 +803,33 @@ for b in batches:
 
 			# map name to project / order / folder
 			print(samname, prj, order, batches[b]['name'], *plate, sep='\t', file=sprj)
-			#softlink raw files with in sampleset to create a restructured input folder
-			sampledir = os.path.join(basedir, sampleset, r["Name"])
-			batchdir = os.path.join(sampledir, (batches[b]["rundate"] + "_" + batches[b]["flowcell"]))
-			rawdir_sample = os.path.join(batchdir, rawdir_sample)
-			extracteddir_sample = os.path.join(batchdir, extracteddir_sample)
-			r1filedest = os.path.join(rawdir_sample, r["Read1 [File]"].split("/")[-1])
-			r2filedest = os.path.join(rawdir_sample, r["Read2 [File]"].split("/")[-1])
-			if(os.path.isfile(r1filedest) and os.path.isfile(r2filedest)):
-				continue
-			try:
-				if(not os.path.isdir(sampledir)):
-					os.mkdir(sampledir)
-				if(not os.path.isdir(batchdir)):
-					os.mkdir(batchdir)
-				if(not os.path.isdir(rawdir_sample)):
-					os.mkdir(rawdir_sample)
-				if(not os.path.isdir(extracteddir_sample)):
-					os.mkdir(extracteddir_sample)
-				if(not os.path.isfile(r1filedest)):
-					os.symlink(os.path.join(download, r["Read1 [File]"]), r1filedest)
-				if(not os.path.isfile(r2filedest)):
-					os.symlink(os.path.join(download, r["Read2 [File]"]), r2filedest)
-			except:
-				print(f"cannot create symlinks for batch <{batches[b]['rundate']}>_<{batches[b]['flowcell']}>, sample <{r['Name']}>")
-				if(os.path.isfile(r1filedest)):
-					os.unlink(r1filedest)
-				if(os.path.isfile(r2filedest)):
-					os.unlink(r2filedest)
-				if(os.path.isdir(rawdir_sample)):
-					os.rmdir(rawdir_sample)
-				if(os.path.isdir(extracteddir_sample)):
-					os.rmdir(extracteddir_sample)
-				if(os.path.isdir(batchdir)):
-					os.rmdir(batchdir)
-				if(os.path.isdir(sampledir)):
-					os.rmdir(sampledir)
-				continue
-		os.rename(os.path.join(basedir,sampleset,f'samples.{batch}.tsv.staging'), os.path.join(basedir,sampleset,f'samples.{batch}.tsv'))
 
+			# move script
+			print(r'''
+mkdir ${mode} -p "%(sampleset)s/"{,"%(sname)s/"{,"%(batch)s/"{,raw_data,extracted_data}}}
+cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X''' % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r1,'destname':f"{fulname}_R1.fastq.gz"}, file=sh)
+			if ends==2:
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(id)s/%(read)s' '%(sampleset)s/%(sname)s/%(batch)s/raw_data/%(destname)s'||X" % {'force': ('f' if args.force else ''),'download':download,'prj':prj,'id':name,'sname':samname,'batch':batch,'sampleset':sampleset,'read':r2,'link':link,'destname':f"{fulname}_R2.fastq.gz"}, file=sh)
+			if qcdir and fulname in fastqc_samples[qcdir]:
+				fqc=rxfqext.sub('_fastqc.html',r1)
+				print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R1_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+				if ends==2:
+					fqc=rxfqext.sub('_fastqc.html',r2)
+					print(r"cp -v%(force)s ${link} '%(download)s/%(prj)s/%(fastqc)s/%(fqc)s' '%(sampleset)s/%(sname)s/%(batch)s/extracted_data/R2_fastqc.html'||X" %{'force': ('f' if args.force else ''),'download':download,'prj':prj,'fastqc':qcdir,'fqc':fqc,'sampleset':sampleset,'sname':samname,'batch':batch}, file=sh)
+
+print(f"""
+echo -e '\\r\\e[K[{bar(128)}] done.'
+if (( !ALLOK )); then
+		echo Some errors
+		exit 1
+fi;
+
+""", file=sh)
+
+for b in otsv.keys():
+	print(f"mv -v {sampleset}/samples.{b}.tsv.staging {sampleset}/samples.{b}.tsv", file=sh)
+
+print("""
+echo All Ok
+exit 0
+""", file=sh)
