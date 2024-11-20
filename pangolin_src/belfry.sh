@@ -96,7 +96,7 @@ callpushrsync() {
         exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync   --timeout=${iotimeout}  \
                 --password-file ${rsync_pass}      \
-                -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+                -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
                 -izrltH --fuzzy --fuzzy --inplace       \
                 -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x        \
                 -g --chown=:'bsse-covid19-pangolin-euler'       \
@@ -121,7 +121,7 @@ callpullrsync_fordb() {
         exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync   --timeout=${iotimeout}  \
                 --password-file ${rsync_pass}      \
-                -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+                -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
                 -izrltHLK --fuzzy --fuzzy --inplace       \
                 --link-dest=${local_dataset}/${working}/samples    \
                 --exclude='alignments/'    \
@@ -156,7 +156,7 @@ callpullrsync_viloca() {
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
 		--password-file ${rsync_pass}	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		--link-dest=${$backupdir}/${viloca_backup_subdir}/	\
 		"${arglist[@]}"	\
@@ -179,7 +179,7 @@ callpullrsync_rsync() {
 	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
 		rsync	--timeout=${iotimeout}	\
 		--password-file ${rsync_pass}	\
-		-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
+		-e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
 		-izrltH --fuzzy --fuzzy --inplace	\
 		--link-dest=${backupdir}/${sync_backup_subdir}	\
 		"${arglist[@]}"	\
@@ -270,7 +270,7 @@ case "$1" in
         err=0
 		rsync	\
 			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} "	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
@@ -288,7 +288,7 @@ case "$1" in
         err=0
 		rsync	\
 			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} "	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
@@ -306,7 +306,7 @@ case "$1" in
 		err=0
 		rsync	\
 			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} "	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
@@ -326,7 +326,7 @@ case "$1" in
         sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${2}.tsv"  )
         rsync \
             --password-file ${HOME}/.ssh/rsync.pass.euler \
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} " \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user} " \
             -izrltHLK --fuzzy --fuzzy --inplace \
             "${sheets[@]}" \
             ${basedir}/tmp/belfrysheets/
@@ -358,7 +358,7 @@ case "$1" in
         echo "Downloading from Euler the necessary cram files"
         rsync   \
             --password-file ${rsync_pass}	\
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrltHLK --fuzzy --fuzzy --inplace       \
             --files-from=${uploader_tempdir}/cram_to_download.txt \
             --link-dest=${local_dataset}/${working}    \
@@ -378,13 +378,13 @@ case "$1" in
             ${local_dataset}/${working}/samples/
         rsync \
             --password-file ${rsync_pass}	\
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrltHLK --fuzzy --fuzzy --inplace       \
             belfry@euler.ethz.ch::lollipop/variants/timeline.tsv \
             ${local_dataset}/${working}
         rsync \
             --password-file ${rsync_pass}	\
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -izrltHLK --fuzzy --fuzzy --inplace       \
             belfry@euler.ethz.ch::${working}/qa.csv \
             ${local_dataset}/${working}
@@ -437,7 +437,7 @@ case "$1" in
         fi
         rsync \
             --password-file ${HOME}/.ssh/rsync.pass.euler \
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} " \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user} " \
             -izrltHLK --fuzzy --fuzzy --inplace \
             "${sheets[@]}" \
             ${basedir}/tmp/belfrysheets/
@@ -470,7 +470,7 @@ case "$1" in
         echo "Backup of uploader archives to bs-bewi08"
         err=0
         rsync	\
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_rsv" \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_influenza" \
             -izrltH --fuzzy --fuzzy --inplace	\
             ${uploader_archive}    \
             bs-pangolin@d@bs-bewi08.ethz.ch:${remote_uploader_backup_dir} || (( ++err ))

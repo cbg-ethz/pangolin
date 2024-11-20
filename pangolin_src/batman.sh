@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
+scriptdir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir_old}/status
@@ -155,9 +155,9 @@ case "$1" in
                 cd ${clusterdir_old}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
