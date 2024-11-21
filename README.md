@@ -1,6 +1,9 @@
 # pangolin
+This is the Influenza adaptation of the pangolin project based on the commit 794dc7c of the rsv_automation branch.
+[Main Branch](https://github.com/cbg-ethz/pangolin)
+[rsv_automation branch](https://github.com/cbg-ethz/pangolin/tree/rsv_automation)
 
-This is a Respiratory Viruses (RSV) sequencing project done at the BSSE relying on [V-pipe](https://cbg-ethz.github.io/V-pipe/sars-cov-2/) ([doi:10.1093/bioinformatics/btab015](https://doi.org/10.1093/bioinformatics/btab015))
+This is a Influenza sequencing project done at the BSSE relying on [V-pipe](https://cbg-ethz.github.io/V-pipe/sars-cov-2/) ([doi:10.1093/bioinformatics/btab015](https://doi.org/10.1093/bioinformatics/btab015))
 to analyse Aviti data done on [wastewater samples](https://bsse.ethz.ch/news-and-events/d-bsse-news/2021/01/sars-cov-2-variants-detected-in-wastewater-samples.html)
 provided by [Eawag](https://www.eawag.ch/en/department/sww/projects/sars-cov2-in-wastewater/).
 
