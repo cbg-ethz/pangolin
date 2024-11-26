@@ -1,0 +1,12 @@
+name: sendcrypt
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python 
+  - pandas
+  - numpy
+  - git
+  - gnupg
+  - zip

@@ -1,0 +1,8 @@
+name: viloca
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - libshorah
+  - snakemake=7.30.2

@@ -1,0 +1,44 @@
+services:
+  pangolin:
+    build:
+      context: /data/projects/wastewater_automation/pangolin 
+    volumes:
+      - /data/projects/wastewater_automation/workdir:/app/workdir:rw
+      - /data/projects/wastewater_automation/resources:/app/resources:ro
+      - /data/projects/dataset:/app/dataset:rw
+      - /data/projects/wastewater_automation/pangolin:/app/codebase:ro
+    secrets:
+      - bs-pangolin_login_euler
+      - bs-pangolin_login_backups
+      - fgcz_login
+      - id_ed25519_wisedb
+      - id_ed25519_wisedb_backups
+      - rsync.pass.euler
+      - spsp_gpg_key
+      - bs_pangolin_gpg_key
+      - bs_pangolin_gpg_key_password
+      - sendcrypt_profile
+      - spsp_uploads_ssh_private_key
+secrets:
+  bs-pangolin_login_euler:
+    file: /data/projects/wastewater_automation/secrets/bs-pangolin@euler.ethz.ch
+  bs-pangolin_login_backups:
+    file: /data/projects/wastewater_automation/secrets/bs-pangolin@d@bs-bewi08
+  fgcz_login:
+    file: /data/projects/wastewater_automation/secrets/fgcz-gstore.uzh.ch
+  id_ed25519_wisedb:
+    file: /data/projects/wastewater_automation/secrets/id_ed25519_wisedb
+  id_ed25519_wisedb_backups:
+    file: /data/projects/wastewater_automation/secrets/id_ed25519_wisedb_backups
+  rsync.pass.euler:
+    file: /data/projects/wastewater_automation/secrets/rsync.pass.euler
+  spsp_uploads_ssh_private_key:
+    file: /data/projects/wastewater_automation/secrets/id_ed25519_spsp_uploads
+  spsp_gpg_key:
+    file: /data/projects/wastewater_automation/secrets/ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
+  bs_pangolin_gpg_key:
+    file: /data/projects/wastewater_automation/secrets/bs-pangolin_spsp-uploads_gpg-key.gpg
+  bs_pangolin_gpg_key_password:
+    file: /data/projects/wastewater_automation/secrets/gpg_key_secrets
+  sendcrypt_profile:
+    file: /data/projects/wastewater_automation/secrets/default.sendcrypt-profile
