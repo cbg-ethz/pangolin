@@ -152,20 +152,29 @@ case "$1" in
                         shift
                 done
                 # start first job
-                cd ${clusterdir_old}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H1/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="H1_FLU-AVITI-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H3/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="H3_FLU-AVITI-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_MP/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="MP_FLU-AVITI-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N1/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="N1_FLU-AVITI-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N2/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="N2_FLU-AVITI-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_H1/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="H1_FLU-AVITI-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_H3/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="H3_FLU-AVITI-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_MP/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="MP_FLU-AVITI-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_N1/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="N1_FLU-AVITI-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_N2/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="N2_FLU-AVITI-vpipe-<${tag}>-cons")"
                 else
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H1/working/vpipe_influenza_.sbatch | sbatch --parsable ${hold} --job-name="H1_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H3/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="H3_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_MP/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="MP_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N1/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="N1_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N2/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="N2_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_H1/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_.sbatch | sbatch --parsable ${hold} --job-name="H1_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_H3/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="H3_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_MP/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="MP_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_N1/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="N1_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/IA_N2/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="N2_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
