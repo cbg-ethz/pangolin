@@ -14,7 +14,7 @@ while getopts "sh" o; do
 	esac
 done
 
-scriptdir=/app/pangolin_src
+scriptdir=/app/fgcz_sync
 . ${scriptdir}/config/server.conf
 runtimeout=3600
 shorttimeout=300
@@ -41,7 +41,7 @@ ring_fgcz_sync() {
 	fi
 	# run the carrillon script
 	echo "Starting loop for: $runtimeout sec"
-	timeout -k 5 -s INT $runtimeout ${scriptdir}/fgcz_sync.sh | tee -a ${statusdir}/carillon/carillon_${now}.log
+	timeout -k 5 -s INT $runtimeout ${scriptdir}/fgcz_sync.sh | tee -a ${statusdir}/carillon/fgcz_sync_${now}.log
 	local retval=$?
 	timeout -k 5 -s INT $shorttimeout touch ${statusdir}/loop_done
 

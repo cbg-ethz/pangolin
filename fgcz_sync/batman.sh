@@ -361,7 +361,7 @@ case "$1" in
         done
         
         # Set the directory where bfabric downloads are stored
-        bfabricdir=${fgcz_download_folder}  # CHANGED TO FOLDER ON EULER
+        bfabricdir=${download}  # CHANGED TO FOLDER ON EULER - fgcz_download_folder (server.conf) or download defined in fgcz.conf
         cd ${bfabricdir}
         
         # Define the directory to store sync status
