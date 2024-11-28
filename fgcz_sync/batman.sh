@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
+scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src  #on euler?
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir_old}/status

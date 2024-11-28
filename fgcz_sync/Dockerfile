@@ -12,16 +12,16 @@ RUN apt-get update && apt-get install -y vim wget lftp rsync gawk ssh git gpg ex
 USER bs-pangolin
 WORKDIR /app/
 RUN mkdir -p setup
-COPY pangolin_src/setup /app/setup
+COPY ./setup /app/setup
 RUN /app/setup/setup.sh
 
 USER root
-COPY --chown=bs-pangolin:bs-pangolin pangolin_src /app/pangolin_src
-COPY --chown=bs-pangolin:bs-pangolin uploader /app/uploader
+COPY --chown=bs-pangolin:bs-pangolin . /app/fgcz_sync
+
 USER bs-pangolin
 
-WORKDIR /app/pangolin_src
+WORKDIR /app/fgcz_sync
 
 
 
-ENTRYPOINT ["/app/pangolin_src/entrypoint.sh"]
+ENTRYPOINT ["/app/fgcz_sync/entrypoint.sh"]
