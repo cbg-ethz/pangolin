@@ -19,6 +19,38 @@ scriptdir=/app/pangolin_src
 runtimeout=3600
 shorttimeout=300
 
+#same function as ring carillon but only for the fgcz loop?
+ring_fgcz_sync() {
+	now=$(date '+%Y%m%d')
+	newtimeout=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^runtimeout=).*$' config/server.conf)
+	if [[ -n "${runtimeout}" ]]; then
+		runtimeout=${newtimeout}
+	fi
+	if timeout -k 5 -s INT ${shorttimeout} touch b0rk && [[ -f b0rk ]]; then
+		rm b0rk
+	else
+		echo "Aargh: problem writing on storage !!!"
+		# TODO use carillon phases
+		${scriptdir}/belfry.sh  df
+		cluster_user="${USER%%@*}"
+		cluster_user=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^cluster_user=).*$' config/server.conf)
+		remote_batman="ssh -o StrictHostKeyChecking=no -ni ${HOME}/.ssh/id_ed25519_batman -l ${cluster_user} euler.ethz.ch --"
+		timeout -k 5 -s INT $shorttimeout ${remote_batman} df
+		date -R
+		return 1
+	fi
+	# run the carrillon script
+	echo "Starting loop for: $runtimeout sec"
+	timeout -k 5 -s INT $runtimeout ${scriptdir}/fgcz_sync.sh | tee -a ${statusdir}/carillon/carillon_${now}.log
+	local retval=$?
+	timeout -k 5 -s INT $shorttimeout touch ${statusdir}/loop_done
+
+	# report NFS status
+	#dmesg -LTk| grep -P 'nfs:.*server \S* (OK|not responding)' --colour=always|tail -n 1
+
+	return $retval
+}
+
 ring_carillon() {
 	now=$(date '+%Y%m%d')
 	newtimeout=$(timeout -k 5 -s INT ${shorttimeout} grep -oP '(?<=^runtimeout=).*$' config/server.conf)

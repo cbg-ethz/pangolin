@@ -71,6 +71,10 @@ ${scriptdir}/belfry.sh get_pangolin_commit
 #         fi
 #     fi
 # fi
+echo "================="
+echo "Reformat data for V-pipe run"
+echo "================="
+
 ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
