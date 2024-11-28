@@ -155,26 +155,21 @@ case "$1" in
                 cd ${clusterdir_old}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H1/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="H1_FLU-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H3/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="H3_FLU-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_MP/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="MP_FLU-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N1/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="N1_FLU-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N2/working/vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="N2_FLU-AVITI-vpipe-<${tag}>-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H1/working/vpipe_influenza_.sbatch | sbatch --parsable ${hold} --job-name="H1_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_H3/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="H3_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_MP/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="MP_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N1/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="N1_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/IA_N2/working/vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="N2_FLU-ILLUMINA-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
                         job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
-                        # if no fail schedule a full job with snv
-                        if (( shorah )); then
-                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
-                                if [[ -n "${job['snv']}" ]]; then
-                                        # schedule a gatherqa no matter what happens to snv
-                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                        # schedule a hugemem job if snvjob failed
-                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
-                                        # schedule a qa afterward
-                                        [[ -n "${job['hugemem']}" ]]    && \
-                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                fi
-                        fi      
                 fi >&2
                 # write job chain list
                 for v in "${list[@]}"; do

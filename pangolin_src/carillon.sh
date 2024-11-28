@@ -43,7 +43,7 @@ ${scriptdir}/belfry.sh get_pangolin_commit
 # Phase 0: General information
 #
 echo '========='
-echo 'This is the RSV automation'
+echo 'This is the Influenza automation'
 echo '========='
 
 #
