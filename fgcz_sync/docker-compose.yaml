@@ -1,5 +1,5 @@
 services:
-  pangolin: # this is the name of the container that will be created - change
+  fgcz_sync: # Service name (container that will be created) - no container neame specified here
     build:
       context: /data/projects/wastewater_automation/pangolin 
     volumes: #directories of the wisedb VM

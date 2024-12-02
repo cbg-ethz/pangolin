@@ -10,6 +10,8 @@
 7. added entrypoint.sh 
 8. deleted cowabunga.sh
 9. deleted ring_carillon and exchanged the call to ring_fgcz_sync in quasimodo.sh
+10. cloned repo to euler /cluster/project/pangolin/fgcz_sync_automation with https
+11. changed name of docker container in the docker-compose
 
 
 
@@ -19,11 +21,6 @@ In Docker file:
 - in belfry.sh there are 4x /app/pangolin_src in the functons: callpushrsync, callpullrsync_fordb, callpullrsync_viloca and callpullrsync_rsync
     - do we still need these functions?
     - 
-
-
-Euler:
-- created folder /cluster/project/pangolin/fgcz_sync_automation
-tried to pull git repo to euler (bs-pangolin) - did not work --> clone with https
 
 left todo:
 - clone to euler
@@ -39,7 +36,7 @@ COPY --chown=bs-pangolin:bs-pangolin . /app/pangolin_src
 
 Question:
 - where to find ${remote_backup} pull_fgcz_data (fgcz_sync.sh)
-- does the Dockerfile also need to be adapted to the current folder?
+
 
 
 
