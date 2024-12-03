@@ -14,7 +14,6 @@
 11. changed name of docker container in the docker-compose
 
 
-
 In Docker file:
 - i now defined that the folder where everything is stores should be called 'fgcz_sync' instrad of pangolin_src --> make sure that it is correctly changed everywhere necessary
 - in batman.sh sync_fgcz there are many dependencies: can i leave the scriptdir as is since it it on euler?
@@ -23,7 +22,6 @@ In Docker file:
     - 
 
 left todo:
-- clone to euler
 - adapt the virus automations to get the data from the right place?
     - we already get them form the rigth place
     - there is a variable to skip the sync in server.conf, just set this to fgcz
@@ -36,6 +34,7 @@ COPY --chown=bs-pangolin:bs-pangolin . /app/pangolin_src
 
 Question:
 - where to find ${remote_backup} pull_fgcz_data (fgcz_sync.sh)
+- the function is in a file in bwo8- similar as batmad for euler
 
 
 
