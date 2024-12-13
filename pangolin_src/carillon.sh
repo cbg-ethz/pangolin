@@ -28,6 +28,7 @@ mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${amplicon_coverage_statusdir}
+mkdir ${mode:+--mode=${mode}} -p ${downstream_analysis_statusdir} ###added new status dir to here and server.conf
 
 touch ${statusdir}/oh_hai_im_looping
 
@@ -43,7 +44,7 @@ ${scriptdir}/belfry.sh get_pangolin_commit
 # Phase 0: General information
 #
 echo '========='
-echo 'This is the RSV automation'
+echo 'This is the Influenza automation'
 echo '========='
 
 #
@@ -349,6 +350,21 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
 else
     echo 'There is already a vpipe run going on'
 fi
+
+#
+# postprocessing of vpipe output to tsv file for SPSP upload
+#
+${remote_batman} vpipe_out_to_tsv
+if [[ -e ${downstream_analysis_statusdir}/detect_AAMutations_fail ]] && [[ ${downstream_analysis_statusdir}/detect_AAMutations_fail -nt ${downstream_analysis_statusdir}/detect_AAMutations_success ]]; then
+    echo -e "\e[31;1mdetect_AAMutations.R script failed\e[0m"
+    echo "postprocessing of vpipe output to tsv file for SPSP upload failed"
+else
+    # Handle the success or other conditions here
+    echo -e "\e[31;1mdetect_AAMutations.R script succeeded\e[0m"
+    echo "postprocessing of vpipe output to tsv file for SPSP upload succeeded"
+fi
+
+
 
 #
 # Phase 4: run viloca on new samples if no viloca instance is running

@@ -6,6 +6,8 @@ scriptdir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
+downstream_analysis_dir=${scriptdir}/downstream_analysis  ###
+
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
 #
@@ -546,5 +548,32 @@ case "$1" in
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
+        ;;
+        vpipe_out_to_tsv)
+        conda activate influenza_analysis_R
+
+        cd ${downstream_analysis_dir}/
+        downstream_analysis_statusdir=${status}/downstream_analysis
+        mkdir -p downstream_analysis_statusdir
+        vpipe_dir=${clusterdir_old}/${working}  ###is this the correct location?
+        location_dic="ww_locations.tsv"  ###here i use the one provided by anika, do we have a central version of this file?
+        #the command which runs the analysis
+        detect_command=$(./detect_AAMutations.R -d $vpipe_dir -l $location_dic)
+
+        fail=0
+        #If the command fails (non-zero exit code), the fail variable is set to 1.
+        command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+        # Check the result of the command and create the appropriate status file
+        if (( fail == 0 )); then
+                #echo "Command succeeded."
+                touch "${downstream_analysis_statusdir}/detect_AAMutations_success"
+        else
+                #echo "Command failed."
+                touch "${downstream_analysis_statusdir}/detect_AAMutations_fail"
+        fi
+
+
+        conda deactivate
+
         ;;
 esac
