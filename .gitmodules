@@ -8,3 +8,5 @@
 [submodule "pangolin_src/downstream_analysis"]
 	path = pangolin_src/downstream_analysis
 	url = git@github.com:anikajohn/AA_mutationAnalysis_IAV.git
+[submodule "/data/projects/influenza_downstream_analysis/pangolin/pangolin_src/downstream_analysis"]
+	branch = development
