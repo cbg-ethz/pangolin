@@ -1,0 +1,219 @@
+# Pangolin
+Pangolin is an automation primarily designed to monitor the upload of new samples to B-fabric, and subsequent alignment of these samples to a reference genomes with the help of V-pipe. When new samples are detected, Pangolin automatically synchronizes them to Euler for downstream processing. Once the samples are synced, V-Pipe is executed to process the data, and both the samples and results are backed up to Bewi08.
+
+
+In addition to its automated processes, Pangolin also offers some manual (not yet automated) functionalities. 
+One such feature is Lollipop, which is used for the deconvolution step in virus analysis.
+
+The automation is organized into three main subfolders:
+
+- pangolin_src: Contains the source code for Pangolin.
+- uploader: Handles the synchronization of uploaded samples.
+- working: Manages intermediate processes and data handling.
+
+#### General Logic
+The autoamtion is started by launching it's docker container on the wiseDB VM and interacts with Euler (sHPC) and databases such as b-fabric and SPSP.
+Additionally backups are done on the bewi08 VM.
+
+## pangolin_src
+This folder contains all the code that is used during the automation. The automation constantly runs in the background and tries to check if there are new samples uploaded to bfabric. If there are new samples, it fetches them and automatically starts vpipe (the alignment). 
+
+In the folder are several scripts to run the Automation. Once the docker image  is created the first script that is celled is entrypoint.sh which then further distributes the tasks and starts the automation.
+
+
+### entrypoint.sh
+The `entrypoint.sh` script in the `flu_automation` branch of the `cbg-ethz/pangolin` repository is designed to set up necessary credentials and configurations for the automation of influenza sequencing processes. It performs the following key actions:
+
+1. **Credential Setup:** Copies various secret files, such as SSH keys and configuration files, into appropriate directories to establish secure connections with external servers and services.
+
+2. **Host Verification:** Adds the SSH keys of specific hosts to the `known_hosts` file, ensuring that the system recognizes and trusts these hosts during SSH connections.
+
+3. **GPG Key Configuration:** Imports GPG keys required for secure data uploads, particularly to the Swiss Pathogen Surveillance Platform (SPSP).
+
+By executing these steps, the script prepares the environment for automated data processing and secure communication with external platforms.
+
+### quasimodo.sh
+This script is designed to run a monitoring process called "carillon" in a loop, with some additional checks and configurations to handle potential issues like storage problems or system crashes. Here's a breakdown of what the script does:
+
+1. **Command Line Options**:
+   - The script accepts two command line options: `-s` for singleshot mode (which stops the script after the first failure) and `-h` for help information.
+   - By default, `singleshot` is set to `0`, meaning the script will continue looping even if there are failures.
+
+2. **Initialization**:
+   - The `scriptdir` variable is set to point to the directory `/app/pangolin_src`, which contains the necessary configuration and scripts.
+   - The script sources a configuration file (`server.conf`) from this directory, which contains key-value pairs that the script uses for further actions.
+
+3. **Timeout Configuration**:
+   - Default values for `runtimeout` and `shorttimeout` are set to 3600 seconds and 300 seconds respectively.
+   - The `ring_carillon` function is defined to perform the main operations, including reading a new value for `runtimeout` from the configuration file if available.
+
+4. **Function `ring_carillon()`**:
+   - This function is responsible for running the carillon monitoring process.
+   - It first sets up a new timeout value by reading from the configuration file.
+   - A temporary file (`b0rk`) is created to test if writing to storage works. If this test fails, it executes commands to troubleshoot and prints an error message.
+   - If the storage test is successful, it runs the `carillon.sh` script for the duration of `runtimeout` and logs its output. The results are saved in a log file named according to the current date.
+   - It then creates a file (`loop_done`) to indicate the completion of a loop.
+
+5. **Handling Previous Stop Files**:
+   - If there is a stop file (`${statusdir}/stop`) from a previous run, it removes this file, indicating that the process should start afresh.
+
+6. **First Run**:
+   - The `ring_carillon` function is called for the first run. If singleshot mode is enabled and the first run fails, the script exits.
+
+7. **Main Loop**:
+   - The script enters a loop that runs indefinitely with a sleep interval of 1200 seconds (20 minutes).
+   - Within the loop:
+     - It re-enters the script directory, which is necessary if an NFS crash makes the current working directory inaccessible.
+     - The `ring_carillon` function is called again.
+     - It checks if the stop file exists (`${statusdir}/stop`). If the stop file is found, it exits the loop gracefully.
+     - The current date is printed in RFC 2822 format after each loop.
+
+8. **Kerberos Ticket Renewal (Commented Out)**:
+   - There is an optional command for renewing a Kerberos ticket, which is currently commented out. This may be necessary for authenticating with certain systems in the environment where the script runs.
+
+**Summary:**
+
+This script is intended to monitor a system or application in a repetitive manner using the "carillon" process. It has features to:
+- Handle failures in storage operations.
+- Periodically renew its running state to avoid stale directory handles (especially useful in networked file systems).
+- Manage failure conditions and exit appropriately based on whether singleshot mode is enabled.
+- It logs its operations and attempts to self-correct in case of errors.
+
+The script is designed for an environment with potential network storage (NFS) and remote server access, and it takes measures to ensure that it can continue functioning even when minor errors or crashes occur.
+
+### carillon.sh
+The script is an automation tool designed to perform a series of tasks for managing data processing and analysis runs on a remote computing cluster. Here's a detailed breakdown of what the script does:
+
+1. **Initialization**
+   - The script starts by defining paths, sourcing a configuration file, and setting default values.
+   - It also sets up environment variables for SSH connections to remote servers for both the main cluster and backup.
+
+2. **Directories and Permissions Setup**
+   - Necessary directories (`statusdir`, `viloca_statusdir`, etc.) are created, and permissions are managed with `umask` to ensure group write access.
+   - A status file (`oh_hai_im_looping`) is created to indicate that the script is running.
+
+3. **Phase 0: General Information**
+   - This phase prints general information about the automation run, including the current script commit for tracking versions.
+
+4. **Phase 1: Data Synchronization**
+   - **Data Sync**: The script syncs data from the FGCZ (Functional Genomics Center Zurich) using a remote command (`sync_fgcz`).
+   - **Error Handling**: If the sync fails, the script indicates that the automation will not be aware of new deliveries.
+   - **Backup**: If configured (`backup_fgcz_raw` set to `1`), it also performs a backup of recent data.
+   - **Sample Sorting**: The script sorts samples depending on the type (e.g., Aviti or Illumina) and the current date. It then pulls the sorting status to check for any issues.
+
+5. **Phase 2: Update Status of Current Run and Trigger Backups**
+   - **Check Current Run**: The script checks if a V-Pipe process is currently running by reading from the `vpipe_started` file.
+   - **Handle Running Jobs**: If a job is still running (`RUNNING`, `PENDING`, etc.), it prints the status, otherwise, it proceeds to mark it as finished.
+   - **Trigger Backup**: If no jobs are running and if backups are enabled (`backup_vpipe` set to `1`), it triggers a backup of the samples.
+   - **Queue for Upload**: If the current run is complete, the last processed batch is queued for upload using the script’s `queue_upload` feature.
+
+6. **Phase 3: Restart V-pipe Runs if New Data**
+   - **Check for New Data**: The script checks if there are new data batches that need to be processed.
+   - **Identify Missing Samples**: It iterates over all available sample sets to identify batches that need to be processed, filtering by date (`limit` is set to two weeks ago).
+   - **Sanity Checks and Starting Jobs**:
+     - The script verifies if all required data are available.
+     - If there are jobs that should be started and job submissions are allowed (`donotsubmit` not set), it starts the necessary jobs, potentially skipping certain types of runs (e.g., Aviti or Shorah) based on configuration flags.
+
+    **Handling Jobs and Submission**
+   - **Run Parameters**: The script determines whether to run the Shorah analysis, skip Aviti, or include other flags as required.
+   - **Start Jobs**: It runs commands to add samples and start V-Pipe, tagging them with batch information.
+   - **Notify Users**: If configured, it sends emails to notify users about new runs and samples that are being processed.
+
+
+7. **Phase 4 & 5: Viloca**
+- TODO
+
+8. **Phase 6: Uploader to SPSP and Backup to bs-bewi08**
+   - **Quota Check**:
+      - Reads or initializes the daily status file to track the number of samples uploaded.
+      - Calculates the current and estimated upload size and compares it against daily limits (sample count and total upload size).
+
+   - **Upload Execution**:
+      - If the upload request exceeds quotas, it defers the upload to the next day.
+      - If within quotas, it starts the upload process using the `belfry.sh upload` script and updates the status file with the new total.
+
+   - **Backup**:
+      - If enabled, backs up the results of the upload to a backup server and logs the status of the backup operation.
+      - Handles both successful and failed backup attempts.
+
+
+9. **Phase 7: Amplicon Coverage**
+- TODO
+
+ 
+
+### belfry.sh 
+Batch Processing Script - 
+Helper functions for carillon.sh (VM interaction / data sync)
+ 
+ **Rsync Commands**:
+  - The script uses `rsync` to manage the transfer of data between local and remote servers.
+  - SSH keys are used for authentication, and `timeout` ensures no command runs indefinitely.
+  - Exclude patterns are used to filter out unnecessary files and directories, which is important for optimizing network usage and focusing on relevant data.
+
+ **Directory and File Operations**:
+  - The script has specific routines for managing directories and file permissions, including using `umask` and `mkdir` with `mode` settings to ensure that directories are created with appropriate permissions for group collaboration.
+
+1. **Initial Setup**
+   - **Set Variables**: 
+     - It sets up different date variables (`now`, `lastmonth`, etc.) to help manage data according to different timeframes.
+     - Uses `date` or `gdate` based on the operating system to handle date calculations.
+   - **Environment Setup**:
+     - Loads configuration from `server.conf` to get key variables.
+     - Defines default values for important variables, such as directories (`basedir`, `sampleset`), parallel processing settings (`parallel`, `parallelpull`), and others.
+   - **Permissions**:
+     - Sets default file creation permissions using `umask 0002`, ensuring group write access.
+
+2. **Directory Setup**
+   - Creates directories (`statusdir`, `viloca_statusdir`, `uploader_statusdir`) required for the script’s execution, using `mkdir` with the optional `mode` parameter if it is defined.
+
+3. **Validation Functions**
+   - **`validateBatchDate()`**:
+     - Ensures that the provided batch date is in the correct format (`YYYYMMDD`). Exits with an error message if not.
+   - **`validateBatchName()`**:
+     - Validates that the batch name follows the expected format (`YYYYMMDD_<alphanumeric>`).
+
+4. **Data Synchronization Functions**
+   - **`callpushrsync()`**:
+     - This function synchronizes files from a local directory to a remote server using `rsync`. It constructs arguments based on the provided inputs and appends the correct directory paths.
+     - Uses SSH for authentication and sets up file permissions for the remote server.
+     - `timeout` ensures the command terminates if it exceeds a defined time.
+   - **`callpullrsync_fordb()`**:
+     - Similar to `callpushrsync()`, but used for pulling files from the remote server to a local destination. It excludes specific directories to avoid unnecessary data transfers (e.g., `alignments/`, `raw_data/`).
+   - **`callpullrsync_viloca()`**:
+     - A specialized function for pulling VILOCA results from the remote server. It uses `rsync` and also supports timeouts and SSH authentication.
+
+5. **Sync Helper Function**
+   - **`checksyncoutput()`**:
+     - Parses the output of the `rsync` command to determine if new files were downloaded and updates status files accordingly.
+     - Uses a regular expression to match and extract data from the output, and uses `flock` to prevent race conditions while writing to files.
+
+6. **Main Command Handler**
+   - Handles different commands passed to the script as arguments (`$1`). Based on the command, it performs various tasks:
+     
+     - **`qa_report`**:
+       - Activates a conda environment named `qa_report` and runs a Python script (`qa_report.py`) to generate a quality assessment report.
+       - If successful, it updates a status file; otherwise, it logs failure.
+     
+     - **`pushseq`**:
+       - Activates a conda environment (`wastewater`) and runs a script (`upload_viollier`) to push sequencing data. Updates status files based on success or failure.
+
+     - **`gitaddseq`**:
+       - Activates the `wastewater` conda environment and adds sequencing files (`*.fasta`) and QA files to a git repository for version control.
+     
+     - **`df`**:
+       - Displays the disk usage information of the base directory, including inode usage.
+
+     - **`garbage`**:
+       - Moves a specified batch to a "garbage" directory for cleanup. Validates the batch name and moves all related data files from both the sampleset and working directories to the garbage folder.
+     
+     - **`pull_sync_status`**:
+       - Uses `rsync` to pull updated status information for raw data synchronization from the remote server.
+       - Logs success or failure to status files.
+
+7. **Error Handling and Safety Features**
+   - **`set -e`**: 
+     - Ensures that the script exits immediately if any command fails. This is a safety feature to avoid continuing operations if something goes wrong.
+   - **`timeout`**:
+     - Used in `rsync` commands to ensure they do not run indefinitely. Commands will be killed if they exceed the allowed time.
+
