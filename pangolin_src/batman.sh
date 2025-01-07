@@ -355,7 +355,7 @@ case "$1" in
 			esac
 			shift
 		done
-		bfabricdir=${clusterdir_old}/bfabric-downloads
+		bfabricdir=${clusterdir_old}/../bfabric-downloads
 		cd ${bfabricdir}
 		sync_fgcz_statusdir=${status}/sync
 		mkdir -p $sync_fgcz_statusdir
