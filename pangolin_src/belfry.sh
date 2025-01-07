@@ -487,6 +487,34 @@ case "$1" in
         commit=$(git log -n 1 ${branch} | head -n 1)
         echo "Branch: ${branch}\n${commit}"
     ;;
+    archive_cram)
+        . ${scriptdir}/config/server.conf
+        echo "Archiving cram files in ${cram_archive}"
+        source ${baseconda}/etc/profile.d/conda.sh
+        conda activate sendcrypt
+        cd ${cram_archive}
+        echo "Downloading from Euler the cram files to archive"
+        rsync   \
+            --password-file ${rsync_pass}       \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+            -irltHLK --fuzzy --fuzzy --inplace       \
+            --files-from=:/samples/cram_list.txt \
+            --link-dest=${cram_archive}/working/samples    \
+            --exclude='alignments/'    \
+            --exclude='extracted_data/'    \
+            --exclude='preprocessed_data/'    \
+            --exclude='raw_data/'   \
+            --exclude='raw_uploads/'    \
+            --exclude='references/'    \
+            --exclude='variants/'   \
+            --exclude='visualization/'      \
+            --exclude='*.out.log'   \
+            --exclude='*.err.log'   \
+            --exclude='*.benchmark' \
+            --exclude='*fastq.gz' \
+            belfry@euler.ethz.ch::${working}/samples \
+            ${cram_archive}/
+    ;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
         exit 2

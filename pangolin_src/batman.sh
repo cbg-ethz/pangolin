@@ -548,6 +548,11 @@ case "$1" in
                 commit=$(git log -n 1 ${branch} | head -n 1)
                 echo "Branch: ${branch}\n${commit}"
         ;;
+	cram_list)
+		cd ${clusterdir_old}/${working}/samples
+		echo "Listing cram files to download. This may take a while..."
+                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${working}/samples/cram_list.txt
+	;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
