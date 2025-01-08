@@ -21,7 +21,7 @@ def bar(v, m=128):
 
 # column in dataset.tsv under which we need to look for plates
 plate_column = 'Tube [Characteristic]' # 'Platename [Characteristic]'
-lib_column = 'LibraryPrepKit' # e.g.: "SARS-CoV-2 ARTIC V4.1 NEB Ultra II"
+lib_column = 'IAV [Characteristic]' # e.g.: "IAV sequencing"
 
 # parse command line
 argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
@@ -85,7 +85,7 @@ lab={os.path.splitext(os.path.basename(args.config))[0]}
 basedir=/cluster/project/pangolin/influenza_pipeline
 basedir_test=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
 sampleset=/cluster/project/pangolin/influenza_pipeline/sampleset
-download=/cluster/project/pangolin/influenza_pipeline/bfabric-downloads
+download=/cluster/project/pangolin/bfabric-downloads
 link=--link
 mode=
 badlist=
