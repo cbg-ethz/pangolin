@@ -6,6 +6,8 @@ scriptdir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
+downstream_analysis_dir=${scriptdir}/downstream_analysis  ### put it in server.comf
+
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
 #
@@ -534,5 +536,46 @@ case "$1" in
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
+        ;;
+        vpipe_out_to_tsv)
+                conda activate influenza_analysis_R
+                ### 1. check if vpipe completed on each fragment: how is this tracked in the influenza case? --> add this in carillon?
+
+                ### 2. create status directory to record the status of the donwstream analysis
+                cd ${downstream_analysis_dir}/
+                downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
+                mkdir -p downstream_analysis_statusdir ### does it fail if it already exisist?
+
+                ### 3. define the relevant folders per fragment and run the scrip per fragment
+                fragments=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)
+
+                for fra in "${fragments[@]}"; do
+                        echo "Processing fragment: $fra"
+                        # 
+                        vpipe_dir=${clusterdir_old}/$fra/pangolin/${working} #can this be generalized better?
+                        location_dic=${ww_locations}
+
+                        ### 4. run the script per fragment and detect the error staus per frament
+                        #### TODO: adapt the .R script such that it takes the correct input etc. see notes in Labbook
+                        #the command which runs the analysis
+                        detect_command=$(./detect_AAMutations.R -d $vpipe_dir -l $location_dic)
+
+                        fail=0
+                        #If the command fails (non-zero exit code), the fail variable is set to 1.
+                        command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                        # Check the result of the command and create the appropriate status file
+                        if (( fail == 0 )); then
+                                #echo "Command succeeded."
+                                touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_success"
+
+                        else
+                                #echo "Command failed."
+                                touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_fail"
+                        fi
+
+                done
+
+                conda deactivate
+
         ;;
 esac

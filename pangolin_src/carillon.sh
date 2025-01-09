@@ -28,6 +28,7 @@ mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${amplicon_coverage_statusdir}
+mkdir ${mode:+--mode=${mode}} -p ${downstream_analysis_statusdir} ###added new status dir to here and server.conf
 
 touch ${statusdir}/oh_hai_im_looping
 
@@ -348,6 +349,25 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
     fi
 else
     echo 'There is already a vpipe run going on'
+fi
+
+#
+# postprocessing of vpipe output to tsv file for SPSP upload
+#
+# 1. check if there is a current vpipe run: if not start the downstream processing of the results
+if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
+    echo "starting postprocessing of vpipe output to tsv"
+    ${remote_batman} vpipe_out_to_tsv
+    if [[ -e ${downstream_analysis_statusdir}/detect_AAMutations_fail ]] && [[ ${downstream_analysis_statusdir}/detect_AAMutations_fail -nt ${downstream_analysis_statusdir}/detect_AAMutations_success ]]; then
+        echo -e "\e[31;1mdetect_AAMutations.R script failed\e[0m"
+        echo "postprocessing of vpipe output to tsv file for SPSP upload failed"
+    else
+        # Handle the success or other conditions here
+        echo -e "\e[31;1mdetect_AAMutations.R script succeeded\e[0m"
+        echo "postprocessing of vpipe output to tsv file for SPSP upload succeeded"
+    fi
+else
+    echo 'There is already a vpipe run going on. Can't run detect_AAMutations.'
 fi
 
 #

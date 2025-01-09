@@ -5,3 +5,5 @@
 [submodule "V-pipe-test"]
 	path = V-pipe-test
 	url = https://github.com/cbg-ethz/V-pipe
+[submodule "/data/projects/influenza_downstream_analysis/pangolin/pangolin_src/downstream_analysis"]
+	branch = automation
