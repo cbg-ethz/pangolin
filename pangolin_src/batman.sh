@@ -6,6 +6,8 @@ scriptdir=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
+downstream_analysis_dir=${scriptdir}/downstream_analysis  ### put it in server.comf
+
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
 #
@@ -546,5 +548,43 @@ case "$1" in
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
                 exit 2
+        ;;
+        rsv_vpipe_out_to_tsv)
+        conda activate rsv_downstream_analysis # TODO add the name to the actual conde env if available
+
+        cd ${downstream_analysis_dir}/
+        downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
+        mkdir -p downstream_analysis_statusdir 
+
+        ### 3. define the relevant folders per fragment and run the scrip per fragment
+        v_subtype=(RSVA RSVB)
+        for vir in "${v_subtype[@]}"; do
+                echo "Processing Virus: $vir"
+
+                vpipe_dir=${clusterdir_old}/$vir/pangolin/${working} 
+                path_to_vcf=${clusterdir_old}/${working}/samples/
+                timeline_tsv=
+                path_to_coverage=${clusterdir_old}/${working}/samples/    #/cluster/project/pangolin/rsv_pipeline/working/samples/ 
+                reference=
+
+                ### 4. run the script per sample? WIP 
+                #the command which runs the analysis
+                detect_command=$(./rsv_downstream_analysis.py --path_to_vcf $path_to_vcf --timeline_tsv $timeline_tsv --path_to_coverage $path_to_coverage --reference $reference)
+
+                fail=0
+                #If the command fails (non-zero exit code), the fail variable is set to 1.
+                command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                # Check the result of the command and create the appropriate status file
+                if (( fail == 0 )); then
+                        #echo "Command succeeded."
+                        touch "${downstream_analysis_statusdir}/detect_AAMutations_${vir}_success"
+
+                else
+                        #echo "Command failed."
+                        touch "${downstream_analysis_statusdir}/detect_AAMutations_${vir}_fail"
+                fi
+
+        done
+        conda deactivate
         ;;
 esac
