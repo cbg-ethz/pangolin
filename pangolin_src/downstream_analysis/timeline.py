@@ -63,7 +63,7 @@ def main(path_to_samples_tsv):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process samples.tsv files and produce timeline.tsv')
-    parser.add_argument('path_to_samples_tsv', nargs='+',
+    parser.add_argument('--path_to_samples_tsv', nargs='+',
                         help='input directory containing samples.tsv files')
     args = parser.parse_args()
 

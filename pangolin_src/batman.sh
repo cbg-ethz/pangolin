@@ -562,10 +562,28 @@ case "$1" in
                 echo "Processing Virus: $vir"
 
                 vpipe_dir=${clusterdir_old}/$vir/pangolin/${working} 
+                #/cluster/work/bewi/members/arimaite/alignments_rsv/vp-analysis/rsv_a_wastewater_24_10_25/results/*/date/variants/SNVs/snvs.vcf
                 path_to_vcf=${clusterdir_old}/${working}/samples/
-                timeline_tsv=
                 path_to_coverage=${clusterdir_old}/${working}/samples/    #/cluster/project/pangolin/rsv_pipeline/working/samples/ 
-                reference=
+                reference= #read from the config file? how to avoid hardcoding?
+                path_to_samples_tsv=${clusterdir_old}/${working}
+
+                ### run the timeline.py
+                detect_command=$(./timeline.py --path_to_samples_tsv $path_to_samples_tsv)
+                timeline_tsv= # this will be created above, where is it stored?!
+
+                fail=0
+                #If the command fails (non-zero exit code), the fail variable is set to 1.
+                command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                # Check the result of the command and create the appropriate status file
+                if (( fail == 0 )); then
+                        #echo "Command succeeded."
+                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
+
+                else
+                        #echo "Command failed."
+                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
+                fi
 
                 ### 4. run the script per sample? WIP 
                 #the command which runs the analysis
