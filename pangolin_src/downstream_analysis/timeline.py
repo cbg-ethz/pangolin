@@ -27,7 +27,7 @@ def find_location(code):
     return location.get(code, 'Unknown')
 
 
-def main(path_to_samples_tsv):
+def main(path_to_samples_tsv, path_to_output):
     timeline_tsv = []
     for path_single_sample_tsv in path_to_samples_tsv:
         sample_tsv = pd.read_csv(path_single_sample_tsv, sep='\t', header=None)
@@ -57,7 +57,7 @@ def main(path_to_samples_tsv):
     timeline_tsv_output = pd.DataFrame(timeline_tsv)
 
     timeline_tsv_output.to_csv(
-        f'timeline.tsv', sep='\t',
+        f'{path_to_output}/timeline.tsv', sep='\t',
         index=False)
 
 
@@ -65,6 +65,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process samples.tsv files and produce timeline.tsv')
     parser.add_argument('--path_to_samples_tsv', nargs='+',
                         help='input directory containing samples.tsv files')
+    parser.add_argument('--path_to_output', nargs='+',
+                        help='input directory containing samples.tsv files')
     args = parser.parse_args()
 
-    main(args.path_to_samples_tsv)
+    main(args.path_to_samples_tsv, args.path_to_output)

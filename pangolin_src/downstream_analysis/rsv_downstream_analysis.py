@@ -7,6 +7,8 @@ import json
 import glob
 import argparse
 import re
+import yaml
+
 
 """ 
 Prepare TSV file in the format which is needed for uploading data to GenSpectrum.
@@ -188,14 +190,27 @@ def main(path_to_vcf, timeline_tsv, path_to_coverage, reference):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process VCF file and tsv files and prepare datamatrix')
+    parser.add_argument('--vpipe_dir', nargs='+', # added vpipe base dir as input 
+                        help='basedir to vpipe. e.g. /cluster/project/pangolin/rsv_pipeline/working')
     parser.add_argument('--path_to_vcf', nargs='+',
                         help='input directory containing VCF files: it should be e.g. /cluster/work/bewi/members/arimaite/alignments_rsv/vp-analysis/rsv_a_wastewater_24_10_25/results/*/date/variants/SNVs/snvs.vcf')
     parser.add_argument('--timeline_tsv', help='path to timeline.tsv file')
     parser.add_argument('--path_to_coverage', nargs='+',
                         help='input directory containing coverage tsv files: it should be e.g. /cluster/work/bewi/members/arimaite/alignments_rsv/vp-analysis/rsv_a_wastewater_24_10_25/results/*/date/alignments/coverage.tsv.gz')
-    parser.add_argument('--reference',
-                        help='reference: it should be e.g. (for RSV-A:) EPI_ISL_412866; (for RSV-B:) EPI_ISL_1653999')
+   # parser.add_argument('--reference',
+   #                     help='reference: it should be e.g. (for RSV-A:) EPI_ISL_412866; (for RSV-B:) EPI_ISL_1653999')  # adapted such that it reads the reference from the config file
+    parser.add_argument('--config',
+                        help='path to config file to read from') #added input of config file to read from 
 
     args = parser.parse_args()
 
-    main(args.path_to_vcf, args.timeline_tsv, args.path_to_coverage, args.reference)
+
+    # Read the YAML file
+    with open(args.config, 'r') as file:
+        configs = yaml.safe_load(file)  # Read and parse the YAML file  
+
+    # Construct the `ref` variable
+    ref = f"{args.vpipe_dir}{configs['input']['reference']}"
+
+
+    main(args.path_to_vcf, args.timeline_tsv, args.path_to_coverage, ref)
