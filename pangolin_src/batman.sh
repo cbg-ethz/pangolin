@@ -93,6 +93,11 @@ case "$1" in
                                 lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing year: ${year}"
                                 cat ${clusterdir_old}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+			;;
+			--all)
+				lst="${clusterdir_old}/${working}/samples.recent.tsv"
+				echo "syncing all from $rsv_startdate"
+				cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
