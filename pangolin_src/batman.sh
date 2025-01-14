@@ -80,6 +80,7 @@ case "$1" in
                 ~/log/rotate
         ;;
         addsamples)
+		echo "Separating RSV A and B in their respective directories"
                 lst="${clusterdir_old}/${working}/samples.tsv"
                 aviti=0
                 case "$2" in
@@ -102,19 +103,36 @@ case "$1" in
                 mkdir -p --mode=2770 "${clusterdir_old}/${working}/samples/"
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
                 sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
-                cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/${working}/samples/"
-                lst="${clusterdir_old}/${working}/samples.tsv"
+		#RSVA
+		awk -F'\t' -v match="$rsva_match" '$4 ~ match' ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/RSVA/${working}/samples.tsv
+		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/RSVA/${working}/samples/"
+                lst_rsva="${clusterdir_old}/RSVA/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
-                mv ${clusterdir_old}/${working}/samples_aviti.tsv ${clusterdir_old}/${working}/samples_aviti.tsv.old
-                touch ${clusterdir_old}/${working}/samples_aviti.tsv 
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
+                mv ${clusterdir_old}/RSVA/${working}/samples_aviti.tsv ${clusterdir_old}/RSVA/${working}/samples_aviti.tsv.old
+                touch ${clusterdir_old}/RSVA/${working}/samples_aviti.tsv 
+                #mv ${clusterdir_old}/RSVA/${working}/samples.tsv ${clusterdir_old}/RSVA/${working}/samples.tsv_old
                 while IFS=$'\t' read -r col1 col2 col3 col4; do
                         if [ "${#col2}" -eq 19 ]; then 
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/RSVA/${working}/samples_aviti.tsv
                         else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_pre-aviti.tsv
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/RSVA/${working}/samples_pre-aviti.tsv
                         fi
-                done < ${clusterdir_old}/${working}/samples.tsv
+                done < ${clusterdir_old}/RSVA/${working}/samples.tsv
+		#RSVB
+		awk -F'\t' -v match="$rsvb_match" '$4 ~ match' ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/RSVB/${working}/samples.tsv
+                cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/RSVB/${working}/samples/"
+                lst_rsvb="${clusterdir_old}/RSVB/${working}/samples.tsv"
+                # Add abstractions and generalized to allow for new sequencing methods
+                mv ${clusterdir_old}/RSVB/${working}/samples_aviti.tsv ${clusterdir_old}/RSVB/${working}/samples_aviti.tsv.old
+                touch ${clusterdir_old}/RSVB/${working}/samples_aviti.tsv 
+                #mv ${clusterdir_old}/RSVB/${working}/samples.tsv ${clusterdir_old}/RSVB/${working}/samples.tsv_old
+                while IFS=$'\t' read -r col1 col2 col3 col4; do
+                        if [ "${#col2}" -eq 19 ]; then 
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/RSVB/${working}/samples_aviti.tsv
+                        else
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/RSVB/${working}/samples_pre-aviti.tsv
+                        fi
+                done < ${clusterdir_old}/RSVB/${working}/samples.tsv
 	;;
         vpipe)
                 declare -A job
@@ -155,9 +173,9 @@ case "$1" in
                 cd ${clusterdir_old}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_aviti_main.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_main.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
