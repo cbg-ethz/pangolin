@@ -2,21 +2,26 @@
 
 scriptdir=/app/pangolin_src
 
+# Determine which 'date' command to use based on the OS (Darwin for macOS)
 if [[ $(uname) == Darwin ]]; then
-    date=gdate
+    date=gdate # Use GNU date on macOS
 else
-    date=date
+    date=date # Use default date command
 fi
+
+# Define date-related variables
 now=$($date '+%Y%m%d')
 lastmonth=$($date '+%Y%m' --date='-1 month')
 thismonth=$($date '+%Y%m')
 twoweeksago=$($date '+%Y%m%d' --date='-2 weeks')
 oneweekago=$($date '+%Y%m%d' --date='-1 weeks')
 
-
+# Declare an associative array
 declare -A lab
-. ${scriptdir}/config/server.conf
 
+# Source configuration file
+. ${scriptdir}/config/server.conf
+# Set default values for various environment variables
 : ${basedir:=$(pwd)}
 : ${download:?}
 : ${sampleset:=sampleset}
@@ -32,33 +37,36 @@ declare -A lab
 : ${viloca_samples:?}
 : ${viloca_results:?}
 
+# Compare the paths of the script directory and base directory
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
     echo "$scriptdir vs $basedir"
 fi
 
+# Validate the 'mode' variable for correct chmod octal values
 if [[ ! $mode =~ ^[0-7]{,4}$ ]]; then
     echo "Invalid characters <${mode//[0-7]/}> in <${mode}>"
     echo 'mode should be an octal chmod value, see `mkdir --help` for informations'
     mode=
 fi
 
+# Enable error handling to exit on any command failure
 set -e
 
-# cd ${basedir}
-
+# Set default file creation permissions
 umask 0002
-
+# Create necessary directories with optional mode
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 
-timeoutforeground=
+timeoutforeground= #?
 #--foreground
 #
 
 #
 # Input validator
 #
+# Define an input validator for batch dates
 validateBatchDate() {
     if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9])$ ]]; then
         return;
@@ -67,7 +75,7 @@ validateBatchDate() {
         exit 1;
     fi
 }
-
+# Define an input validator for batch names
 validateBatchName() {
     if [[ "$1" =~ ^(20[0-9][0-9][0-1][0-9][0-3][0-9]_[[:alnum:]-]{4,})$ ]]; then
         return;
@@ -81,38 +89,40 @@ validateBatchName() {
 #
 # rsync parallel helpers
 #
+# Helper function to execute rsync push operations (from wisedb to euler)
 callpushrsync() {
         scriptdir=/app/pangolin_src
         . ${scriptdir}/config/server.conf
 
         local arglist=( )
-        if (( ${#@} )); then
-                arglist=( "${@/#/${basedir}/${sampleset}/}" )
+        if (( ${#@} )); then  #was the function called with any arguments?
+                arglist=( "${@/#/${basedir}/${sampleset}/}" )  #if yes, extract the agumants
         else
                 #arglist=( "${basedir}/${sampleset}/" )
                 echo "rsync job didn't receive list"
                 exit 1;
         fi
+        # Execute rsync with timeout and specified options
         exec    timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-                rsync   --timeout=${iotimeout}  \
-                --password-file ${rsync_pass}      \
-                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-                -izrltH --fuzzy --fuzzy --inplace       \
-                -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x        \
-                -g --chown=:'bsse-covid19-pangolin-euler'       \
-                "${arglist[@]}" \
-                belfry@euler.ethz.ch::${sampleset}/
+                rsync   --timeout=${iotimeout}  \       # Set I/O timeout
+                --password-file ${rsync_pass}      \    # Use password file for authentication
+                -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \   # SSH options
+                -izrltH --fuzzy --fuzzy --inplace       \   # Rsync options for file synchronization
+                -p --chmod=Dg+s,ug+rw,o-rwx,Fa-x        \   # Set file and directory permissions
+                -g --chown=:'bsse-covid19-pangolin-euler'       \   # Change ownership to specified group
+                "${arglist[@]}" \       # Files/directories to synchronize
+                belfry@euler.ethz.ch::${sampleset}/     # Remote target location
 }
 export -f callpushrsync
 
-
+# Helper function to execute rsync pull operations (from euler to wisedb)
 callpullrsync_fordb() {
         scriptdir=/app/pangolin_src
         . ${scriptdir}/config/server.conf
 
-        local arglist=( )
-        if (( ${#@} )); then
-                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+        local arglist=( ) 
+        if (( ${#@} )); then  #was the function called with any arguments?
+                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )  #if yes, extract the agumants
         else
                 #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
                 echo "rsync job didn't receive list"
@@ -137,10 +147,11 @@ callpullrsync_fordb() {
                 --exclude='*.benchmark' \
                 --exclude='*fastq.gz' \
                 "${arglist[@]}" \
-                ${local_dataset}/${working}/samples/
+                ${local_dataset}/${working}/samples/  #traget location
 }
 export -f callpullrsync_fordb
 
+# pull viloca results to wisedb
 callpullrsync_viloca() {
     scriptdir=/app/pangolin_src
 	. ${scriptdir}/config/server.conf
@@ -164,6 +175,7 @@ callpullrsync_viloca() {
 }
 export -f callpullrsync_viloca
 
+# backup bfabric downloads
 callpullrsync_rsync() {
     scriptdir=/app/pangolin_src
 	. ${scriptdir}/config/server.conf
@@ -190,19 +202,20 @@ export -f callpullrsync_rsync
 #
 # sync helper
 #
+# Function to process rsync output and handle synchronization results
 checksyncoutput() {
-    local new="${statusdir}/sync${1}_new"
+    local new="${statusdir}/sync${1}_new" # sync status files
     local last="${statusdir}/sync${1}_last"
-
+    # Check if the rsync output matches the expected pattern
     if [[ "${2}" =~ Total:\ +([[:digit:]]+)\ +directories,\ +([[:digit:]]+)\ +files,.*?New:\ +([[:digit:]]+)\ +files, ]]; then
-        echo "Newfiles downloaded"
-        echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${last}
-        flock -x -o ${last} -c "sleep 1"
-        echo "${BASH_REMATCH[3]}" > ${new}
+        echo "Newfiles downloaded"  # Log that new files were downloaded
+        echo -e "${BASH_REMATCH[2]}\n${BASH_REMATCH[1]}" > ${last}  # Save the number of files and directories to the last status file
+        flock -x -o ${last} -c "sleep 1"    # Lock the last file and delay to ensure synchronization
+        echo "${BASH_REMATCH[3]}" > ${new}  # Save the count of new files to the new status file
     else
-        echo "No files to sync found"
-        touch ${last}
-    fi 2>&1
+        echo "No files to sync found" 
+        touch ${last}   # Create an empty last status file
+    fi 2>&1 # Redirect standard error to standard output
 }
 
 

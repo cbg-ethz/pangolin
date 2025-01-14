@@ -9,11 +9,15 @@ The automation is organized into three main subfolders:
 
 - pangolin_src: Contains the source code for Pangolin.
 - uploader: Handles the synchronization of uploaded samples.
-- working: Manages intermediate processes and data handling.
+- working: Manages intermediate processes and data handling. --> pangolin/woking = NOT IN UNSE ANYMORE / ARTEFACT
+   - the ../woking is used as working directory, not pangolin/working
 
 #### General Logic
 The autoamtion is started by launching it's docker container on the wiseDB VM and interacts with Euler (sHPC) and databases such as b-fabric and SPSP.
 Additionally backups are done on the bewi08 VM.
+
+**Status Files**
+Generally status files are created directly on wisedb in `workdir/status. If a command is executed on euler (with the batman.sh script) status files are created on euler and synced to wisedb.
 
 ## pangolin_src
 This folder contains all the code that is used during the automation. The automation constantly runs in the background and tries to check if there are new samples uploaded to bfabric. If there are new samples, it fetches them and automatically starts vpipe (the alignment). 
@@ -211,9 +215,19 @@ Helper functions for carillon.sh (VM interaction / data sync)
        - Uses `rsync` to pull updated status information for raw data synchronization from the remote server.
        - Logs success or failure to status files.
 
+      - **`pull_sortsamples_status`**
+      - **`pushsamplelist_viloca`**
+      - **`queue_upload`**
+      - **`upload`**
+      - **`clean_sendcrypt_temp`**
+      - **`pullsamples_for_db`**
+      - **`backup_uploader`**
+
 7. **Error Handling and Safety Features**
    - **`set -e`**: 
      - Ensures that the script exits immediately if any command fails. This is a safety feature to avoid continuing operations if something goes wrong.
    - **`timeout`**:
      - Used in `rsync` commands to ensure they do not run indefinitely. Commands will be killed if they exceed the allowed time.
 
+
+### batman.sh
