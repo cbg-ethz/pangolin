@@ -104,7 +104,7 @@ case "$1" in
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
                 sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
 		#RSVA
-		awk -F'\t' -v match="$rsva_match" '$4 ~ match' ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/RSVA/${working}/samples.tsv
+		awk -F'\t' -v match_strings="$rsva_match" '$4 ~ match_strings' ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/RSVA/${working}/samples.tsv
 		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/RSVA/${working}/samples/"
                 lst_rsva="${clusterdir_old}/RSVA/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
@@ -119,7 +119,7 @@ case "$1" in
                         fi
                 done < ${clusterdir_old}/RSVA/${working}/samples.tsv
 		#RSVB
-		awk -F'\t' -v match="$rsvb_match" '$4 ~ match' ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/RSVB/${working}/samples.tsv
+		awk -F'\t' -v match_strings="$rsvb_match" '$4 ~ match_strings' ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/RSVB/${working}/samples.tsv
                 cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/RSVB/${working}/samples/"
                 lst_rsvb="${clusterdir_old}/RSVB/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
