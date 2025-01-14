@@ -423,6 +423,10 @@ case "$1" in
                                         recent="--recent=${year}"
                                         shrtrecent="-r ${year}"
                                 ;;
+				--all)
+					recent="--recent=${rsv_startdate}"
+					shrtrecent="-r ${rsv_startdate}"
+				;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
 					exit 2
@@ -431,11 +435,6 @@ case "$1" in
 			shift
 		done
 		fail=0
-		if  (( ${lab[gfb]} == 1 )); then
-			${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir_old}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
-		else
-			echo "Skipping gfb"
-		fi
 		if  (( ${lab[fgcz]} == 1 )); then
 			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
  
@@ -445,20 +444,6 @@ case "$1" in
 
 		else
 			echo "Skipping fgcz"
-		fi
-		if  (( ${lab[h2030]} == 1 )) && [[ -e ${clusterdir}/synch2030_ended && -e ${clusterdir}/synch2030_started && ${clusterdir}/synch2030_ended -nt ${clusterdir}/synch2030_started ]]; then
-			# NOTE always recent/based on last sync), no support for --force, move done immediately/no separate movedatafiles.sh
-			# TODO support for protocols
-			${clusterdir}/sort_h2030 -c ${clusterdir}/config/h2030.conf $(< ${clusterdir}/synch2030_started ) || fail=1
-		else
-			echo "Skipping h2030"
-		fi
-		if  (( ${lab[viollier]} == 1 )); then
-			# NOTE always --force, short options only
-			# HACK hardcoded paths due to multiple directories
-			${clusterdir}/sort_viollier -c ${clusterdir}/config/viollier.conf -4 ${clusterdir}/${working}/${protocolyaml} ${shrtrecent} sftp-viollier/raw_sequences/*/ && bash ${clusterdir}/$movedatafiles.sh || fail=1
-		else
-			echo "Skipping viollier"
 		fi
 		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
 		conda deactivate
