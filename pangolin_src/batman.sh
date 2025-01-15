@@ -551,15 +551,15 @@ case "$1" in
         ;;
         vpipe_out_to_tsv)
                 conda activate influenza_analysis_R
-                ### 1. check if vpipe completed on each fragment: how is this tracked in the influenza case? --> add this in carillon?
 
-                ### 2. create status directory to record the status of the donwstream analysis
+                ### create status directory to record the status of the donwstream analysis
                 cd ${downstream_analysis_dir}/
                 downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
                 mkdir -p downstream_analysis_statusdir ### does it fail if it already exisist?
 
-                ### 3. define the relevant folders per fragment and run the scrip per fragment
+                ###  define the relevant folders per fragment and run the scrip per fragment
                 fragments=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)
+                process_fail=0
 
                 for fra in "${fragments[@]}"; do
                         echo "Processing fragment: $fra"
@@ -567,8 +567,7 @@ case "$1" in
                         vpipe_dir=${clusterdir_old}/$fra/pangolin/${working} #can this be generalized better?
                         location_dic=${ww_locations}
 
-                        ### 4. run the script per fragment and detect the error staus per frament
-                        #### TODO: adapt the .R script such that it takes the correct input etc. see notes in Labbook
+                        ### run the script per fragment and detect the error staus per frament
                         #the command which runs the analysis
                         detect_command=$(./detect_AAMutations.R -d $vpipe_dir -l $location_dic)
 
@@ -583,9 +582,20 @@ case "$1" in
                         else
                                 #echo "Command failed."
                                 touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_fail"
+                                process_fail=$((process_fail + 1))
                         fi
 
                 done
+                # to track the whole process in one file:
+                if (( process_fail == 0 )); then
+                        #echo "Command succeeded."
+                        touch "${downstream_analysis_statusdir}/detect_AAMutations_success"
+
+                else
+                        #echo "Command failed."
+                        touch "${downstream_analysis_statusdir}/detect_AAMutations_fail"
+                        
+                fi
 
                 conda deactivate
 
