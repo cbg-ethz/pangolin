@@ -569,7 +569,7 @@ case "$1" in
                 path_to_samples_tsv=${clusterdir_old}/$vir/${working} # Folder: RSV*/working/samples.tsv 
                 path_to_output=${clusterdir_old}/$vir/${working}    # output from timeline.py will be input for downstream analysis --timeline_tsv
                 path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
-                path_to_config=${clusterdir_old}/${configfile}
+                path_to_config=${clusterdir_old}/$vir/${working}/${configfile}
 
                 ### run the timeline.py each time when there are newsamples
                 detect_command=$(./timeline.py --path_to_samples_tsv $path_to_samples_tsv --path_to_output $path_to_output )
@@ -591,7 +591,7 @@ case "$1" in
 
                 ### 4.
                 #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                detect_command=$(./rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config --path_to_output $path_to_output)
+                detect_command=$(./rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config )
 
                 fail=0
                 #If the command fails (non-zero exit code), the fail variable is set to 1.

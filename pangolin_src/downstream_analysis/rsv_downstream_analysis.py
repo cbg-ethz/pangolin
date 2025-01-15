@@ -131,7 +131,7 @@ def process_multiple_coverage_files(input_directories, reference_genome):
     return coverage_out
 
 
-def main(path_to_vcf, timeline_tsv, path_to_coverage, reference):
+def main(path_to_vcf, timeline_tsv, path_to_coverage, reference,path_to_output,BATCH):
     # Process multiple vcfs and produce data frame
  #   print(path_to_vcf)
     output_multiple_vcfs = process_multiple_vcfs(path_to_vcf, reference)
@@ -184,7 +184,7 @@ def main(path_to_vcf, timeline_tsv, path_to_coverage, reference):
     tsv_samples_locations['lineageFrequencyEstimates'] = None
 
     tsv_samples_locations.to_csv(
-        f'{path_to_output}timeline_mutation_multiple_batches_{reference}.tsv', sep='\t',
+        f'{path_to_output}/{BATCH}_{reference}_Mutations_Dashboard.tsv', sep='\t',
         index=False, quoting=3)
 
 
@@ -201,8 +201,6 @@ if __name__ == '__main__':
    #                     help='reference: it should be e.g. (for RSV-A:) EPI_ISL_412866; (for RSV-B:) EPI_ISL_1653999')  # adapted such that it reads the reference from the config file
     parser.add_argument('--config',
                         help='path to config file to read from') #added input of config file to read from 
-    parser.add_argument('--path_to_output', nargs='+',
-                        help='directory where to store output file')
     args = parser.parse_args()
 
 
@@ -212,6 +210,18 @@ if __name__ == '__main__':
 
     # Construct the `ref` variable
     ref = f"{args.vpipe_dir}{configs['input']['reference']}"
+    samples_tsv = f"{args.vpipe_dir}{configs['input']['samples_file']}"
+
+    # Read the TSV file into a DataFrame
+    df = pd.read_csv(samples_tsv, sep="\t")   
+
+    # Ensure the second column exists and calculate the max value
+    if len(df.columns) > 1:
+        latest_batch = df.iloc[:, 1].max()  # Access the second column using iloc
+    else:
+        print("The samples.tsv file does not have a second column to extract the latest batch.")
+
+    out_dir=f'{args.vpipe_dir}/MutationFrequencies/'
 
 
-    main(args.path_to_vcf, args.timeline_tsv, args.path_to_coverage, ref, args.path_to_output)
+    main(args.path_to_vcf, args.timeline_tsv, args.path_to_coverage, ref, out_dir, latest_batch)
