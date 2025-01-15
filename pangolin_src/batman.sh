@@ -97,7 +97,7 @@ case "$1" in
                         ;;
 			--all)
                                 lst="${clusterdir_old}/${working}/samples.tsv"
-                                echo "syncing all from $rsv_startdate"
+                                echo "syncing all from $influenza_startdate"
                                 cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                                 cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.tsv"
                         ;;
@@ -402,8 +402,8 @@ case "$1" in
                                         shrtrecent="-r ${year}"
                                 ;;
 				--all)
-                                        recent="--recent=${rsv_startdate}"
-                                        shrtrecent="-r ${rsv_startdate}"
+                                        recent="--recent=${influenza_startdate}"
+                                        shrtrecent="-r ${influenza_startdate}"
                                 ;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
