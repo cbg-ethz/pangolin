@@ -91,4 +91,5 @@ dependencies:
   - wheel=0.38.4=py37h06a4308_0
   - xz=5.2.10=h5eee18b_1
   - zlib=1.2.13=h5eee18b_0
+  - pyyaml
 prefix: /cluster/work/bewi/members/arimaite/miniconda3/envs/rsv_downstream_analysis
