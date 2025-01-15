@@ -95,6 +95,12 @@ case "$1" in
                                 echo "syncing year: ${year}"
                                 cat ${clusterdir_old}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
+			--all)
+                                lst="${clusterdir_old}/${working}/samples.tsv"
+                                echo "syncing all from $rsv_startdate"
+                                cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                                cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.tsv"
+                        ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
@@ -394,6 +400,10 @@ case "$1" in
                                 --year)
                                         recent="--recent=${year}"
                                         shrtrecent="-r ${year}"
+                                ;;
+				--all)
+                                        recent="--recent=${rsv_startdate}"
+                                        shrtrecent="-r ${rsv_startdate}"
                                 ;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr

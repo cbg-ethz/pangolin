@@ -367,7 +367,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         echo "postprocessing of vpipe output to tsv file for SPSP upload succeeded"
     fi
 else
-    echo 'There is already a vpipe run going on. Can't run detect_AAMutations.'
+    echo "There is already a vpipe run going on. Can't run detect_AAMutations."
 fi
 
 #
