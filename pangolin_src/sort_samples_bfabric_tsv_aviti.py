@@ -22,7 +22,7 @@ def bar(v, m=128):
 
 # column in dataset.tsv under which we need to look for plates
 plate_column = 'Tube [Characteristic]' # 'Platename [Characteristic]'
-lib_column = 'IAV [Characteristic]' # e.g.: "IAV sequencing"
+lib_column = 'LibraryPrepKit' # e.g.: "IAV sequencing"
 
 # parse command line
 argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
