@@ -184,7 +184,7 @@ def main(path_to_vcf, timeline_tsv, path_to_coverage, reference):
     tsv_samples_locations['lineageFrequencyEstimates'] = None
 
     tsv_samples_locations.to_csv(
-        f'timeline_mutation_multiple_batches_{reference}.tsv', sep='\t',
+        f'{path_to_output}timeline_mutation_multiple_batches_{reference}.tsv', sep='\t',
         index=False, quoting=3)
 
 
@@ -201,7 +201,8 @@ if __name__ == '__main__':
    #                     help='reference: it should be e.g. (for RSV-A:) EPI_ISL_412866; (for RSV-B:) EPI_ISL_1653999')  # adapted such that it reads the reference from the config file
     parser.add_argument('--config',
                         help='path to config file to read from') #added input of config file to read from 
-
+    parser.add_argument('--path_to_output', nargs='+',
+                        help='directory where to store output file')
     args = parser.parse_args()
 
 
@@ -213,4 +214,4 @@ if __name__ == '__main__':
     ref = f"{args.vpipe_dir}{configs['input']['reference']}"
 
 
-    main(args.path_to_vcf, args.timeline_tsv, args.path_to_coverage, ref)
+    main(args.path_to_vcf, args.timeline_tsv, args.path_to_coverage, ref, args.path_to_output)

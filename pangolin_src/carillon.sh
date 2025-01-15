@@ -28,6 +28,7 @@ mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${amplicon_coverage_statusdir}
+mkdir ${mode:+--mode=${mode}} -p ${downstream_analysis_statusdir} 
 
 touch ${statusdir}/oh_hai_im_looping
 
@@ -321,22 +322,27 @@ fi
 
 
 #
-# postprocessing of vpipe output to tsv file for SPSP upload
+# postprocessing of vpipe output to tsv file for genspectrum upload
 #
 # 1. check if there is a current vpipe run: if not start the downstream processing of the results
 if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
     echo "starting postprocessing of vpipe output to tsv"
     ${remote_batman} rsv_vpipe_out_to_tsv
-    if [[ -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ]]; then
-        echo -e "\e[31;1mdetect_AAMutations.R script failed\e[0m"
-        echo "postprocessing of vpipe output to tsv file for SPSP upload failed"
+    ${scriptdir}/belfry.sh pull_downstream_status  ### this pulls the status files to wise db but never checks them? in the next step i check only if the pulling of the status files worked?
+    if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
+        echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
+        echo "The automation will not be aware of postprocessing of vpipe output status"
     else
-        # Handle the success or other conditions here
-        echo -e "\e[31;1mdetect_AAMutations.R script succeeded\e[0m"
-        echo "postprocessing of vpipe output to tsv file for SPSP upload succeeded"
+        # check the status of the downstream processing
+        if [[ ( -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ) ]]; then #check the correct files
+                echo "\e[31;1Downstream_analysis script failed\e[0m"
+            fi
+        else
+            echo "\e[31;1Downstream_analysis script sucsess\e[0m"
+        fi
     fi
 else
-    echo 'There is already a vpipe run going on. Can't run detect_AAMutations.'
+    echo "There is already a vpipe run going on. Can't run downstream_analysis."
 fi
 
 

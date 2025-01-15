@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_samples_tsv', nargs='+',
                         help='input directory containing samples.tsv files')
     parser.add_argument('--path_to_output', nargs='+',
-                        help='input directory containing samples.tsv files')
+                        help='directory where to store output file')
     args = parser.parse_args()
 
     main(args.path_to_samples_tsv, args.path_to_output)
