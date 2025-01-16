@@ -12,7 +12,6 @@ services:
       - bs-pangolin_login_backups
       - fgcz_login
       - id_ed25519_influenza
-      - id_ed25519_influenza_backups
       - rsync.pass.euler
       - spsp_gpg_key
       - bs_pangolin_gpg_key
@@ -28,8 +27,6 @@ secrets:
     file: /data/projects/influenza_automation/secrets/fgcz-gstore.uzh.ch
   id_ed25519_influenza:
     file: /data/projects/influenza_automation/secrets/id_ed25519_influenza
-  id_ed25519_influenza_backups:
-    file: /data/projects/influenza_automation/secrets/id_ed25519_influenza_backups
   rsync.pass.euler:
     file: /data/projects/influenza_automation/secrets/rsync.pass.euler
   spsp_uploads_ssh_private_key:

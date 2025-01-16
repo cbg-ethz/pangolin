@@ -95,6 +95,12 @@ case "$1" in
                                 echo "syncing year: ${year}"
                                 cat ${clusterdir_old}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
+			--all)
+                                lst="${clusterdir_old}/${working}/samples.tsv"
+                                echo "syncing all from $influenza_startdate"
+                                cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                                cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.tsv"
+                        ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
@@ -154,29 +160,17 @@ case "$1" in
                         shift
                 done
                 # start first job
-                cd ${clusterdir_old}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti_main.sbatch | sbatch --parsable ${hold} --job-name="FLU-AVITI-vpipe-<${tag}>-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                        cd ${clusterdir_old}/working/
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_main.sbatch | sbatch --parsable ${hold} --job-name="FLU-ILLUMINA-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
                         job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
-                        # if no fail schedule a full job with snv
-                        if (( shorah )); then
-                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
-                                if [[ -n "${job['snv']}" ]]; then
-                                        # schedule a gatherqa no matter what happens to snv
-                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                        # schedule a hugemem job if snvjob failed
-                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
-                                        # schedule a qa afterward
-                                        [[ -n "${job['hugemem']}" ]]    && \
-                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
-                                fi
-                        fi      
                 fi >&2
                 # write job chain list
                 for v in "${list[@]}"; do
@@ -406,6 +400,10 @@ case "$1" in
                                 --year)
                                         recent="--recent=${year}"
                                         shrtrecent="-r ${year}"
+                                ;;
+				--all)
+                                        recent="--recent=${influenza_startdate}"
+                                        shrtrecent="-r ${influenza_startdate}"
                                 ;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr

@@ -12,6 +12,6 @@
                  - secret fgcz-gstore.uzh.ch
                  - secret gpg keys
                  - gpg_key_secrets
-                 - id_ed25519_rsv.pub
+                 - id_ed25519_influenza.pub
                     - Add the public key to the list of authorized keys
                  - 
