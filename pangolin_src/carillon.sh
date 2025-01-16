@@ -354,25 +354,29 @@ fi
 #
 # postprocessing of vpipe output to tsv file for SPSP upload
 #
-# 1. check if there is a current vpipe run: if not start the downstream processing of the results
-if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
-    echo "starting postprocessing of vpipe output to tsv"
-    ${remote_batman} vpipe_out_to_tsv
-    ${scriptdir}/belfry.sh pull_downstream_status 
-    if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
-        echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
-        echo "The automation will not be aware of postprocessing of vpipe output status"
-    else
-        # check the status of the downstream processing
-        if [[ ( -e ${downstream_analysis_statusdir}/detect_AAMutations_fail ) && ( ${downstream_analysis_statusdir}/detect_AAMutations_fail -nt ${downstream_analysis_statusdir}/detect_AAMutations_success ) ]]; then #check the correct files
-                echo "\e[31;1Downstream_analysis detect_AAMutations.R script failed\e[0m"
-            fi
+if [ "$run_downstream" -eq "1" ]; then
+    # 1. check if there is a current vpipe run: if not start the downstream processing of the results
+    if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
+        echo "starting postprocessing of vpipe output to tsv"
+        ${remote_batman} vpipe_out_to_tsv
+        ${scriptdir}/belfry.sh pull_downstream_status 
+        if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
+            echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
+            echo "The automation will not be aware of postprocessing of vpipe output status"
         else
-            echo "\e[31;1Downstream_analysis detect_AAMutations.R script sucsess\e[0m"
+            # check the status of the downstream processing
+            if [[ ( -e ${downstream_analysis_statusdir}/detect_AAMutations_fail ) && ( ${downstream_analysis_statusdir}/detect_AAMutations_fail -nt ${downstream_analysis_statusdir}/detect_AAMutations_success ) ]]; then #check the correct files
+                    echo "\e[31;1Downstream_analysis detect_AAMutations.R script failed\e[0m"
+                fi
+            else
+                echo "\e[31;1Downstream_analysis detect_AAMutations.R script sucsess\e[0m"
+            fi
         fi
+    else
+        echo "There is already a vpipe run going on. Can't run downstream_analysis."
     fi
 else
-    echo "There is already a vpipe run going on. Can't run downstream_analysis."
+    echo "skipping downstream analysis"
 fi
 
 #
