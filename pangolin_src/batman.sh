@@ -6,7 +6,7 @@ scriptdir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-downstream_analysis_dir=${scriptdir}/downstream_analysis  ### put it in server.comf
+
 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
