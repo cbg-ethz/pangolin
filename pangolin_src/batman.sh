@@ -543,10 +543,6 @@ case "$1" in
                 commit=$(git log -n 1 ${branch} | head -n 1)
                 echo "Branch: ${branch}\n${commit}"
         ;;
-        *)
-                echo "Unkown sub-command ${1}" > /dev/stderr
-                exit 2
-        ;;
         vpipe_out_to_tsv)
                 conda activate influenza_analysis_R
 
@@ -597,5 +593,9 @@ case "$1" in
 
                 conda deactivate
 
+        ;;
+        *)
+                echo "Unkown sub-command ${1}" > /dev/stderr
+                exit 2
         ;;
 esac
