@@ -558,7 +558,7 @@ case "$1" in
                 for fra in "${fragments[@]}"; do
                         echo "Processing fragment: $fra"
                         # 
-                        vpipe_dir=${clusterdir_old}/$fra/pangolin/${working} #can this be generalized better?
+                        vpipe_dir=${clusterdir_old}/$fra/${working} #can this be generalized better?
                         location_dic=${ww_locations}
 
                         ### run the script per fragment and detect the error staus per frament
