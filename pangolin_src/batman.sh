@@ -552,7 +552,7 @@ case "$1" in
                 mkdir -p downstream_analysis_statusdir ### does it fail if it already exisist?
 
                 ###  define the relevant folders per fragment and run the scrip per fragment
-                fragments=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)
+                fragments=(IA_H1 IA_MP IA_N1) # excluded IA_H3 and IA_N2 for the moment since the references are not correct
                 process_fail=0
 
                 for fra in "${fragments[@]}"; do
