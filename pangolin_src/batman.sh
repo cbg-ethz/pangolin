@@ -563,7 +563,7 @@ case "$1" in
 
                         ### run the script per fragment and detect the error staus per frament
                         #the command which runs the analysis
-                        detect_command=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir -l $location_dic)
+                        detect_command=$(${downstream_analysis_dir}/detect_AAMutations.R -d $cd -l $location_dic)
 
                         fail=0
                         #If the command fails (non-zero exit code), the fail variable is set to 1.
