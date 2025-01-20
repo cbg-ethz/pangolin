@@ -565,11 +565,11 @@ case "$1" in
                         #the command which runs the analysis
                         detect_command=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir -l $location_dic)
 
-                        fail=0
+                       
                         #If the command fails (non-zero exit code), the fail variable is set to 1.
-                        command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                        #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                         # Check the result of the command and create the appropriate status file
-                        if (( fail == 0 )); then
+                        if (( detect_command == 0 )); then
                                 #echo "Command succeeded."
                                 touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_success"
 
