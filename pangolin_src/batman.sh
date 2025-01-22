@@ -568,14 +568,14 @@ case "$1" in
                 path_to_config=${clusterdir_old}/$vir/${working}/${configfile}
 
                 ### run the timeline.py each time when there are newsamples
-                detect_command=$(./timeline.py --path_to_samples_tsv $path_to_samples_tsv --path_to_output $path_to_output )
+                detect_command=$(./timeline.py --path_to_samples_tsv $path_to_samples_tsv --path_to_output $path_to_output | tee /dev/tty)
                 
 
-                fail=0
+                #fail=0
                 #If the command fails (non-zero exit code), the fail variable is set to 1.
-                command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                 # Check the result of the command and create the appropriate status file
-                if (( fail == 0 )); then
+                if [[ "$detect_command" == "0" ]] ; then
                         #echo "Command succeeded."
                         touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
 
@@ -587,13 +587,13 @@ case "$1" in
 
                 ### 4.
                 #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                detect_command=$(./rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config )
+                detect_command=$(./rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config | tee /dev/stderr)
 
-                fail=0
+                #fail=0
                 #If the command fails (non-zero exit code), the fail variable is set to 1.
-                command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                 # Check the result of the command and create the appropriate status file
-                if (( fail == 0 )); then
+                if [[ "$detect_command" == "0" ]]; then
                         #echo "Command succeeded."
                         touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
 
@@ -606,7 +606,7 @@ case "$1" in
         done
 
         # to track the whole process in one file:
-        if (( process_fail == 0 )); then
+        if [[ "$process_fail" == "0" ]] ; then
                 #echo "Command succeeded."
                 touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
         else
