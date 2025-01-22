@@ -283,6 +283,24 @@ case "$1" in
 			touch ${statusdir}/pull_sync_status_success
 		fi
     ;;
+    pull_downstream_status)
+        echo "Pulling the updated status of the downstream analysis"
+        err=0
+		rsync	\
+			--password-file ${rsync_pass}	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} "	\
+			-izrltH --fuzzy --fuzzy --inplace	\
+			-p --chmod=Dg+s,ug+rw,o-rwx	\
+			-g --chown=:"${storgrp}"	\
+			belfry@euler.ethz.ch::${remote_status}/downstream_analysis/ \
+			${statusdir}/downstream_analysis || (( ++err ))
+		if (( err )); then
+			echo "Error: ${err} downstream_analysis sync failed"
+			touch ${statusdir}/pull_sync_downstream_analysis_fail
+		else
+			touch ${statusdir}/pull_sync_downstream_analysis_success
+		fi
+    ;;
     pull_sortsamples_status)
         echo "Pulling the updated status of the sortsamples procedure"
         err=0
