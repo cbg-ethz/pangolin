@@ -568,14 +568,14 @@ case "$1" in
 
                 vpipe_dir=${clusterdir_old}/$vir/${working} 
                 ### Creating the input strings necessary for the downstream analysis
-                path_to_vcf=${clusterdir_old}/$vir/${working}/samples/*/*/variants/SNVs/snvs.vcf        # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
-                path_to_coverage=${clusterdir_old}/$vir/${working}/samples/*/*/alignments/coverage.tsv.gz       #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
-                path_to_samples_tsv=${clusterdir_old}/$vir/${working}/samples.tsv       # Folder: RSV*/working/samples.tsv 
-                path_to_output=${clusterdir_old}/$vir/${working}        # output from timeline.py will be input for downstream analysis --timeline_tsv
-                path_to_config=${clusterdir_old}/$vir/${working}/${configfile}
+                path_to_vcf="${clusterdir_old}/$vir/${working}/samples/*/*/variants/SNVs/snvs.vcf"        # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
+                path_to_coverage="${clusterdir_old}/$vir/${working}/samples/*/*/alignments/coverage.tsv.gz"       #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
+                path_to_samples_tsv="${clusterdir_old}/$vir/${working}/samples.tsv"       # Folder: RSV*/working/samples.tsv 
+                path_to_output="${clusterdir_old}/$vir/${working}"        # output from timeline.py will be input for downstream analysis --timeline_tsv
+                path_to_config="${clusterdir_old}/$vir/${working}/${configfile}"
 
                 ### run the timeline.py each time when there are newsamples
-                detect_command=$(${downstream_analysis_dir}/timeline.py --path_to_samples_tsv $path_to_samples_tsv --path_to_output $path_to_output | tee /dev/tty)
+                detect_command=$(${downstream_analysis_dir}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" | tee /dev/tty)
                 
 
                 #fail=0
