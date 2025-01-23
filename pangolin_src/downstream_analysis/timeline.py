@@ -30,7 +30,7 @@ def find_location(code):
 def main(path_to_samples_tsv, path_to_output):
     timeline_tsv = []
     for path_single_sample_tsv in path_to_samples_tsv:
-        sample_tsv = pd.read_csv(path_single_sample_tsv, sep='\t', header=None)
+        sample_tsv = pd.read_csv(path_single_sample_tsv, sep='\t', header=None, engine='python', encoding='utf-8')
         for index, row in sample_tsv.iterrows():
             submission_Id = row[0]
             batch = path_single_sample_tsv.split('/')[-2]
@@ -39,6 +39,7 @@ def main(path_to_samples_tsv, path_to_output):
             primerProtocol = f'Eawag-2024-{row[3]}'
             location_code = submission_Id.split('_')[1]
             date_string = '-'.join(submission_Id.split('_')[2:])
+            date_string = date_string.split("-3x")[0]  # Remove the "-3x" part
             date = datetime.strptime(date_string, "%Y-%m-%d")
             location = find_location(location_code)
 

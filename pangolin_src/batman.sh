@@ -570,9 +570,8 @@ case "$1" in
                 ### Creating the input strings necessary for the downstream analysis
                 path_to_vcf=${clusterdir_old}/$vir/${working}/samples/*/*/variants/SNVs/snvs.vcf   # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
                 path_to_coverage=${clusterdir_old}/$vir/${working}/samples/*/*/alignments/coverage.tsv.gz   #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
-                path_to_samples_tsv=${clusterdir_old}/$vir/${working} # Folder: RSV*/working/samples.tsv 
+                path_to_samples_tsv=${clusterdir_old}/$vir/${working}/samples.tsv # Folder: RSV*/working/samples.tsv 
                 path_to_output=${clusterdir_old}/$vir/${working}    # output from timeline.py will be input for downstream analysis --timeline_tsv
-                path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
                 path_to_config=${clusterdir_old}/$vir/${working}/${configfile}
 
                 ### run the timeline.py each time when there are newsamples
@@ -594,6 +593,7 @@ case "$1" in
                 fi
 
                 ### 4.
+                path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
                 #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
                 detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config | tee /dev/stderr)
 
