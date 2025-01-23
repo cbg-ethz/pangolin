@@ -610,7 +610,7 @@ case "$1" in
                                 touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
                                 process_fail=$((process_fail + 1))
                         fi
-                done
+                fi
 
                 # to track the whole process in one file:
                 if [[ "$process_fail" == "0" ]] ; then
@@ -620,7 +620,7 @@ case "$1" in
                         #echo "Command failed."
                         touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
                 fi             
-        fi
+        done
         conda deactivate
         ;;
         *)
