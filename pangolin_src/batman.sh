@@ -582,47 +582,45 @@ case "$1" in
                 #If the command fails (non-zero exit code), the fail variable is set to 1.
                 #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                 # Check the result of the command and create the appropriate status file
-                if [[ "$detect_command" == "0" ]] ; then
+                if [[ "$detect_command" != "0" ]] ; then
+                        #echo "Command failed."
+                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
+                        echo "Could not create timeline.tsv file, will skip downstream processing"
+                        continue 
+                else
                         #echo "Command succeeded."
                         touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
 
-                else
-                        #echo "Command failed."
-                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
-                        continue 
-                fi
 
-                ### 4.
-                path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
-                #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config | tee /dev/stderr)
+                        ### 4. continue with downstream only if timeline is produced
+                        path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
+                        #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
+                        detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config | tee /dev/stderr)
 
-                #fail=0
-                #If the command fails (non-zero exit code), the fail variable is set to 1.
-                #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
-                # Check the result of the command and create the appropriate status file
-                if [[ "$detect_command" == "0" ]]; then
+                        #fail=0
+                        #If the command fails (non-zero exit code), the fail variable is set to 1.
+                        #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                        # Check the result of the command and create the appropriate status file
+                        if [[ "$detect_command" == "0" ]]; then
+                                #echo "Command succeeded."
+                                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
+
+                        else
+                                #echo "Command failed."
+                                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
+                                process_fail=$((process_fail + 1))
+                        fi
+                done
+
+                # to track the whole process in one file:
+                if [[ "$process_fail" == "0" ]] ; then
                         #echo "Command succeeded."
-                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
-
+                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
                 else
                         #echo "Command failed."
-                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
-                        process_fail=$((process_fail + 1))
-                fi
-
-        done
-
-        # to track the whole process in one file:
-        if [[ "$process_fail" == "0" ]] ; then
-                #echo "Command succeeded."
-                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
-        else
-                #echo "Command failed."
-                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
-                
-        fi             
-        
+                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
+                fi             
+        fi
         conda deactivate
         ;;
         *)
