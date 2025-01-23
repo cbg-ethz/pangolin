@@ -70,4 +70,7 @@ if __name__ == '__main__':
                         help='directory where to store output file')
     args = parser.parse_args()
 
-    main(args.path_to_samples_tsv, args.path_to_output)
+    # Clean the path
+    path_to_samples_tsv = args.path_to_samples_tsv.strip("[]'\" ")
+
+    main(path_to_samples_tsv, args.path_to_output)
