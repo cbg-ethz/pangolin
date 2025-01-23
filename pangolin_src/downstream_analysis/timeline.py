@@ -71,6 +71,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Clean the path
-    path_to_samples_tsv = args.path_to_samples_tsv.strip("[]'\" ")
+    path_to_samples_tsv = args.path_to_samples_tsv[0]
 
     main(path_to_samples_tsv, args.path_to_output)
