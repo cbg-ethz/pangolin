@@ -3,4 +3,4 @@ ssh
 secrets
 pangolin_src/fgcz-gstore.uzh.ch
 uploader/__pycache__ 
-pangolin_src/downstream_analysis
+pangolin_src/downstream_analysis/
