@@ -593,7 +593,7 @@ case "$1" in
 
 
                         ### 4. continue with downstream only if timeline is produced
-                        path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
+                        path_to_timeline=$path_to_output/timeline.tsv
                         #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
                         detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config | tee /dev/stderr)
 
