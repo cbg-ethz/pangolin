@@ -583,7 +583,7 @@ case "$1" in
                 detect_command=$(${downstream_analysis_dir}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" | tee /dev/tty)
                 exit_code=$?
 		echo "Timeline creation:"
-		echo "Exit code: $?" 
+		echo "Exit code: $exit_code" 
 
                 #fail=0
                 #If the command fails (non-zero exit code), the fail variable is set to 1.
