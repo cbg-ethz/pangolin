@@ -359,7 +359,6 @@ if [ "$run_downstream" -eq "1" ]; then
             # check the status of the downstream processing
             if [[ ( -e ${downstream_analysis_statusdir}/detect_AAMutations_fail ) && ( ${downstream_analysis_statusdir}/detect_AAMutations_fail -nt ${downstream_analysis_statusdir}/detect_AAMutations_success ) ]]; then #check the correct files
                     echo "\e[31;1Downstream_analysis detect_AAMutations.R script failed\e[0m"
-                fi
             else
                 echo "\e[31;1Downstream_analysis detect_AAMutations.R script sucsess\e[0m"
             fi
