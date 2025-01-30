@@ -6,7 +6,6 @@ scriptdir=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-downstream_analysis_dir=${scriptdir}/downstream_analysis  ### put it in server.comf
 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
@@ -555,7 +554,7 @@ case "$1" in
                 echo "Branch: ${branch}\n${commit}"
         ;;
         rsv_vpipe_out_to_tsv)
-        conda activate rsv_downstream_analysis
+        conda activate test_downstream #rsv_downstream_analysis
 
         cd ${downstream_analysis_dir}/
         downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
@@ -569,61 +568,69 @@ case "$1" in
 
                 vpipe_dir=${clusterdir_old}/$vir/${working} 
                 ### Creating the input strings necessary for the downstream analysis
-                path_to_vcf=${clusterdir_old}/$vir/${working}/samples/*/*/variants/SNVs/snvs.vcf   # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
-                path_to_coverage=${clusterdir_old}/$vir/${working}/samples/*/*/alignments/coverage.tsv.gz   #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
-                path_to_samples_tsv=${clusterdir_old}/$vir/${working} # Folder: RSV*/working/samples.tsv 
-                path_to_output=${clusterdir_old}/$vir/${working}    # output from timeline.py will be input for downstream analysis --timeline_tsv
-                path_to_timeline=${clusterdir_old}/$vir/${working}/timeline.tsv
-                path_to_config=${clusterdir_old}/$vir/${working}/${configfile}
+                path_to_vcf="${clusterdir_old}/$vir/${working}/results/*/*/variants/SNVs/snvs.vcf"        # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
+                path_to_coverage="${clusterdir_old}/$vir/${working}/results/*/*/alignments/coverage.tsv.gz"       #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
+                path_to_samples_tsv="${clusterdir_old}/$vir/${working}/samples.tsv"       # Folder: RSV*/working/samples.tsv 
+                path_to_output="${clusterdir_old}/$vir/${working}"        # output from timeline.py will be input for downstream analysis --timeline_tsv
+                path_to_config="${clusterdir_old}/$vir/${working}/${configfile}"
+		if [[ $vir == "RSVA" ]]; then
+			reference="EPI_ISL_412866"
+		else
+			reference="EPI_ISL_1653999"
+		fi
 
                 ### run the timeline.py each time when there are newsamples
-                detect_command=$(./timeline.py --path_to_samples_tsv $path_to_samples_tsv --path_to_output $path_to_output | tee /dev/tty)
-                
+                detect_command=$(${downstream_analysis_dir}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" | tee /dev/tty)
+                exit_code=$?
+		echo "Timeline creation:"
+		echo "Exit code: $exit_code" 
 
                 #fail=0
                 #If the command fails (non-zero exit code), the fail variable is set to 1.
                 #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                 # Check the result of the command and create the appropriate status file
-                if [[ "$detect_command" == "0" ]] ; then
-                        #echo "Command succeeded."
+                if [[ $exit_code -ne 0 ]] ; then
+                        #echo "Command failed."
+			echo "detect_command: $detect_command"
+                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
+                        echo "Could not create timeline.tsv file, will skip downstream processing"
+                        continue 
+                else
+                        echo "Successfully created timeline.tsv. Proceeding with .tsv file creation."
                         touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
 
-                else
-                        #echo "Command failed."
-                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
-                        continue 
+			echo "path to vcf: $path_to_vcf"
+                        ### 4. continue with downstream only if timeline is produced
+                        path_to_timeline=$path_to_output/timeline.tsv
+                        #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
+                        detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config | tee /dev/stderr)
+			exit_code=$?
+                        echo "Downstream analysis:"
+			echo "Exit code: $exit_code"
+			#fail=0
+                        #If the command fails (non-zero exit code), the fail variable is set to 1.
+                        #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                        # Check the result of the command and create the appropriate status file
+                        if [[ $exit_code -eq 0 ]]; then
+                                echo "Downstream analysis succeeded. .tsv file has been created."
+                                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
+
+                        else
+                                echo "Downstream analysis for a variant failed."
+                                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
+                                process_fail=$((process_fail + 1))
+                        fi
                 fi
 
-                ### 4.
-                #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                detect_command=$(./rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf $path_to_vcf --timeline_tsv $path_to_timeline --path_to_coverage $path_to_coverage --config $path_to_config | tee /dev/stderr)
-
-                #fail=0
-                #If the command fails (non-zero exit code), the fail variable is set to 1.
-                #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
-                # Check the result of the command and create the appropriate status file
-                if [[ "$detect_command" == "0" ]]; then
-                        #echo "Command succeeded."
-                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
-
+                # to track the whole process in one file:
+                if [[ "$process_fail" == "0" ]] ; then
+                        echo "Downstream analysis succeeded."
+                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
                 else
-                        #echo "Command failed."
-                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
-                        process_fail=$((process_fail + 1))
-                fi
-
+                        echo "Downstream analysis failed."
+			touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
+                fi             
         done
-
-        # to track the whole process in one file:
-        if [[ "$process_fail" == "0" ]] ; then
-                #echo "Command succeeded."
-                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
-        else
-                #echo "Command failed."
-                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
-                
-        fi             
-        
         conda deactivate
         ;;
         *)

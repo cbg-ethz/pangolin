@@ -2,5 +2,5 @@ ssh
 .*.sw?
 secrets
 pangolin_src/fgcz-gstore.uzh.ch
-uploader/__pycache__
-pangolin_src/downstream_analysis
+uploader/__pycache__ 
+pangolin_src/downstream_analysis/
