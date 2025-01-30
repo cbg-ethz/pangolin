@@ -6,7 +6,7 @@ scriptdir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
 status=${clusterdir_old}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
-downstream_analysis_dir=${scriptdir}/downstream_analysis  ### put it in server.comf
+
 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
@@ -552,24 +552,24 @@ case "$1" in
                 mkdir -p downstream_analysis_statusdir ### does it fail if it already exisist?
 
                 ###  define the relevant folders per fragment and run the scrip per fragment
-                fragments=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)
+                fragments=(IA_H1 IA_H3 IA_N1 IA_N2) # excluded IA_MP 
                 process_fail=0
 
                 for fra in "${fragments[@]}"; do
                         echo "Processing fragment: $fra"
                         # 
-                        vpipe_dir=${clusterdir_old}/$fra/pangolin/${working} #can this be generalized better?
+                        vpipe_dir=${clusterdir_old}/$fra/${working} #can this be generalized better?
                         location_dic=${ww_locations}
 
                         ### run the script per fragment and detect the error staus per frament
                         #the command which runs the analysis
-                        detect_command=$(./detect_AAMutations.R -d $vpipe_dir -l $location_dic)
+                        detect_command=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir -l $location_dic | tee /dev/tty)
 
-                        fail=0
+                       
                         #If the command fails (non-zero exit code), the fail variable is set to 1.
-                        command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
+                        #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                         # Check the result of the command and create the appropriate status file
-                        if (( fail == 0 )); then
+                        if  [[ "$detect_command" == "0" ]] ; then
                                 #echo "Command succeeded."
                                 touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_success"
 
@@ -581,7 +581,7 @@ case "$1" in
 
                 done
                 # to track the whole process in one file:
-                if (( process_fail == 0 )); then
+                if [[ "$process_fail" == "0" ]]; then
                         #echo "Command succeeded."
                         touch "${downstream_analysis_statusdir}/detect_AAMutations_success"
 
