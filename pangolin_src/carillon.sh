@@ -329,7 +329,6 @@ if [ "$run_downstream" -eq "1" ]; then
             # check the status of the downstream processing
             if [[ ( -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ) ]]; then #check the correct files
                     echo "\e[31;1Downstream_analysis script failed\e[0m"
-                fi
             else
                 echo "\e[31;1Downstream_analysis script sucsess\e[0m"
             fi
