@@ -515,7 +515,7 @@ case "$1" in
                         # check the presence of fasta on each sample
                         echo -n ${sample}/${batch}
                         #ls ${clusterdir_old}/${working}/samples/${sample}/${batch}
-                        if [[ -e ${clusterdir_old}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
+                        if [[ -e ${clusterdir_old}/IA_H1/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_H3/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_MP/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_N1/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_N2/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
                             # this will check for:
                             #  - references/ref_majority.fasta
                             #  - references/consensus.bcftools.fasta & .chain
