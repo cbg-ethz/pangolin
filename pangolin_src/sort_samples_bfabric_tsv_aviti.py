@@ -236,15 +236,15 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 				if "aviti" in srch.lower():
 					#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
 					j = os.path.join(srch, 'DmxStats', f'Stats_*i1-{barcode1}_i2-{barcode2}.json')
-                                        j = glob.glob(j)
-                                        if len(j) > 1:
-                                                print("ERROR: found multiple Stats files for delivery" + srch)
-                                                continue
-                                        if len(j) == 0:
+					j = glob.glob(j)
+					if len(j) > 1:
+						print("ERROR: found multiple Stats files for delivery" + srch)
+						continue
+					if len(j) == 0:
 						print(j, "Cannot find the Stats file")
 						continue
-                                        j=j[0]
-                                        barcode_postfix=j.split(os.sep)[-1].split(".json")[0].split("Stats_")[1]
+					j=j[0]
+					barcode_postfix=j.split(os.sep)[-1].split(".json")[0].split("Stats_")[1]
 				else:
 					# build the stats filename based on the barcode lengths
 					j = os.path.join(srch, 'DmxStats', f'Stats_i1-{barcode1}_i2-{barcode2}.standard.json')
@@ -329,7 +329,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	if "aviti" in srch.lower():
 		try:
 			#m=rxcell.search(stats['FlowCellID']).groupdict()
-                        m=re.match('^[a-z0-9]{10}$', stats['FlowCellID'])
+			m=re.match('^[a-z0-9]{10}$', stats['FlowCellID'])
 			flowcell=m.group()
 		except:
 			print(f"{name} cannot parse: {stats.get('Flowcell')}")
