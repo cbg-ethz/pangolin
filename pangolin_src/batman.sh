@@ -111,7 +111,7 @@ case "$1" in
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
                 sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
                 #IA_H1
-		cp ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/IA_H1/${working}/samples.tsv
+		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_H1/${working}/samples.tsv
 		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_H1/${working}/samples/"
                 lst="${clusterdir_old}/IA_H1/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
@@ -126,7 +126,7 @@ case "$1" in
                         fi
                 done < ${clusterdir_old}/${working}/samples.tsv
                 #IA_H3
-		cp ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/IA_H3/${working}/samples.tsv
+		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_H3/${working}/samples.tsv
 		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_H3/${working}/samples/"
                 lst="${clusterdir_old}/IA_H3/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
@@ -141,7 +141,7 @@ case "$1" in
                         fi
                 done < ${clusterdir_old}/${working}/samples.tsv
                 #IA_MP
-		cp ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/IA_MP/${working}/samples.tsv
+		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_MP/${working}/samples.tsv
 		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_MP/${working}/samples/"
                 lst="${clusterdir_old}/IA_MP/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
@@ -156,7 +156,7 @@ case "$1" in
                         fi
                 done < ${clusterdir_old}/${working}/samples.tsv
                 #IA_N1
-		cp ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/IA_N1/${working}/samples.tsv
+		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_N1/${working}/samples.tsv
 		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_N1/${working}/samples/"
                 lst="${clusterdir_old}/IA_N1/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
@@ -171,7 +171,7 @@ case "$1" in
                         fi
                 done < ${clusterdir_old}/${working}/samples.tsv
                 #IA_N2
-		cp ${clusterdir_old}/${working}/samples.tsv > ${clusterdir_old}/IA_N2/${working}/samples.tsv
+		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_N2/${working}/samples.tsv
 		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_N2/${working}/samples/"
                 lst="${clusterdir_old}/IA_N2/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
