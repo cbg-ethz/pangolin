@@ -54,14 +54,14 @@ if [[ -n $skipsync ]]; then
 fi
 
 if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz
+    ${remote_batman} sync_fgcz 
     ${scriptdir}/belfry.sh pull_sync_status
     if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
         echo "\e[31;1Pulling sync status files failed\e[0m"
         echo "The automation will not be aware of any new deliveries"
     else
         if [ $backup_fgcz_raw -eq "1" ]; then
-            ${remote_backup} pull_fgcz_data --recent
+            ${remote_backup} pull_fgcz_data --recent || echo -e "\e[31mremote_backup pull_fgcz_data function failed\e[0m"
             if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
                 echo "\e[31;1Backup of fgcz raw data failed\e[0m"
                 echo "The system will retry next loop"
@@ -132,7 +132,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         case "$j" in
             seqqa)
                 if [ $backup_vpipe -eq "1" ]; then
-                    ${remote_backup} pullsamples_noshorah --recent
+                    ${remote_backup} pullsamples_noshorah --recent || echo -e "\e[31mremote_backup pullsamples_noshorah function failed\e[0m"
                     if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
                         echo "\e[31;1mpulling data for database failed\e[0m"
                         (( ++stillrunning ))
@@ -156,7 +156,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 
     if (( stillrunning == 0 )); then
         if [ $backup_vpipe -eq "1" ]; then
-            ${remote_backup} pullsamples_noshorah --recent
+            ${remote_backup} pullsamples_noshorah --recent || echo -e "\e[31mremote_backup pullsamples_noshorah function failed\e[0m"
             if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
                 echo "Pulling data success!"
             else
@@ -392,7 +392,7 @@ if [ "$run_viloca" -eq "1" ]; then
                 echo "${id}" > ${viloca_statusdir}/viloca_${j}_ended
                 echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
                 if [ $backup_viloca -eq "1" ]; then
-                    ${remote_backup} pullresults_viloca --batch ${lastbatch_viloca} > ${viloca_statusdir}/backup_viloca_status_${now}
+                    ${remote_backup} pullresults_viloca --batch ${lastbatch_viloca} > ${viloca_statusdir}/backup_viloca_status_${now} || echo -e "\e[31mremote_backup pullresults_viloca function failed\e[0m"
                     if [[ ( ! -e ${viloca_statusdir}/backup_viloca_status_${now} ) || $(cat ${viloca_statusdir}/backup_viloca_status_${now}) -eq "SUCCESS" ]]; then
                         echo "Backup of VILOCA results on bs-bewi08 success!"
                     else
@@ -566,7 +566,7 @@ if [ $run_amplicon_coverage -eq "1" ]; then
         echo "No new batch to run AMPLICON COVERAGE on"
     fi
     if [ ${backup_amplicon_cov} -eq "1" ]; then
-        ${remote_backup} pullresults_amplicon_cov > ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now}
+        ${remote_backup} pullresults_amplicon_cov > ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} || echo -e "\e[31mremote_backup pullresults_amplicon_cov function failed\e[0m"
         if [[ ( ! -e ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} ) || $(cat ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} | tail -n 1) -eq "SUCCESS" ]]; then
             echo "Backup of AMPLICON COVERAGE results on bs-bewi08 success!"
         else

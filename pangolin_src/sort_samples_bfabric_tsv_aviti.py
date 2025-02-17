@@ -207,7 +207,7 @@ order2runs={} # table that keeps track of orders and how many runs each has.
 order2runfolders={}
 plate2runs={} # table that leeps track of which run each plate has ended up in.
 for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
-	if "Aviti" in srch:
+	if "aviti" in srch.lower():
 		print(srch, f"\x1b[32;1mDetected Aviti sample\x1b[0m")
 	pathparts = srch.split(os.sep)
 	path = os.sep.join(pathparts)
