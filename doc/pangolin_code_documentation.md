@@ -231,3 +231,110 @@ Helper functions for carillon.sh (VM interaction / data sync)
 
 
 ### batman.sh
+
+
+#### Downstream analysis
+For Influenza and RSV the vpipe output has to be processed to get a table with the ferequency data which will be uploaded to the genspectrum dashboard. 
+The function that takes the vpipe output and transforms it to a .tsv file is refered to as *downstream analysis*. This Analysis differes between RSV and Influenza as the provided code stems from different sources.
+The scripts that perform the data transformation are uniformly stored in a folder on Euler calles *rsv_downstream_analysis* or *influenza_downstream_analysis* respectively.
+These scripts are linked via softlinks to the reespective */pangolin/pangolin_src/downstream_analysis folder to make them available to the automation.
+In *carillon.sh* first, it is checked if there is an ongoing vpipe run and if so, nothing happens. If the last vpipe run completed downstream analysis will be started.
+These checks are done via the status files created throughout the pipline. 
+
+To start the downstream analysis the *remote_batman* script on euler is called with the respective name of the function (Influenza:vpipe_out_to_tsv , RSV: rsv_vpipe_out_to_tsv).
+These functions are stored in the respective batman.sh script on euler and have differences which accomodate the differences between the downstream processing scripts. 
+
+TBD: explain the rsv_vpipe_out_to_tsv function once completed
+
+**vpipe_out_to_tsv (Influenza batman.sh on euler)**
+
+This function is embedding the /detect_AAMutations.R script which actually runs the transformation of the vpipe output to the .tsv table for uploading. The function ensures that this script is run on each of the fragments and creates the status files accordingly.
+As input the function needs the fragment specific vpipe working folder as well as the path to the location.tsv file (which is stored in server.conf).
+As output it generates the mutation frequency table in `/cluster/project/pangolin/influenza_pipeline/*/working/MutationFrequencies`.
+
+TBD: what happens with this output. Continue if upload is autoamtied.
+
+# Euler
+Base conda: 
+```Bash 
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+```
+Notes on conda envs:
+- If creating a new conda env which should be runnig on euler thes env has to be created **manually** before the automation can use it
+- for this go to euler and activate the base env
+- then create the new env form the .yaml file
+```Bash 
+conda env create -f environment.yaml #create conda env from existing yaml file
+```
+- if all the dependencies are solved the environment can be used
+   - if packages need to be updates changed etc. save the new env
+   - `conda env export --no-builds > environment.yaml`
+- this process has to be repreated each time an environment changes / updates / adds
+
+
+
+# Single Tool Documentation
+## Uploader to SPSP
+To upload samples to SPSP we use *sendcrypt* which is the tool provided by SPSP for the upload. Different functionas and parts of scripts are involved in the uploader process:
+
+The upload happens in the folder on wise_db: wastewater_automation/pangolin/uploader.
+To clarify/keep in mind: the wastewater_automation container also is responsible to analyse the covid data (run the vpipe analysis etc.) but also includes the upload of *ALL* the multiviral samples!
+
+wise_db: wastewater_automation/pangolin/uploader_legacy
+- depreciated
+- contains the information of the pure covid uploads before the mulitviral samples
+
+wise_db:/data/projects/dataset/archive → after upload, upload information it is archived there!
+
+**belfry.sh**
+Since the upload of the samples happens from the VM (wise:db) to SPSP the functions related to the upload are stored in there.
+- queue_upload) creates batches_to_upload.tsv
+- upload) function doing the upload
+- clean_sendcrypt_temp)
+
+*queue_upload*
+
+This function of belfry.sh adds new samples to the batches_to_upload.tsv list which is required in *prepare.sh* to create the actual list of samples to upload (to_upload.txt) that is needed for the upload.
+It gets the samples.BATCH.tsv from euler. And adds the samples to batches_to_upload.tsv which is then sortet such that the latest batch is on top.
+
+*upload*
+
+This function first creates a file (${uploader_tempdir}/cram_to_download.txt) to store the path of the .cram files of the new samples. This list is then used to rsync the new .creamfiles for the upload to the wise_db VM since the upload to SPSP needs to be done form the VM (technical pakage version reasons).
+It also rsyncs the timeline.tsv and qa.csv file to have it in the package to be uploaded to SPSP. Then the upload.sh script is run to prepare the correct metadata.tsv table for the upload. If the metadata file in not empty the sendCrypt is run.
+The upload is performed by useind the commands update (updates sendCrypt to always have the lates version), version (to record the sendCrypt version used) and send (whcih performed the upload). The send command take time since it takes the whole package and compresses it into a .gz folder and uploads it to SPSP.
+After the upload was sucessfull the information is stored in the archive folder on wise_db and the .cram files are deleted.
+
+*clean_sendcrypt_temp*
+
+The sendcrypt send command creates a compressed version of the .cram files and the matedata and stores it in sendcrypt. folder. This needs to be deleted after the upload to avoid heavy storage usage.
+
+**entrypont.sh**
+The first script that is run when the container is created. It stores the GPG keys for the upload to SPSP. We need 2 keys to encrypt the data in the upload process one for us and another for SPSP (we need to have both). 
+This setup is included in the entrypoint.sh script. (sendcrypt documentation on how to get them etc.)
+
+**setup.sh**
+setup.sh is called in entrypoint.sh (the script that sets up the container). Each time the container is recreated we run the installation of sendcrypt to have it in the container available. This installation is done as part of the setup.sh script.
+
+**prepare.sh**
+- stored at:/data/projects/wastewater_automation/pangolin/uploader
+- called form belfry.sh upload) function.
+- output: {uploader_tempdir}/to_upload.txt
+
+This script prepared the list of samples to be uploaded to SPSP. First, it cleans up the to_upload.txt created fromt he previous run. Then it runs an inline Python script which created the to_upload.txt of the currently new samples.
+It checks the list of batches_to_upload.tsv created in ____ and filteres out the blacklisted smaples and the already uploaded samples (${uploader_workdir}/all_uploaded.tsv) . 
+Then it takes the *sample_number* which is the max nr. of samples to be uploaded at once and provides them in the to_upload.txt file which is the basis for which samples to upload.
+
+**upload.sh**
+- stored at:/data/projects/wastewater_automation/pangolin/uploader
+- called form belfry.sh upload) function.
+
+This script does not run the upload with sendcrypt but prepares the metadata.tsv file in the format that sendcrypt requires. 
+It first checks the to_upload.txt files created in prepare.sh (which is called in belfry.sh) and goes through each sample line by line. It created the path to the dehuman.cram file and if it exists first makes a copy of it with the name *samplename.cram* file. This is necessary becasue by design vpipe output is called dehuman.cram for every sample. So for the upload they could not be differenciated.
+Then the metadata line is created for this sample by running the create_metadata_line.py script which actually extracts the necessary information form the provided sample and wirtes it into the metadata.tsv file.
+Lastly, the sample name is written in to the file that archives the uploaded run and the whole metadata.tsv is outputted.
+
+**create_metadata_line.py**
+tbd
+
+
+
