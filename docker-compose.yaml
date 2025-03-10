@@ -20,6 +20,7 @@ services:
       - bs_pangolin_gpg_key_password
       - sendcrypt_profile
       - spsp_uploads_ssh_private_key
+      - wisedb_token
 secrets:
   bs-pangolin_login_euler:
     file: /data/projects/wastewater_automation/secrets/bs-pangolin@euler.ethz.ch
@@ -43,3 +44,5 @@ secrets:
     file: /data/projects/wastewater_automation/secrets/gpg_key_secrets
   sendcrypt_profile:
     file: /data/projects/wastewater_automation/secrets/default.sendcrypt-profile
+  wisedb_token:
+    file: /data/projects/wastewater_automation/secrets/wisedb_token.txt

@@ -6,6 +6,7 @@ import os
 import argparse
 import sys
 import re
+import requests
 sys.path.append("/app/uploader")
 import submission_metadata as meta
 
@@ -18,11 +19,65 @@ def parse_args():
     parser.add_argument('-b', '--batchname', required=True, help = "Batchname of the batch to upload")
     parser.add_argument('-u', '--update', required=False, default="No", help = "If the field _is_assembly_update_ should be Yes or No")
     parser.add_argument('-o', '--outfile', required=True, help="metadata output file to write the line to")
+    parser.add_argument('-t', '--wisedb_token', required=True, help="Token used for connecting to WiseDB to retrieve the dPCR values")
     return parser.parse_args()
 
 # samplename="KLZHCov220123"
 # batchname="20220204_HVFYNDRXY"
 # update="No"
+
+def load_dpcr(token, wisedb_dpcr_url, exceptions, date, eawag_id, meta):
+    try:
+        ara_id = meta.ara_id[eawag_id]
+    except:
+        sys.exit("Error: Cannot find an ARA ID associated to EAWAG ID " + eawag_id)
+    if ara_id == "":
+        sys.exit("Error: Empty ARA ID associated to EAWAG ID " + eawag_id)
+    if len(date.split("-")) != 3:
+        sys.exit("Error: the provided date does not appear to have '-' as a separator")
+    url = f"{wisedb_dpcr_url}/?ara_id={ara_id}&from={date}&to={date}"
+    headers = {
+    "accept": "text/csv",
+    "Authorization": f"Token {token}"
+    }
+    response = requests.get(url, headers=headers)
+    output = response.text
+    output = output.split("\r\n")
+    dpcr_dict = {}
+    for line in output:
+        values = line.split(',')
+        # Ensure there are enough elements (at least 23 positions)
+        if len(values) >= 23:
+            key = values[7].strip()
+            value = values[22].strip()
+            if key == "target" and value == "load":
+                continue
+            try:
+                float_value = float(value)
+            except ValueError:
+                sys.exit("Error: failed to convert the dPCR value to float. Please check: ara_id:" + ara_id + "; date: " + date + "; target: ", + key)
+            if key in dpcr_dict:
+                existing_value = dpcr_dict[key]
+                dpcr_dict[key] = (existing_value + float_value) / 2
+            else:
+                dpcr_dict[key] = float_value
+    # Temporary dictionary to accumulate sum and count for each canonical key
+    temp = {}
+    for key, value in dpcr_dict.items():
+    # Check if the key is in any of the exception lists
+        for exception_key, additional_keys in exceptions.items():
+            if key in additional_keys:
+                key = exception_key
+                break  # Use the first matching exception key
+        # If the canonical key already exists, accumulate the value
+        if key in temp:
+            current_sum, current_count = temp[key]
+            temp[key] = (current_sum + value, current_count + 1)
+        else:
+            temp[key] = (value, 1)
+    # Build the updated dictionary by averaging accumulated values
+    dpcr_dict = {k: total / count for k, (total, count) in temp.items()}
+    return dpcr_dict
 
 def load_locations(locationfile):
     with open(locationfile, 'r') as file:
@@ -88,8 +143,8 @@ def verify_strain_name(strain, meta):
     pieces = strain.split("/")
     if (len(pieces)!=4):
         sys.exit("Error: strain name " + strain + " does not have 4 fields separated by /")
-    if (pieces[0]!="hCoV-19"):
-        sys.exit("Error: strain name " + strain + " does not have the string hCoV-19 as first field")
+    #if (pieces[0] not in meta.tracked_viruses.keys()):
+    #    sys.exit("Error: strain name " + strain + " does not have any accepted tracked virus as first field")
     if (pieces[1]!="Switzerland"):
         sys.exit("Error: strain name " + strain + " does not have the string Switzerland as second field")
     if (pieces[3] not in meta.projyears):
@@ -199,19 +254,16 @@ def main():
             mydata[6] = "Zürich (ZH)"
         if (mydata[6] == "Kanton Zürich/Promega"):
             mydata[6] = "Zürich (ZH)"
-    cram = args.samplename+".cram"
-    strain = 'hCoV-19/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","").replace("-","")+"/"+mydata[5].split("-")[0]
-    verify_strain_name(strain, meta)
     sourcename = mydata[6]
     try:
         sampleinfo = meta.kit[mydata[3]]
     except:
         sys.exit("Error: cannot recognise the primer kit code:" + mydata[3])
 
-    try:
-        samplecov = str(round(float(read_qa(args.samplename, meta.qafile)[34])))
-    except:
-        sys.exit("Error: cannot load the qa file")
+    #try:
+    #    samplecov = str(round(float(read_qa(args.samplename, meta.qafile)[34])))
+    #except:
+    #    sys.exit("Error: cannot load the qa file")
 
     try:
         collectingcode = meta.collecting_lab[mydata[4]]
@@ -235,15 +287,48 @@ def main():
     except ValueError:
         catchment_size = ""
 
-    fullline = args.update+"\t2697049\t"+strain+"\t"+mydata[5]+"\tEurope/Switzerland/"+mydata[6].split(" ")[1].replace("(","").replace(")","")+"\t"+mydata[6]+"\t\tEnvironment\tWastewater treatment plant\t"+sourcename+"\t"+catchment_size+"\t"+meta.population[mydata[4]]+"\t"+meta.region[mydata[4]]+"\tSurveillance\tMetagenome\t"+cram+"\t"+sampleinfo+"\t"+meta.seqcenter[meta.centerused]+"\t"+meta.seqplatform+"\t"+meta.assembly+"\t"+samplecov+"\t"+meta.reportinglab+"\t"+collectinglab+"\t"+authors+"\t"+meta.embargo+"\t\t\n"
-    verify_mandatory_fields(fullline, meta, args.samplename)
+    # Get all viruses that are present in the sample by checking if the wisedb has dPCR values or not for the sample
+    load = load_dpcr(args.wisedb_token, meta.wisedb_dpcr_url, meta.exceptions_dpcr, mydata[5], mydata[4], meta) 
+    all_subtypes = []
+    all_taxids = []
+    for virus in load.keys():
+        if virus not in meta.tracked_viruses.keys():
+            print("Skipping virus " + virus + " because not in the list of tracked viruses for upload")
+            continue
+        else:
+            virus_shortname = [meta.tracked_viruses[virus]]
+            if virus_shortname == ["rsv"]:
+                print("Found exception: rsv may include RSVA or RSVB for sequencing. Retrieving which")
+                for key, value in meta.rsv_kits.items():
+                    if mydata[3] in value:
+                        virus_shortname = [key]
+            if virus_shortname == ["rsv"]:
+                sys.exit("Error: could not find if the detected rsv is RSVA or RSVB from the library prep kit of sample " + mydata[0])
+            if virus_shortname == ["rsva_and_b"]:
+                virus_shortname = ["rsva", "rsvb"]
+        if load[virus] > 0:
+            for subtype in virus_shortname:
+                print("Found viral load for virus " + subtype + " in sample " + mydata[0] + ". Adding the metadata line")
+                all_subtypes.extend(subtype)
+                try:
+                    taxid = meta.taxon_id[subtype]
+                except:
+                    sys.exit("Error: could not find the taxon id associated to subtype " + subtype)
+                all_taxids.extend(taxid)
+        else:
+            print("Info: no viral load for virus " + virus_shortname + " in sample " + mydata[0] + ". Skipping metadata line")
 
-    try:
-        with open(args.outfile, "a") as file_object:
-            file_object.write(fullline)
-    except:
-        sys.ext("Error: failed to write the metadata line for sample ", args.samplename, " in output file ", args.outfile)
-
+    cram = args.samplename+".cram"
+    strain = ",".join(all_subtypes)+'/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","").replace("-","")+"/"+mydata[5].split("-")[0]
+    verify_strain_name(strain, meta)
+    taxid = meta.taxon_id[subtype]
+    fullline = args.update+"\t"+",".join(all_taxids)+"\t"+strain+"\t"+mydata[5]+"\tEurope/Switzerland/"+mydata[6].split(" ")[1].replace("(","").replace(")","")+"\t"+mydata[6]+"\t\tWastewater treatment plant\t"+sourcename+"\t"+catchment_size+"\t"+meta.population[mydata[4]]+"\t"+meta.region[mydata[4]]+"\tSurveillance\tMetagenome\t"+cram+"\t\t"+sampleinfo+"\t"+meta.seqcenter[meta.centerused]+"\t"+meta.seqplatform+"\t"+meta.assembly+"\t"+collectinglab+"\t"+authors+"\t"+meta.embargo+"\t"+meta.projnum+"\t\t\t\t\n"
+                verify_mandatory_fields(fullline, meta, args.samplename)
+                try:
+                    with open(args.outfile, "a") as file_object:
+                        file_object.write(fullline)
+                except:
+                    sys.exit("Error: failed to write the metadata line for sample " + args.samplename + ", virus " + virus_shortname + ", in output file ", args.outfile)
 if __name__ == '__main__':
     main()
 
