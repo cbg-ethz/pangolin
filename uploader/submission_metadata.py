@@ -13,7 +13,7 @@ kit = {
   "V532": "SARS-CoV-2 ARTIC V5.3.2",
   "v5.3.2": "SARS-CoV-2 ARTIC V5.3.2",
   "V5.3.2": "SARS-CoV-2 ARTIC V5.3.2",
-  "v532_pooled": "PLACEHOLDER POOLED KIT"
+  "v532_pooled": "SARS-CoV-2 ARTIC V5.3.2,Native Barcoding Kit 24 V14 (SQK-NBD114.24),Ligation sequencing amplicons V14 (SQK-LSK114)"
 } 
 # convertion from eawag_ids (what we use in lollipop) to ara_id (to be used to query wisedb)
 # The matches have been retrieved from wisedb using the API metadata/wastewater_treatment_plant
@@ -298,7 +298,7 @@ basedir = "/app/uploader"
 samplesfolder = "/app/dataset/working/samples"
 timelinefile = "/app/dataset/working/timeline.tsv"
 assembly = "V-pipe"
-embargo = "2025-02-28"
+embargo = "2025-03-31"
 projyears = ["2024", "2025"]
 projnum = "PRJEB85524"
 submitting = "ETHZ"
