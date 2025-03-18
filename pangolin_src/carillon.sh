@@ -319,20 +319,37 @@ fi
 if [ "$run_downstream" -eq "1" ]; then
     # 1. check if there is a current vpipe run: if not start the downstream processing of the results
     if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
-        echo "starting postprocessing of vpipe output to tsv"
-        ${remote_batman} rsv_vpipe_out_to_tsv
-        ${scriptdir}/belfry.sh pull_downstream_status 
-        if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
-            echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
-            echo "The automation will not be aware of postprocessing of vpipe output status"
-        else
-            # check the status of the downstream processing
-            if [[ ( -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ) ]]; then #check the correct files
-                    echo "\e[31;1Downstream_analysis script failed\e[0m"
-                fi
+         # if no vpipe is running check if downstream already ran on the latest batch:
+        lastbatch_downs=$(cat $(ls -Art ${downstream_analysis_statusdir}/downstream_new* | tail -n 1))
+        echo "Last batch analysed by downstream analysis is ${lastbatch_downs}"
+        vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
+        vpipe_enddate=${vpipe_enddate#*.} #take only the date form the string stored in vpipe_ended
+        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
+        echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
+        #### check the latest vpipe batch with the latest downstream analysis batch:
+        if [[ $lastbatch_downs != $lastbatch_vpipe ]]; then
+            echo "There is a new most recent batch that the downstream analyisis can run on"
+            echo "starting postprocessing of vpipe output to tsv"
+            #### RUN Downstream Analysis
+            echo "starting postprocessing of vpipe output to tsv"
+            ${remote_batman} rsv_vpipe_out_to_tsv
+            #create status file to store the latest batch in
+            $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
+            ${scriptdir}/belfry.sh pull_downstream_status 
+            if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
+                echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
+                echo "The automation will not be aware of postprocessing of vpipe output status"
             else
-                echo "\e[31;1Downstream_analysis script sucsess\e[0m"
+                # check the status of the downstream processing
+                if [[ ( -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ) ]]; then #check the correct files
+                        echo "\e[31;1Downstream_analysis script failed\e[0m"
+                    fi
+                else
+                    echo "\e[31;1Downstream_analysis script sucsess\e[0m"
+                fi
             fi
+        else
+            echo "No new batch to run the downstream analysis on"
         fi
     else
         echo "There is already a vpipe run going on. Can't run downstream_analysis."
