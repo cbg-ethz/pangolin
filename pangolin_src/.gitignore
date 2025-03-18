@@ -25,6 +25,7 @@ status/
 ._*
 .snapshot
 .ipynb_checkpoints
+downstream_analysis/
 
 #logs
 slurm-*
