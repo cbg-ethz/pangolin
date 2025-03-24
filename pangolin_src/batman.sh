@@ -463,7 +463,7 @@ case "$1" in
                         # check the presence of fasta on each sample
                         echo -n ${sample}/${batch}
                         #ls ${clusterdir_old}/${working}/samples/${sample}/${batch}
-                        if [[ -e ${clusterdir_old}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
+                        if [[ -e ${clusterdir_old}/RSVA/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/RSVB/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
                             # this will check for:
                             #  - references/ref_majority.fasta
                             #  - references/consensus.bcftools.fasta & .chain
@@ -575,8 +575,10 @@ case "$1" in
                 path_to_config="${clusterdir_old}/$vir/${working}/${configfile}"
 		if [[ $vir == "RSVA" ]]; then
 			reference="EPI_ISL_412866"
+			virus_strings=${rsva_match}
 		else
 			reference="EPI_ISL_1653999"
+			virus_strings=${rsvb_match}
 		fi
 
                 ### run the timeline.py each time when there are newsamples
@@ -603,7 +605,7 @@ case "$1" in
                         ### 4. continue with downstream only if timeline is produced
                         path_to_timeline=$path_to_output/timeline.tsv
                         #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                        detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config | tee /dev/stderr)
+                        detect_command=$(${downstream_analysis_dir}/rsv_downstream_analysis.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config --virus_string "$virus_strings" | tee /dev/stderr)
 			exit_code=$?
                         echo "Downstream analysis:"
 			echo "Exit code: $exit_code"
