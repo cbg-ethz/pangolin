@@ -274,7 +274,7 @@ case "$1" in
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${remote_status}/sync/ \
+			belfry@euler.ethz.ch::${remote_status_rsv}/sync/ \
 			${statusdir}/remote_sync || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
@@ -292,7 +292,7 @@ case "$1" in
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${remote_status}/downstream_analysis/ \
+			belfry@euler.ethz.ch::${remote_status_rsv}/downstream_analysis/ \
 			${statusdir}/downstream_analysis || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} downstream_analysis sync failed"
@@ -310,7 +310,7 @@ case "$1" in
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
-			belfry@euler.ethz.ch::${remote_status}/sortsamples/* \
+			belfry@euler.ethz.ch::${remote_status_rsv}/sortsamples/* \
 			${statusdir}/remote_sortsamples || (( ++err ))
 		if (( err )); then
 			echo "Error: ${err} rsync job(s) failed"
