@@ -557,8 +557,8 @@ case "$1" in
         conda activate test_downstream #rsv_downstream_analysis
 
         cd ${downstream_analysis_dir}/
-        downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
-        mkdir -p downstream_analysis_statusdir 
+        remote_downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
+        mkdir -p ${remote_downstream_analysis_statusdir} 
 
         ### 3. define the relevant folders per fragment and run the scrip per fragment
         v_subtype=(RSVA RSVB)
@@ -594,12 +594,12 @@ case "$1" in
                 if [[ $exit_code -ne 0 ]] ; then
                         #echo "Command failed."
 			echo "detect_command: $detect_command"
-                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
+                        touch "${remote_downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
                         echo "Could not create timeline.tsv file, will skip downstream processing"
                         continue 
                 else
                         echo "Successfully created timeline.tsv. Proceeding with .tsv file creation."
-                        touch "${downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
+                        touch "${remote_downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
 
 			echo "path to vcf: $path_to_vcf"
                         ### 4. continue with downstream only if timeline is produced
@@ -615,11 +615,11 @@ case "$1" in
                         # Check the result of the command and create the appropriate status file
                         if [[ $exit_code -eq 0 ]]; then
                                 echo "Downstream analysis succeeded. .tsv file has been created."
-                                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
+                                touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
 
                         else
                                 echo "Downstream analysis for a variant failed."
-                                touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
+                                touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
                                 process_fail=$((process_fail + 1))
                         fi
                 fi
@@ -627,10 +627,10 @@ case "$1" in
                 # to track the whole process in one file:
                 if [[ "$process_fail" == "0" ]] ; then
                         echo "Downstream analysis succeeded."
-                        touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
+                        touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
                 else
                         echo "Downstream analysis failed."
-			touch "${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
+			touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
                 fi             
         done
         conda deactivate

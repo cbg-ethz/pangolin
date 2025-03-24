@@ -344,9 +344,12 @@ if [ "$run_downstream" -eq "1" ]; then
                 # check the status of the downstream processing
                 if [[ ( -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ) ]]; then #check the correct files
                     echo "\e[31;1Downstream_analysis script failed\e[0m"
-            else
-                echo "\e[31;1Downstream_analysis script success\e[0m"
-            fi
+            	else
+                    echo "\e[31;1Downstream_analysis script success\e[0m"
+		    #create status file to store in the latest batch in
+		    echo $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
+                fi
+           fi
         else
             echo "No new batch to run the downstream analysis on"
         fi
