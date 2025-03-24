@@ -582,7 +582,7 @@ case "$1" in
 		fi
 
                 ### run the timeline.py each time when there are newsamples
-                detect_command=$(${downstream_analysis_dir}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" | tee /dev/tty)
+                detect_command=$(${downstream_analysis_dir}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" | tee /dev/stderr)
                 exit_code=$?
 		echo "Timeline creation:"
 		echo "Exit code: $exit_code" 
