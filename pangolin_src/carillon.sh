@@ -318,7 +318,11 @@ fi
 #
 if [ "$run_downstream" -eq "1" ]; then
     # 1. check if there is a current vpipe run: if not start the downstream processing of the results
-    if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started ) ) || ( ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ) ]]; then
+    if [[ ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ]]; then
+        check_file_exists=$(ls -Art ${downstream_analysis_statusdir}/downstream_new* | wc -l)
+        if [[ "$check_file_exists" == "0" ]]; then
+            touch ${downstream_analysis_statusdir}/downstream_new
+        fi
          # if no vpipe is running check if downstream already ran on the latest batch:
         lastbatch_downs=$(cat $(ls -Art ${downstream_analysis_statusdir}/downstream_new* | tail -n 1))
         echo "Last batch analysed by downstream analysis is ${lastbatch_downs}"
@@ -331,10 +335,7 @@ if [ "$run_downstream" -eq "1" ]; then
             echo "There is a new most recent batch that the downstream analyisis can run on"
             echo "starting postprocessing of vpipe output to tsv"
             #### RUN Downstream Analysis
-            echo "starting postprocessing of vpipe output to tsv"
             ${remote_batman} rsv_vpipe_out_to_tsv
-            #create status file to store the latest batch in
-            $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
             ${scriptdir}/belfry.sh pull_downstream_status 
             if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
                 echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
@@ -342,10 +343,11 @@ if [ "$run_downstream" -eq "1" ]; then
             else
                 # check the status of the downstream processing
                 if [[ ( -e ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/rsv_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/rsv_downstream_analysis_success ) ]]; then #check the correct files
-                        echo "\e[31;1Downstream_analysis script failed\e[0m"
-                    fi
+                    echo "\e[31;1Downstream_analysis script failed\e[0m"
                 else
                     echo "\e[31;1Downstream_analysis script sucsess\e[0m"
+                    #create status file to store the latest batch in
+                    $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
                 fi
             fi
         else
