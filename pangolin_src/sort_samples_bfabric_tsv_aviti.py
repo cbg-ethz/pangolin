@@ -208,7 +208,7 @@ order2runs={} # table that keeps track of orders and how many runs each has.
 order2runfolders={}
 plate2runs={} # table that leeps track of which run each plate has ended up in.
 for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
-	if "Aviti" in srch:
+	if "aviti" in srch.lower():
 		print(srch, f"\x1b[32;1mDetected Aviti sample\x1b[0m")
 	pathparts = srch.split(os.sep)
 	path = os.sep.join(pathparts)
@@ -234,7 +234,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						barcode1 = len(f"{r['barcode1']}")
 					if 'barcode2' in r:
 						barcode2 = len(f"{r['barcode2']}")
-				if "Aviti" in srch:
+				if "aviti" in srch.lower():
 					#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
 					j = os.path.join(srch, 'DmxStats', f'Stats_*i1-{barcode1}_i2-{barcode2}.json')
 					j = glob.glob(j)
@@ -327,7 +327,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
 			continue
 	# parse flowcell
-	if "Aviti" in srch:
+	if "aviti" in srch.lower():
 		try:
 			#m=rxcell_aviti.search(stats['FlowCellID']).groupdict()
 			m=re.match('^[a-z0-9]{10}$', stats['FlowCellID'])
@@ -343,7 +343,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			print(f"{name} cannot parse: {stats.get('Flowcell')}")
 			continue
 	# parse run folder
-	if "Aviti" in srch:
+	if "aviti" in srch.lower():
 		runfolder=stats['RunID']
 		try:
 			with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
@@ -378,12 +378,12 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 		print(name, f"\x1b[32;1mforcing {lib_column} of {order} {name} as {libkitoverride[(prj, order)]}\x1b[0m")
 	# parse information about reads
 	lane={}
-	if "Aviti" in srch:
+	if "aviti" in srch.lower():
 		laneinfo=stats["Lanes"]
 	else:
 		laneinfo=stats['ReadInfosForLanes']
 	for l in laneinfo: # lane
-		if "Aviti" in srch:
+		if "aviti" in srch.lower():
 			lanenum=l['Lane']
 			readinfo=l["Reads"]
 		else:
@@ -391,7 +391,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 			readinfo=l['ReadInfos']
 		ends=rlen=0	
 		for r in readinfo: # read phases (indexes, reads)
-			if "Aviti" in srch:
+			if "aviti" in srch.lower():
 				ncycles=len(r['Cycles'])
 				try:
 					if "I" in r['Read']: continue
@@ -420,7 +420,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	#		except json.JSONDecodeError as e:
 	#			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
 	#			continue
-	if "Aviti" in srch:
+	if "aviti" in srch.lower():
 		try:
 			if len(stats['Lanes']) > 1:
 				print("ERROR: multiple lanes processing is not implemented yet for Aviti")

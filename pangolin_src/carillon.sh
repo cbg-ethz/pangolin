@@ -79,16 +79,8 @@ if [[ "${skipsync}" != "fgcz" ]]; then
         fi
     fi
 fi
-if (( skipaviti )); then
-    echo "Skipping aviti as per config"
-    ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
-elif [ ${now} -ge ${aviti_date} ]; then
-    echo "Sorting Aviti samples"
-    ${remote_batman} sortsamples --aviti $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
-else
-    echo "Sorting Illumina samples"
-    ${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
-fi
+echo "Sorting samples"
+${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"

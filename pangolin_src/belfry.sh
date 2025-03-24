@@ -288,7 +288,7 @@ case "$1" in
         err=0
 		rsync	\
 			--password-file ${rsync_pass}	\
-			-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} "	\
+			-e "ssh -i ${HOME}/.ssh/id_ed25519_influenza -l ${cluster_user} "	\
 			-izrltH --fuzzy --fuzzy --inplace	\
 			-p --chmod=Dg+s,ug+rw,o-rwx	\
 			-g --chown=:"${storgrp}"	\
