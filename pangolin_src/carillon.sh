@@ -377,7 +377,7 @@ if [ "$run_downstream" -eq "1" ]; then
                 else
                     echo "\e[31;1Downstream_analysis detect_AAMutations.R script sucsess\e[0m"
                     #create status file to store the latest batch in
-                    $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
+                    echo $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
                 fi
             fi
         else
