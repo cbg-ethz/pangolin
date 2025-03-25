@@ -625,8 +625,8 @@ case "$1" in
 
                         ### run the script per fragment and detect the error staus per frament
                         #the command which runs the analysis
-                        detect_command=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir -l $location_dic | tee /dev/tty)
-
+                        command_std_err=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir -l $location_dic | tee /dev/tty)
+                        detect_command=$?
                        
                         #If the command fails (non-zero exit code), the fail variable is set to 1.
                         #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
