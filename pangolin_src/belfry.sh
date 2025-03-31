@@ -499,7 +499,7 @@ case "$1" in
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -irltHLK --fuzzy --fuzzy --inplace       \
             --files-from=:/samples/cram_list.txt \
-            --link-dest=${cram_archive}/working/samples    \
+            --link-dest=${cram_archive}    \
             --exclude='alignments/'    \
             --exclude='extracted_data/'    \
             --exclude='preprocessed_data/'    \
