@@ -100,14 +100,12 @@ case "$1" in
 
                 esac
                 mkdir -p --mode=2770 "${clusterdir_old}/${working}/samples/"
-                #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
                 sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
                 cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/${working}/samples/"
                 lst="${clusterdir_old}/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
                 mv ${clusterdir_old}/${working}/samples_aviti.tsv ${clusterdir_old}/${working}/samples_aviti.tsv.old
                 touch ${clusterdir_old}/${working}/samples_aviti.tsv 
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
                 while IFS=$'\t' read -r col1 col2 col3 col4; do
                         if [ "${#col2}" -eq 19 ]; then
                                 batch_date=${col2%%_*}
