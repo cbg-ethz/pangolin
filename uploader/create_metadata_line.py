@@ -20,11 +20,39 @@ def parse_args():
     parser.add_argument('-u', '--update', required=False, default="No", help = "If the field _is_assembly_update_ should be Yes or No")
     parser.add_argument('-o', '--outfile', required=True, help="metadata output file to write the line to")
     parser.add_argument('-t', '--wisedb_token', required=True, help="Token used for connecting to WiseDB to retrieve the dPCR values")
+    parser.add_argument('-f', '--failed', required=True, help="Filename where to store the list of failed samples")
     return parser.parse_args()
 
 # samplename="KLZHCov220123"
 # batchname="20220204_HVFYNDRXY"
 # update="No"
+
+
+def write_failed(samplename, reason, failed_file):
+    text = samplename + "\t" + reason
+    with open(failed_file, "a") as myfile:
+        myfile.write(text)
+
+
+def remove_failed(samplename, failed_file):
+    # Read all lines from the file
+    with open(failed_file, "r") as f:
+        lines = f.readlines()
+    # Filter out lines where the first column matches match_str
+    filtered_lines = []
+    for line in lines:
+        # Remove trailing newline characters
+        stripped_line = line.rstrip("\n")
+        # Split the line on tab delimiter
+        columns = stripped_line.split("\t")
+        # Check if the first column matches the target string exactly
+        if columns and columns[0] == samplename:
+            continue  # Skip this line
+        filtered_lines.append(line)
+    # Write the filtered lines back to the file
+    with open(failed_file, "w") as f:
+        f.writelines(filtered_lines)
+
 
 def load_dpcr(token, wisedb_dpcr_url, exceptions, date, eawag_id, meta):
     try:
@@ -213,18 +241,31 @@ def get_authors_by_date(meta, collectingcode, center, ethz, date):
         sys.exit("Error: no date range available for authors of " + ethz + " for date " + str(date))
     return [collectingauthorcode, centerauthorcode, ethzauthorcode]
 
+
+def string_in_file(search_str, filename):
+    try:
+        with open(filename, "r") as file:
+            for line in file:
+                if search_str in line:
+                    return True
+    except FileNotFoundError:
+        print(f"Error: The file '{filename}' does not exist.")
+        return False
+    return False
+
+
 def main():
     args = parse_args()
     if (args.samplename == "" or args.batchname == "" or args.outfile == ""):
-        sys.exit("Error, empty sample name")
+        sys.exit("ERROR: empty sample name")
 
     if (args.update != "Yes" and args.update != "No"):
-        sys.exit("Error: wrong value for option --update")
+        sys.exit("ERROR: wrong value for option --update")
 
     try:
         locations = load_locations(meta.locations)
     except:
-        sys.exit("Error: cannot load the locations file")
+        sys.exit("ERROR: cannot load the locations file")
     try:
         locations[locations.index(['KLZHCov', 'Kanton', 'Zürich'])] = ['KLZHCov', 'Zürich', "(ZH)"]
         locations[locations.index(['KLZHCov_Promega', 'Kanton', 'Zürich/Promega'])] = ['KLZHCov_Promega', 'Zürich', "(ZH)"]
@@ -289,6 +330,11 @@ def main():
 
     # Get all viruses that are present in the sample by checking if the wisedb has dPCR values or not for the sample
     load = load_dpcr(args.wisedb_token, meta.wisedb_dpcr_url, meta.exceptions_dpcr, mydata[5], mydata[4], meta) 
+    if len(load) == 0:
+        print("No load values on wisedb for sample " + mydata[0])
+        if not string_in_file(mydata[0], args.failed):
+            write_failed(mydata[0], "no load", args.failed)
+        sys.exit(200)
     all_subtypes = []
     all_taxids = []
     for virus in load.keys():
@@ -303,7 +349,10 @@ def main():
                     if mydata[3] in value:
                         virus_shortname = [key]
             if virus_shortname == ["rsv"]:
-                sys.exit("Error: could not find if the detected rsv is RSVA or RSVB from the library prep kit of sample " + mydata[0])
+                print("Error: could not find if the detected rsv is RSVA or RSVB from the library prep kit of sample " + mydata[0])
+                if not string_in_file(mydata[0], args.failed):
+                    write_failed(mydata[0], "RSVA-B not specified", args.failed)
+                sys.exit(200)
             if virus_shortname == ["rsva_and_b"]:
                 virus_shortname = ["rsva", "rsvb"]
         if load[virus] > 0:
@@ -313,10 +362,16 @@ def main():
                 try:
                     taxid = meta.taxon_id[subtype]
                 except:
-                    sys.exit("Error: could not find the taxon id associated to subtype " + subtype)
+                    print("Error: could not find the taxon id associated to subtype " + subtype)
+                    if not string_in_file(mydata[0], args.failed):
+                        write_failed(mydata[0], "Can't find the taxon id of the subtype", args.failed)
+                    sys.exit(200)
                 all_taxids.extend(taxid)
         else:
             print("Info: no viral load for virus " + virus_shortname + " in sample " + mydata[0] + ". Skipping metadata line")
+            if not string_in_file(mydata[0], args.failed):
+                write_failed(mydata[0], "No load for " + virus_shortname, args.failed)
+            sys.exit(200)
 
     cram = args.samplename+".cram"
     strain = ",".join(all_subtypes)+'/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","").replace("-","")+"/"+mydata[5].split("-")[0]
@@ -327,6 +382,9 @@ def main():
                 try:
                     with open(args.outfile, "a") as file_object:
                         file_object.write(fullline)
+                    if string_in_file(mydata[0], args.failed):
+                        print("Successfully created metadata line for previously-failed sample " + mydata[0]+ ". Removing from failed file"
+                        remove_failed(mydata[0], args.failed)
                 except:
                     sys.exit("Error: failed to write the metadata line for sample " + args.samplename + ", virus " + virus_shortname + ", in output file ", args.outfile)
 if __name__ == '__main__':

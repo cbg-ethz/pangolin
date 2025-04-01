@@ -351,9 +351,8 @@ case "$1" in
         if [ -f ${uploader_tempdir}/cram_to_download.txt ]; then
             rm ${uploader_tempdir}/cram_to_download.txt
         fi
-        while IFS= read -r line; do
-            line2=$(echo ${line} | sed 's/ /\//g')
-            echo "${line2}/uploads/dehuman.cram" >> ${uploader_tempdir}/cram_to_download.txt
+	while IFS=$'\t' read -r col1 col2 _; do
+            echo "${col1}/${col2}/uploads/dehuman.cram" >> ${uploader_tempdir}/cram_to_download.txt
         done < "${uploader_tempdir}/to_upload.txt"
         echo "Downloading from Euler the necessary cram files"
         rsync   \

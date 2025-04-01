@@ -28,25 +28,11 @@ then
         rm "${uploader_tempdir}/to_upload.txt"
 fi
 echo "Preparing the list of files to upload for this batch"
-{ python3 - ${uploader_workdir}/${uploaderlist} ${uploader_uploaded} ${sample_number} ${uploader_tempdir}/to_upload.txt ${blacklist} <<EOF
-import sys
-try:
-    with open(sys.argv[1]) as f:
-        all_to_upload = [ element.strip() for element in f.readlines() ]
-    with open(sys.argv[2]) as f:
-        uploaded = [ element.strip() for element in f.readlines() ]
-    with open(sys.argv[5]) as f:
-        blacklisted = [ element.strip().split("\t")[0] for element in f.readlines() ]
-    current_tmp = [ entry for entry in all_to_upload if entry.split("\t")[0] not in uploaded ]
-    current = [ entry for entry in current_tmp if entry.split("\t")[0] not in blacklisted]
-    current = current[:int(sys.argv[3])]
-    with open(sys.argv[4],'w') as f:
-        for item in current:
-            f.write(item+"\n")
-except IOError:
-    # fixes BrokenPipe
-    print("ERROR")
-    sys.stdout.flush()
-EOF
-}
+
+# Remove any lines that appear in the uploader_uploaded or blacklist files,
+# then select the top sample_number lines and save them to the output file.
+grep -F -x -v -f "${uploader_uploaded}" "${uploader_workdir}/${uploaderlist}" | \
+	grep -F -v -f "${blacklist}" | \
+	head -n "${sample_number}" > "${uploader_tempdir}/to_upload.txt"
+
 

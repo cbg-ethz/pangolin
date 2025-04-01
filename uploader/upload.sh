@@ -61,7 +61,7 @@ echo -e "is_update\tspecies\tstrain_name\tisolation_date\tlocation_general\tloca
 echo "Retrieving CRAM files and adding their metadata line"
 
 cat ${TMPDIR}/to_upload.txt |
-while read samplename batch; do
+while read samplename batch _; do
   samplename=$(echo $samplename | tr -d '"')
   if [[ $samplename =~ [A-H][0-9]_24_.* ]]; then
     echo "skipped ski resort $samplename" | tee -a ${archive_now}/not_found.txt
@@ -76,7 +76,7 @@ while read samplename batch; do
   X=${uploader_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
     cp $(realpath $X) $target/${samplename}.cram
-    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token}
+    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv
     echo $samplename >> ${archive_now}/uploaded_run.txt
   else
     echo "not found $samplename" | tee -a ${archive_now}/not_found.txt
