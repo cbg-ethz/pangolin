@@ -570,9 +570,10 @@ case "$1" in
                 ### Creating the input strings necessary for the downstream analysis
                 path_to_vcf="${clusterdir_old}/$vir/${working}/results/*/*/variants/SNVs/snvs.vcf"        # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
                 path_to_coverage="${clusterdir_old}/$vir/${working}/results/*/*/alignments/coverage.tsv.gz"       #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
-                path_to_samples_tsv="${clusterdir_old}/$vir/${working}/samples.tsv"       # Folder: RSV*/working/samples.tsv 
+                path_to_samples_tsv="${clusterdir_old}/$vir/${working}/samples.tsv"
                 path_to_output="${clusterdir_old}/$vir/${working}"        # output from timeline.py will be input for downstream analysis --timeline_tsv
                 path_to_config="${clusterdir_old}/$vir/${working}/${configfile}"
+		
 		if [[ $vir == "RSVA" ]]; then
 			reference="EPI_ISL_412866"
 			virus_strings=${rsva_match}
