@@ -585,13 +585,13 @@ case "$1" in
 		fi
 
                 ### run the timeline.py each time when there are newsamples
-                detect_command=$(${downstream_analysis_dir}/RSV-wastewater-V-pipe/regular_monitoring_2024_2025/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" 2>/dev/null)
+                detect_command=$(${rsv_git_repo_folder}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" 2>/dev/null)
                 exit_code=$?
 		echo "Timeline creation. Exit code: $exit_code"
 
                 ####### Annotate the vcf files
                 ### run the annotate_vcf.py with the genbank reference (path defined in server.conf)
-                detect_command_ann=$(${downstream_analysis_dir}/RSV-wastewater-V-pipe/regular_monitoring_2024_2025/annotate_vcf.py --input_dir "$path_to_vcf" --fname_genbank_file "$fname_genbank_file" --chrom_name "$reference" 2>/dev/null)
+                detect_command_ann=$(${rsv_git_repo_folder}/annotate_vcf.py --input_dir "$path_to_vcf" --fname_genbank_file "$fname_genbank_file" --chrom_name "$reference" 2>/dev/null)
                 exit_code_ann=$?
 		echo "Annotated vcf files. Exit code: $exit_code_ann"
 
@@ -618,7 +618,7 @@ case "$1" in
                         ### 4. continue with downstream only if timeline is produced
                         path_to_timeline=$path_to_output/timeline.tsv
                         #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                        detect_command=$(${downstream_analysis_dir}/RSV-wastewater-V-pipe/regular_monitoring_2024_2025/make_mutation_tsv_annotated.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_annotated_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config --virus_string "$virus_strings" 2>/dev/null)
+                        detect_command=$(${rsv_git_repo_folder}/make_mutation_tsv_annotated.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_annotated_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config --virus_string "$virus_strings" 2>/dev/null)
 			exit_code=$?
                         echo "Downstream analysis:"
 			echo "Exit code: $exit_code"
