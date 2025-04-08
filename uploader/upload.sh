@@ -9,6 +9,7 @@ fi
 . ${scriptdir}/config/server.conf
 cd ${uploader_code}
 source ${baseconda}/etc/profile.d/conda.sh
+export wisedb_token=$(cat ${wisedb_token_file})
 conda activate sendcrypt
 
 set -eu
@@ -75,9 +76,10 @@ while read samplename batch _; do
   echo "$samplename $batch"
   X=${uploader_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
-    cp $(realpath $X) $target/${samplename}.cram
-    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv
-    echo $samplename >> ${archive_now}/uploaded_run.txt
+    echo "Generating metadata line for sample ${samplename}"
+    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv &&
+      cp $(realpath $X) $target/${samplename}.cram &&
+      echo $samplename >> ${archive_now}/uploaded_run.txt
   else
     echo "not found $samplename" | tee -a ${archive_now}/not_found.txt
   fi

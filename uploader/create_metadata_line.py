@@ -29,7 +29,7 @@ def parse_args():
 
 
 def write_failed(samplename, reason, failed_file):
-    text = samplename + "\t" + reason
+    text = samplename + "\t" + reason + "\n"
     with open(failed_file, "a") as myfile:
         myfile.write(text)
 
@@ -135,8 +135,10 @@ def read_qa(samplename, qafile):
 
 def verify_mandatory_fields(line, meta, samplename):
     line = line.split("\t")
-    if (line[1]!="2697049"):
-        sys.exit("Error: The metadata line for " + samplename + " has an unexpected species code")
+    taxons = line[1].split(",")
+    for tax in taxons:
+        if (tax not in meta.taxon_ids.values()):
+            sys.exit("Error: The metadata line for " + samplename + " has an unexpected species code (taxon id)")
     date = line[3].split("-")
     if (len(date)!=3):
         sys.exit("Error: The metadata line for " + samplename + " has a date with an unexpected format")
@@ -145,26 +147,26 @@ def verify_mandatory_fields(line, meta, samplename):
     cantonfull = line[4].split("/")
     if (cantonfull[2]==""):
         sys.exit("Error: The metadata line for " + samplename + " has a location general field with an empty canton")
-    if (line[7]!="Environment"):
-        sys.exit("Error: The metadata line for " + samplename + " has an unexpected isolation source description")
+    if (line[7]!="Wastewater treatment plant"):
+        sys.exit("Error: The metadata line for " + samplename + " has an unexpected isolation source detailed")
     # line[8] is not necessary as it's built from the cantonfull we already checked
-    if (line[13]!="Surveillance"):
+    if (line[12]!="Surveillance"):
         sys.exit("Error: The metadata line for " + samplename + " has an unexpected sequencing purpose")
-    if (line[14]!="Metagenome"):
+    if (line[13]!="Metagenome"):
         sys.exit("Error: The metadata line for " + samplename + " has an unexpected sequencing investigation type")
-    if (line[15]==""):
+    if (line[14]==""):
         sys.exit("Error: The metadata line for " + samplename + " has an empty cram file field")
-    cram = line[15].split(".")
+    cram = line[14].split(".")
     if (cram[1]!="cram"):
         sys.exit("Error: The metadata line for " + samplename + " has a cram file with an unexpected extension")
     # line[16] is already verified inline with a try/except
     if (line[18]!=meta.seqplatform):
         sys.exit("Error: The metadata line for " + samplename + " has a unexpected sequencing platform")
     if (line[19]!=meta.assembly):
-        sys.exit("Error: The metadata line for " + samplename + " has a unexpected assembly method")
-    if (line[21]!=meta.reportinglab):
-        sys.exit("Error: The metadata line for " + samplename + " has a unexpected reporting lab name")
-    if (line[22] not in meta.collectinglab.values()):
+        sys.exit("Error: The metadata line for " + samplename + " has a unexpected basecaller")
+    #if (line[21]!=meta.reportinglab):
+    #    sys.exit("Error: The metadata line for " + samplename + " has a unexpected reporting lab name")
+    if (line[20] not in meta.collectinglab.values()):
         sys.exit("Error: The metadata line for " + samplename + " has a unexpected collecting lab name")
 
 def verify_strain_name(strain, meta):
@@ -262,6 +264,9 @@ def main():
     if (args.update != "Yes" and args.update != "No"):
         sys.exit("ERROR: wrong value for option --update")
 
+    if not os.path.exists(args.failed):
+        open(args.failed, 'a').close()
+
     try:
         locations = load_locations(meta.locations)
     except:
@@ -329,11 +334,17 @@ def main():
         catchment_size = ""
 
     # Get all viruses that are present in the sample by checking if the wisedb has dPCR values or not for the sample
-    load = load_dpcr(args.wisedb_token, meta.wisedb_dpcr_url, meta.exceptions_dpcr, mydata[5], mydata[4], meta) 
+    load = load_dpcr(args.wisedb_token, meta.wisedb_dpcr_url, meta.exceptions_dpcr, mydata[5], mydata[4], meta)
     if len(load) == 0:
         print("No load values on wisedb for sample " + mydata[0])
         if not string_in_file(mydata[0], args.failed):
             write_failed(mydata[0], "no load", args.failed)
+        sys.exit(200)
+    all_tracked_viruses_present = all(element in load.keys() for element in meta.tracked_viruses.keys())
+    if not all_tracked_viruses_present:
+        print("No load values for at least one tracked virus on wisedb for sample " + mydata[0])
+        if not string_in_file(mydata[0], args.failed):
+            write_failed(mydata[0], "Missing load for a tracked virus", args.failed)
         sys.exit(200)
     all_subtypes = []
     all_taxids = []
@@ -348,6 +359,7 @@ def main():
                 for key, value in meta.rsv_kits.items():
                     if mydata[3] in value:
                         virus_shortname = [key]
+            # If the above code cannot find if we are talking about RSVA or RSVB, it means that virus_shortname stays "rsv". Below we test that to throw the error.
             if virus_shortname == ["rsv"]:
                 print("Error: could not find if the detected rsv is RSVA or RSVB from the library prep kit of sample " + mydata[0])
                 if not string_in_file(mydata[0], args.failed):
@@ -358,35 +370,36 @@ def main():
         if load[virus] > 0:
             for subtype in virus_shortname:
                 print("Found viral load for virus " + subtype + " in sample " + mydata[0] + ". Adding the metadata line")
-                all_subtypes.extend(subtype)
+                all_subtypes.append(subtype)
                 try:
-                    taxid = meta.taxon_id[subtype]
+                    taxid = meta.taxon_ids[subtype]
                 except:
                     print("Error: could not find the taxon id associated to subtype " + subtype)
                     if not string_in_file(mydata[0], args.failed):
                         write_failed(mydata[0], "Can't find the taxon id of the subtype", args.failed)
                     sys.exit(200)
-                all_taxids.extend(taxid)
+                all_taxids.append(taxid)
         else:
-            print("Info: no viral load for virus " + virus_shortname + " in sample " + mydata[0] + ". Skipping metadata line")
-            if not string_in_file(mydata[0], args.failed):
-                write_failed(mydata[0], "No load for " + virus_shortname, args.failed)
-            sys.exit(200)
+            if virus_shortname == ["rsva", "rsvb"]:
+                v = "rsv"
+            else:
+                v = virus_shortname[0]
+            print("Info: Viral load zero for virus " + v + " in sample " + mydata[0] + ". The virus will not be reported")
+            
 
     cram = args.samplename+".cram"
-    strain = ",".join(all_subtypes)+'/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","").replace("-","")+"/"+mydata[5].split("-")[0]
+    strain = "-".join(all_subtypes)+'/Switzerland/'+mydata[6].split(" ")[1].replace("(","").replace(")","")+"-ETHZ-"+mydata[0].replace("_","").replace("-","")+"/"+mydata[5].split("-")[0]
     verify_strain_name(strain, meta)
-    taxid = meta.taxon_id[subtype]
     fullline = args.update+"\t"+",".join(all_taxids)+"\t"+strain+"\t"+mydata[5]+"\tEurope/Switzerland/"+mydata[6].split(" ")[1].replace("(","").replace(")","")+"\t"+mydata[6]+"\t\tWastewater treatment plant\t"+sourcename+"\t"+catchment_size+"\t"+meta.population[mydata[4]]+"\t"+meta.region[mydata[4]]+"\tSurveillance\tMetagenome\t"+cram+"\t\t"+sampleinfo+"\t"+meta.seqcenter[meta.centerused]+"\t"+meta.seqplatform+"\t"+meta.assembly+"\t"+collectinglab+"\t"+authors+"\t"+meta.embargo+"\t"+meta.projnum+"\t\t\t\t\n"
-                verify_mandatory_fields(fullline, meta, args.samplename)
-                try:
-                    with open(args.outfile, "a") as file_object:
-                        file_object.write(fullline)
-                    if string_in_file(mydata[0], args.failed):
-                        print("Successfully created metadata line for previously-failed sample " + mydata[0]+ ". Removing from failed file"
-                        remove_failed(mydata[0], args.failed)
-                except:
-                    sys.exit("Error: failed to write the metadata line for sample " + args.samplename + ", virus " + virus_shortname + ", in output file ", args.outfile)
+    verify_mandatory_fields(fullline, meta, args.samplename)
+    try:
+        with open(args.outfile, "a") as file_object:
+            file_object.write(fullline)
+        if string_in_file(mydata[0], args.failed):
+            print("Successfully created metadata line for previously-failed sample " + mydata[0]+ ". Removing from failed file")
+            remove_failed(mydata[0], args.failed)
+    except:
+        sys.exit("Error: failed to write the metadata line for sample " + args.samplename + ", virus " + virus_shortname + ", in output file ", args.outfile)
 if __name__ == '__main__':
     main()
 
