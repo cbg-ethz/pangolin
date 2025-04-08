@@ -9,6 +9,7 @@ fi
 . ${scriptdir}/config/server.conf
 cd ${uploader_code}
 source ${baseconda}/etc/profile.d/conda.sh
+export wisedb_token=$(cat ${wisedb_token_file})
 conda activate sendcrypt
 
 set -eu
@@ -56,12 +57,12 @@ echo $tsv
 archive_now=$1
 
 echo "Initializing the submission metadata"
-echo -e "is_assembly_update\tspecies\tstrain_name\tisolation_date\tlocation_general\tlocation_city\tlocation_geocoordinates\tisolation_source_description\tisolation_source_detailed\tisolation_source_name\tisolation_source_size_catchment_area\tisolation_source_population_size_catchment_area\tisolation_source_regions_catchment_area\tsequencing_purpose\tsequencing_investigation_type\torig_fastq_name_forward\tlibrary_preparation_kit\tsequencing_lab_name\tsequencing_platform\tassembly_method\traw_dataset_coverage\treporting_lab_name\tcollecting_lab_name\treporting_authors\traw_dataset_embargo\tgenbank_identifier\tENA_accession"> $tsv
+echo -e "is_update\tspecies\tstrain_name\tisolation_date\tlocation_general\tlocation_city\tlocation_geocoordinates\tisolation_source_detailed\tisolation_source_name\tisolation_source_size_catchment_area\tisolation_source_population_size_catchment_area\tisolation_source_regions_catchment_area\tsequencing_purpose\tsequencing_investigation_type\torig_fastq_name_forward\torig_fastq_name_reverse\tlibrary_preparation_kit\tsequencing_lab_name\tsequencing_platform\tbasecaller_long\tcollecting_lab_name\treporting_authors\traw_dataset_embargo\tinsdc_study_accession_target\tinsdc_study_accession\tinsdc_sample_accession\tinsdc_raw_reads_accession\tinsdc_assembly_accession"> $tsv
 
 echo "Retrieving CRAM files and adding their metadata line"
 
 cat ${TMPDIR}/to_upload.txt |
-while read samplename batch; do
+while read samplename batch _; do
   samplename=$(echo $samplename | tr -d '"')
   if [[ $samplename =~ [A-H][0-9]_24_.* ]]; then
     echo "skipped ski resort $samplename" | tee -a ${archive_now}/not_found.txt
@@ -75,9 +76,10 @@ while read samplename batch; do
   echo "$samplename $batch"
   X=${uploader_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
-    cp $(realpath $X) $target/${samplename}.cram
-    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv
-    echo $samplename >> ${archive_now}/uploaded_run.txt
+    echo "Generating metadata line for sample ${samplename}"
+    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv &&
+      cp $(realpath $X) $target/${samplename}.cram &&
+      echo $samplename >> ${archive_now}/uploaded_run.txt
   else
     echo "not found $samplename" | tee -a ${archive_now}/not_found.txt
   fi

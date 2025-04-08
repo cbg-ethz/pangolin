@@ -1,80 +1,19 @@
 cantons = ["BL","ZH","SG","AI","ZG","GE","TG","OW","UR","GL","TI","SO","GR","FR","SZ","BS","JU","AG","AR","VS","NW","NE","VD","LU","BE","SH"]
 mandatory_fields = ["species","strain_name","isolation_date","location_general","isolation_source_description","isolation_source_detailed","sequencing_purpose","sequencing_investigation_type","orig_fastq_name_forward","library_preparation_kit","sequencing_platform","assembly_method","reporting_lab_name","collecting_lab_name","reporting_authors"]
 kit = {
-  "v532": "SARS-CoV-2 ARTIC V5.3.2,Native Barcoding Kit 24 V14 (SQK-NBD114.24),Ligation sequencing amplicons V14 (SQK-LSK114)",
-  "v532_pooled": "SARS-CoV-2 ARTIC V5.3.2,Native Barcoding Kit 24 V14 (SQK-NBD114.24),Ligation sequencing amplicons V14 (SQK-LSK114)"
-} 
-# convertion from eawag_ids (what we use in lollipop) to ara_id (to be used to query wisedb)
-# The matches have been retrieved from wisedb using the API metadata/wastewater_treatment_plant
-# on 2024-03-03
-ara_id = {
-  "1": "526800",
-  "2": "526200",
-  "3": "514700",
-  "4": "517800",
-  "5": "515100",
-  "6": "511301",
-  "7": "500500",
-  "8": "528100",
-  "9": "511302",
-  "10": "26101",
-  "12": "558600",
-  "11.1": "6602",
-  "11.2": "6602",
-  "13": "420300",
-  "14": "36200",
-  "15": "270101",
-  "16": "664301",
-  "17": "390101",
-  "18": "102400",
-  "19": "323700",
-  "20": "293700",
-  "21": "132200",
-  "22": "219600",
-  "23": "286100",
-  #"24": "603102",
-  "25": "66700",
-  "26": "297100",
-  "32":"35100",
-  "33":"680000",
-  "34":"645800",
-  "35":"253400",
-  "36":"137200",
-  "37":"",
-  "99": "",
-  "ba": "",
-  "klzhcov": "",
-  "klzhCov_Promega": "",
-  "558600": "",
-  "624801": "",
-  "680000": "",
-}
-# You can find the address of the API endpoint at https://wisedb.ethz.ch/swagger/ after logging in to wisedb
-wisedb_dpcr_url = "https://wisedb.ethz.ch/api/export/dpcr"
-# List all the viruses in wisedb that are tracked in the sequencing analysis
-tracked_viruses = {
-  "IAV-M": "flua",
-  "RSV-N": "rsv",
-  "SARS-N1": "sarscov2",
-}
-rsv_kits = {
-  "rsva": ["RSV subtype A","RSV-A","RSVA","rsva","rsv-a","RSV subtype A"],
-  "rsvb": ["RSV subtype B","RSV-B","RSVB","rsvb","rsv-b","RSV subtype B"],
-  "rsva_and_b": ["sequencing of both RSV-A and B","RSV subtype A and B","RSV-A and B","RSV A and B","v3","v532","RSV_pooled","SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel","Amplicon Barcoding","RSV_pooled_old","SARS-CoV-2 ARTIC V5.3.2 NEB Ultra II","test"],
-}
-taxon_ids = {
-  "flua": "641809",
-  "rsva": "208893",
-  "rsvb": "208895",
-  "sarscov2": "2697049",
-}
-# In some cases we track more segments of the virus. If that happens, we want to average the values to know if the virus is present
-# However, we need to know which other values are part of the tracked virus. E.g. we we track sarscov2 and we defined SARS-N1 as
-# "tracked_virus"; we also have SARS-N2 in the database.
-# The exceptions are dictionaries to enable multiple exceptions for one virus
-exceptions_dpcr = {
-  "SARS-N1": ["SARS-N2"]
-}
+  "v3": "SARS-CoV-2 ARTIC V3",
+  "V3": "SARS-CoV-2 ARTIC V3",
+  "v4": "SARS-CoV-2 ARTIC V4",
+  "V4": "SARS-CoV-2 ARTIC V4",
+  "v41": "SARS-CoV-2 ARTIC V4.1",
+  "V41": "SARS-CoV-2 ARTIC V4.1",
+  "v4.1": "SARS-CoV-2 ARTIC V4.1",
+  "V4.1": "SARS-CoV-2 ARTIC V4.1",
+  "v532": "SARS-CoV-2 ARTIC V5.3.2",
+  "V532": "SARS-CoV-2 ARTIC V5.3.2",
+  "v5.3.2": "SARS-CoV-2 ARTIC V5.3.2",
+  "V5.3.2": "SARS-CoV-2 ARTIC V5.3.2",
+}  
 collecting_lab = {
   "1": "eawag",
   "2": "eawag",
@@ -268,22 +207,15 @@ authors = {
   "eawag_20221001_20230131": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Alexander J. Devaux, Franziska Böni, Johannes Rusch, Laura Brülisauer, Aurélie Holschneider, Charlie Gan",
   "eawag_20230201_20230228": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Alexander J. Devaux, Franziska Böni, Laura Brülisauer, Seju Kang, Aurélie Holschneider, Charlie Gan",
   "eawag_20230301_20230331": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Alexander J. Devaux, Seju Kang, Ayazhan Dauletova, Camille Hablützel, Rachel McLeod, Aurélie Holschneider, Charlie Gan",
-  "eawag_20230401_20230831": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan",
-  "eawag_20230901_20231130": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton",
-  "eawag_20231201_20231231": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton, Linda Schneider",
-  "eawag_20240101_20240229": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton, Linda Schneider, Anna Wettlauffer",
-  "eawag_20240301_20240630": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton, Linda Schneider, Anna Wettlauffer, Patrick Schmidhalter",
-  "eawag_20240701_20240831": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton, Linda Schneider, Anna Wettlauffer, Patrick Schmidhalter, Nadine Hürlimann",
-  "eawag_20240901_20250131": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton, Linda Schneider, Anna Wettlauffer, Patrick Schmidhalter, Nadine Hürlimann, Ida Werner",
-  "eawag_20250201_25000101": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Jolinda de Korne, Charlie Gan, Melissa Pitton, Linda Schneider, Anna Wettlauffer, Patrick Schmidhalter, Nadine Hürlimann, Ida Werner, Lara Achermann",
+  "eawag_20230401_25000101": "Christoph Ort, Tamar Kohn, Timothy R. Julian, Lea Caduff, Seju Kang, Ayazhan Dauletova, Camille Hablützel, Rachel McLeod, Daniela Yordanova, Jolinda de Korne, Charlie Gan",
   "basel_20000101_25000101": "Claudia Bagutti, Evelyn Ilg Hampe, Sarah Tschudin Sutter",
   "microsynth_20000101_25000101": "Christoph Gruenig, Maria-Luise Deflorian",
   "kzurich_20000101_25000101": "Nadine Gerber, Natalie Meyer, René Köppel",
-  "ethz_20000101_25000101": "Katharina Jahn, Pelin Burcak Icer, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Kim Philipp Jablonski, Anika John, Louis Du Plessis, Matteo Carrara, Kyra Kirschenbühler, Franziska Singer, Niko Beerenwinkel",
-  "fgcz_20000101_25000101": "Catharine Aquino, Dominika Brchnelova, Adriana Hotzm Lennart Opitz",
+  "ethz_20000101_25000101": "Katharina Jahn, Pelin Burcak Icer, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Kim Philipp Jablonski, Anika John, Matteo Carrara, Franziska Singer, Chaoran Chen, Sarah Nadeau, Niko Beerenwinkel, Tanja Stadler",
+  "fgcz_20000101_25000101": "Catharine Aquino, Lennart Opitz, Tim Sykes",
 }
-seqplatform = "Combination of Illumina NovaSeq 5000/6000, NextSeq2000, Element Biosciences AVITI"
-reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Schanzenstrasse 44, 4056, Basel"
+seqplatform = "Combination Illumina MiSeq, Illumina NovaSeq 5000/6000, NextSeq2000"
+reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Mattenstrasse 26, 4058 Basel"
 qafile = "/app/dataset/working/qa.csv"
 seqcenter = {
   "fgcz": "Functional Genomics Center Zurich",
@@ -295,8 +227,6 @@ samplesfolder = "/app/dataset/working/samples"
 timelinefile = "/app/dataset/working/timeline.tsv"
 assembly = "V-pipe"
 embargo = ""
-projyears = ["2024", "2025"]
-projnum = "PRJEB85524"
+projyears = ["2020", "2021", "2022", "2023", "2024"]
 submitting = "ETHZ"
 exceptions = {"558600":"Lausanne (VD)", "624801":"Sierre/Noes (VS)", "680000":"Porrentruy (JU)"}
-multi_virus_start_date = "2024-11-02"
