@@ -571,10 +571,9 @@ case "$1" in
                 path_to_vcf="${clusterdir_old}/$vir/${working}/results/*/*/variants/SNVs/snvs.vcf"        # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
                 path_to_annotated_vcf="${clusterdir_old}/$vir/${working}/results/*/*/variants/SNVs/snvs_annotated.vcf"
                 path_to_coverage="${clusterdir_old}/$vir/${working}/results/*/*/alignments/coverage.tsv.gz"       #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
-                path_to_samples_tsv="${clusterdir_old}/$vir/${working}/samples.tsv"
+                path_to_samples_tsv="${clusterdir_old}/$vir/${working}/samples.tsv"       # Folder: RSV*/working/samples.tsv 
                 path_to_output="${clusterdir_old}/$vir/${working}"        # output from timeline.py will be input for downstream analysis --timeline_tsv
                 path_to_config="${clusterdir_old}/$vir/${working}/${configfile}"
-		
 		if [[ $vir == "RSVA" ]]; then
 			reference="EPI_ISL_412866"
 			virus_strings=${rsva_match}
@@ -586,13 +585,13 @@ case "$1" in
 		fi
 
                 ### run the timeline.py each time when there are newsamples
-                detect_command=$(${rsv_git_repo_folder}/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" 2>/dev/null)
+                detect_command=$(${downstream_analysis_dir}/RSV-wastewater-V-pipe/regular_monitoring_2024_2025/timeline.py --path_to_samples_tsv "$path_to_samples_tsv" --path_to_output "$path_to_output" 2>/dev/null)
                 exit_code=$?
 		echo "Timeline creation. Exit code: $exit_code"
 
                 ####### Annotate the vcf files
                 ### run the annotate_vcf.py with the genbank reference (path defined in server.conf)
-                detect_command_ann=$(${rsv_git_repo_folder}/annotate_vcf.py --input_dir "$path_to_vcf" --fname_genbank_file "$fname_genbank_file" --chrom_name "$reference" 2>/dev/null)
+                detect_command_ann=$(${downstream_analysis_dir}/RSV-wastewater-V-pipe/regular_monitoring_2024_2025/annotate_vcf.py --input_dir "$path_to_vcf" --fname_genbank_file "$fname_genbank_file" --chrom_name "$reference" 2>/dev/null)
                 exit_code_ann=$?
 		echo "Annotated vcf files. Exit code: $exit_code_ann"
 
@@ -602,32 +601,34 @@ case "$1" in
 			echo "detect_command: $detect_command"
                         touch "${remote_downstream_analysis_statusdir}/timeline_tsv_${vir}_fail"
                         echo "Could not create timeline.tsv file, will skip downstream processing"
-                        process_fail=$((process_fail + 1))
                         continue 
                 elif [[ $exit_code_ann -ne 0 ]] ; then
                         #echo "Command failed."
-	                echo "detect_command: $detect_command_ann"
+			echo "detect_command: $detect_command_ann"
                         touch "${remote_downstream_analysis_statusdir}/annotate_vcf_${vir}_fail"
                         echo "Could not annotate vcf files, will skip downstream processing"
-                        process_fail=$((process_fail + 1))
                         continue 
                 else
                         echo "Successfully  annotated vcf files and created timeline.tsv. Proceeding with .tsv file creation."
                         touch "${remote_downstream_analysis_statusdir}/timeline_tsv_${vir}_success"
                         touch "${remote_downstream_analysis_statusdir}/annotate_vcf_${vir}_success"
 
+			#echo "path to vcf: $path_to_vcf"
                         ### 4. continue with downstream only if timeline is produced
                         path_to_timeline=$path_to_output/timeline.tsv
                         #the command which runs the analysis: the input of the command is a specific path with wildcard so it take all the files with the speicifc path strucutre
-                        detect_command=$(${rsv_git_repo_folder}/make_mutation_tsv_annotated.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_annotated_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config --virus_string "$virus_strings" 2>/dev/null)
+                        detect_command=$(${downstream_analysis_dir}/RSV-wastewater-V-pipe/regular_monitoring_2024_2025/make_mutation_tsv_annotated.py --vpipe_dir $vpipe_dir --path_to_vcf "$path_to_annotated_vcf" --timeline_tsv "$path_to_timeline" --path_to_coverage "$path_to_coverage" --reference $reference --config $path_to_config --virus_string "$virus_strings" 2>/dev/null)
 			exit_code=$?
                         echo "Downstream analysis:"
 			echo "Exit code: $exit_code"
-			
+			#fail=0
+                        #If the command fails (non-zero exit code), the fail variable is set to 1.
+                        #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                         # Check the result of the command and create the appropriate status file
                         if [[ $exit_code -eq 0 ]]; then
                                 echo "Downstream analysis succeeded. .tsv file has been created."
                                 touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_success"
+
                         else
                                 echo "Downstream analysis for a variant failed."
                                 touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
@@ -644,6 +645,7 @@ case "$1" in
 			touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
                 fi             
         done
+        conda deactivate
         ;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
