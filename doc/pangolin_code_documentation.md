@@ -19,6 +19,32 @@ Additionally backups are done on the bewi08 VM.
 **Status Files**
 Generally status files are created directly on wisedb in `workdir/status. If a command is executed on euler (with the batman.sh script) status files are created on euler and synced to wisedb.
 
+# Main Working Folders
+**Covid**
+The SARS CoV19 directory where the regular analysis takes place (lollipop) is `/cluster/project/pangolin/work-vp-test`
+   - corresponding blacklist: `/cluster/project/pangolin/lollipop_blacklist.txt`
+- the vpipe is run in : `/cluster/project/pangolin/working` (go here to check the slurm-out of vpipe)
+
+**RSV**
+For RSV it is `/cluster/project/pangolin/rsv_pipeline`
+
+**Influenza**
+For Influenza it is `/cluster/project/pangolin/influenza_pipeline/`
+
+
+***Bad List** For Influenza and RSV!!
+(similar to blacklist for covid)
+- in pangolin/pancoling_scr/config there is a fgcz.yaml file where there is a badlist specified
+- put the delivery name (order) in this list
+- you can find the delivery name associated to the batch in sampleset folder: batch.BATCHNAME.tsv
+
+
+
+
+**samples download from bfabric**
+`/cluster/project/pangolin/sampleset`
+
+# Main Folders General Structure
 ## pangolin_src
 This folder contains all the code that is used during the automation. The automation constantly runs in the background and tries to check if there are new samples uploaded to bfabric. If there are new samples, it fetches them and automatically starts vpipe (the alignment). 
 
@@ -338,3 +364,6 @@ tbd
 
 
 
+## Amplicon Coverage
+The Amplicon Coverage plot is created automatically by the automation and can be found for each batch at:
+`/cluster/project/pangolin/work-amplicon-coverage`
