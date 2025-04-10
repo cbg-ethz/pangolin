@@ -260,11 +260,12 @@ Helper functions for carillon.sh (VM interaction / data sync)
 
 
 #### Downstream analysis
-For Influenza and RSV the vpipe output has to be processed to get a table with the ferequency data which will be uploaded to the genspectrum dashboard. 
+For Influenza and RSV the vpipe output has to be processed to get a table with the amino acid ferequency data which will be uploaded to the genspectrum dashboard. 
 The function that takes the vpipe output and transforms it to a .tsv file is refered to as *downstream analysis*. This Analysis differes between RSV and Influenza as the provided code stems from different sources.
 The scripts that perform the data transformation are uniformly stored in a folder on Euler calles *rsv_downstream_analysis* or *influenza_downstream_analysis* respectively.
-These scripts are linked via softlinks to the reespective */pangolin/pangolin_src/downstream_analysis folder to make them available to the automation.
-In *carillon.sh* first, it is checked if there is an ongoing vpipe run and if so, nothing happens. If the last vpipe run completed downstream analysis will be started.
+
+In *carillon.sh* first, it is checked if there is an ongoing vpipe run and if so, nothing happens. If the last vpipe run completed and the downstream analysis has not yet been done for this batch
+the downstream analysis will start.
 These checks are done via the status files created throughout the pipline. 
 
 To start the downstream analysis the *remote_batman* script on euler is called with the respective name of the function (Influenza:vpipe_out_to_tsv , RSV: rsv_vpipe_out_to_tsv).
@@ -272,8 +273,22 @@ These functions are stored in the respective batman.sh script on euler and have 
 
 TBD: explain the rsv_vpipe_out_to_tsv function once completed
 
-**vpipe_out_to_tsv (Influenza batman.sh on euler)**
+**RSV: rsv_vpipe_out_to_tsv**
+This function is stored in batman.sh and executed on euler. The scripts that are celled in the function are stored in a public (git repository)[https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/production/README.md]
+on the production branch. The git repo on euler can be found in `/cluster/project/pangolin/rsv_pipeline/rsv_downstream_analysis/RSV-wastewater-V-pipe`.
+The function calles 3 different scripts: */timeline.py*, */annotate_vcf.py* and */make_mutation_tsv_annotated.py*.
+It tracks sucessfull run of the script by means of status files.
+It loops through the 2 RSV subtypes and defines the subtype specific input path needed to run the scripts, as well as subtype specific variables.
+*/timeline.py* creates the timepline file for all the subtype spcific samples. This file in needed in */make_mutation_tsv_annotated.py* to filter for 
+the relevant samples to create the output file.
+*/annotate_vcf.py* loops thought the snvs.vcf files and creates amonoacide annotated snvs_annotated.vcf in the respective directory where snvs.vcf is located.
+For this it needs the genbank reference file (path stored in server.conf).
+Once both scripts run sucessfully */make_mutation_tsv_annotated.py* is called. The input requires the new timeline.tsv file and the annotated vcf file.
+It takes the information from the annotated vcf file and transforms then into a table that can be uploaded to genspectrum.
+The output is stored in `/cluster/project/pangolin/rsv_pipeline/*/working/MutationFrequencies`. (Note that the first batches up to 20250321_2429695737 only contain the nucleotide mutation frequenvy and not the amino acid mutation frequencies!)
 
+**vpipe_out_to_tsv (Influenza batman.sh on euler)**
+The files for the analysis are linked via softlinks to the reespective */pangolin/pangolin_src/downstream_analysis folder to make them available to the automation.
 This function is embedding the /detect_AAMutations.R script which actually runs the transformation of the vpipe output to the .tsv table for uploading. The function ensures that this script is run on each of the fragments and creates the status files accordingly.
 As input the function needs the fragment specific vpipe working folder as well as the path to the location.tsv file (which is stored in server.conf).
 As output it generates the mutation frequency table in `/cluster/project/pangolin/influenza_pipeline/*/working/MutationFrequencies`.
