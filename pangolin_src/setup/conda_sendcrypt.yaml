@@ -10,3 +10,4 @@ dependencies:
   - git
   - gnupg
   - zip
+  - requests

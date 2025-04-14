@@ -279,8 +279,8 @@ authors = {
   "basel_20000101_25000101": "Claudia Bagutti, Evelyn Ilg Hampe, Sarah Tschudin Sutter",
   "microsynth_20000101_25000101": "Christoph Gruenig, Maria-Luise Deflorian",
   "kzurich_20000101_25000101": "Nadine Gerber, Natalie Meyer, René Köppel",
-  "ethz_20000101_25000101": "Katharina Jahn, Pelin Burcak Icer, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Kim Philipp Jablonski, Anika John, Louis Du Plessis, Matteo Carrara, Kyra Kirschenbühler, Franziska Singer, Niko Beerenwinkel",
-  "fgcz_20000101_25000101": "Catharine Aquino, Dominika Brchnelova, Adriana Hotzm Lennart Opitz",
+  "ethz_20000101_25000101": "Pelin Icer Baykal, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Anika John, Auguste Rimaite, Gordon Koehn, Louis Du Plessis, Matteo Carrara, Kyra Kirschenbühler, Franziska Singer, Niko Beerenwinkel",
+  "fgcz_20000101_25000101": "Catharine Aquino, Dominika Brchnelova, Adriana Hotz, Lennart Opitz",
 }
 seqplatform = "Combination of Illumina NovaSeq 5000/6000, NextSeq2000, Element Biosciences AVITI"
 reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Schanzenstrasse 44, 4056, Basel"
