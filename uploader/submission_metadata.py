@@ -284,15 +284,15 @@ authors = {
 }
 seqplatform = "Combination of Illumina NovaSeq 5000/6000, NextSeq2000, Element Biosciences AVITI"
 reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Schanzenstrasse 44, 4056, Basel"
-qafile = "/app/dataset/working/qa.csv"
+qafile = "/app/raw_data/working/qa.csv"
 seqcenter = {
   "fgcz": "Functional Genomics Center Zurich",
 }
 centerused = "fgcz"
 locations = "/app/workdir/uploader/resources/ww_locations.tsv"
 basedir = "/app/uploader"
-samplesfolder = "/app/dataset/working/samples"
-timelinefile = "/app/dataset/working/timeline.tsv"
+samplesfolder = "/app/raw_data/working/samples"
+timelinefile = "/app/raw_data/working/timeline.tsv"
 assembly = "V-pipe"
 embargo = ""
 projyears = ["2024", "2025"]
