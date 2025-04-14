@@ -74,7 +74,7 @@ while read samplename batch _; do
   fi
   batch=$(echo $batch | tr -d '"')
   echo "$samplename $batch"
-  X=${uploader_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
+  X=${local_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
     echo "Generating metadata line for sample ${samplename}"
     python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv &&
