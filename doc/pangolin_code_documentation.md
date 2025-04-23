@@ -285,8 +285,8 @@ It takes the information from the annotated vcf file and transforms then into a 
 The output is stored in `/cluster/project/pangolin/rsv_pipeline/*/working/MutationFrequencies`. (Note that the first batches up to 20250321_2429695737 only contain the nucleotide mutation frequency and not the amino acid mutation frequencies!)
 
 **Influenza: vpipe_out_to_tsv**
-The files for the analysis are linked via softlinks to the reespective */pangolin/pangolin_src/downstream_analysis folder to make them available to the automation.
-This function is embedding the /detect_AAMutations.R script which actually runs the transformation of the vpipe output to the .tsv table for uploading. The function ensures that this script is run on each of the fragments and creates the status files accordingly.
+The files for the analysis are in a currently local version stored on euler at: `/cluster/project/pangolin/influenza_pipeline/influenza_downstream_analysis` (tbd: update to git repo).
+This function is embedding the /detect_AAMutations.R script which runs the transformation of the vpipe output to the .tsv table for uploading. The function ensures that this script is run on each of the fragments and creates the status files accordingly.
 As input the function needs the fragment specific vpipe working folder as well as the path to the location.tsv file (which is stored in server.conf).
 As output it generates the mutation frequency table in `/cluster/project/pangolin/influenza_pipeline/*/working/MutationFrequencies`.
 
