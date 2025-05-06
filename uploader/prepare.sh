@@ -31,7 +31,7 @@ echo "Preparing the list of files to upload for this batch"
 
 # Remove any lines that appear in the uploader_uploaded or blacklist files,
 # then select the top sample_number lines and save them to the output file.
-grep -F -x -v -f "${uploader_uploaded}" "${uploader_workdir}/${uploaderlist}" | \
+grep -F -v -f "${uploader_uploaded}" "${uploader_workdir}/${uploaderlist}" | \
 	grep -F -v -f "${blacklist}" | \
 	head -n "${sample_number}" > "${uploader_tempdir}/to_upload.txt"
 

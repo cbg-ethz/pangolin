@@ -60,7 +60,7 @@ tracked_viruses = {
 rsv_kits = {
   "rsva": ["RSV subtype A","RSV-A","RSVA","rsva","rsv-a","RSV subtype A"],
   "rsvb": ["RSV subtype B","RSV-B","RSVB","rsvb","rsv-b","RSV subtype B"],
-  "rsva_and_b": ["sequencing of both RSV-A and B","RSV subtype A and B","RSV-A and B","RSV A and B","v3","v532","RSV_pooled","SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel","Amplicon Barcoding","RSV_pooled_old","SARS-CoV-2 ARTIC V5.3.2 NEB Ultra II","test"],
+  "rsva_and_b": ["sequencing of both RSV-A and B","RSV subtype A and B","RSV-A and B","RSV A and B","v3","v532","RSV_pooled","SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel","Amplicon Barcoding","RSV_pooled_old","SARS-CoV-2 ARTIC V5.3.2 NEB Ultra II","test","RSV Subtype A and B"],
 }
 taxon_ids = {
   "flua": "641809",
