@@ -3,9 +3,9 @@
 # Input: Virus subtype e.g. RSVA/RSVB
 # Infput: Batch e.g. 20250417_2427493980
 
-scriptdir=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
-. ${scriptdir}/config/server.conf
-. ${scriptdir}/config/fgcz.conf
+dir=/cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
+. ${dir}/config/server.conf
+. ${dir}/config/fgcz.conf
 
 # defaults, in case flags aren’t passed
 variant=""
@@ -52,6 +52,12 @@ garbage_dir="${variant_base_dir}/garbage"
 mkdir -p "$garbage_dir"
 
 sampleset_file="${sampleset}/projects.${batch}.tsv"
+
+if [[ ! -f "$sampleset_file" ]]; then
+  echo "ERROR: Required file '$sampleset_file' not found!" >&2
+  exit 1
+fi
+
 
 # Read the first column (one sample name per line) into an array:
 mapfile -t samples_from_batch < <(cut -f1 "$sampleset_file")
