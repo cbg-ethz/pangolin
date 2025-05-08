@@ -51,7 +51,7 @@ cd $variant_base_dir
 garbage_dir="${variant_base_dir}/garbage"
 mkdir -p "$garbage_dir"
 
-sampleset_file="${clusterdir_old}/${sampleset}/projects.${batch}.tsv"
+sampleset_file="${sampleset}/projects.${batch}.tsv"
 
 # Read the first column (one sample name per line) into an array:
 mapfile -t samples_from_batch < <(cut -f1 "$sampleset_file")
