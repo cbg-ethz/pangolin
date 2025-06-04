@@ -514,6 +514,16 @@ case "$1" in
             belfry@euler.ethz.ch::${working}/samples \
             ${archive_path}/
     ;;
+    checksum_tables)
+        . ${scriptdir}/config/server.conf
+        echo "Adding the missing checksums to the archived files in ${archive_path}"
+        cd ${archive_path}
+        find . -type f ! -name '*.md5' -print0 | \
+            while IFS= read -r -d '' file; do
+                if [ ! -e "${file}.md5" ]; then
+                    md5sum "$file" > "${file}.md5"
+                fi
+        done
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
         exit 2

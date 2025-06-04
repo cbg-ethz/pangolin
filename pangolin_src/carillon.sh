@@ -591,6 +591,7 @@ if [ $run_archive -eq "1" ]; then
     echo "Updating the list of files to archive from Euler. This may take some time"
     ${remote_batman} list_files_to_download
     ${scriptdir}/belfry.sh archive_files
+    ${scriptdir}/belfry.sh checksum_tables
 else
     echo "Skipping CRAM archival as per configuration"
 fi
