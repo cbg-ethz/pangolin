@@ -524,6 +524,7 @@ case "$1" in
                     md5sum "$file" > "${file}.md5"
                 fi
         done
+    ;;
     *)
         echo "Unkown sub-command ${1}" > /dev/stderr
         exit 2
