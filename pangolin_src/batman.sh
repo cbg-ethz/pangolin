@@ -546,10 +546,15 @@ case "$1" in
                 commit=$(git log -n 1 ${branch} | head -n 1)
                 echo "Branch: ${branch}\n${commit}"
         ;;
-	cram_list)
+	list_files_to_download)
 		cd ${clusterdir_old}/${working}/samples
-		echo "Listing cram files to download. This may take a while..."
-                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${working}/samples/cram_list.txt
+		echo "Listing files to download. This may take a while..."
+                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${working}/samples/files_list.txt
+                fd -p '.*/raw_uploads/raw_reads\.cram\.md5' >> ${clusterdir_old}/${working}/samples/files_list.txt
+                fd -p '.*/raw_uploads/dehuman\.cram' >> ${clusterdir_old}/${working}/samples/files_list.txt
+                fd -p '.*/raw_uploads/dehuman\.cram\.md5' >> ${clusterdir_old}/${working}/samples/files_list.txt
+                fd -p '.*/alignments/basecnt\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/files_list.txt
+                fd -p '.*/alignments/coverage\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/files_list.txt
 	;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr

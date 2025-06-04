@@ -583,14 +583,14 @@ fi
 #
 # Phase 8: Archiving CRAM files
 #
-if [ $run_cram_archive -eq "1" ]; then
+if [ $run_archive -eq "1" ]; then
     echo "===================="
-    echo "Start new CRAM archival run"
+    echo "Start new results archival run"
     echo "===================="
     
-    echo "Updating the list of crams to archive from Euler. This may take some time"
-    ${remote_batman} cram_list
-    ${scriptdir}/belfry.sh archive_cram
+    echo "Updating the list of files to archive from Euler. This may take some time"
+    ${remote_batman} list_files_to_download
+    ${scriptdir}/belfry.sh archive_files
 else
     echo "Skipping CRAM archival as per configuration"
 fi
