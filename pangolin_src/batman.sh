@@ -549,10 +549,10 @@ case "$1" in
 	list_files_to_download)
 		cd ${clusterdir_old}/${working}/samples
 		echo "Listing files to download. This may take a while..."
-                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${working}/samples/files_list.txt
-                fd -p '.*/raw_uploads/dehuman\.cram' >> ${clusterdir_old}/${working}/samples/files_list.txt
-                fd -p '.*/alignments/basecnt\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/files_list.txt
-                fd -p '.*/alignments/coverage\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/files_list.txt
+                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${working}/samples/file_list.txt
+                fd -p '.*/raw_uploads/dehuman\.cram' >> ${clusterdir_old}/${working}/samples/file_list.txt
+                fd -p '.*/alignments/basecnt\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/file_list.txt
+                fd -p '.*/alignments/coverage\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/file_list.txt
 	;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
