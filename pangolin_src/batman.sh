@@ -553,6 +553,9 @@ case "$1" in
                 fd -p '.*/raw_uploads/dehuman\.cram' >> ${clusterdir_old}/${working}/samples/file_list.txt
                 fd -p '.*/alignments/basecnt\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/file_list.txt
                 fd -p '.*/alignments/coverage\.tsv\.gz' >> ${clusterdir_old}/${working}/samples/file_list.txt
+                fd -p '.*/references/consensus.bcftools.chain' >> ${clusterdir_old}/${working}/samples/file_list.txt
+                fd -p '.*/references/consensus.bcftools.fasta' >> ${clusterdir_old}/${working}/samples/file_list.txt
+                fd -p '.*/references/frameshift_deletions_check.tsv' >> ${clusterdir_old}/${working}/samples/file_list.txt
 	;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
