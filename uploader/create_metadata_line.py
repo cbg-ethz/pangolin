@@ -7,6 +7,7 @@ import argparse
 import sys
 import re
 import requests
+from datetime import datetime
 sys.path.append("/app/uploader")
 import submission_metadata as meta
 
@@ -27,6 +28,16 @@ def parse_args():
 # samplename="KLZHCov220123"
 # batchname="20220204_HVFYNDRXY"
 # update="No"
+
+def is_date_in_ranges(date_str, date_ranges):
+    """Check if date_str is within any date range in date_ranges."""
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    for start_str, end_str in date_ranges:
+        start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+        if start_date <= target_date <= end_date:
+            return True
+    return False
 
 
 def get_delivery_folder_name(batchname, batchfile_dir):
@@ -357,13 +368,17 @@ def main():
         catchment_size = ""
 
     # Get all viruses that are present in the sample by checking if the wisedb has dPCR values or not for the sample
+    if is_date_in_ranges(mydata[5],meta.multi_virus_dates):
+        tracked_viruses = meta.tracked_viruses_multivirus
+    else:
+        tracked_viruses = meta.tracked_viruses_singlevirus
     load = load_dpcr(args.wisedb_token, meta.wisedb_dpcr_url, meta.exceptions_dpcr, mydata[5], mydata[4], meta)
     if len(load) == 0:
         print("No load values on wisedb for sample " + mydata[0])
         if not string_in_file(mydata[0], args.failed):
             write_failed(mydata[0], "no load", args.failed)
         sys.exit(200)
-    all_tracked_viruses_present = all(element in load.keys() for element in meta.tracked_viruses.keys())
+    all_tracked_viruses_present = all(element in load.keys() for element in tracked_viruses.keys())
     if not all_tracked_viruses_present:
         print("No load values for at least one tracked virus on wisedb for sample " + mydata[0])
         if not string_in_file(mydata[0], args.failed):
@@ -372,11 +387,11 @@ def main():
     all_subtypes = []
     all_taxids = []
     for virus in load.keys():
-        if virus not in meta.tracked_viruses.keys():
+        if virus not in tracked_viruses.keys():
             print("Skipping virus " + virus + " because not in the list of tracked viruses for upload")
             continue
         else:
-            virus_shortname = [meta.tracked_viruses[virus]]
+            virus_shortname = [tracked_viruses[virus]]
             if virus_shortname == ["rsv"]:
                 print("Found exception: rsv may include RSVA or RSVB for sequencing. Retrieving which")
                 for key, value in meta.rsv_kits.items():

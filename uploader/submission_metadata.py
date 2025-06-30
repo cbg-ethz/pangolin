@@ -52,9 +52,12 @@ ara_id = {
 # You can find the address of the API endpoint at https://wisedb.ethz.ch/swagger/ after logging in to wisedb
 wisedb_dpcr_url = "https://wisedb.ethz.ch/api/export/dpcr"
 # List all the viruses in wisedb that are tracked in the sequencing analysis
-tracked_viruses = {
+tracked_viruses_multivirus = {
   "IAV-M": "flua",
   "RSV-N": "rsv",
+  "SARS-N1": "sarscov2",
+}
+tracked_viruses_singlevirus = {
   "SARS-N1": "sarscov2",
 }
 rsv_kits = {
@@ -304,4 +307,4 @@ projyears = ["2024", "2025"]
 projnum = "PRJEB85524"
 submitting = "ETHZ"
 exceptions = {"558600":"Lausanne (VD)", "624801":"Sierre/Noes (VS)", "680000":"Porrentruy (JU)"}
-multi_virus_start_date = "2024-11-02"
+multi_virus_dates = [["2024-11-02","2025-05-16"]]
