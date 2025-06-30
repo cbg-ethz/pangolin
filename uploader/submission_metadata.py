@@ -282,7 +282,12 @@ authors = {
   "ethz_20000101_25000101": "Pelin Icer Baykal, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Anika John, Auguste Rimaite, Gordon Koehn, Tanja Stadler, Louis du Plessis, Matteo Carrara, Kyra Kirschenbühler, Franziska Singer, Niko Beerenwinkel",
   "fgcz_20000101_25000101": "Catharine Aquino, Dominika Brchnelova, Adriana Hotz, Lennart Opitz",
 }
-seqplatform = "Combination of Illumina NovaSeq 5000/6000, NextSeq2000, Element Biosciences AVITI"
+accepted_seqplatform = ["NovaSeq", "NextSeq", "AVITI"]
+seqplatform_match = {
+    "novaseq": "Illumina NovaSeq 5000/6000",
+    "nextseq": "Illumina NextSeq 2000",
+    "aviti": "Element BioSciences AVITI",
+}
 reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Schanzenstrasse 44, 4056, Basel"
 qafile = "/app/raw_data/working/qa.csv"
 seqcenter = {

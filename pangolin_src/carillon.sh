@@ -49,6 +49,8 @@ echo '========='
 
 set -e
 
+${scriptdir}/belfry.sh sync_sampleset_batch_files
+
 if [[ -n $skipsync ]]; then
     echo "${skipsync} will be skipped."
 fi
