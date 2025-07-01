@@ -52,9 +52,12 @@ ara_id = {
 # You can find the address of the API endpoint at https://wisedb.ethz.ch/swagger/ after logging in to wisedb
 wisedb_dpcr_url = "https://wisedb.ethz.ch/api/export/dpcr"
 # List all the viruses in wisedb that are tracked in the sequencing analysis
-tracked_viruses = {
+tracked_viruses_multivirus = {
   "IAV-M": "flua",
   "RSV-N": "rsv",
+  "SARS-N1": "sarscov2",
+}
+tracked_viruses_singlevirus = {
   "SARS-N1": "sarscov2",
 }
 rsv_kits = {
@@ -282,7 +285,12 @@ authors = {
   "ethz_20000101_25000101": "Pelin Icer Baykal, David Dreifuss, Ivan Topolsky, Lara Fuhrmann, Anika John, Auguste Rimaite, Gordon Koehn, Tanja Stadler, Louis du Plessis, Matteo Carrara, Kyra Kirschenbühler, Franziska Singer, Niko Beerenwinkel",
   "fgcz_20000101_25000101": "Catharine Aquino, Dominika Brchnelova, Adriana Hotz, Lennart Opitz",
 }
-seqplatform = "Combination of Illumina NovaSeq 5000/6000, NextSeq2000, Element Biosciences AVITI"
+accepted_seqplatform = ["NovaSeq", "NextSeq", "AVITI"]
+seqplatform_match = {
+    "novaseq": "Illumina NovaSeq 5000/6000",
+    "nextseq": "Illumina NextSeq 2000",
+    "aviti": "Element BioSciences AVITI",
+}
 reportinglab = "Department of Biosystems Science and Engineering, ETH Zurich; Schanzenstrasse 44, 4056, Basel"
 qafile = "/app/raw_data/working/qa.csv"
 seqcenter = {
@@ -299,4 +307,6 @@ projyears = ["2024", "2025"]
 projnum = "PRJEB85524"
 submitting = "ETHZ"
 exceptions = {"558600":"Lausanne (VD)", "624801":"Sierre/Noes (VS)", "680000":"Porrentruy (JU)"}
-multi_virus_start_date = "2024-11-02"
+# The dates of the time frames where we receive multiple viruses
+# The dates to include are SAMPLE dates, i.e. the date of the first multi-virus sample and the date of the last multi-virus sample
+multi_virus_dates = [["2024-10-16","2025-05-04"]]

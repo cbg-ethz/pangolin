@@ -77,7 +77,7 @@ while read samplename batch _; do
   X=${local_dataset}/working/samples/${samplename}/${batch}/uploads/dehuman.cram
   if [ -f $X ]; then
     echo "Generating metadata line for sample ${samplename}"
-    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv &&
+    python3 ${uploader_code}/create_metadata_line.py -s ${samplename} -b ${batch} -o $tsv -t ${wisedb_token} -f ${uploader_workdir}/failed.tsv -d ${batchfiles_dir} &&
       cp $(realpath $X) $target/${samplename}.cram &&
       echo $samplename >> ${archive_now}/uploaded_run.txt
   else

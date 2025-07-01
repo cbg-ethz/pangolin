@@ -319,6 +319,16 @@ case "$1" in
 			touch ${viloca_statusdir}/pushsamplelist_viloca_success
 		fi
 	;;
+    sync_sampleset_batch_files)
+	echo "syncing all sampleset/batch.<batchname>.yaml files available on euler"
+        cd ${uploader_workdir}
+        rsync \
+            --password-file ${HOME}/.ssh/rsync.pass.euler \
+            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
+            -izrltHLK --fuzzy --fuzzy --inplace \
+            belfry@euler.ethz.ch::${sampleset}/batch.*.yaml \
+            "${batchfiles_dir}"
+    ;;
     queue_upload)
         echo "Adding new samples to the upload list"
         validateBatchName "$2"
