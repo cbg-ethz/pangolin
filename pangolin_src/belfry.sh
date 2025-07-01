@@ -327,7 +327,7 @@ case "$1" in
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
             -izrltHLK --fuzzy --fuzzy --inplace \
             belfry@euler.ethz.ch::${sampleset}/batch.*.yaml \
-            "$${batchfiles_dir}"
+            "${batchfiles_dir}"
     ;;
     queue_upload)
         echo "Adding new samples to the upload list"

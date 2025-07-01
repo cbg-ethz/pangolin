@@ -307,4 +307,6 @@ projyears = ["2024", "2025"]
 projnum = "PRJEB85524"
 submitting = "ETHZ"
 exceptions = {"558600":"Lausanne (VD)", "624801":"Sierre/Noes (VS)", "680000":"Porrentruy (JU)"}
-multi_virus_dates = [["2024-11-02","2025-05-16"]]
+# The dates of the time frames where we receive multiple viruses
+# The dates to include are SAMPLE dates, i.e. the date of the first multi-virus sample and the date of the last multi-virus sample
+multi_virus_dates = [["2024-10-16","2025-05-04"]]
