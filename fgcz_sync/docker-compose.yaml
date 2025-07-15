@@ -1,15 +1,18 @@
 services:
   fgcz_sync: # Service name (container that will be created) - no container neame specified here
     build:
-      context: /data/projects/fgcz_data_sync_automation/pangolin 
+      context: /data/projects/fgcz_data_sync_automation/pangolin/fgcz_sync 
     volumes: #directories of the wisedb VM
       - /data/projects/fgcz_data_sync_automation/workdir:/app/workdir:rw
+      - /data/projects/fgcz_data_sync_automation/resources:/app/resources
+      - /data/projects/fgcz_data_sync_automation/pangolin/fgcz_sync:/app/fgcz_sync
     secrets:
       - bs-pangolin_login_euler
       - bs-pangolin_login_backups
       - fgcz_login
       - id_ed25519_fgcz_sync
       - rsync.pass.euler
+      - id_ed25519_wisedb
 secrets:
   bs-pangolin_login_euler:
     file: /data/projects/fgcz_data_sync_automation/secrets/bs-pangolin@euler.ethz.ch
@@ -21,3 +24,5 @@ secrets:
     file: /data/projects/fgcz_data_sync_automation/secrets/id_ed25519_fgcz_sync # wisedb to connect to euler
   rsync.pass.euler:
     file: /data/projects/fgcz_data_sync_automation/secrets/rsync.pass.euler #rsync deamon running in background of euler
+  id_ed25519_wisedb:
+    file: /data/projects/fgcz_data_sync_automation/secrets/id_ed25519_wisedb
