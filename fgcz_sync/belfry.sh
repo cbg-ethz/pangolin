@@ -18,7 +18,6 @@ declare -A lab
 . ${scriptdir}/config/server.conf
 
 : ${basedir:=$(pwd)}
-: ${download:?}
 : ${sampleset:=sampleset}
 : ${working:=working}
 : ${storgrp:?}
@@ -28,9 +27,6 @@ declare -A lab
 : ${retries:=10}
 : ${iotimeout:=300}
 : ${protocolyaml:=/references/primers.yaml}
-: ${viloca_basedir:?}
-: ${viloca_samples:?}
-: ${viloca_results:?}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
     echo "$scriptdir vs $basedir"
@@ -49,8 +45,6 @@ set -e
 umask 0002
 
 mkdir ${mode:+--mode=${mode}} -p ${statusdir}
-mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
-mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 
 timeoutforeground=
 #--foreground
