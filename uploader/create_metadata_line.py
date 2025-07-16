@@ -10,6 +10,7 @@ import requests
 from datetime import datetime
 sys.path.append("/app/uploader")
 import submission_metadata as meta
+import rsv_exceptions as rsv_exc
 
 # parse command line
 def parse_args():
@@ -395,6 +396,9 @@ def main():
             if virus_shortname == ["rsv"]:
                 print("Found exception: rsv may include RSVA or RSVB for sequencing. Retrieving which")
                 for key, value in meta.rsv_kits.items():
+                    #If the sample is in the list of exceptions, change its kit name to what the exception list says, then move on with the check
+                    if mydata[0] in rsv_exc.rsv_exceptions.keys():
+                        mydata[3] = rsv_exc.rsv_exceptions[mydata[0]]
                     if mydata[3] in value:
                         virus_shortname = [key]
             # If the above code cannot find if we are talking about RSVA or RSVB, it means that virus_shortname stays "rsv". Below we test that to throw the error.
