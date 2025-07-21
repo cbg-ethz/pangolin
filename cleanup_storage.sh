@@ -6,6 +6,7 @@ scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
 umask 0007
 
 #enable globbing
+shopt -s nullglob
 set +f
 
 custom_date=$(date '+%Y%m%d' --date='-3 months')
@@ -93,14 +94,15 @@ for subtype in ${virusbase[@]}; do
 			subtype_garbagedir=${subtype#*/}
 			garbagedir="${clusterdir_old}/garbage/${virus}/${subtype_garbagedir}/${parent}/${sample}/${batch}/${item%/*}"
 			echo "Garbaging ${tomove}/"
-			if $doit; then
-				if [ -n "$(ls -A "${tomove}")" ]; then
+			if compgen -G "$tomove" > /dev/null; then
+				#eval tomove=$tomove
+				if $doit; then
 					mkdir -p ${garbagedir}
-					mv ${tomove} ${garbagedir}
+					eval "mv ${tomove} ${garbagedir}"
+				else
+					echo [dryrun] mkdir -p ${garbagedir}
+					eval "echo [dryrun] mv ${tomove} ${garbagedir}"
 				fi
-			else
-				echo "[dryrun] mkdir -p ${garbagedir}"
-				echo "[dryrun] mv ${tomove} ${garbagedir}"
 			fi
 		done
 	done < "${clusterdir_old}/${subtype}/working/samples.tsv.toclean"
