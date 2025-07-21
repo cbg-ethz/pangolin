@@ -90,7 +90,8 @@ for subtype in ${virusbase[@]}; do
 	while IFS=$'\t' read -r sample batch _rest; do
 		for item in "${togarbage[@]}"; do
 			tomove="${clusterdir_old}/${subtype}/${parent}/${sample}/${batch}/${item}"
-			garbagedir="${clusterdir_old}/garbage/${virus}/${parent}/${sample}/${batch}/${item%/*}"
+			subtype_garbagedir=${subtype#*/}
+			garbagedir="${clusterdir_old}/garbage/${virus}/${subtype_garbagedir}/${parent}/${sample}/${batch}/${item%/*}"
 			echo "Garbaging ${tomove}/"
 			if $doit; then
 				if [ -n "$(ls -A "${tomove}")" ]; then
