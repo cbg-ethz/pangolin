@@ -18,14 +18,14 @@ fi
 if (( $# >= 2 )) && [[ $2 == "doit" ]]; then
 	echo "THIS NOT A DRYRUN!"
 	echo "Please run the dryrun beforehand and check the output!"
-	echo "To do so, run the command without the additional option 'do it'"
+	echo "To do so, run the command without the additional option 'doit'"
 	echo "The procedure will continue in 15 seconds. Please press CTRL+c to abort"
 	doit=true
 	sleep 15
 else
 	echo "This is a dry run."
 	echo "The commands that would be run if you use the 'doit' option will be printed on screen"
-                        doit=false
+        doit=false
 fi
 
 
@@ -94,8 +94,8 @@ for subtype in ${virusbase[@]}; do
 			echo "Garbaging ${tomove}/"
 			if $doit; then
 				if [ -n "$(ls -A "${tomove}")" ]; then
-					echo "mkdir -p ${garbagedir}"
-					echo "mv ${tomove} ${garbagedir}"
+					mkdir -p ${garbagedir}
+					mv ${tomove} ${garbagedir}
 				fi
 			else
 				echo "[dryrun] mkdir -p ${garbagedir}"
