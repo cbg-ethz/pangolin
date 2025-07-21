@@ -2,4 +2,5 @@ ssh
 .*.sw?
 secrets
 pangolin_src/fgcz-gstore.uzh.ch
-uploader/__pycache__ 
+uploader/__pycache__
+pangolin_src/garbage_out.log 
