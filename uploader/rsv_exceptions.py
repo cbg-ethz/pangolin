@@ -1,0 +1,26 @@
+# When we track RSV, we may sequence subtype A, B, or both. That information is available as a dedicated column in the sequencing metadata and is used to fetch the dPCR values of the correct subtype from wisedb.
+# This file is an override in case of errors or missing values in the official metadata
+rsv_exceptions = {
+  "A1_05_2025_04_23": "RSV subtype A and B" 
+  "A2_16_2025_04_23": "RSV subtype A and B" 
+  "A3_25_2025_05_01": "RSV subtype A and B" 
+  "B1_05_2025_04_26": "RSV subtype A and B" 
+  "B2_16_2025_04_27": "RSV subtype A and B" 
+  "B3_25_2025_05_04": "RSV subtype A and B" 
+  "C1_10_2025_04_23": "RSV subtype A and B" 
+  "C2_05_2025_05_01": "RSV subtype A and B" 
+  "C3_15_2025_05_01": "RSV subtype A and B" 
+  "D1_10_2025_04_26": "RSV subtype A and B" 
+  "D2_05_2025_05_04": "RSV subtype A and B" 
+  "D3_15_2025_05_05": "RSV subtype A and B" 
+  "E1_17_2025_04_23": "RSV subtype A and B" 
+  "E2_10_2025_05_01": "RSV subtype A and B" 
+  "E3_16_2025_05_01": "RSV subtype A and B" 
+  "F1_17_2025_04_26": "RSV subtype A and B" 
+  "F2_10_2025_05_04": "RSV subtype A and B" 
+  "F3_16_2025_05_05": "RSV subtype A and B" 
+  "G1_25_2025_04_23": "RSV subtype A and B" 
+  "G2_17_2025_05_01": "RSV subtype A and B" 
+  "H1_25_2025_04_26": "RSV subtype A and B" 
+  "H2_17_2025_05_04": "RSV subtype A and B" 
+}
