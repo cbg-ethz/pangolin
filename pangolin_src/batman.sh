@@ -506,7 +506,16 @@ case "$1" in
                                 if [ -f ${amplicon_coverage_sample_list} ]; then
                                         rm "${amplicon_coverage_sample_list}"
                                 fi
-                                alldates=$(cat ${clusterdir_old}/${working}/samples.tsv | awk '{print $2}' |  awk -F'_' '{print $1}' | awk -v var=$enddate 'NR==1 { print } NR != 1 && $1 <= var { print }' | awk -v var=$startdate 'NR==1 { print } NR != 1 && $1 >= var { print }' | sort | uniq)
+                                alldates=$(awk -v s="$startdate" -v e="$enddate" '
+                                        BEGIN { FS = "\t" }
+                                        {
+                                            split($2, a, "_")       # pull the batch-date prefix
+                                            d = a[1] + 0            # force numeric
+                                            if (d >= s && d <= e)   # inclusive range test
+                                                print d
+                                       }
+                                       ' "${clusterdir_old}/${working}/samples.tsv" \
+                                       | sort -u)
                                 for i in $alldates; do
                                         grep ${i} ${clusterdir_old}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
                                 done
