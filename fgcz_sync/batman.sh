@@ -1,10 +1,9 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync
+scriptdir=/cluster/project/pangolin/test_fgcz_sync_automation/pangolin/fgcz_sync
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir_old}/status
-vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
 
@@ -69,6 +68,8 @@ case "$1" in
         sync_fgcz)
         # Loop through all the parameters passed after the first one
         if [[ -n $2 ]]; then
+	    echo "The variable 2 is:"
+	    echo $2
             case "$2" in
                 --https)
                     # Set the transfer type to HTTPS if --https is specified
@@ -85,7 +86,7 @@ case "$1" in
                 ;;
             esac
 	else
-		echo "The first flat is required and must define the connection protocol. Please choose either --https or --ftp"
+		echo "The first flag is required and must define the connection protocol. Please choose either --https or --ftp"
 		exit 2
 	fi
         # Set the directory where bfabric downloads are stored
