@@ -1,11 +1,11 @@
 services:
-  test_fgcz_sync: # Service name (container that will be created) - no container neame specified here
+  fgcz_sync: # Service name (container that will be created) - no container neame specified here
     build:
-      context: /data/projects/fgcz_fix_test/pangolin/fgcz_sync 
+      context: /data/projects/fgcz_data_sync_automation/pangolin/fgcz_sync 
     volumes: #directories of the wisedb VM
       - /data/projects/fgcz_data_sync_automation/workdir:/app/workdir:rw
       - /data/projects/fgcz_data_sync_automation/resources:/app/resources
-      - /data/projects/fgcz_fix_test/pangolin/fgcz_sync:/app/fgcz_sync
+      - /data/projects/fgcz_data_sync_automation/pangolin/fgcz_sync:/app/fgcz_sync
     secrets:
       - bs-pangolin_login_euler
       - bs-pangolin_login_backups

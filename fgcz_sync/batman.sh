@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/test_fgcz_sync_automation/pangolin/fgcz_sync
+scriptdir=/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir_old}/status
@@ -68,14 +68,14 @@ case "$1" in
         sync_fgcz)
         # Loop through all the parameters passed after the first one
         if [[ -n $2 ]]; then
-	    echo "The variable 2 is:"
-	    echo $2
             case "$2" in
                 --https)
+		    echo "Running in HTTPS mode"
                     # Set the transfer type to HTTPS if --https is specified
                     type='https'
                 ;;
                 --ftp)
+		    echo "Running in FTP mode"
                     # Set the transfer type to FTP if --ftp is specified
                     type='ftp'
                 ;;
