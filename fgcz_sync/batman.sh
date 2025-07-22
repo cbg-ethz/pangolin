@@ -49,7 +49,7 @@ RXJOB='Job <([[:digit:]]+)> is submitted'
 # Generic job.
 # Job <129052039> is submitted to queue <light.5d>.
 
-custom_date=$(date '+%Y%m%d' --date='-3 months')
+custom_date=$(date '+%Y%m%d' --date='-6 months')
 
 if [[ "$1" == "--limited" ]]; then
         shift
@@ -112,7 +112,7 @@ case "$1" in
 
         # Check if the "--recent" parameter is passed
         if [[ "${3}" = "--recent" ]]; then
-            limitlast=$custom_date  # Set the time limit to 3 weeks ago
+            limitlast=$custom_date  # Set the time limit 
             # Generate an exclude list for recent projects
             ${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config} -r "${limitlast}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
             param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
