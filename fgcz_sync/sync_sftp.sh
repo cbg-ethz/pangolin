@@ -61,7 +61,8 @@ else
     connect_echo="${connect_prepass}${password:+:<PASSWORD>}${connect_postpass}"
     echo "${connect_echo}"
     settings="set cmd:move-background false; set net:timeout $(( contimeout / retries)); set net:max-retries ${retries}; set net:reconnect-interval-base 8; set xfer:timeout ${iotimeout}"
-    mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
+    #mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
+    mirror="mirror --only-newer --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"} ${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
     echo lftp -c "$settings; ${connect_echo}; cd $expname; $mirror"
     exec lftp -c "$settings; $connect; cd $expname; $mirror"
 fi
