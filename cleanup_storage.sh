@@ -43,6 +43,12 @@ case "$1" in
 		parent="working/samples"
 		togarbage=("preprocessed_data/*fastq.gz")
 	;;
+	clean_raw_covid)
+		virus="covid"
+                virusbase=(".")
+                parent="working/samples"
+		togarbage=("raw_data/*fastq.gz")
+	;;
 	clean_sampleset_rsv)
 		virus="rsv"
 		virusbase=("rsv_pipeline")
