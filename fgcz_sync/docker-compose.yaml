@@ -13,6 +13,7 @@ services:
       - id_ed25519_fgcz_sync
       - rsync.pass.euler
       - id_ed25519_wisedb
+      - id_ed25519_wisedb_backups
 secrets:
   bs-pangolin_login_euler:
     file: /data/projects/fgcz_data_sync_automation/secrets/bs-pangolin@euler.ethz.ch
@@ -26,3 +27,5 @@ secrets:
     file: /data/projects/fgcz_data_sync_automation/secrets/rsync.pass.euler #rsync deamon running in background of euler
   id_ed25519_wisedb:
     file: /data/projects/fgcz_data_sync_automation/secrets/id_ed25519_wisedb
+  id_ed25519_wisedb_backups:
+    file: /data/projects/wastewater_automation/secrets/id_ed25519_wisedb_backups

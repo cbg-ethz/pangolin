@@ -31,7 +31,7 @@ touch ${statusdir}/oh_hai_im_looping
 source /home/bs-pangolin/.ssh/${cluster_user}@${cluster}
 source /home/bs-pangolin/.ssh/${bck_user}@${bckhost}
 remote_batman="ssh -o StrictHostKeyChecking=no -ni ${privkey} ${cluster_user}@${cluster} --"
-#remote_backup="ssh -o StrictHostKeyChecking=no -ni ${bck_privkey} ${bck_user}@${bckhost} --"
+remote_backup="ssh -o StrictHostKeyChecking=no -ni ${bck_privkey} ${bck_user}@${bckhost} --"
 
 echo "The current automation run is based on: "
 ${scriptdir}/belfry.sh get_pangolin_commit
@@ -51,7 +51,7 @@ if [[ -n $skipsync ]]; then
 fi
 
 if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz
+    ${remote_batman} sync_fgcz --ftp --recent
     ${scriptdir}/belfry.sh pull_sync_status
     if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
         echo "\e[31;1Pulling sync status files failed\e[0m"
