@@ -10,7 +10,7 @@ umask 0007
 shopt -s nullglob
 set +f
 
-custom_date=$(date '+%Y%m%d' --date='-3 months')
+custom_date=$(date '+%Y%m%d' --date='-6 months')
 
 if [ -z "${1-}" ]; then
   echo "Error: missing required argument." >&2
@@ -99,10 +99,9 @@ esac
 
 if [[ "$type" == "fgcz" ]];then
 	for prj in "${projlist[@]}"; do
-		custom_date=$(date -d "6 months ago" +%Y/%m/%d)
 		garbagedir="${clusterdir_old}/garbage/${type}/${prj}"
 		readarray -t dirs < <(
-			ls -l "${base}/${prj}" --time-style=+'%Y/%m/%d %H:%M:%S' | \
+			ls -l "${base}/${prj}" --time-style=+'%Y%m%d %H:%M:%S' | \
 				awk -v d="$custom_date" '$6 < d { print $8 }' | \
 				tail -n +2
 		)
