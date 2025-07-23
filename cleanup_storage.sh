@@ -117,8 +117,8 @@ if [[ "$type" == "fgcz" ]];then
 			shopt -s extglob
 			if [[ -f "${origin}/dataset.tsv" ]] || [[ -d "${origin}/DmxStats" ]]; then
 				if $doit; then
-					echo "mkdir -p ${garbagedir}/${d}"
-					eval "echo mv -- ${origin}/!(dataset.tsv|DmxStats) ${garbagedir}/${d}"
+					mkdir -p ${garbagedir}/${d}
+					mv -- ${origin}/!(dataset.tsv|DmxStats) ${garbagedir}/${d}
 				else
 					echo "[dryrun] mkdir -p ${garbagedir}/${d}"
 					eval "echo [dryrun] mv -- ${origin}/!(dataset.tsv|DmxStats) ${garbagedir}/${d}"
