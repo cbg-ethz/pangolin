@@ -81,6 +81,7 @@ case "$1" in
         ;;
         addsamples)
                 lst="${clusterdir_old}/${working}/samples.tsv"
+		avi_batches="${clusterdir_old}/${working}/avi_batches.tsv"
                 aviti=0
                 case "$2" in
                         --recent)
@@ -107,14 +108,19 @@ case "$1" in
                 mv ${clusterdir_old}/${working}/samples_aviti.tsv ${clusterdir_old}/${working}/samples_aviti.tsv.old
                 touch ${clusterdir_old}/${working}/samples_aviti.tsv 
                 while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then
+                        # 1) Check if length = 19 -> Aviti
+			if [ "${#col2}" -eq 19 ]; then
                                 batch_date=${col2%%_*}
                                 if [ "$batch_date" -gt $aviti_date ]; then
                                         echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
                                 else
                                         echo "skipping Aviti batch ${col2} as too old"
                                 fi
-                        else
+			# 2) Else check if batch name is listed in avi_batches file
+        		elif grep -Fxq "${col2}" "$avi_batches"; then
+            			echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
+                        # 3) Else -> pre-Aviti
+			else
                                 echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_pre-aviti.tsv
                         fi
                 done < ${clusterdir_old}/${working}/samples.tsv
