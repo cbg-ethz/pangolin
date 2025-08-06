@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-scriptdir=/links/shared/covid19-pangolin/backup/automation_backups/pangolin
+scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
 
 if [[ $(uname) == Darwin ]]; then
     date=gdate
@@ -51,12 +51,12 @@ validateBatchName() {
 }
 
 callpullrsync() {
-        scriptdir=/links/shared/covid19-pangolin/backup/automation_backups/pangolin
+        scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
         . ${scriptdir}/server.conf
 
         local arglist=( )
         if (( ${#@} )); then
-                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+                arglist=( "${@/#/belfry@euler.ethz.ch::${working_rsv}/samples/}" )
         else
                 #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
                 echo "rsync job didn't receive list"
@@ -66,7 +66,7 @@ callpullrsync() {
                 rsync   --timeout=${iotimeout}  \
                 --password-file ${HOME}/rsync.pass.euler      \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-                -izrlH --fuzzy --inplace       \
+                -izrltH --fuzzy --fuzzy --inplace       \
                 --link-dest=${basedir}/${sampleset}/    \
                 "${arglist[@]}" \
                 --exclude='uploads/*'   \
@@ -84,14 +84,14 @@ callpullrsync() {
 export -f callpullrsync
 
 callpullrsync_noshorah() {
-         scriptdir=/links/shared/covid19-pangolin/backup/automation_backups/pangolin
+         scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
         . ${scriptdir}/server.conf
 
         local arglist=( )
         if (( ${#@} )); then
-                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+                arglist=( "${@/#/belfry@euler.ethz.ch::${working_rsv}/samples/}" )
         else
-                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+                #arglist=( "belfry@euler.ethz.ch::${working_rsv}/samples/" )
                 echo "rsync job didn't receive list"
                 exit 1;
         fi
@@ -99,7 +99,7 @@ callpullrsync_noshorah() {
                 rsync   --timeout=${iotimeout}  \
                 --password-file ${HOME}/rsync.pass.euler      \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-                -izrlH --fuzzy --inplace       \
+                -izrltH --fuzzy --fuzzy --inplace       \
                 --link-dest=${basedir}/${sampleset}/    \
                 "${arglist[@]}" \
                 --exclude='uploads/*'   \
@@ -116,12 +116,12 @@ callpullrsync_noshorah() {
 export -f callpullrsync_noshorah
 
 callpullrsync_viloca() {
-        scriptdir=/links/shared/covid19-pangolin/backup/automation_backups/pangolin
+        scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
         . ${scriptdir}/server.conf
        
         local arglist=( )
         if (( ${#@} )); then
-         arglist=( "${@/#/belfry@euler.ethz.ch::${work_viloca}/${viloca_results}}" )
+         arglist=( "${@/#/belfry@euler.ethz.ch::${work_viloca_rsv}/${viloca_results}}" )
         else
          #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
          echo "rsync job didn't receive list"
@@ -131,7 +131,7 @@ callpullrsync_viloca() {
          rsync --timeout=${iotimeout} \
          --password-file ${HOME}/rsync.pass.euler \
          -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}" \
-         -izrlH --fuzzy --inplace \
+         -izrltH --fuzzy --fuzzy --inplace \
          --link-dest=${$basedir}/${viloca_backup_subdir}/ \
          "${arglist[@]}" \
          ${basedir}/${viloca_backup_subdir}
@@ -152,34 +152,37 @@ case "$1" in
     ;;
     pull_fgcz_data)
         echo "backup of the FGCZ raw data"
-        custom_date=$(date -d "6 months ago" +%Y/%m/%d)
-	err=0
+        thismonth=$(date '+%m')
+        lastmonth=$(date '+%m' --date='-1 month')
+        thismonthyear=$(date '+%Y')
+        lastmonthyear=$(date '+%Y' --date='-1 month')
+        err=0
         if [[ "${2}" = "--recent" ]]; then
             dirs=$(rsync --timeout=${iotimeout} \
              --password-file ~/rsync.pass.euler \
              -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
              --list-only \
-             belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project}/ |\
-	     awk -v d="$custom_date" '$3 > d { print $5 }' | tail -n +2)
+             belfry@euler.ethz.ch::${bfabric_downloads_rsv}/${bfabric_project}/ |\
+              awk '{print $3,$5}' | grep -E "((${thismonthyear}/${thismonth})|(${lastmonthyear}/${lastmonth}))" | awk '{print $2}' | tail -n +2)
             timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync --timeout=${iotimeout}  \
                      --password-file ~/rsync.pass.euler \
                      -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
-                     -izrlH --fuzzy --inplace \
+                     -izrltH --fuzzy --fuzzy --inplace \
                      -p --chmod=Dg+s,ug+rw,o-rwx \
                      -g --chown=:"${storgrp}" \
                      --files-from=<( printf "%s\n" "${dirs[@]}" ) \
-                     belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project} \
+                     belfry@euler.ethz.ch::${bfabric_downloads_rsv}/${bfabric_project} \
                      ${basedir}/${bfabric_downloads}/${bfabric_project} || (( ++err ))
         else
             timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync --timeout=${iotimeout}  \
                         --password-file ~/rsync.pass.euler      \
                         -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}"    \
-                        -izrlH --fuzzy --inplace       \
+                        -izrltH --fuzzy --fuzzy --inplace       \
                         -p --chmod=Dg+s,ug+rw,o-rwx     \
                         -g --chown=:"${storgrp}"        \
-                        belfry@euler.ethz.ch::${bfabric_downloads}/ \
+                        belfry@euler.ethz.ch::${bfabric_downloads_rsv}/ \
                         ${basedir}/${bfabric_downloads}/ || (( ++err ))
         fi
         if (( err )); then
@@ -194,10 +197,10 @@ case "$1" in
         rsync \
             --password-file ~/rsync.pass.euler \
             -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} " \
-            -izrlH --fuzzy --inplace \
+            -izrltH --fuzzy --fuzzy --inplace \
             -p --chmod=Dg+s,ug+rw,o-rwx \
             -g --chown=:"${storgrp}" \
-            belfry@euler.ethz.ch::${work_viloca}/ \
+            belfry@euler.ethz.ch::${work_viloca_rsv}/ \
             ${basedir}/${viloca_backup_subdir}/ || (( ++err ))
         if (( err )); then
              echo "FAILED" | tee ${backup_statusdir}/pullresults_viloca_status_${now}
@@ -211,10 +214,10 @@ case "$1" in
         rsync   \
                 --password-file ~/rsync.pass.euler   \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} "  \
-                -izrlH --fuzzy --inplace       \
+                -izrltH --fuzzy --fuzzy --inplace       \
                 -p --chmod=Dg+s,ug+rw,o-rwx     \
                 -g --chown=:"${storgrp}"        \
-                belfry@euler.ethz.ch::${work_amplicon_cov}/ \
+                belfry@euler.ethz.ch::${work_amplicon_cov_rsv}/ \
                 ${basedir}/${amplicon_cov_backup_subdir}/ || (( ++err ))
         if (( err )); then
                 echo "FAILED" | tee ${backup_statusdir}/pullresults_amplicon_cov_status_${now}
@@ -226,7 +229,7 @@ case "$1" in
         echo "backup of the UPLOADER results"
         err=0
         rsync   \
-                -izrlH --fuzzy --inplace       \
+                -izrltH --fuzzy --fuzzy --inplace       \
 		${vm_user}@${vmaddress}:${uploader_archive} \
                 ${basedir}/${uploader_backup_subdir}/ || (( ++err ))
         if (( err )); then
@@ -243,21 +246,21 @@ case "$1" in
             ## Check if the glob gets expanded to existing files.
             ## If not, f here will be exactly the pattern above
             ## and the exists test will evaluate to false.
-              [ -e "$f" ] && sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" ) || sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" )
+              [ -e "$f" ] && sheets=( "belfry@euler.ethz.ch::${sampleset_rsv}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset_rsv}/samples.${thismonth}*.tsv" ) || sheets=( "belfry@euler.ethz.ch::${sampleset_rsv}/samples.${lastmonth}*.tsv" )
             ## This is all we needed to know, so we can break after the first iteration
             break
             done
             #sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${lastmonth}*.tsv" "belfry@euler.ethz.ch::${sampleset}/samples.${thismonth}*.tsv" )
         elif [[ "${2}" = "--batch" ]]; then
             validateBatchName "${3}"
-            sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+            sheets=( "belfry@euler.ethz.ch::${sampleset_rsv}/samples.${3}.tsv"  )
         else
-            sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
+            sheets=( "belfry@euler.ethz.ch::${sampleset_rsv}/samples.2*.tsv" )
         fi
         rsync \
             --password-file ${HOME}/rsync.pass.euler \
             -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} " \
-            -izrlH --fuzzy --inplace \
+            -izrltH --fuzzy --fuzzy --inplace \
             -p --chmod=Dg+s,ug+rw,o-rwx \
             -g --chown=:"${storgrp}" \
             "${sheets[@]}" \
@@ -279,11 +282,11 @@ case "$1" in
             rsync --timeout=${iotimeout} \
                 --password-file ${HOME}/rsync.pass.euler \
                 -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user}  -oConnectTimeout=${contimeout}" \
-                -izrl --fuzzy --inplace \
+                -izrlt --fuzzy --fuzzy --inplace \
                 --exclude='*.out.log' \
                 --exclude='*.err.log' \
                 --exclude='*.benchmark' \
-                belfry@euler.ethz.ch::${working}/{qa.csv,variants} \
+                belfry@euler.ethz.ch::${working_rsv}/{qa.csv,variants} \
                 ${basedir}/${working}/ || (( ++err ))
         echo "samples:"
         cut -s --fields=1 "${sheets[@]}"|sort -u| \

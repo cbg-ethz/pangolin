@@ -1,6 +1,6 @@
 # Automation backups
 
-This directory contains all the necessary code to run trigger the data backup to the Spectrum Scale Storage
+This directory contains all the necessary code to run trigger the data backup to the Spectrum Scale Storage. This specific instance handles only the RSV surveillance WISE project.
 
 ## Structure
 
