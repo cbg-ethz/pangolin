@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
+scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups/pangolin
 
 if [[ $(uname) == Darwin ]]; then
     date=gdate
@@ -51,7 +51,7 @@ validateBatchName() {
 }
 
 callpullrsync() {
-        scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
+        scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups/pangolin
         . ${scriptdir}/server.conf
 
         local arglist=( )
@@ -84,7 +84,7 @@ callpullrsync() {
 export -f callpullrsync
 
 callpullrsync_noshorah() {
-         scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
+         scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups/pangolin
         . ${scriptdir}/server.conf
 
         local arglist=( )
@@ -116,7 +116,7 @@ callpullrsync_noshorah() {
 export -f callpullrsync_noshorah
 
 callpullrsync_viloca() {
-        scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups
+        scriptdir=/links/shared/covid19-pangolin/backup/rsv_backups/pangolin
         . ${scriptdir}/server.conf
        
         local arglist=( )
