@@ -108,8 +108,20 @@ case "$1" in
                 mv ${clusterdir_old}/${working}/samples_aviti.tsv ${clusterdir_old}/${working}/samples_aviti.tsv.old
                 touch ${clusterdir_old}/${working}/samples_aviti.tsv 
                 while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        # 1) Check if length = 19 -> Aviti
-			if [ "${#col2}" -eq 19 ]; then
+                       #Check if the batches included are all Aviti
+                       # The projects.tsv files for a batch have a list of all delivery names that are included in the batch.
+                       # We get all delivery names, we loop over them. By default we say the batch has aviti. If any of the batches is not aviti, we set the flag to false.
+                       # Depending on the flag value we decide if the samples in the batch go into aviti or into pre-aviti
+                       prjtsv=${clusterdir_old}/${sampleset}/projects.${col2}.tsv
+                       deliverynames=$(awk '{print $4}' ${prjtsv} | sort -u)
+                       all_match=true
+                       while read -r val; do
+                               if echo $val | grep -qvi aviti; then
+                                       all_match=false
+                                       break
+                               fi
+                       done <<< "$deliverynames"
+                       if all_match; then
                                 batch_date=${col2%%_*}
                                 if [ "$batch_date" -gt $aviti_date ]; then
                                         echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
