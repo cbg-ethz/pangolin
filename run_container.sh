@@ -1,1 +1,1 @@
-docker run -it -v /data/wastewater_automation/workdir:/app/workdir /bin/bash
+docker run -it -v /data/projects/wastewater_automation_new/workdir:/app/workdir /bin/bash

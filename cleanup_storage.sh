@@ -1,6 +1,6 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
+scriptdir=/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation/pangolin/pangolin_src
 garbage_logs=/cluster/project/pangolin/garbage/logs
 . ${scriptdir}/config/server.conf
 . ${clusterdir}/config/fgcz.conf

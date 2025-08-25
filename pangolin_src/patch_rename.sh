@@ -4,7 +4,7 @@ scriptdir="$(dirname $(which $0))"
 
 . ${scriptdir}/config/server.conf
 
-: ${basedir:=$(pwd)}
+: ${basedir:=/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation}
 : ${sampleset:=sampleset}
 : ${working:=working}
 
@@ -55,7 +55,7 @@ fi
 
 # get batch
 batchname="${1}"
-byml="${sampleset}/batch.${batchname}.yaml"
+byml="${basedir}/${sampleset}/batch.${batchname}.yaml"
 [[ -r "${byml}" ]] || fail "Cannot open ${byml}"
 
 # get patchname (if not provided)
@@ -79,7 +79,7 @@ if [[ -z "${patchfile}" ]]; then
 				[[ "${batch}" =~ project:[[:space:]]+p?([[:digit:]]+) ]] || fail "Cannot find project" $'file was:\n'"${batch}"
 				project="${BASH_REMATCH[1]}"
 				echo "project ${project}"
-				patchfile="${sampleset}/patch.${project}.${order}.tsv"
+				patchfile="${basedir}/${sampleset}/patch.${project}.${order}.tsv"
 			fi
 		;;
 		*)
@@ -97,7 +97,7 @@ declare -A map
 while read old new trash; do
 	map[$old]="${new}"
 
-	if [[ -e "${working}/samples/${new}" ]]; then
+	if [[ -e "${basedir}/${working}/samples/${new}" ]]; then
 		oops "$old -> $new already moved"
 		continue
 	fi
@@ -105,34 +105,34 @@ while read old new trash; do
 	longold="${old}-${batchname}"
 	longnew="${new}-${batchname}"
 
-	mkdir -p "${sampleset}/${new}"
-	mv -v "${sampleset}/${old}/${batchname}" "${sampleset}/${new}/"
-	touch --reference="${sampleset}/${old}" "${sampleset}/${new}"
-	rmdir "${sampleset}/${old}"
+	mkdir -p "${basedir}/${sampleset}/${new}"
+	mv -v "${basedir}/${sampleset}/${old}/${batchname}" "${basedir}/${sampleset}/${new}/"
+	touch --reference="${basedir}/${sampleset}/${old}" "${basedir}/${sampleset}/${new}"
+	rmdir "${basedir}/${sampleset}/${old}"
 
-	mkdir -p "${working}/samples/${new}"
-	mv -v "${working}/samples/${old}/${batchname}" "${working}/samples/${new}/"
+	mkdir -p "${basedir}/${working}/samples/${new}"
+	mv -v "${basedir}/${working}/samples/${old}/${batchname}" "${basedir}/${working}/samples/${new}/"
 	
-	mv "${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz"{,.old}
-	zcat "${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz.old" | sed "1s/${longold}/${longnew}/g" | gzip >"${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz"
-	touch --reference="${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz.old" "${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz"
-	rm "${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz.old"
+	mv "${basedir}/${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz"{,.old}
+	zcat "${basedir}/${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz.old" | sed "1s/${longold}/${longnew}/g" | gzip >"${basedir}/${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz"
+	touch --reference="${basedir}/${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz.old" "${basedir}/${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz"
+	rm "${basedir}/${working}/samples/${new}/${batchname}/alignments/basecnt.tsv.gz.old"
 
-	mv "${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz"{,.old}
-	zcat "${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz.old" | sed "1s/${longold}/${longnew}/g" | gzip >"${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz"
-	touch --reference="${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz.old" "${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz"
-	rm "${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz.old"
+	mv "${basedir}/${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz"{,.old}
+	zcat "${basedir}/${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz.old" | sed "1s/${longold}/${longnew}/g" | gzip >"${basedir}/${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz"
+	touch --reference="${basedir}/${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz.old" "${basedir}/${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz"
+	rm "${basedir}/${working}/samples/${new}/${batchname}/alignments/coverage.tsv.gz.old"
 
-	sed -si "1s/${longold}/${longnew}/g" "${working}/samples/${new}/${batchname}/alignments/REF_aln_stats.yaml" "${working}/samples/${new}/${batchname}/references/"*.fasta
-	sed -i "s@${old}([-/])${batchname}@${new}\{1}${batchname}@g;s/^${longold:0:6}/${longnew:0:6}/g" "${working}/samples/${new}/${batchname}/references/"*.matcher
-	sed -i "s/${longold}/${longnew}/g" "${working}/samples/${new}/${batchname}/references/frameshift_deletions_check.tsv"
+	sed -si "1s/${longold}/${longnew}/g" "${basedir}/${working}/samples/${new}/${batchname}/alignments/REF_aln_stats.yaml" "${basedir}/${working}/samples/${new}/${batchname}/references/"*.fasta
+	sed -i "s@${old}([-/])${batchname}@${new}\{1}${batchname}@g;s/^${longold:0:6}/${longnew:0:6}/g" "${basedir}/${working}/samples/${new}/${batchname}/references/"*.matcher
+	sed -i "s/${longold}/${longnew}/g" "${basedir}/${working}/samples/${new}/${batchname}/references/frameshift_deletions_check.tsv"
 
-	touch --reference="${working}/samples/${old}" "${working}/samples/${new}"
-	rmdir "${working}/samples/${old}"
+	touch --reference="${basedir}/${working}/samples/${old}" "${basedir}/${working}/samples/${new}"
+	rmdir "${basedir}/${working}/samples/${old}"
 done < "${patchfile}"
 
 # patch sample tsv list
-mv "${sampleset}/samples.${batchname}.tsv"{,.old}
+mv "${basedir}/${sampleset}/samples.${batchname}.tsv"{,.old}
 while read old batch len proto; do
 	new="${old}"
 	if [[ -z ${map[$old]} ]]; then
@@ -141,11 +141,10 @@ while read old batch len proto; do
 		new="${map[$old]}"
 	fi
 	printf "%s\t%s\t%u\t%s\n" "${new}" "${batch}" "${len}" "${proto}"
-done < "${sampleset}/samples.${batchname}.tsv.old" > "${sampleset}/samples.${batchname}.tsv"
-#rm "${sampleset}/samples.${batchname}.tsv.old"
+done < "${basedir}/${sampleset}/samples.${batchname}.tsv.old" > "${basedir}/${sampleset}/samples.${batchname}.tsv"
 
 # patch projects tsv list
-mv "${sampleset}/projects.${batchname}.tsv"{,.old}
+mv "${basedir}/${sampleset}/projects.${batchname}.tsv"{,.old}
 while read old project order folder plate; do
 	new="${old}"
 	if [[ -z ${map[$old]} ]]; then
@@ -154,5 +153,4 @@ while read old project order folder plate; do
 		new="${map[$old]}"
 	fi
 	printf "%s\t%s\t%s\t%s\t%s\n" "${new}" "${project}" "${order}" "${folder}" "${plate}"
-done < "${sampleset}/projects.${batchname}.tsv.old" > "${sampleset}/projects.${batchname}.tsv"
-#rm "${sampleset}/projects.${batchname}.tsv.old"
+done < "${basedir}/${sampleset}/projects.${batchname}.tsv.old" > "${basedir}/${sampleset}/projects.${batchname}.tsv"

@@ -78,10 +78,10 @@ config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in s
 with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
 lab={os.path.splitext(os.path.basename(args.config))[0]}
-basedir=/cluster/project/pangolin
-basedir_test=/cluster/project/pangolin/test_automation/pangolin/pangolin_src
-sampleset=/cluster/project/pangolin/sampleset
-download=/cluster/project/pangolin/bfabric-downloads
+basedir=/cluster/project/pangolin/folder_cleanup
+basedir_test=/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation/pangolin/pangolin_src
+sampleset=/cluster/project/pangolin/folder_cleanup/sampleset
+download=/cluster/project/pangolin/folder_clenup/bfabric-downloads
 link=--link
 mode=
 badlist=
@@ -117,10 +117,6 @@ forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_'][
 '''folders to use even with missing order'''
 fuselist=(config['_']['fuselist'].strip("\"'").split(',')) if len(config['_']['fuselist']) else list()
 '''folders to always merge'''
-# nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_']['nofuselist']) else list()
-# '''folders to never merge'''
-# fusedays=int(config['_']['fusedays'].strip("\"'"))
-# '''delay after which orders aren't considered for merging anymore'''
 
 fallbackproto=config['_']['fallbackproto'].strip("\"'")
 
@@ -412,13 +408,6 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	samples={}
 	badyield=0
 	badsamples=set()
-	#with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
-	#	with io.TextIOWrapper(zf.open("reports_L1_L2_i1-"+str(barcode1)+"_i2-"+str(barcode2)+"/RunParameters.json")) as f:
-	#		try:
-	#			stats_zip = json.loads(f.read());
-	#		except json.JSONDecodeError as e:
-	#			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
-	#			continue
 	if "aviti" in srch.lower():
 		try:
 			if len(stats['Lanes']) > 1:
@@ -676,17 +665,8 @@ for b in batches:
 			'project': 	delistify(set([prj] + listify(yamldict['project']))),
 			'order':	delistify(set([order] + listify(yamldict['order']))),
 			'name':	name,
-			#bfabfolder=[batches[b]['name'],batches[order]['name']]
 			'folder':	delistify(set([batches[b]['name']] + listify(yamldict['folder']))),
-			#runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
 			'runfolder':	delistify(set([batches[b]['runfolder']] + listify(yamldict['runfolder']))),
-			#fastqcfolder=[]
-			#if 'fastqc' in batches[b]:
-			#	fastqcfolder+=[batches[b]['fastqc']]
-			#if 'fastqc' in batches[order]:
-			#	fastqcfolder+=[batches[order]['fastqc']]
-			#if len(fastqcfolder) == 0:
-			#	fastqcfolder=None
 			'fastqcfolder':	delistify(set(listify(yamldict['fastqcfolder']) + ([batches[b]['fastqc']] if 'fastqc' in batches[b] else []))),
 			**plts,
 		})

@@ -83,4 +83,4 @@ for batch in filter_df['Batch'].unique():
 	d=m.groupdict()
 	out_df=filter_df[filter_df['Batch'] == batch][["Sample_Name_FGCZ","Sample_Name_COWWID-19"]]
 	print(f"generating patch for p{d['proj']} o{d['order']}: {len(out_df.index)} entries")
-	out_df.to_csv(f"sampleset/patch.{d['proj']}.{d['order']}.tsv", header=False, index=False, sep="\t", compression={'method':'infer'})
+	out_df.to_csv(f"sars_cov_2_automation/sampleset/patch.{d['proj']}.{d['order']}.tsv", header=False, index=False, sep="\t", compression={'method':'infer'})
