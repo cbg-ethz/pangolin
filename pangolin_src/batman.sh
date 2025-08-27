@@ -95,6 +95,7 @@ case "$1" in
 		        --all)
 				echo "syncing all"
 				cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+			;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
