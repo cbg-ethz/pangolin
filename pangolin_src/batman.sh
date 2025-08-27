@@ -80,20 +80,21 @@ case "$1" in
                 ~/log/rotate
         ;;
         addsamples)
-                lst="${clusterdir_old}/${working}/samples.tsv"
+                lst="${clusterdir_old}/${working}/samples.recent.tsv"
 		avi_batches="${clusterdir_old}/${working}/avi_batches.tsv"
                 aviti=0
                 case "$2" in
                         --recent)
-                                lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"
                                 cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
                         --year)
-                                lst="${clusterdir_old}/${working}/samples.recent.tsv"
                                 echo "syncing year: ${year}"
                                 cat ${clusterdir_old}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
+		        --all)
+				echo "syncing all"
+				cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
                                 exit 2
@@ -113,6 +114,10 @@ case "$1" in
                        # We get all delivery names, we loop over them. By default we say the batch has aviti. If any of the batches is not aviti, we set the flag to false.
                        # Depending on the flag value we decide if the samples in the batch go into aviti or into pre-aviti
                        prjtsv=${clusterdir_old}/${sampleset}/projects.${col2}.tsv
+		       # If the projects file does not exist, skip the batch entirely
+		       if [[ ! -f ${prjtsv} ]]; then
+                               continue
+                       fi
                        deliverynames=$(awk '{print $4}' ${prjtsv} | sort -u)
                        all_match=true
                        while read -r val; do
@@ -121,13 +126,9 @@ case "$1" in
                                        break
                                fi
                        done <<< "$deliverynames"
-                       if all_match; then
-                                batch_date=${col2%%_*}
-                                if [ "$batch_date" -gt $aviti_date ]; then
-                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
-                                else
-                                        echo "skipping Aviti batch ${col2} as too old"
-                                fi
+                       if [[ $all_match == true ]]; then
+			        echo "${prjtsv} - Detected Aviti"
+                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
 			# 2) Else check if batch name is listed in avi_batches file
         		elif grep -Fxq "${col2}" "$avi_batches"; then
             			echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_aviti.tsv
@@ -135,7 +136,7 @@ case "$1" in
 			else
                                 echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${working}/samples_pre-aviti.tsv
                         fi
-                done < ${clusterdir_old}/${working}/samples.tsv
+                done < ${clusterdir_old}/${working}/samples.recent.tsv
         ;;
         vpipe)
                 declare -A job
