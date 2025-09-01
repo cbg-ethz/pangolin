@@ -537,13 +537,13 @@ case "$1" in
                                        ' "${clusterdir_old}/${working}/samples.tsv" \
                                        | sort -u)
                                 for i in $alldates; do
-                                        grep ${i} ${clusterdir_old}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
+                                        grep ${i} ${clusterdir_old}/${working}/samples.tsv >> ${amplicon_coverage_sample_list}
                                 done
                                 amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
                         ;;
                         --libkit)
                                 echo "Running amplicon coverage for any sample with library kit $3"
-                                grep ${3} ${clusterdir_old}/${working}/samples.wastewateronly.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
+                                grep ${3} ${clusterdir_old}/${working}/samples.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
                                 amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
                                 amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
                         ;;
