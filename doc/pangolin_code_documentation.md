@@ -16,14 +16,30 @@ The automation is organized into three main subfolders:
 The autoamtion is started by launching it's docker container on the wiseDB VM and interacts with Euler (sHPC) and databases such as b-fabric and SPSP.
 Additionally backups are done on the bewi08 VM.
 
+
 **Status Files**
 Generally status files are created directly on wisedb in `workdir/status. If a command is executed on euler (with the batman.sh script) status files are created on euler and synced to wisedb.
 
 # Main Working Folders
+**V-pipe**
+There is one v-pipe installation which is called from everywhere (all the viruses): '/cluster/project/pangolin/V-pipe'
+
+**work-vp-test**
+Working folder to run lollipop for covid. Points also at '/cluster/project/pangolin/V-pipe'. This should be included in the future in pangolin/working (main covid working directory).
+
+
 **Covid**
 The SARS CoV19 directory where the regular analysis takes place (lollipop) is `/cluster/project/pangolin/work-vp-test`
    - corresponding blacklist: `/cluster/project/pangolin/lollipop_blacklist.txt`
 - the vpipe is run in : `/cluster/project/pangolin/working` (go here to check the slurm-out of vpipe)
+   - in the slurm-out (main) it tells you which batches it checks for new samples, but this does not mean that it runs on all of these batches, it only checks if there are samples that have not yet been aligned by v-pipe!
+- config files for covid vpipe: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src`
+
+#### Automation
+The folder for the covid autoamtion on euler is: '/cluster/project/pangolin/test_automation/pangolin'
+'/cluster/project/pangolin/test_automation' is the main folder in the covid automation. However, the working in test_automation is outdated and we use '/cluster/project/pangolin/working'.
+In this working folder there is also the results directory (huge directory which sould not me copied!) - this will be restructured soon.
+
 
 **RSV**
 For RSV it is `/cluster/project/pangolin/rsv_pipeline`
@@ -32,12 +48,14 @@ For RSV it is `/cluster/project/pangolin/rsv_pipeline`
 For Influenza it is `/cluster/project/pangolin/influenza_pipeline/`
 
 
-***Bad List** For Influenza and RSV!!
-(similar to blacklist for covid)
+## Bad List 
+**For Covid, Influenza and RSV!!**
+(similar to blacklist for covid-lollipop but here we define it for the fgcz downloads!)
 - in pangolin/pancoling_scr/config there is a fgcz.yaml file where there is a badlist specified
 - put the delivery name (order) in this list
 - you can find the delivery name associated to the batch in sampleset folder: batch.BATCHNAME.tsv
 
+Covid: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src/config/fgcz.conf`
 
 
 
@@ -304,6 +322,51 @@ RSV:
 cd /cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 ./batman.sh rsv_vpipe_out_to_tsv
 ```
+
+### garbage.sh
+**Garbage RSV/Influenza**
+If any batch already run v-pipe, use the garbage script for a cleanup of the folders from this batch. BEFORE: Add the batch to the **Bad List** as described above.
+Garbage script: `./cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src/garbage.sh --variant "RSVB" --batch "20250417_2427493980"`
+creates a garbage directroy in ./results and moves the sample/batch directrories inside the garbage directroy. Then checks if there are other batchech for the sample and if not deletes the sample directory form the ./results directroy.
+
+**Garbage Covid**
+`test_automation/pangolin/pangolin_scr/batman.sh garbage BATCHNAME`
+moves the samples from sampleset to `/cluster/project/pangolin/garbage`
+*Remember* to first black list the batch in `test_automation/pangolin/pangolin_scr/config/fgcz.conf`
+
+
+## FGCZ Sync
+
+### Merging orders 
+It can happend that ordres (Batches) need to be merged e.g. if one sequencing run did not result in high enough read depth etc. Then the automation will first see it as a separate batch.
+These have to be merged by adding the order in the fuselist in `/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync/config/fgcz.conf`.
+The next time the sync autoamtion is running it will rake the 2 orders and create a new Batchname and places all related fastq files in this new batch. 
+The remaining Batches need to be added to the badlist in `/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync/config/fgcz.conf`such that they are ingored and only the merged batch is used for further processing.
+Remember to grabage the already created vpipe results of the half batches: `./batman.sh garbage BATCHNAME` (see Autoamtion above)
+
+If this happens, remember to contact SPSP to correct the .cram file upload (the single batches need to be taken down and only the combined batch is relevant).
+
+Currently, the created new Batchname for the combined data does not have 19 characters. Thus, the automation will not see that this is an aviti batch and vpipe will ignore the batch. 
+To make vpipe see the batch as relevant, add the new batch name to the file: `/cluster/project/pangolin/working/avi_batches.tsv`
+Makre sure the batch is present in: `/cluster/project/pangolin/working/samples_aviti.tsv`
+
+**Timeframe**
+The autoamtion only checks if there are missing vpipe results from the last 2 weeky samples. If the order is longer in the past adapt the timeframe in which the automation checks manually in the container on *wiseDB VM*
+In carillon.sh :
+```Bash
+echo "============="
+echo "Start new run"
+echo "============="
+.
+.
+.
+limit=$(date --date='2 weeks ago' '+%Y%m%d') <--------------------------------------
+.
+.
+```
+
+
+
 # Euler
 Base conda: 
 ```Bash 
@@ -388,6 +451,17 @@ tbd
 
 
 
-## Amplicon Coverage
+## Amplicon Coverage Covid
 The Amplicon Coverage plot is created automatically by the automation and can be found for each batch at:
 `/cluster/project/pangolin/work-amplicon-coverage`
+
+
+# bewi08 VM
+We make regular backup of the analysed data. This is done by a VM called `bewi08`.
+Inside this we have a script that runs these backup: `/links/shared/covid19-pangolin/backup/automation_backups/automation_backups.sh`.
+
+The folder `/links/shared/covid19-pangolin` is mount to thin VM. This folder is stored inside a physical storage in D-BSSE.
+If there is some storage maintenance done in the storage at the D-BSSE the link to this folder can break. Then, the folder has to be remounted to the VM with the following commands:
+
+1. to unmount the backup folder on bewi08: `sudo umount /links/shared/covid19-pangolin`
+2. to mount: `sudo mount /links/shared/covid19-pangolin`
