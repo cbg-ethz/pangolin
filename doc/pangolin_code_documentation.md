@@ -465,3 +465,77 @@ If there is some storage maintenance done in the storage at the D-BSSE the link 
 
 1. to unmount the backup folder on bewi08: `sudo umount /links/shared/covid19-pangolin`
 2. to mount: `sudo mount /links/shared/covid19-pangolin`
+
+
+## Storage Cleanup
+The bioinformatics pipeline generates a significant amount of data that is regularly backed up on the Beerenwinkel group's shared folder, and is not necessary for research. Such data can be safely deleted from the computing cluster to minimize the space requirements.
+The cleanup_storage.sh script contains the functions necessary to safely delete the temporary data.
+
+**Variables setup**
+The script defines the location of its script, of the logs and of the automation configuration
+
+**Bash options**
+`shopt -s nullglob` -> If a glob pattern matches nothing, treat it as empty instead of literal.
+
+`set +f` -> Make sure globbing is active (needed because `set -f` might have been used before).
+
+**Setting date**
+Any run of the script, we define a date set 6 months prior, which is the current agreed-upon data retention period on the cluster.
+
+**Script call sanity check**
+The script checks if the required number of argument has been provided, then it checks if the `doit` option is also available. If it is available, it prints a warning message, waits 15 seconds and sets a flag that defines the run to be an actual deletion run. Otherwise, it warns the user that the current run is a dryrun and sets the flag to false.
+
+**Available arguments**
+
+- `clean_sampleset_covid`: deletes the content of the directories `raw_data` and `extracted_data` in the covid `sampleset` directory
+- `clean_preproc_covid`: deletes the `fastq.gz` files in the directory `preprocessed_data` in the covid `working/samples` directory
+- `clean_raw_covid`: deletes the `fastq.gz` files in the directory `raw_data` in the covid `working/samples` directory
+- `clean_raw_uploads_covid`: deletes the `dehuman.cram` and `raw_reads.cram` files in the directory `raw_uploads` in the covid `working/samples` directory
+- `clean_sampleset_rsv`: deletes the content of the directories `raw_data` and
+ `extracted_data` in the RSV `sampleset` directory
+- `clean_preproc_rsv`: deletes the `fastq.gz` files in the directory `preprocessed_data` in the RSVA and RSVB `working/samples` directories
+- `clean_raw_rsv`: deletes the `fastq.gz` files in the directory `raw_data` in
+ the RSVA and RSVB `working/samples` directories
+- `clean_sampleset_flu`: deletes the content of the directories `raw_data` and
+ `extracted_data` in the Influenza `sampleset` directory
+- `clean_preproc_flu`: deletes the `fastq.gz` files in the directory `preprocessed_data` in the IA\_H1, IA\_H3, IA\_MP, IA\_N1, IA\_N2 influenza `working/samples` directories
+- `clean_raw_flu`: deletes the `fastq.gz` files in the directory `raw_data` in the IA\_H1, IA\_H3, IA\_MP, IA\_N1, IA\_N2 influenza `working/samples` directories
+- `clean_raw_fgcz`: deletes any FGCZ delivery older than 6 months from directory `bfabric_downloads`
+- `clean_lollipop`: deletes the the files `alignments/basecnt.tsv.gz`, `alignments/host_aln.cram`, `alignments/REF_aln.bam`, `alignments/REF_aln_trim.bam` from the lollipop-specific `work-vp-test/results` directory. Such files are hardlinks to V-pipe results that are still available in the covid `working/samples` directory after this deletion step is run
+
+**Logic**
+The script avoids code duplication by setting specific variables depending on the function called, then running a generalized code snippet to search for the files and move them in a dedicated `garbage` directory.
+
+The destination garbage directory will have the same structure of the origin of the files, and everything will reside in a dedicated subdirectory, in order to avoid overwriting files with identical names and in order to simplify restoring the files in case of problems.
+
+The actual deletion only happens after the user manually deletes the files from the garbage directory, to ensure a final safety net.
+
+**Deletion variables definition**
+- `type`: stores the name of the type of data. Either the virus short name, fgcz or lollipop.
+- `virusbase`: array storeing the virus subdirectory/subdirectories where the data is stored (e.g. `rsv_pipeline/RSVA`).
+  - fgcz and lollipop are exceptions, due to the different folder structure. To avoid confusion, instead of `virusbase` they use the variable `base`.
+  - **TODO**: With the current folder structure, covid has no dedicated subfolder and therefore `virusbase is set to `.`, indicating `/cluster/project/pangolin`. This will change after the folder restructuring.
+- `parent`: stores the name of the static subdirectory of `virusbase` where the sample data can be found (e.g. `working/results`).
+  - fgcz and lollipop are exceptions, due to the different folder structure. They do not require a `parent` variable.
+- `togarbage`: array storing the files to delete, including the sample subdirectories that contain it. The variable can include `\*` as a wildcard.
+  - fgcz is an exception. The entire delivery folder is deleted, therefore `togarbage` is not necessary.
+- `garbage_logfile`: stores the position and name of the log file that will be written during the run. The name is unique for each function, includes if the run is dry or not, and includes the current date.
+
+**Deletion code**
+For any function excluding fgcz and lollipop, the script:
+- loops through all virus subtype provided in the array `virusbase`
+  - takes the `samples.tsv` file and filters it to get only the samples older than 6 months
+  - loop through all samples
+    - loop through all files to garbage in array `togarbage`
+      - checks if the file to garbage exists
+      - if it exists
+        - either print to screen the move commands (dryrun), or create the garbage directory and move the files
+
+If `type` is `fgcz`:
+- get from the `fgcz.conf` automation config file the list of tracked projects
+- retrieve the last modification dates of all files in the project directory and keep only those older than 6 months
+- for each found directory
+  - either print to screen the move commands (dryrun), or create the garbage directory and move the directories
+
+If `type` is `lollipop`
+Follow the same logic as for any other virus, but rely on the different file structure
