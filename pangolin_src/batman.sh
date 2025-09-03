@@ -52,6 +52,7 @@ RXJOB='Job <([[:digit:]]+)> is submitted'
 
 now=$(date '+%Y%m%d')
 lastmonth=$(date '+%Y%m' --date='-1 month')
+twomonths=$(date '+%Y%m' --date='-2 month')
 thismonth=$(date '+%Y%m')
 twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
 year=$(date '+%Y')
@@ -86,7 +87,7 @@ case "$1" in
                 case "$2" in
                         --recent)
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"
-                                cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                                cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth},${twomonths}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
                         ;;
                         --year)
                                 echo "syncing year: ${year}"
