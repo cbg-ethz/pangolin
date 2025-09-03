@@ -456,6 +456,102 @@ The Amplicon Coverage plot is created automatically by the automation and can be
 `/cluster/project/pangolin/work-amplicon-coverage`
 
 
+# Primer Update in Regular Processing
+
+If there is a primer update (e.g., an ARTIC release), follow the steps below to ensure correct integration of the new primer scheme into the `v-pipe` analysis.
+Typically, a `.bed` file for the primers is available from the [ARTIC GitHub repository](https://github.com/artic-network/primer-schemes), which can be downloaded and used with a custom script to generate the required files.
+For analysis, the following files are required and must be referenced in:
+
+```
+/cluster/project/pangolin/working/references/primers.yaml
+```
+
+This YAML file maps the required input files. It should include the following fields:
+
+* `name`: Identifier used in the FGCZ metadata delivery.
+* `insert_bedfile`: BED file defining the regions intended to be sequenced.
+* `primer_bedfile`: BED file defining the primer binding regions (typically from ARTIC).
+* `primers_file`: Tab-separated file with primer information.
+* `primer_fasta`: FASTA file containing primer sequences.
+
+---
+
+### Step 1: Generate Missing Files from ARTIC `.bed`
+
+Usually, only the `primer_bedfile` is provided by ARTIC. The remaining files must be generated using the following script:
+
+```
+/cluster/project/pangolin/folder_cleanup/resources/smallgenomeutilities/scripts/prepare_primers
+```
+
+#### Environment Setup
+
+Activate the appropriate conda environment:
+
+```bash
+eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+conda activate amplicon_coverage
+```
+
+#### Script Parameters
+
+* **Input:** Refer to the “arguments” section in the script header.
+
+* **Output prefix:** Define a consistent prefix for all generated files.
+
+* **`--change_ref`:** The reference sequence used may vary. Ensure the correct one (`NC_045512.2`) is used. If the `.bed` file uses `MN908947.3`, include this argument to override it:
+
+  ```
+  --change_ref NC_045512.2
+  ```
+
+* **`--primer_names_sep`:** Specify the separator used in the primer names (e.g., `_`, `-`). This is necessary if elements in the BED file are not separated by underscores. It allows the script to correctly extract the primer number and side.
+
+* **`--primer_number_pos`:** Indicate the zero-based position of the primer number in the split name (e.g., if `nCoV-2019_1_LEFT` is the format and `_` is the separator, the number is at position `1`).
+
+* **`--primer_side_pos`:** Similarly, specify the position of the side (`LEFT` or `RIGHT`) in the name.
+
+#### Output Files
+
+The script will generate:
+* A full FASTA file with primer sequences.
+* A TSV file with structured primer information.
+* A BED file with insert regions.
+
+### Step 2: Store the files
+
+1. Create a new folder (e.g., `v542`) under:
+
+   ```
+   /cluster/project/pangolin/working/references/primers
+   ```
+
+2. Place all generated files in this folder.
+
+3. Update the `primers.yaml` file with the corresponding entries for the new set.
+
+### Step 3: Configure Amplicon Coverage
+
+To enable amplicon coverage analysis (specific to COVID data in `test_automation`), update the following setting:
+
+```
+pangoling/pangolinscr/config/server.conf
+```
+
+Update the `remote_primer_bed` variable to point to the new BED file.
+
+
+### Cleanup
+
+After all files have been added, clean up any partially processed results or temporary folders.
+Use the `batman.sh` garbage function to remove the corresponding batch:
+
+```bash
+batman.sh garbage <batch_name>
+```
+
+
+
 # bewi08 VM
 We make regular backup of the analysed data. This is done by a VM called `bewi08`.
 Inside this we have a script that runs these backup: `/links/shared/covid19-pangolin/backup/automation_backups/automation_backups.sh`.
