@@ -1,11 +1,11 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync
+scriptdir=/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync
 . ${scriptdir}/config/server.conf
 
-status=${clusterdir_old}/status
+status=${clusterdir_resources}/status
 
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/resources/miniconda3/bin/conda shell.bash hook)"
 
 #
 # Input validator
@@ -114,7 +114,7 @@ case "$1" in
         if [[ "${3}" = "--recent" ]]; then
             limitlast=$custom_date  # Set the time limit 
             # Generate an exclude list for recent projects
-            ${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config} -r "${limitlast}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
+            ${clusterdir_resources}/exclude_list_bfabric.py -c ${fgcz_config} -r "${limitlast}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
             param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
             echo -ne "syncing recent: ${limitlast}\texcluding: "
             wc -l ${sync_fgcz_statusdir}/fgcz.exclude.lst  # Print the number of excluded projects
