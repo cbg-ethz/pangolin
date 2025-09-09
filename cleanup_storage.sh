@@ -1,7 +1,7 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation/pangolin/pangolin_src
-garbage_logs=/cluster/project/pangolin/garbage/logs
+scriptdir=/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src
+garbage_logs=/cluster/project/pangolin/data/garbage/logs
 . ${scriptdir}/config/server.conf
 . ${clusterdir}/config/fgcz.conf
 
@@ -145,7 +145,7 @@ case "$1" in
         ;;
 	clean_raw_fgcz)
 		type="fgcz"
-		base=${clusterdir_old}/${bfabric_downloads}
+		base=${clusterdir_old}/data/${bfabric_downloads}
 		#NOTE: projlist MUST be a bash array defined in fgcz.conf
 		if declare -p projlist &>/dev/null && \
 			declare -p projlist | grep -q 'declare \-a'; then

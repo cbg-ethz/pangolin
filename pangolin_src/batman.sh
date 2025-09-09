@@ -1,12 +1,11 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation/pangolin/pangolin_src
+scriptdir=/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
-status=${clusterdir_old}/status
-vilocadir=${remote_viloca_basedir}/${viloca_processing}
+status=${clusterdir_old}/processes/status
 
-eval "$(/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/resources/miniconda3/bin/conda shell.bash hook)"
 
 #
 # Input validator
@@ -100,9 +99,9 @@ case "$1" in
                         ;;
 
                 esac
-                mkdir -p --mode=2770 "${clusterdir_old}/${clusterdir}/${working}/samples/"
+                mkdir -p --mode=2770 "${clusterdir_old}/${clusterdir}/${working}/vpipe_output/"
                 sort -u ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-                cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${clusterdir}/${sampleset}/{}/" "${clusterdir_old}/${clusterdir}/${working}/samples/"
+                cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${clusterdir}/${sampleset}/{}/" "${clusterdir_old}/${clusterdir}/${working}/vpipe_output/"
                 lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
                 mv ${clusterdir_old}/${clusterdir}/${working}/samples_aviti.tsv ${clusterdir_old}/${clusterdir}/${working}/samples_aviti.tsv.old
@@ -243,10 +242,10 @@ case "$1" in
                 count_old=0
                 while read s; do
                         (( ++count_all ))
-                        if [[ -r "${clusterdir_old}/${clusterdir}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
+                        if [[ -r "${clusterdir_old}/${clusterdir}/${working}/vpipe_output/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/${working}/vpipe_output/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
                                 (( ++count_old ))
                                 if (( purge )); then
-                                        rm -rvf  "${temp_scratch}/samples/${s}"
+                                        rm -rvf  "${temp_scratch}/vpipe_output/${s}"
                                 else
                                         echo "${s}";
                                 fi
@@ -282,8 +281,8 @@ case "$1" in
                         mkdir --mode=0770 -p "${garbage}"
                         mv -v "${f%/}" "${garbage}/"
                 done
-                for f in ${clusterdir}/${working}/samples/*/${2}/; do
-                        garbage="${f//${working}\/samples/garbage}"
+                for f in ${clusterdir}/${working}/vpipe_output/*/${2}/; do
+                        garbage="${f//${working}\/vpipe_output/garbage}"
                         mkdir --mode=0770 -p "${garbage%/}/"{raw_data,extracted_data}/
                         mv -vf "${f%/}/raw_data/"* "${garbage%/}/raw_data/"
                         rm "${f%/}/raw_data/"*.fa*
@@ -360,7 +359,7 @@ case "$1" in
 			esac
 			shift
 		done
-		bfabricdir=${clusterdir_old}/bfabric-downloads
+		bfabricdir=${clusterdir_old}/${bfabric_downloads}
 		cd ${bfabricdir}
 		sync_fgcz_statusdir=${status}/sync
 		mkdir -p $sync_fgcz_statusdir
@@ -423,7 +422,7 @@ case "$1" in
 			shift
 		done
 		fail=0
-		# Additional sequencing platforms are not in use and the code is significantly outdated (will need to be rewritten regardless). There it is deprecated and will be removed in next releases
+		# Additional sequencing platforms are not in use and the code is significantly outdated (it cannot therefore be reused in case the platforms are re-introduced in the project). Therefore it is deprecated code and will be removed in next releases
 		#if  (( ${lab[gfb]} == 1 )); then
 		#	${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir_old}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
 		#else
@@ -462,7 +461,7 @@ case "$1" in
                         [[ $sample =~ $rxsample ]] || continue
                         # check the presence of fasta on each sample
                         echo -n ${sample}/${batch}
-                        if [[ -e ${clusterdir_old}/${clusterdir}/${working}/samples/${sample}/${batch}/upload_prepared.touch ]]; then
+                        if [[ -e ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/${sample}/${batch}/upload_prepared.touch ]]; then
                             # this will check for:
                             #  - references/ref_majority.fasta
                             #  - references/consensus.bcftools.fasta & .chain
@@ -562,15 +561,15 @@ case "$1" in
         #        echo "Branch: ${branch}\n${commit}"
         #;;
 	list_files_to_download)
-		cd ${clusterdir_old}/${clusterdir}/${working}/samples
+		cd ${clusterdir_old}/${clusterdir}/${working}/vpipe_output
 		echo "Listing files to download. This may take a while..."
-                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
-                fd -p '.*/raw_uploads/dehuman\.cram' >> ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
-                fd -p '.*/alignments/basecnt\.tsv\.gz' >> ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
-                fd -p '.*/alignments/coverage\.tsv\.gz' >> ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
-                fd -p '.*/references/consensus.bcftools.chain' >> ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
-                fd -p '.*/references/consensus.bcftools.fasta' >> ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
-                fd -p '.*/references/frameshift_deletions_check.tsv' >> ${clusterdir_old}/${clusterdir}/${working}/samples/file_list.txt
+                fd -p '.*/raw_uploads/raw_reads\.cram' > ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
+                fd -p '.*/raw_uploads/dehuman\.cram' >> ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
+                fd -p '.*/alignments/basecnt\.tsv\.gz' >> ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
+                fd -p '.*/alignments/coverage\.tsv\.gz' >> ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
+                fd -p '.*/references/consensus.bcftools.chain' >> ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
+                fd -p '.*/references/consensus.bcftools.fasta' >> ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
+                fd -p '.*/references/frameshift_deletions_check.tsv' >> ${clusterdir_old}/${clusterdir}/${working}/vpipe_output/file_list.txt
 	;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr

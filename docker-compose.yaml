@@ -1,5 +1,5 @@
 services:
-  pangolin:
+  sars_cov_2:
     build:
       context: /data/projects/wastewater_automation_new/pangolin 
     volumes:

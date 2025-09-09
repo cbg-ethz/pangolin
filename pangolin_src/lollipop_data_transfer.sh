@@ -4,10 +4,12 @@ umask 0007
 
 scriptdir="$(dirname $(which $0))"
 baseconda="$scriptdir/"
+. ${scriptdir}/config/server.conf
+. ${scriptdir}/config/fgcz.conf
 
-working=working
-worktest=work-vp-test
-sampleset=sampleset
+#working=working
+worktest=lollipop
+#sampleset=vpipe_input
 
 #
 # Input validator
@@ -58,21 +60,21 @@ case "$1" in
                         custom_date="2"
 		fi
 
-		projects=( 'p23224' 'p24991' 'p26177' 'p30045' )
+		projects=( 'p23224' )
 		projpat="$( ( IFS='|';echo "${projects[*]}" ) )"
-		gawk -v d="${custom_date}" '$2<d' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.tsv.old
+		gawk -v d="${custom_date}" '$2<d' ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv > ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv.old
 		{
 			# assemble samples.wastewateronly.tsv
 			{
-				printf '%s\n' ${sampleset}/projects.${custom_date}*.tsv | grep -vF '*' | sort -r | while read p; do
+				printf '%s\n' ${clusterdir_old}/${clusterdir}/${sampleset}/projects.${custom_date}*.tsv | grep -vF '*' | sort -r | while read p; do
 					echo -n "${p} - ${p//projects/samples} ... " >&2
 					gawk -v projpat="${projpat}" '(FILENAME~/\/projects\./)&&($2~projpat){ww[$1]++;nww++};(FILENAME~/\/samples\./)&&(ww[$1]);END{print nww >> "/dev/stderr"}' "${p}" "${p//projects/samples}"
 				done | tee >(cut -f4 >&3) # pass the protos to the second part bellow
-				cat ${working}/samples.wastewateronly.tsv.old
-			} > ${working}/samples.wastewateronly.tsv
+				cat ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv.old
+			} > ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv
 		} 3>&1 | sort | uniq -c | while read cnt PROTO o; do
 			echo "proto: ${PROTO} (${cnt})"
-			gawk -v proto="${PROTO}" '$4==proto' ${working}/samples.wastewateronly.tsv > ${working}/samples.wastewateronly.${PROTO}.tsv
+			gawk -v proto="${PROTO}" '$4==proto' ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv > ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.${PROTO}.tsv
 		done;
 	;;
 
@@ -94,7 +96,7 @@ case "$1" in
 		echo "batch ${BATCH}"
 
 		# majority votre proto
-		read cnt PROTO o < <(cut -f4 sampleset/samples.${BATCH}.tsv | sort | uniq -c | tee /dev/stderr)
+		read cnt PROTO o < <(cut -f4 ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${BATCH}.tsv | sort | uniq -c | tee /dev/stderr)
 		echo "proto: ${PROTO}"
 
 		#
@@ -109,23 +111,23 @@ case "$1" in
 				exit 1;
 			;;
 		esac
-		allprototsv=( ${working}/samples.wastewateronly.{v41,v4,v3}.tsv )
+		allprototsv=( ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.{v41,v4,v3}.tsv )
 		if [[ ! -r "${bedfile}" ]]; then
 			echo "missing bedfile ${bedfile}"
 			exit 1;
 		fi
 
 		# 'lastweek' backup
-		if grep -qF "${BATCH}" ${working}/samples.wastewateronly${PROTO:+.${PROTO}}.tsv; then
+		if grep -qF "${BATCH}" ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly${PROTO:+.${PROTO}}.tsv; then
 			echo "using:"
-			ls -l ${working}/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek,.thisweek}.tsv
+			ls -l ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek,.thisweek}.tsv
 		else
 			echo "backing up lastweek:"
-			cp -v ${working}/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek}.tsv
+			cp -v ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly${PROTO:+.${PROTO}}{,.lastweek}.tsv
 		fi
 
-		(grep -vP '^(Y\d{2,}|NC|\d{6,})' "sampleset/samples.${BATCH}.tsv" | tee ${working}/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv ; cat ${working}/samples.wastewateronly${PROTO:+.${PROTO}}.lastweek.tsv) > ${working}/samples.wastewateronly${PROTO:+.${PROTO}}.tsv
-		cat "${allprototsv[@]}" > ${working}/samples.wastewateronly.tsv
+		(grep -vP '^(Y\d{2,}|NC|\d{6,})' "${clusterdir_old}/${clusterdir}/${sampleset}/samples.${BATCH}.tsv" | tee ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly${PROTO:+.${PROTO}}.thisweek.tsv ; cat ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly${PROTO:+.${PROTO}}.lastweek.tsv) > ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly${PROTO:+.${PROTO}}.tsv
+		cat "${allprototsv[@]}" > ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv
 	;;
 
 	bring_results)
@@ -144,8 +146,8 @@ case "$1" in
 		fi
 
 		# bring current list in
-		if cp ${scriptdir}/${working}/${TSV} ${scriptdir}/${worktest}/; then
-			ln -sf "${TSV}" ${worktest}/samples.tsv
+		if cp ${clusterdir_old}/${clusterdir}/${working}/${TSV} ${clusterdir_old}/${clusterdir}/../${worktest}/; then
+			ln -sf "${TSV}" ${clusterdir_old}/${clusterdir}/../${worktest}/samples.tsv
 		else
 			echo "Cannot find ${TSV}"
 			exit 1
@@ -157,17 +159,17 @@ case "$1" in
 			echo "Appending missing samples to results/ directory"
 		fi
 
-		mkdir -p ${worktest}/results/
+		mkdir -p ${clusterdir_old}/${clusterdir}/../${worktest}/results/
 
 		while read s b o; do
-			rmdir --ignore-fail-on-non-empty ${worktest}/results/${s}/${b}/
+			rmdir --ignore-fail-on-non-empty ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/
 			if (( overwrite )); then
-				rm -rvf ${worktest}/results/${s}/${b}/
-			elif [[ -e ${worktest}/results/${s}/${b}/ ]]; then
+				rm -rvf ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/
+			elif [[ -e ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/ ]]; then
 				continue
 			fi
 
-			mkdir -p ${worktest}/results/${s}/${b}/
+			mkdir -p ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/
 			if grep -q ${s} lollipop_blacklist.txt || grep -q ${b} lollipop_blacklist.txt; then
 				echo "Skipping ${worktest}/results/${s}/${b}/ in lollipop_blacklist.txt"
 			else
