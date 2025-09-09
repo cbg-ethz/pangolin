@@ -1,12 +1,12 @@
 services:
   sars_cov_2:
     build:
-      context: /data/projects/wastewater_automation_new/pangolin 
+      context: /data/projects/sars_cov_2_automation/pangolin 
     volumes:
-      - /data/projects/wastewater_automation_new/workdir:/app/workdir:rw
-      - /data/projects/wastewater_automation_new/resources:/app/resources:ro
+      - /data/projects/sars_cov_2_automation/workdir:/app/workdir:rw
+      - /data/projects/sars_cov_2_automation/resources:/app/resources:ro
       - /data/projects/dataset:/app/dataset:rw
-      - /data/projects/wastewater_automation_new/pangolin:/app/codebase:ro
+      - /data/projects/sars_cov_2_automation/pangolin:/app/codebase:ro
       - /raw_data:/app/raw_data:rw
     secrets:
       - bs-pangolin_login_euler
@@ -23,26 +23,26 @@ services:
       - wisedb_token
 secrets:
   bs-pangolin_login_euler:
-    file: /data/projects/wastewater_automation_new/secrets/bs-pangolin@euler.ethz.ch
+    file: /data/projects/sars_cov_2_automation/secrets/bs-pangolin@euler.ethz.ch
   bs-pangolin_login_backups:
-    file: /data/projects/wastewater_automation_new/secrets/bs-pangolin@d@bs-bewi08
+    file: /data/projects/sars_cov_2_automation/secrets/bs-pangolin@d@bs-bewi08
   fgcz_login:
-    file: /data/projects/wastewater_automation_new/secrets/fgcz-gstore.uzh.ch
+    file: /data/projects/sars_cov_2_automation/secrets/fgcz-gstore.uzh.ch
   id_ed25519_wisedb:
-    file: /data/projects/wastewater_automation_new/secrets/id_ed25519_wisedb
+    file: /data/projects/sars_cov_2_automation/secrets/id_ed25519_wisedb
   id_ed25519_wisedb_backups:
-    file: /data/projects/wastewater_automation_new/secrets/id_ed25519_wisedb_backups
+    file: /data/projects/sars_cov_2_automation/secrets/id_ed25519_wisedb_backups
   rsync.pass.euler:
-    file: /data/projects/wastewater_automation_new/secrets/rsync.pass.euler
+    file: /data/projects/sars_cov_2_automation/secrets/rsync.pass.euler
   spsp_uploads_ssh_private_key:
-    file: /data/projects/wastewater_automation_new/secrets/id_ed25519_spsp_uploads
+    file: /data/projects/sars_cov_2_automation/secrets/id_ed25519_spsp_uploads
   spsp_gpg_key:
-    file: /data/projects/wastewater_automation_new/secrets/ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
+    file: /data/projects/sars_cov_2_automation/secrets/ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
   bs_pangolin_gpg_key:
-    file: /data/projects/wastewater_automation_new/secrets/bs-pangolin_spsp-uploads_gpg-key.gpg
+    file: /data/projects/sars_cov_2_automation/secrets/bs-pangolin_spsp-uploads_gpg-key.gpg
   bs_pangolin_gpg_key_password:
-    file: /data/projects/wastewater_automation_new/secrets/gpg_key_secrets
+    file: /data/projects/sars_cov_2_automation/secrets/gpg_key_secrets
   sendcrypt_profile:
-    file: /data/projects/wastewater_automation_new/secrets/default.sendcrypt-profile
+    file: /data/projects/sars_cov_2_automation/secrets/default.sendcrypt-profile
   wisedb_token:
-    file: /data/projects/wastewater_automation_new/secrets/wisedb_token.txt
+    file: /data/projects/sars_cov_2_automation/secrets/wisedb_token.txt
