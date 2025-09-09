@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name="COVID-qa"
-#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch" # carrara@nexus.ethz.ch # singer@nexus.ethz.ch louis.duplessis@bsse.ethz.ch sarah.nadeau@bsse.ethz.ch" # chaoran.chen@bsse.ethz.ch
-#SBATCH --mail-type=FAIL
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4096
 #SBATCH --time="4:00:00"

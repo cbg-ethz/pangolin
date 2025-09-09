@@ -1,7 +1,5 @@
 #!/bin/bash
 #SBATCH --job-name="COVID-qa"
-#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch"
-#SBATCH --mail-type=END
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=1024
 #SBATCH --time="4:00:00"

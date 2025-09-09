@@ -429,10 +429,10 @@ case "$1" in
 		#	echo "Skipping gfb"
 		#fi
 		if  (( ${lab[fgcz]} == 1 )); then
-			. <(grep '^google_sheet_patches=' ${clusterdir_old}/${clusterdir}/config/fgcz.conf)
+			. <(grep '^google_sheet_patches=' ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf)
  
-			(( google_sheet_patches )) && ${clusterdir_old}/${clusterdir}/google_sheet_patches.py
-          		${clusterdir_old}/${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir}/movedatafiles.sh || fail=1
+			(( google_sheet_patches )) && ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/google_sheet_patches.py
+          		${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir}/movedatafiles.sh || fail=1
 
 		else
 			echo "Skipping fgcz"

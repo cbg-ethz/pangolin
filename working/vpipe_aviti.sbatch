@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name="COVID-vpipe"
+#SBATCH --job-name="COVID-Aviti-vpipe"
 #SBATCH --mail-type=END
 #SBATCH --mem-per-cpu=16384
 #SBATCH --oversubscribe
@@ -8,9 +8,12 @@
 umask 0007
 
 mkdir -p cluster_logs/
-./vpipe --configfile config.snv.yaml --dryrun --unlock
+./vpipe --configfile vpipe_aviti.yaml --dryrun --unlock
 # export SNAKEMAKE_PROFILE=$(realpath ../profiles/custom-lsf/)
 # exec ./vpipe --profile ${SNAKEMAKE_PROFILE}	\
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/ )
 exec ./vpipe --profile ${SNAKEMAKE_PROFILE}	\
-	--configfile config.snv.yaml
+	--configfile vpipe_aviti.yaml --omit-from snv
+
+#exec ./vpipe --profile ${SNAKEMAKE_PROFILE}     \
+#        --configfile vpipe_aviti.yaml --omit-from snv -n
