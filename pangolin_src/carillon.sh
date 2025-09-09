@@ -74,7 +74,7 @@ ${scriptdir}/belfry.sh sync_sampleset_batch_files
 #        fi
 #    fi
 #fi
-${remote_batman} sortsamples --recent )
+${remote_batman} sortsamples --recent
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"
