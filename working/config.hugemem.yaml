@@ -1,7 +1,7 @@
 # config: big ShoRAH run (8 threads only)
 
 input:
-  samples_file: samples.wastewateronly.tsv
+  samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples.wastewateronly.tsv
 
 output:
   snv: true
@@ -11,10 +11,6 @@ output:
   QA: true
 
 snv:
-    #time: 240
-    #mem: 32768
     mem: 524288
-    #threads: 8
-    #threads: 63
     threads: 16
     time: 1400

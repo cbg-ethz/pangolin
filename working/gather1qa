@@ -28,10 +28,10 @@ if [[ "$idx" =~ ^[0-9]+$ ]] && (( idx >= 0 )); then
 		exit 1;
 	fi
 	input_tsv="${TMPDIR:+$TMPDIR/}samples.qa-${batch}.tsv"
-	output_csv="qa/qa.${batch}.csv"
+	output_csv="/cluster/project/pangolin/processes/sars_cov_2/working/qa/qa.${batch}.csv"
 	echo "batch: ${batch}"
 	echo "output: ${output_csv}"
-	gawk -v b="${batch}" '$2==b' < samples.tsv > ${input_tsv}
+	gawk -v b="${batch}" '$2==b' < /cluster/project/pangolin/processes/sars_cov_2/working/samples.tsv > ${input_tsv}
 	echo "tsv: ${input_tsv}"
 	wc -l ${input_tsv}
 else
@@ -104,7 +104,7 @@ matchkeys=( "${!matchsearch[@]}" ) # keep all findings
 
 # labs
 declare -A labs
-for b in ../sampleset/batch.*.yaml; do
+for b in /cluster/project/pangolin/processes/sars_cov_2/vpipe_input/batch.*.yaml; do
 	if [[ ! ${b} =~ batch\.([[:digit:]]{8}_[[:alnum:]-]+)\.yaml$ ]]; then
 		argh "Cannot parse: <${b}>"
 		continue
@@ -150,7 +150,7 @@ filecounter=0
 while read subject sublvl len; do
 	qadata=( )
 	echo -ne "\r$((++filecounter))\t${subject}\e[K\t" 1>&2
-	sample=samples/${subject}/${sublvl}
+	sample=/cluster/project/pangolin/processes/sars_cov_2/vpipe_output/${subject}/${sublvl}
 	qadata['sample']=$subject
 	qadata['batch']=$sublvl
 

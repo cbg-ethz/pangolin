@@ -1,6 +1,5 @@
 input:
-  #samples_file: samples.wastewateronly.tsv
-  samples_file: ../sampleset/samples.20210709_BPA73113-1417.tsv
+  samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples.20210709_BPA73113-1417.tsv
 
 output:
   snv: false

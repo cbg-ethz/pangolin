@@ -18,13 +18,9 @@ umask 0007
 
 # unlock if crashed before finishing
 ./vpipe --configfile config.unlock.yaml --dryrun --unlock || exit 1
-#--cleanup-shadow
 
-# update the shared snake envs (with proxy when not on a login node)
-#./create_envs -p
 # proxy so update can work
 echo "Using proxy"
-#. /etc/profile.d/software_stack_default.sh
 module load eth_proxy
 echo "${https_proxy}"
 

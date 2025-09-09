@@ -9,8 +9,6 @@ umask 0007
 
 mkdir -p cluster_logs/
 ./vpipe --configfile config.snv.yaml --dryrun --unlock
-# export SNAKEMAKE_PROFILE=$(realpath ../profiles/custom-lsf/)
-# exec ./vpipe --profile ${SNAKEMAKE_PROFILE}	\
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/ )
 exec ./vpipe --profile ${SNAKEMAKE_PROFILE}	\
 	--configfile config.snv.yaml

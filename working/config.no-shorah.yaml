@@ -1,5 +1,5 @@
 input:
-  samples_file: samples.recent.tsv
+  samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples.recent.tsv
 
 output:
   snv: false

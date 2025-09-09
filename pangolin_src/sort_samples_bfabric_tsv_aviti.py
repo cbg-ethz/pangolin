@@ -78,10 +78,10 @@ config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in s
 with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
 lab={os.path.splitext(os.path.basename(args.config))[0]}
-basedir=/cluster/project/pangolin/folder_cleanup
-basedir_test=/cluster/project/pangolin/folder_cleanup/sars_cov_2_automation/pangolin/pangolin_src
-sampleset=/cluster/project/pangolin/folder_cleanup/sampleset
-download=/cluster/project/pangolin/folder_clenup/bfabric-downloads
+basedir=/cluster/project/pangolin
+basedir_test=/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src
+sampleset=/cluster/project/pangolin/processes/sars_cov_2/vpipe_input
+download=/cluster/project/pangolin/data/fgcz_raw
 link=--link
 mode=
 badlist=

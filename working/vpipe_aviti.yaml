@@ -7,22 +7,22 @@ general:
 
 
 input:
-    datadir: samples/
-    samples_file: samples_aviti.tsv
+    datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output
+    samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv
     #reference: references/NC_045512.2.fasta
-    metainfo_file: references/metainfo.yaml
-    gff_directory: references/gffs/
+    metainfo_file: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/metainfo.yaml
+    gff_directory: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/
     #primers_file: references/primers/v41/nCoV-2019.tsv
     #primers_bedfile: references/primers/v41/nCoV-2019.primer.bed
-    protocols_file: references/primers.yaml
+    protocols_file: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/primers.yaml
     #inserts_bedfile: references/primers/v41/SARS-CoV-2.insert.bed
     #genes_gff: references/gffs/Genes_NC_045512.2.GFF3
-    variants_def_directory: references/voc/
+    variants_def_directory: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/voc/
     
     
 output:
-    datadir: samples/
-    cohortdir: ../variants/
+    datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output
+    cohortdir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/variants/
     trim_primers: True
     snv: False
     local: False
