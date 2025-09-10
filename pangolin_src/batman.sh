@@ -392,7 +392,7 @@ case "$1" in
 	#	conda deactivate
 	#;;
 	sortsamples)
-		conda activate pybis
+		#conda activate pybis
 		cd ${clusterdir_old}/${clusterdir}/
                 sortsamples_statusdir=${status}/sortsamples
 		mkdir -p $sortsamples_statusdir

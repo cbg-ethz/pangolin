@@ -23,5 +23,6 @@ echo "ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3:6:" | gpg --import-ownertrust
 
 cat /home/bs-pangolin/.ssh/bs_pangolin_gpg_key_password | gpg --batch --yes --passphrase-fd 0  --import /home/bs-pangolin/.ssh/bs_pangolin_gpg_key
 echo "B2E046C543F6FDD84C4A5A307ABF7E3B5AAAE4A6:6:" | gpg --import-ownertrust
-#/app/pangolin_src/quasimodo.sh
-sleep 10d
+/app/pangolin_src/quasimodo.sh
+##DEBUG. To activate, comment the line calling quasimodo.sh and uncomment the following line. That will start a container without triggering the loop. The container can be used interactively for testing or to run commands manually.
+#sleep 10d
