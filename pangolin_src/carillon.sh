@@ -312,7 +312,13 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             aviti=""
         fi
-        ${remote_batman} addsamples --recent && \
+        ${remote_batman} addsamples --recent
+	if [[ ${filter_samplelist_by_date} == 1 ]]; then
+	       ${remote_batman} filter_sample_list ${clusterdir_old}/${clusterdir}/${working}/samples.tsv
+     	       ${remote_batman} filter_sample_list ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv
+    	       ${remote_batman} filter_sample_list ${clusterdir_old}/${clusterdir}/${working}/samples_aviti.tsv
+   	       ${remote_batman} filter_sample_list ${clusterdir_old}/${clusterdir}/${working}/samples_pre-aviti.tsv
+	fi
         ${remote_batman} vpipe ${shorah} ${aviti} --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} &&  \
         if [[ -s ${statusdir}/vpipe.${now} ]]; then
             ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started

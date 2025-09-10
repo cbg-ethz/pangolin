@@ -7,8 +7,9 @@ general:
 
 
 input:
-    datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output
-    samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv
+    #datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output
+    datadir: vpipe_output
+    samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv_six_months_ago.tsv
     #reference: references/NC_045512.2.fasta
     metainfo_file: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/metainfo.yaml
     gff_directory: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/
@@ -21,7 +22,7 @@ input:
     
     
 output:
-    datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output
+    datadir: vpipe_output
     cohortdir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/variants/
     trim_primers: True
     snv: False

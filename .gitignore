@@ -6,3 +6,9 @@ uploader/__pycache__
 pangolin_src/garbage_out.log
 
 working/references/NC_045512.2.fasta.* 
+
+working/samples*
+working/slurm-*
+working/cluster_logs
+working/vpipe_output
+.snakemake

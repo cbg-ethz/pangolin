@@ -2,10 +2,10 @@
 
 umask 0007
 
-scriptdir="$(dirname $(which $0))"
-baseconda="$scriptdir/"
-. ${scriptdir}/config/server.conf
+scriptdir="/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src"
+baseconda="/cluster/project/pangolin/resources/miniconda3"
 . ${scriptdir}/config/fgcz.conf
+. ${scriptdir}/config/server.conf
 
 #working=working
 worktest=lollipop
@@ -25,7 +25,7 @@ validateBatchName() {
 
 validateProto() {
 	case "$1" in
-		v3|v4|v41|v532)
+		v3|v4|v41|v532|v542)
 			return
 		;;
 		*)
@@ -146,8 +146,8 @@ case "$1" in
 		fi
 
 		# bring current list in
-		if cp ${clusterdir_old}/${clusterdir}/${working}/${TSV} ${clusterdir_old}/${clusterdir}/../${worktest}/; then
-			ln -sf "${TSV}" ${clusterdir_old}/${clusterdir}/../${worktest}/samples.tsv
+		if cp ${clusterdir_old}/${clusterdir}/${working}/${TSV} ${clusterdir_old}/${clusterdir}/${worktest}/; then
+			ln -sf "${TSV}" ${clusterdir_old}/${clusterdir}/${worktest}/samples.tsv
 		else
 			echo "Cannot find ${TSV}"
 			exit 1
@@ -159,29 +159,29 @@ case "$1" in
 			echo "Appending missing samples to results/ directory"
 		fi
 
-		mkdir -p ${clusterdir_old}/${clusterdir}/../${worktest}/results/
+		mkdir -p ${clusterdir_old}/${clusterdir}/${worktest}/results/
 
 		while read s b o; do
-			rmdir --ignore-fail-on-non-empty ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/
+			rmdir --ignore-fail-on-non-empty ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
 			if (( overwrite )); then
-				rm -rvf ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/
-			elif [[ -e ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/ ]]; then
+				rm -rvf ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
+			elif [[ -e ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/ ]]; then
 				continue
 			fi
 
-			mkdir -p ${clusterdir_old}/${clusterdir}/../${worktest}/results/${s}/${b}/
-			if grep -q ${s} lollipop_blacklist.txt || grep -q ${b} lollipop_blacklist.txt; then
-				echo "Skipping ${worktest}/results/${s}/${b}/ in lollipop_blacklist.txt"
+			mkdir -p ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
+			if grep -q ${s} /cluster/project/pangolin/resources/lollipop_blacklist.txt || grep -q ${b} /cluster/project/pangolin/resources/lollipop_blacklist.txt; then
+				echo "Skipping ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/ in /cluster/project/pangolin/resources/lollipop_blacklist.txt"
 			else
-				cp -alv ${working}/samples/${s}/${b}/{references,alignments} ${worktest}/results/${s}/${b}/
+				cp -alv ${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/{references,alignments} ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
 			fi
-		done < ${worktest}/${TSV}
-        for i in $(cat lollipop_blacklist.txt); do
+		done < ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}
+        for i in $(cat /cluster/project/pangolin/resources/lollipop_blacklist.txt); do
             while read -r line
             do
                 [[ ! $line =~ $i ]] && echo "$line"
-            done <${worktest}/${TSV} > ${worktest}/${TSV}_temp
-            mv ${worktest}/${TSV}_temp ${worktest}/${TSV}
+            done <${clusterdir_old}/${clusterdir}/${worktest}/${TSV} > ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}_temp
+            mv ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}_temp ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}
         done
 	;;
 
@@ -190,7 +190,7 @@ case "$1" in
 		validateProto "${proto}"
 		echo "fetching ${proto}:"
 
-		gawk -v proto="${proto}" '$4==proto' ${worktest}/samples.tsv | while read s b o; do cat ${worktest}/results/${s}/${b}/signatures/cooc.yaml; echo -n '.' >&2; done > ${worktest}/cooc.${proto}.yaml
+		gawk -v proto="${proto}" '$4==proto' ${clusterdir_old}/${clusterdir}/${worktest}/samples.tsv | while read s b o; do cat ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/signatures/cooc.yaml; echo -n '.' >&2; done > ${clusterdir_old}/${clusterdir}/${worktest}/cooc.${proto}.yaml
 		echo "done"
 	;;
 

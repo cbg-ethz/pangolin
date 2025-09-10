@@ -55,6 +55,7 @@ thismonth=$(date '+%Y%m')
 twoweeksago=$(date '+%Y%m%d' --date='-2 weeks')
 year=$(date '+%Y')
 lastyear=$(date '+%Y%m' --date='-1 year')
+sixmonths=$(date '+%Y%m%d' --date='-6 months')
 
 if [[ "$1" == "--limited" ]]; then
         shift
@@ -148,10 +149,10 @@ case "$1" in
                                         fi
                                         tag="${2%;}"
                                 ;;
-                                --recent)
-#                                        # TODO switch between full cohort and only recent
-#                                         #recent="..."
-                                ;;
+                                #--recent)
+                                #         # TODO switch between full cohort and only recent
+                                #          #recent="..."
+                                #;;
                                 --aviti)
                                         aviti=1
                                         shorah=0
@@ -163,13 +164,13 @@ case "$1" in
                 cd ${clusterdir_old}/${clusterdir}/pangolin/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_aviti.sbatch | sbatch --parsable ${hold} --job-name="COVID-AVITI-vpipe-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe-no-shorah.sbatch | sbatch --parsable ${hold} --job-name="COVID-vpipe-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
-                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
+                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="COVID-qa" --dependency="afterany:${job['seq']}" qa-launcher)"
                         # if no fail schedule a full job with snv
                         if (( shorah )); then
                                 job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
@@ -343,52 +344,53 @@ case "$1" in
         #                fi
         #        done
 	#;;
-	sync_fgcz)
-        	while [[ -n $2 ]]; do
-			case "$2" in
-				--https)
-					type='https'
-				;;
-				--ftp)
-					type='ftp'
-				;;
-				*)
-					echo "Unkown parameter ${2}" > /dev/stderr
-					exit 2
-				;;
-			esac
-			shift
-		done
-		bfabricdir=${clusterdir_old}/${bfabric_downloads}
-		cd ${bfabricdir}
-		sync_fgcz_statusdir=${status}/sync
-		mkdir -p $sync_fgcz_statusdir
-		fgcz_config=${clusterdir_old}/${clusterdir}/config/fgcz.conf
+	# The sync procedure has been moved to its own process and is therefore deprecated here. It will be removed in future commits
+	#sync_fgcz)
+        #	while [[ -n $2 ]]; do
+	#		case "$2" in
+	#			--https)
+	#				type='https'
+	#			;;
+	#			--ftp)
+	#				type='ftp'
+	#			;;
+	#			*)
+	#				echo "Unkown parameter ${2}" > /dev/stderr
+	#				exit 2
+	#			;;
+	#		esac
+	#		shift
+	#	done
+	#	bfabricdir=${clusterdir_old}/${bfabric_downloads}
+	#	cd ${bfabricdir}
+	#	sync_fgcz_statusdir=${status}/sync
+	#	mkdir -p $sync_fgcz_statusdir
+	#	fgcz_config=${clusterdir_old}/${clusterdir}/config/fgcz.conf
 
-		echo "Sync FGCZ - bfabric"
+	#	echo "Sync FGCZ - bfabric"
 
-                echo "Syncing from node $(hostname)"
-		conda activate sync
-		. <(grep '^projlist=' ${fgcz_config})
-		if [[ "${3}" = "--recent" ]]; then
-			limitlast='3 weeks ago'
-			${clusterdiri_old}/${clusterdir}/${sourcefiles_location}/exclude_list_bfabric.py -c ${fgcz_config} -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
-			param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
-			echo -ne "syncing recent: ${limitlast}\texcluding: "
-			wc -l ${sync_fgcz_statusdir}/fgcz.exclude.lst
-		else
-			param=( "${projlist[@]}" )
-		fi
-                fail=0
-                if [[ "${type}" = "https" ]]; then
-                        syncoutput="$(${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} -H "${param[@]}"|tee /dev/stderr)" || fail=1
-                else
-		        syncoutput="$(${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
-                fi
-		checksyncoutput "fgcz" "$syncoutput"
-                (( fail == 0 )) &&  touch ${sync_fgcz_statusdir}/sync_fgcz_success || touch ${sync_fgcz_statusdir}/sync_fgcz_fail
-		conda deactivate
-	;;
+        #        echo "Syncing from node $(hostname)"
+	#	conda activate sync
+	#	. <(grep '^projlist=' ${fgcz_config})
+	#	if [[ "${3}" = "--recent" ]]; then
+	#		limitlast='3 weeks ago'
+	#		${clusterdiri_old}/${clusterdir}/${sourcefiles_location}/exclude_list_bfabric.py -c ${fgcz_config} -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
+	#		param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
+	#		echo -ne "syncing recent: ${limitlast}\texcluding: "
+	#		wc -l ${sync_fgcz_statusdir}/fgcz.exclude.lst
+	#	else
+	#		param=( "${projlist[@]}" )
+	#	fi
+        #        fail=0
+        #        if [[ "${type}" = "https" ]]; then
+        #                syncoutput="$(${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} -H "${param[@]}"|tee /dev/stderr)" || fail=1
+        #        else
+	#	        syncoutput="$(${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
+        #        fi
+	#	checksyncoutput "fgcz" "$syncoutput"
+        #        (( fail == 0 )) &&  touch ${sync_fgcz_statusdir}/sync_fgcz_success || touch ${sync_fgcz_statusdir}/sync_fgcz_fail
+	#	conda deactivate
+	#;;
 	sortsamples)
 		conda activate pybis
 		cd ${clusterdir_old}/${clusterdir}/
@@ -495,6 +497,20 @@ case "$1" in
                 validateBatchName "$2"
                 cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv
         ;;
+        filter_sample_list)
+	        sample_list=$2
+	        filtered_list=${sample_list}_six_months_ago.tsv
+	        if [[ -e ${filtered_list} ]]; then
+	                rm ${filtered_list}
+	        fi
+		touch ${filtered_list}
+		while IFS=$'\t' read -r sample batch other; do
+    			batch_date=${batch%_*}
+    			if (( batch_date > sixmonths )); then
+        			printf '%s\t%s\t%s\n' "$sample" "$batch" "$other" >> "$filtered_list"
+    			fi
+		done < "$sample_list"
+;;
         amplicon_coverage)
                 case "$2" in
                         --batch)

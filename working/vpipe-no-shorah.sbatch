@@ -5,7 +5,8 @@
 #SBATCH --oversubscribe
 #SBATCH --time=3:00:00
 #SBATCH --comment="batches	@TAG@"
-
+#SBATCH --output=/cluster/project/pangolin/processes/sars_cov_2/working/slurm-%x-%j.out
+#SBATCH --error=/cluster/project/pangolin/processes/sars_cov_2/working/slurm-%x-%j.err
 
 logfile=/cluster/scratch/bs-pangolin/log.$LSB_JOBID
 

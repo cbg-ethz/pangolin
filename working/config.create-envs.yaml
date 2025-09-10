@@ -1,6 +1,6 @@
 input:
-  samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples.20210709_BPA73113-1417.tsv
-  datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
+  samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples.recent.tsv
+  datadir: vpipe_output
 
 #output:
   #snv: true
