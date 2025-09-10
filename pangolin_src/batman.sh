@@ -270,8 +270,7 @@ case "$1" in
         ;;
         df)
                 #df ${clusterdir_old} ${SCRATCH}
-                lquota -2 ${clusterdir_old}
-                lquota -2 ${SCRATCH}
+                quota -s
         ;;
         garbage)
                 validateBatchName "$2"
