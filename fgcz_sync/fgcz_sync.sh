@@ -51,7 +51,7 @@ if [[ -n $skipsync ]]; then
 fi
 
 if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz --https --recent
+    ${remote_batman} sync_fgcz --ftp --recent
     ${scriptdir}/belfry.sh pull_sync_status
     if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
         echo "\e[31;1Pulling sync status files failed\e[0m"

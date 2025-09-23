@@ -1,6 +1,7 @@
 #!/bin/bash
 
 scriptdir=/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync
+. ${scriptdir}/config/fgcz.conf	
 . ${scriptdir}/config/server.conf
 
 status=${clusterdir_old}/processes/status
