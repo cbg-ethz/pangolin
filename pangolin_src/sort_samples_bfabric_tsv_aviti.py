@@ -545,6 +545,7 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 
 
 # shell script file with all moving instructions inside
+print("outputting to movedatafiles")
 sh=open(os.path.join(basedir_test,'movedatafiles.sh'), 'wt')
 
 # generic header: only for stand-alone files.
@@ -616,7 +617,6 @@ for b in batches:
 	else:
 		order=b
 		batch=f"{rundate}_{flowcell}"
-
 	print(r"[[ -d '%(download)s/%(prj)s/%(id)s' ]] || fail 'Not a directory:' '%(download)s/%(prj)s/%(id)s'" % {'download':download,'prj':prj,'id':name}, file=sh)
 	qcdir=None
 	if (not args.nofqc) and (not dupe) and ('fastqc' in batches[b]):
