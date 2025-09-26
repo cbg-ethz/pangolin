@@ -30,10 +30,58 @@ Working folder to run lollipop for covid. Points also at '/cluster/project/pango
 
 **Covid**
 The SARS CoV19 directory where the regular analysis takes place (lollipop) is `/cluster/project/pangolin/work-vp-test`
-   - corresponding blacklist: `/cluster/project/pangolin/lollipop_blacklist.txt`
+   - corresponding blacklist: `/cluster/project/pangolin/resources/lollipop_blacklist.txt`
 - the vpipe is run in : `/cluster/project/pangolin/working` (go here to check the slurm-out of vpipe)
    - in the slurm-out (main) it tells you which batches it checks for new samples, but this does not mean that it runs on all of these batches, it only checks if there are samples that have not yet been aligned by v-pipe!
 - config files for covid vpipe: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src`
+
+**Patching**
+#Patching
+[WIP] this paragraph is only in notes style and need to be worked over!
+If there are wrong sample names in the order from fgcz, we need to patch the names. For this a file like the following has to be created: `/cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.23224.39798.tsv`
+- the previous v-pipe reults need to be garbaged
+- v-pipe needs to rerun
+
+To patch the libkit:
+- Check from the emails which delivery is the first one FGCZ generated with V542
+- if you have the date, check on bfabric which order matches that date
+- Write down all orders starting from that first order, up to the latest we received with the correct kit (which is order o39518, i.e. batch 20250822_2506652341)
+- Stop the sarscov2 automation on wisedb. The name now is pangolin-sars_cov_2-1
+- In directory /cluster/project/pangolin/processes/sars_cov_2/vpipe_input you have a file called patch.fgcz-libkit.tsv . The file is structure as follows:
+- p25650  o26956  SARS-CoV-2 ARTIC V3 NexteraXT
+- Please add one line per order to patch. The last column is the libkit that should be actually used must match the libkit definitions we have. Please use SARS-CoV-2 ARTIC V5.4.2 NEB Ultra II
+-  Find the batch names of all orders you added. To do that, for each order name you can do
+- cd /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
+- grep -rl batch.*.tsv -e <order_name>
+- That should give you the filename of the tsv file for that specific order. The batch name is in the filename
+- Garbage all batches that match the patched orders
+- /cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/batman.sh garbage <batch> | tee garbage.log
+- check the log for sanity check. Please note that some errors of files not found are acceptable, if the garbage still works on at least one file (or the main sample folder) for the sample. The error comes from the garbaging trying to garbage everything, and for some samples not everything is available
+- After garbaging, restart the automation on wisedb and check that Vpipe is ran
+
+
+2 things we can patch:
+
+1. sample names (everywhere / matadata and sample files)
+2. library prep kit in the metadata
+3. for all other issues we need to go back to fgcz
+
+For all 3 pipeline go to sampleset dir (the following is only for covid)
+- create a patch file in the format: patch.projct.order.tsv
+- the first column = old name
+- second col = new name we want to assign
+
+if v pipe already run ont he wronly named file, these have to be grabaged! (see master file)
+- run [batman.sh](http://batman.sh) grabage BATCH_NAME to clean all the folders form the already created results
+- in the next loop the sort samples takes care of the patching automatically
+
+library prep:
+- only for covid
+- as this information is important for lollipop
+- also in sampleset folder there is a file: pathc.fgcz-libkit.tsv
+- in there is the structure: project order lib kit, to assing the correct libkit to the order
+- garbaging as above
+    - this is only possible to patch like this if the whole order (all amples) have the same libkit assigned, if there is sample specific libkits then fgcz needs to correct the metadata themself
 
 #### Automation
 The folder for the covid autoamtion on euler is: '/cluster/project/pangolin/test_automation/pangolin'
@@ -667,3 +715,37 @@ sbatch /run_covvfit_lollipop.sbatch
 cd /cluster/project/pangolin/cowwid/covvfit/analysis/covvfit_analysis/scripts
 ./run_covvfit.sh
 ```
+
+# V-pipe
+The internal V-pipe logic is:
+- V-pipe's rule "timeline" takes the samples.tsv, applies a config file with regex and generates the date, location code and fullname code, and saves it into timeline.tsv
+this should have all the samples of the wastewater cohort.
+- rule "tallymut" merges the above file with the individual "mutations of interest" TSV files of each samples in the cohort (of each sample in samples.tsv) to make a big tally of all mutations.
+- rule "deconvolution" runs LolliPop. LolliPop itself filters by "location", and runs deconvolution over the time-seires (by "date").
+if location or date information are missing, there won't be any corresponding points in the curve.
+
+## manually run v-pipe
+- What if vpipe is not running on some samples because they are older than 6 months? Manually run vpipe on those samples
+- take the file /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv_six_months_ago.tsv (which is the samples.tsv file for vpipe used at present) and generate a new one that has only lines for the samples you want to run manually
+- go to /cluster/project/pangolin/processes/sars_cov_2/pangolin/working and make a copy of vpipe_aviti.yaml, maybe call it vpipe_aviti_manual.yaml
+- change in the yaml file the field samples_file: to point to vpipe_aviti_manual.yaml
+- copy vpipe_aviti.sbatch and call the copy vpipe_aviti_manual.sbatch
+- Modify the file so that
+- --configfile vpipe_aviti_manual.yaml
+- bonus points, change the name of the slurm job for easier tracking: #SBATCH --job-name="COVID-Aviti-vpipe"  to #SBATCH --job-name=“manual-Aviti-vpipe”
+- Run the sbatch file sbatch vpipe_aviti_manual.sbatch
+
+# wiseDB
+#wiseDB #wisedb
+
+If uploads to wiseDB fail form the uploader script, an mail is sent with the header "all_upload_extract_load error". This means that something with the file changed and thus the upload was rejected. 
+This error will stop the whole wiseDB uploading pipeline for EVERYBODY! Thu, it is crucial to monitor this and reject the upload immediately once you see that the upload did nod succeed.
+To reject the upload:
+- go to https://wisedb.ethz.ch/admin/site/upload/otherfileuploadbatch/
+- login with your credentials (every user has it's own credentials)
+- on the left scroll down to: UPLOAD > other file batches
+- find the just uploaded file and click on it
+- check the file and klick reject
+
+Then figure out what is wrong with the file and reupload the corrected file.
+In case someting does not work as described contact Severing Olloz or Patrick Schmidhalter.
