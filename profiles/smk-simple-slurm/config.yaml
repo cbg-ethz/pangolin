@@ -11,7 +11,8 @@ cluster:
     --error=cluster_logs/{rule}/{rule}-%j.err.log
     #--mem={resources.mem_mb}
 #cluster-status: ../profiles/smk-simple-slurm/status-scontrol.sh
-cluster-status: ../profiles/smk-simple-slurm/status-sacct.sh
+#cluster-status: ../profiles/smk-simple-slurm/status-sacct.sh
+cluster-status: /cluster/project/pangolin/processes/sars_cov_2/pangolin/profiles/smk-simple-slurm/status-sacct.sh
 default-resources:
   #  --partition={resources.partition}
   #- partition=<name-of-default-partition>
