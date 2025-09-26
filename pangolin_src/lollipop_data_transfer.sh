@@ -75,6 +75,9 @@ case "$1" in
 		} 3>&1 | sort | uniq -c | while read cnt PROTO o; do
 			echo "proto: ${PROTO} (${cnt})"
 			gawk -v proto="${PROTO}" '$4==proto' ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv > ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.${PROTO}.tsv
+			row_count=$(wc -l < "${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv")
+			echo "${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv"
+			echo "$row_count"
 		done;
 	;;
 
