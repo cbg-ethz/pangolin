@@ -86,7 +86,7 @@ library prep:
 #### Automation
 The folder for the covid autoamtion on euler is: '/cluster/project/pangolin/test_automation/pangolin'
 '/cluster/project/pangolin/test_automation' is the main folder in the covid automation. However, the working in test_automation is outdated and we use '/cluster/project/pangolin/working'.
-In this working folder there is also the results directory (huge directory which sould not me copied!) - this will be restructured soon.
+In this working folder there is also the results directory (huge directory which sould not be copied!) - this will be restructured soon.
 
 
 **RSV**
@@ -749,3 +749,49 @@ To reject the upload:
 
 Then figure out what is wrong with the file and reupload the corrected file.
 In case someting does not work as described contact Severing Olloz or Patrick Schmidhalter.
+
+## Sequence upload
+#wisedb_uploader
+The sequence upload to wiseDB happen from the wiseVM. (TODO: can this be done directly from Euler to avoid double data transfer?)
+The uploader script is: `/data/projects/wisedb_uploader/upload_to_wisedb.sh`
+This script expects two arguments. The first one is the path to the sample data directory (e.g. `/data/projects/wisedb_uploader/tmp_toupload`).
+This directory should contain samples in the following strucutre:
+````
+sample
+|_ batch
+   |_alignments
+   |_raw_uploads
+   |_references
+````
+The second one is a random string which serves as a switch and will be removed soon, since the else of the function is depreciated.
+Importantly, in the request the file order and checksum order is fixed and cannot be changed!
+In case of "Bad request" a person vom wiseDB needs to be contacted.
+Import checks are based on the metadata which are taken from the file string. There is no metadata file. Uploaded file contents are not checked.
+
+# RSV
+## Folderstructure
+
+Main folder `/cluster/project/pangolin/processes/rsv`
+```
+-- working
+-- v-pipe input
+-- RSVA
+      |__ pangolin
+      |__ v-pipe output
+      |__ working
+-- RSVB
+      |__ pangolin
+      |__ v-pipe output
+      |__ working
+
+
+/cluster/project/pangolin
+--resources
+|__ rsv_downstream_analysis
+````
+
+
+
+### v-pipe
+For RSV there is a main sbatch job `/cluster/project/pangolin/processes/rsv/working/vpipe_rsv_aviti_main.sbatch`
+This job spinns the doughter jobs for RSVA and RSVB.
