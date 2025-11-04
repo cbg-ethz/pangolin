@@ -371,6 +371,82 @@ cd /cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 ./batman.sh rsv_vpipe_out_to_tsv
 ```
 
+#### sortsample 
+#sortsample
+This is an essential function that takes the rawdata and sorts them to create the input data format for vpipe. 
+
+````
+${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py \
+  -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf \
+  --no-fastqc \
+  --protocols=${clusterdir_old}/${clusterdir}/pangolin/${working}/${protocolyaml} \
+  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv \
+  ${force} ${recent}
+`````
+**1. Arguments maped to argparse in sort_samples_bfabric_tsv_aviti.py**
+
+| Bash Argument              | Python `argparse` Option | Destination Variable (`args.<var>`) | Purpose / Description                                                                                                            |
+| -------------------------- | ------------------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `-c <path>`                | `--config`               | `args.config`                       | Path to configuration file (overrides default `config/server.conf`). Here, it points to `config/fgcz.conf`.                      |
+| `--no-fastqc`              | `-Q / --no-fastqc`       | `args.nofqc`                        | Boolean flag. When present, tells the script to **skip importing fastqc directories**.                                           |
+| `--protocols=<path>`       | `-4 / --protocols`       | `args.protoyaml`                    | Path to a **protocol YAML file** used to build a 4-column `samples.tsv` (using fields `'name'` and `'alias'`).                   |
+| `--libkit-override=<path>` | `-l / --libkit-override` | `args.libkittsv`                    | Path to a **TSV file** that maps library prep kit overrides for certain projects/orders.                                         |
+| `${force}`                 | `-f / --force`           | `args.force`                        | Optional flag added conditionally by the shell. If set to `-f`, it tells the script to **overwrite existing files** when moving. |
+| `${recent}`                | `-r / --recent`          | `args.recent`                       | Optional argument. If set (e.g. `-r 20240401`), only process batches *after* that date.                                          |
+
+**3. Configuration Values (loaded inside the script)**
+
+The script then reads the configuration file (fgcz.conf) using some custom loader (not shown here) and assigns variables:
+| Config Key          | Assigned Python Variable | Purpose                                                                     |
+| ------------------- | ------------------------ | --------------------------------------------------------------------------- |
+| `_ → lab`           | `lab`                    | Name of the lab, used in the batch YAML.                                    |
+| `_ → basedir`       | `basedir`                | Main data directory.                                                        |
+| `_ → basedir_test`  | `basedir_test`           | Alternative directory for test runs.                                        |
+| `_ → expname`       | `expname`                | Name of the experiment/project (used e.g. in SFTP naming).                  |
+| `_ → download`      | `download`               | Directory where raw (unsorted) datasets are stored.                         |
+| `_ → sampleset`     | `sampleset`              | Directory for sorted sample sets.                                           |
+| `_ → link`          | `link`                   | Whether to **link** instead of copy files (may be `hardlink` or `reflink`). |
+| `_ → badlist`       | `badlist`                | List of folder names to skip entirely.                                      |
+| `_ → forcelist`     | `forcelist`              | List of folders to force process even with missing metadata.                |
+| `_ → fuselist`      | `fuselist`               | List of folders to always merge.                                            |
+| `_ → fallbackproto` | `fallbackproto`          | Default protocol to apply if none specified.                                |
+
+**4. Execution Flow Summary**
+- The shell checks if FGCZ lab is active.
+- It sources fgcz.conf to see if google_sheet_patches is enabled.
+- If yes, it runs google_sheet_patches.py first.
+- Then it calls sort_samples_bfabric_tsv_aviti.py with arguments that define:
+- which config file to use (fgcz.conf),
+- which protocol YAML to apply,
+- which library patch TSV to apply,
+- whether to skip fastqc,
+- and optionally --force and --recent filters.
+- If the Python call fails, fail=1 is set and movedatafiles.sh is not executed.
+
+
+
+#### Overview sort_samples_bfabric_tsv_aviti.py
+
+The script performs two big phases:
+
+**Phase 1 – Data gathering:**
+It walks through the download directory (basedir/download/projects/*) and collects run information from Stats.json, dataset.tsv, etc.
+It builds an internal structure called batches, where each key is an order and the value holds all metadata for that order/run (samples, lanes, flowcell, rundate, etc.).
+
+**Phase 2 – Output building:**
+It writes:
+samples.<batch>.tsv
+projects.<batch>.tsv
+batch.<batch>.yaml
+missing.<batch>.txt
+and a shell script movedatafiles.sh
+
+Those files define and enact how data are copied or linked into the final sampleset layout: `<sampleset>/<sample>/<batch>/{raw_data,extracted_data}
+`
+**Internal Batch Name**
+Is created my putting together the `rundate` and `"FlowCellID"` extracted from the raw_data *DmxStats* *.json file. 
+
+
 ### garbage.sh
 **Garbage RSV/Influenza**
 If any batch already run v-pipe, use the garbage script for a cleanup of the folders from this batch. BEFORE: Add the batch to the **Bad List** as described above.
@@ -795,3 +871,12 @@ Main folder `/cluster/project/pangolin/processes/rsv`
 ### v-pipe
 For RSV there is a main sbatch job `/cluster/project/pangolin/processes/rsv/working/vpipe_rsv_aviti_main.sbatch`
 This job spinns the doughter jobs for RSVA and RSVB.
+
+
+
+# Naming conventions
+**Samples:**
+FlowCellArrayPosition_TreatmentPlant_SamplingDate
+
+**Batch:**
+SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
