@@ -1,12 +1,12 @@
 services:
   pangolin_rsv:
     build:
-      context: /data/projects/rsv_automation/pangolin 
+      context: /data/projects/rsv_automation_restructuring/pangolin 
     volumes:
-      - /data/projects/rsv_automation/workdir:/app/workdir:rw
-      - /data/projects/rsv_automation/resources:/app/resources:ro
+      - /data/projects/rsv_automation_restructuring/workdir:/app/workdir:rw
+      - /data/projects/rsv_automation_restructuring/resources:/app/resources:ro
       - /data/projects/dataset:/app/dataset:rw
-      - /data/projects/rsv_automation/pangolin:/app/codebase:ro
+      - /data/projects/rsv_automation_restructuring/pangolin:/app/codebase:ro
     secrets:
       - bs-pangolin_login_euler
       - bs-pangolin_login_backups
@@ -21,24 +21,24 @@ services:
       - spsp_uploads_ssh_private_key
 secrets:
   bs-pangolin_login_euler:
-    file: /data/projects/rsv_automation/secrets/bs-pangolin@euler.ethz.ch
+    file: /data/projects/rsv_automation_restructuring/secrets/bs-pangolin@euler.ethz.ch
   bs-pangolin_login_backups:
-    file: /data/projects/rsv_automation/secrets/bs-pangolin@d@bs-bewi08
+    file: /data/projects/rsv_automation_restructuring/secrets/bs-pangolin@d@bs-bewi08
   fgcz_login:
-    file: /data/projects/rsv_automation/secrets/fgcz-gstore.uzh.ch
+    file: /data/projects/rsv_automation_restructuring/secrets/fgcz-gstore.uzh.ch
   id_ed25519_rsv:
-    file: /data/projects/rsv_automation/secrets/id_ed25519_rsv
+    file: /data/projects/rsv_automation_restructuring/secrets/id_ed25519_rsv
   id_ed25519_rsv_backups:
-    file: /data/projects/rsv_automation/secrets/id_ed25519_rsv_backups
+    file: /data/projects/rsv_automation_restructuring/secrets/id_ed25519_rsv_backups
   rsync.pass.euler:
-    file: /data/projects/rsv_automation/secrets/rsync.pass.euler
+    file: /data/projects/rsv_automation_restructuring/secrets/rsync.pass.euler
   spsp_uploads_ssh_private_key:
-    file: /data/projects/rsv_automation/secrets/id_ed25519_spsp_uploads
+    file: /data/projects/rsv_automation_restructuring/secrets/id_ed25519_spsp_uploads
   spsp_gpg_key:
-    file: /data/projects/rsv_automation/secrets/ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
+    file: /data/projects/rsv_automation_restructuring/secrets/ABC9FC14AAC952E7767FD14A48B70E724BAFE0A3.asc
   bs_pangolin_gpg_key:
-    file: /data/projects/rsv_automation/secrets/bs-pangolin_spsp-uploads_gpg-key.gpg
+    file: /data/projects/rsv_automation_restructuring/secrets/bs-pangolin_spsp-uploads_gpg-key.gpg
   bs_pangolin_gpg_key_password:
-    file: /data/projects/rsv_automation/secrets/gpg_key_secrets
+    file: /data/projects/rsv_automation_restructuring/secrets/gpg_key_secrets
   sendcrypt_profile:
-    file: /data/projects/rsv_automation/secrets/default.sendcrypt-profile
+    file: /data/projects/rsv_automation_restructuring/secrets/default.sendcrypt-profile
