@@ -9,7 +9,7 @@
 umask 0007
 
 # unlock if crashed before finishing
-./vpipe --dryrun --unlock --configfile vpipe_rsv_aviti.yaml
+./vpipe --dryrun --unlock --configfile vpipe_rsvb_aviti.yaml
 
 # update the shared snake envs (with proxy when not on a login node)
 
@@ -22,4 +22,4 @@ echo "${https_proxy}"
 mkdir -p cluster_logs/
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/ )
 exec ./vpipe --profile ${SNAKEMAKE_PROFILE}     \
-        --configfile vpipe_rsv_aviti.yaml
+        --configfile vpipe_rsvb_aviti.yaml

@@ -10,11 +10,11 @@ failure_detected=0
 
 # Submit child jobs
 cd /cluster/project/pangolin/rsv_pipeline/RSVA/working/
-job_id=$(sbatch  /cluster/project/pangolin/rsv_pipeline/RSVA/working/vpipe_rsv_aviti.sbatch | awk '{print $NF}')
+job_id=$(sbatch  /cluster/project/pangolin/rsv/pangolin/working/vpipe_rsva_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child RSVA job $i with ID $job_id"
 child_jobs+=($job_id)
 cd /cluster/project/pangolin/rsv_pipeline/RSVB/working/
-job_id=$(sbatch  /cluster/project/pangolin/rsv_pipeline/RSVB/working/vpipe_rsv_aviti.sbatch | awk '{print $NF}')
+job_id=$(sbatch  /cluster/project/pangolin/rsv/pangolin/working/vpipe_rsvb_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child RSVB job $i with ID $job_id"
 child_jobs+=($job_id)
 

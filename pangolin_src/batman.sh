@@ -177,7 +177,7 @@ case "$1" in
                         shift
                 done
                 # start first job
-                cd ${clusterdir_old}/${clusterdir}/${working}/
+                cd ${clusterdir_old}/${clusterdir}/pangolin/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
 			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_aviti_main.sbatch | sbatch --parsable ${hold} --job-name="rsv_main_AVITI-vpipe-<${tag}>-cons")"
@@ -446,11 +446,11 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[fgcz]} == 1 )); then
-			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
+			. <(grep '^google_sheet_patches=' ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf)
  
-			(( google_sheet_patches )) && ${clusterdir}/google_sheet_patches.py
+			(( google_sheet_patches )) && ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/google_sheet_patches.py
  			#${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
-          		${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+          		${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
                         #${clusterdir_old}/${clusterdir}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${clusterdir}/pangolin/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir}/${clusterdir}/pangolin/movedatafiles.sh || fail=1
 		else
 			echo "Skipping fgcz"

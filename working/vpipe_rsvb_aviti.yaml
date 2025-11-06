@@ -6,14 +6,14 @@ general:
     threads: 6
     snv_caller: "lofreq"
 input:
-    datadir: "/cluster/project/pangolin/rsv_pipeline/RSVB/working/samples"
-    samples_file: "/cluster/project/pangolin/rsv_pipeline/RSVB/working/samples.tsv"
+    datadir: "/cluster/project/pangolin/processes/rsv/RSVB/vpipe_output"
+    samples_file: "/cluster/project/pangolin/processes/rsv/RSVB/working/samples.tsv"
     read_length: 251
-    protocols_file: "references/primers.yaml"
-    reference: "references/concat_EPI_ISL_412866_EPI_ISL_1653999.fasta"
+    protocols_file: "/cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVB/primers.yaml"
+    reference: "/cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVB/concat_EPI_ISL_412866_EPI_ISL_1653999.fasta"
     primers_trim_cutoff: 200
 output:
-    datadir: "results"
+    datadir: "/cluster/project/pangolin/processes/rsv/RSVB/vpipe_output"
     trim_primers: true
     snv: true
     local: false

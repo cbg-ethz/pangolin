@@ -1,1 +1,1 @@
-docker run -it -v /data/projects/rsv_automation/workdir:/app/workdir /bin/bash
+docker run -it -v /data/projects/rsv/workdir:/app/workdir /bin/bash
