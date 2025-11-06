@@ -26,6 +26,8 @@ status/
 .snapshot
 .ipynb_checkpoints
 
+config/server_old.conf
+
 #logs
 slurm-*
 
