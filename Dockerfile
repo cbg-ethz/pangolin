@@ -1,6 +1,6 @@
 FROM debian:buster-slim
 
-RUN addgroup --gid 1029 bs-pangolin && adduser --ingroup bs-pangolin --uid 542576 bs-pangolin
+RUN addgroup --gid 1029 bs-pangolin && adduser --ingroup bs-pangolin --uid 514896 bs-pangolin
 
 WORKDIR /root
 
