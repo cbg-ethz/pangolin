@@ -22,7 +22,7 @@ def bar(v, m=128):
 
 # column in dataset.tsv under which we need to look for plates
 plate_column = 'Tube [Characteristic]' # 'Platename [Characteristic]'
-lib_column = 'Description [Characteristic]'  # e.g.: "RSV-B"
+lib_column = 'LibraryPrepKit' #'Description [Characteristic]'  # e.g.: "RSV-B"
 
 # parse command line
 argparser = argparse.ArgumentParser(description="Fetch metadata from bfabric relying on the built-in metadata.tsv")
@@ -78,7 +78,7 @@ config.SECTCRE = re.compile(r'\[ *(?P<header>[^]]+?) *\]') # support spaces in s
 with open(args.config) as f: config.read_string(f"""
 [DEFAULT]
 lab={os.path.splitext(os.path.basename(args.config))[0]}
-basedir=/cluster/project/pangolin/processes/rsv
+basedir=/cluster/project/pangolin
 basedir_test=/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src
 sampleset=/cluster/project/pangolin/processes/rsv/vpipe_input
 download=/cluster/project/pangolin/data/fgcz_raw
@@ -117,10 +117,6 @@ forcelist=(config['_']['forcelist'].strip("\"'").split(',')) if len(config['_'][
 '''folders to use even with missing order'''
 fuselist=(config['_']['fuselist'].strip("\"'").split(',')) if len(config['_']['fuselist']) else list()
 '''folders to always merge'''
-# nofuselist=(config['_']['nofuselist'].strip("\"'").split(',')) if len(config['_']['nofuselist']) else list()
-# '''folders to never merge'''
-# fusedays=int(config['_']['fusedays'].strip("\"'"))
-# '''delay after which orders aren't considered for merging anymore'''
 
 fallbackproto=config['_']['fallbackproto'].strip("\"'")
 
@@ -146,7 +142,6 @@ else:
 rxorder=re.compile(r'(?:^|/|_)(?P<order>o\d+)') # match the order patter either after a "_", at the start of the string (wether it's the actual start or the initial part after a path)
 rxrun=re.compile('^(?P<century>20)?(?P<date>\d{6})_(?P<instr>\w+)_(?P<num>\d+)_(?P<prefix>(?:0+-)|[AB])?(?P<cell>\w+(?(prefix)|-\d+))$') # e.g.: 200430_M01761_0414_000000000-J3JCT or 201023_A00730_0259_BHTVCCDRXX or 20210709_FS10001154_41_BPA73113-1417
 rxcell=re.compile('(?:0+-)?(?P<cell>\w+(?:-\d+)?)$') # e.g.: '000000000-CTT3D' or 'HTVCCDRXX' or 'BPA73113-1417'
-rxcell_aviti=re.compile('^[a-z0-9]{10}$')
 rxsuffix=re.compile('(?:_S\d+)?(?:_L\d+)?$') # e.g.: ..._Plate_2_011120EG27_A4_S5_L001
 rxfqext=re.compile('\.fastq\.gz$') 
 
@@ -329,7 +324,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	# parse flowcell
 	if "aviti" in srch.lower():
 		try:
-			#m=rxcell_aviti.search(stats['FlowCellID']).groupdict()
+			#m=rxcell.search(stats['FlowCellID']).groupdict()
 			m=re.match('^[a-z0-9]{10}$', stats['FlowCellID'])
 			flowcell=m.group()
 		except:
@@ -413,13 +408,6 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 	samples={}
 	badyield=0
 	badsamples=set()
-	#with zipfile.ZipFile(os.path.join(basedir,download,prj,name,"DmxStats","SequencerReport.zip")) as zf:
-	#	with io.TextIOWrapper(zf.open("reports_L1_L2_i1-"+str(barcode1)+"_i2-"+str(barcode2)+"/RunParameters.json")) as f:
-	#		try:
-	#			stats_zip = json.loads(f.read());
-	#		except json.JSONDecodeError as e:
-	#			print(f"\x1b[31;1mError: Cannot parse JSON file {j}, Invalid JSON syntax:\x1b[0m", e)
-	#			continue
 	if "aviti" in srch.lower():
 		try:
 			if len(stats['Lanes']) > 1:
@@ -557,7 +545,6 @@ if not os.path.isdir(os.path.join(basedir,sampleset)):
 
 
 # shell script file with all moving instructions inside
-print("outputting to movedatafiles")
 sh=open(os.path.join(basedir_test,'movedatafiles.sh'), 'wt')
 
 # generic header: only for stand-alone files.
@@ -678,17 +665,8 @@ for b in batches:
 			'project': 	delistify(set([prj] + listify(yamldict['project']))),
 			'order':	delistify(set([order] + listify(yamldict['order']))),
 			'name':	name,
-			#bfabfolder=[batches[b]['name'],batches[order]['name']]
 			'folder':	delistify(set([batches[b]['name']] + listify(yamldict['folder']))),
-			#runfolder=[batches[b]['runfolder'],batches[order]['runfolder']]
 			'runfolder':	delistify(set([batches[b]['runfolder']] + listify(yamldict['runfolder']))),
-			#fastqcfolder=[]
-			#if 'fastqc' in batches[b]:
-			#	fastqcfolder+=[batches[b]['fastqc']]
-			#if 'fastqc' in batches[order]:
-			#	fastqcfolder+=[batches[order]['fastqc']]
-			#if len(fastqcfolder) == 0:
-			#	fastqcfolder=None
 			'fastqcfolder':	delistify(set(listify(yamldict['fastqcfolder']) + ([batches[b]['fastqc']] if 'fastqc' in batches[b] else []))),
 			**plts,
 		})
