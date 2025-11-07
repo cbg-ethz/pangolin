@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 RUN addgroup --gid 1029 bs-pangolin && adduser --ingroup bs-pangolin --uid 514896 bs-pangolin
 
