@@ -410,7 +410,7 @@ case "$1" in
 	#;;
 	sortsamples)
 		conda activate pybis
-		cd ${clusterdir}
+		cd ${clusterdir}/${clusterdir}/
                 sortsamples_statusdir=${status}/sortsamples
 		mkdir -p $sortsamples_statusdir
 		summary=""
@@ -446,6 +446,7 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[fgcz]} == 1 )); then
+                        echo "Start sortsamples"
 			. <(grep '^google_sheet_patches=' ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf)
  
 			(( google_sheet_patches )) && ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/google_sheet_patches.py
@@ -453,7 +454,7 @@ case "$1" in
           		${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
                         #${clusterdir_old}/${clusterdir}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${clusterdir}/pangolin/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir}/${clusterdir}/pangolin/movedatafiles.sh || fail=1
 		else
-			echo "Skipping fgcz"
+			echo "Skipping  fgcz / skipping batman.sh sortsamples as per configuration."
 		fi
 		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
 		conda deactivate

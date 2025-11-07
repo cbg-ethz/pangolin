@@ -1,10 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name="COVID-vpipe-hugemem"
-#SBATCH --mail-user="ivan.topolsky@bsse.ethz.ch"
 #SBATCH --mail-type=END
 #SBATCH --mem-per-cpu=16384
 #SBATCH --oversubscribe
-#SBATCH --time=96:00:00
+#SBATCH --time=6:00:00
+#SBATCH --output=/cluster/project/pangolin/processes/rsv/working/slurm-%x-%j.out
+#SBATCH --error=/cluster/project/pangolin/processes/rsv/working/slurm-%x-%j.err
 
 umask 0007
 

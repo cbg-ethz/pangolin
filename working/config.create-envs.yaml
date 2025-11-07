@@ -1,7 +1,7 @@
 input:
   #samples_file: samples.wastewateronly.tsv
-  samples_file: ../sampleset/samples.20210709_BPA73113-1417.tsv
-  datadir: ../sampleset
+  samples_file: /cluster/project/pangolin/processes/rsv/working/samples.20210709_BPA73113-1417.tsv
+  datadir: /cluster/project/pangolin/processes/rsv/vpipe_input
 
 #output:
   #snv: true
