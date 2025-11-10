@@ -18,6 +18,7 @@ echo $PATH
 conda init
 
 conda install --yes -c conda-forge mamba
+conda clean -a -y  # Clean cache to avoid corrupted packages
 
 for ENV in /app/setup/conda*.yaml; do
 	echo create env for $ENV
