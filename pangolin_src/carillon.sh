@@ -256,6 +256,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
                 exit 1
             fi
         fi
+        #If there’s no syncopenbis_new file, or if vpipe_started is newer than syncopenbis_new, then no new data have been downloaded since the last run.
         if [[ ( ! -e ${statusdir}/syncopenbis_new ) || ( ( -e ${statusdir}/vpipe_started ) && ( ${statusdir}/vpipe_started -nt ${statusdir}/syncopenbis_new ) ) ]]; then
             echo 'oops: something fishy: no downloaded data newer than last run ?' > /dev/stderr
         fi
