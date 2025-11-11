@@ -177,27 +177,27 @@ case "$1" in
                         shift
                 done
                 # start first job
-                cd ${clusterdir_old}/${clusterdir}/pangolin/${working}/
+                cd ${clusterdir_old}/${clusterdir}/${working}/
                 if (( aviti )); then
                         echo "Processing Aviti"
-			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_aviti_main.sbatch | sbatch --parsable ${hold} --job-name="rsv_main_AVITI-vpipe-<${tag}>-cons")"
+			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe_rsv_aviti_main.sbatch | sbatch --parsable ${hold} --job-name="rsv_main_AVITI-vpipe-<${tag}>-cons")"
                 else
-                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_rsv_main.sbatch | sbatch --parsable ${hold} --job-name="rsv_main-vpipe-<${tag}>-cons")"
+                        job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe_rsv_main.sbatch | sbatch --parsable ${hold} --job-name="rsv_main-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa no mater what happens
-                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" qa-launcher)"
+                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
                         # if no fail schedule a full job with snv
                         if (( shorah )); then
-                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes vpipe.sbatch)"
+                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe.sbatch)"
                                 if [[ -n "${job['snv']}" ]]; then
                                         # schedule a gatherqa no matter what happens to snv
-                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
                                         # schedule a hugemem job if snvjob failed
-                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes vpipe-hugemem.sbatch)"
+                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe-hugemem.sbatch)"
                                         # schedule a qa afterward
                                         [[ -n "${job['hugemem']}" ]]    && \
-                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes qa-launcher)"
+                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
                                 fi
                         fi      
                 fi >&2
@@ -451,7 +451,7 @@ case "$1" in
  
 			(( google_sheet_patches )) && ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/google_sheet_patches.py
  			#${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
-          		${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/pangolin/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/movedatafiles.sh || fail=1
+          		${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working_vpipe}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/movedatafiles.sh || fail=1
                         #${clusterdir_old}/${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir_old}/${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir_old}/${clusterdir}/pangolin/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir_old}/${clusterdir_old}/${clusterdir}/pangolin/movedatafiles.sh || fail=1
 		else
 			echo "Skipping  fgcz / skipping batman.sh sortsamples as per configuration."

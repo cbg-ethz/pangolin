@@ -26,6 +26,9 @@ status/
 .snapshot
 .ipynb_checkpoints
 
+*.log
+
+docker-compose.yaml
 config/server_old.conf
 
 #logs
