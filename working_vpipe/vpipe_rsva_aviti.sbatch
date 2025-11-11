@@ -8,8 +8,11 @@
 
 umask 0007
 
+prefix="/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/"
+profile_prefix="/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src"
+
 # unlock if crashed before finishing
-./vpipe --dryrun --unlock --configfile vpipe_rsva_aviti.yaml
+./${prefix}/vpipe --dryrun --unlock --configfile ${prefix}/vpipe_rsva_aviti.yaml
 
 # update the shared snake envs (with proxy when not on a login node)
 
@@ -20,6 +23,6 @@ module load eth_proxy
 echo "${https_proxy}"
 
 mkdir -p cluster_logs/
-export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/ )
-exec ./vpipe --profile ${SNAKEMAKE_PROFILE}     \
-        --configfile vpipe_rsva_aviti.yaml
+export SNAKEMAKE_PROFILE=$(realpath ${profile_prefix}/smk-simple-slurm/ )
+exec ./${prefix}/vpipe --profile ${SNAKEMAKE_PROFILE}     \
+        --configfile ${prefix}/vpipe_rsva_aviti.yaml
