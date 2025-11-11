@@ -832,17 +832,75 @@ The sequence upload to wiseDB happen from the wiseVM. (TODO: can this be done di
 The uploader script is: `/data/projects/wisedb_uploader/upload_to_wisedb.sh`
 This script expects two arguments. The first one is the path to the sample data directory (e.g. `/data/projects/wisedb_uploader/tmp_toupload`).
 This directory should contain samples in the following strucutre:
-````
+```
 sample
 |_ batch
    |_alignments
    |_raw_uploads
    |_references
-````
+```
 The second one is a random string which serves as a switch and will be removed soon, since the else of the function is depreciated.
 Importantly, in the request the file order and checksum order is fixed and cannot be changed!
 In case of "Bad request" a person vom wiseDB needs to be contacted.
 Import checks are based on the metadata which are taken from the file string. There is no metadata file. Uploaded file contents are not checked.
+
+# wiseVM
+#wiseVM #wisevm 
+## Background
+the wisdb VM showed limitations in the amount of allocated memory. Building a new image has become impossible, due the memory requirement of mamba/conda for updating an environment.
+The agreed solution is to build the image locally, transfer it to wisedb, and deploy. That will be the solution until the memory problems are solved.
+
+## Procedure
+The build must happen on a local machine, because the HPC clusters give access only to singularity and not to docker.
+
+Building an image for a linux host from an ARM host, means adapting the configuration.
+
+## Adaptations
+### docker-compose
+- context: /Users/mcarrara/data/ww/local_deploy/pangolin
+- volumes: pointing to the local_deploy directory
+- secrets: pointing to the local_deploy directory
+
+## Building
+```
+# define the target architecture
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+docker-compose build --no-cache --progress=plain
+# check the IMAGE ID with 
+docker images
+# add a meaningful tagging
+docker tag f44abc678111 pangolin_rsv:latest
+# The hex value is the ID of the image to save
+docker save -o ./pangolin-pangolin.tar IMAGE_ID (e.g."f44abc678111")
+```
+
+## Deploy
+- Transfer the tar archive to wisedb in directory
+  - on date 2025-04-14, the local deploy follows the commit 292bbba2c8644134f97f3e05614ead75a72e9d99
+  - create a directory (or add it to the existing: `/data/projects/rsv_automation_restructuring/local_deploy`)
+  - mkdir commit_"commit the container was build on"
+  - copy all relevant files back
+
+- on wisedb, run:
+- this extractes the image
+```
+#this extractes the image
+docker load -i pangolin-pangolin.tar
+
+#copy the docker-compose.yaml with the VM path and remove the "build:"section and add image: pangolin_rsv:latest
+
+cp ../../pangolin/docker-compose.yaml pangolin/to_use_on_vm_docker-compose.yaml
+#rename the files
+mv docker-compose.yaml docker-compose.old.txt
+mv to_use_on_vm_docker-compose.yaml docker-compose.yaml
+#start the image with 
+docker-compose -p pangolin_rsv up -d
+
+#docker run -d --name pangolin_rsv pangolin_rsv:latest
+
+```
+This will take the defined path form the docker-compose.yaml file to point to all the secret files etc on the VM.
+Make sure that the image already exists such that it is NOT BUILD on the VM!
 
 # RSV
 ## Folderstructure
