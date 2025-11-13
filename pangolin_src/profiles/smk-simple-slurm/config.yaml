@@ -12,7 +12,7 @@ cluster:
     #--mem={resources.mem_mb}
 #cluster-status: ../profiles/smk-simple-slurm/status-scontrol.sh
 #cluster-status: ../profiles/smk-simple-slurm/status-sacct.sh
-cluster-status: /cluster/project/pangolin/processes/rsv/pangolin/profiles/smk-simple-slurm/status-sacct.sh
+cluster-status: /cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/profiles/smk-simple-slurm/status-sacct.sh
 default-resources:
   #  --partition={resources.partition}
   #- partition=<name-of-default-partition>
