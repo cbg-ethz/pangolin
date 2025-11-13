@@ -1,6 +1,6 @@
 cluster:
   mkdir -p cluster_logs/{rule} &&
-  ${{SNAKEMAKE_PROFILE:-../profiles}}/smk-simple-slurm/sbatch_wrap.sh
+  sbatch
     --parsable
     --job-name=COVID-vpipe-{rule}-{wildcards}
     --cpus-per-task={threads}
@@ -10,7 +10,9 @@ cluster:
     --output=cluster_logs/{rule}/{rule}-%j.out.log
     --error=cluster_logs/{rule}/{rule}-%j.err.log
     #--mem={resources.mem_mb}
-cluster-status: ../profiles/smk-simple-slurm/status-sacct.sh
+#cluster-status: ../profiles/smk-simple-slurm/status-scontrol.sh
+#cluster-status: ../profiles/smk-simple-slurm/status-sacct.sh
+cluster-status: /cluster/project/pangolin/processes/rsv/pangolin/profiles/smk-simple-slurm/status-sacct.sh
 default-resources:
   #  --partition={resources.partition}
   #- partition=<name-of-default-partition>
@@ -22,7 +24,7 @@ default-resources:
 restart-times: 1
 max-jobs-per-second: 30
 max-status-checks-per-second: 30
-local-cores: 1
+local-cores: 4
 latency-wait: 600
 jobs: 120
 keep-going: True
