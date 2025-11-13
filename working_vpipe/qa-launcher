@@ -9,8 +9,12 @@
 
 umask 0007
 
-work_dir="/cluster/project/pangolin/processes/rsv/working/"
-
+'''
+qa-launcher is called in batman.sh vpipe function which is started from cd ${clusterdir_old}/${clusterdir}/${working}/
+In vpipe_rsv_aviti_main.sbatch we cd into the variant specific working directory /cluster/project/pangolin/processes/rsv/*/working/ to run the variant specific sbatch file
+the variant specific .sbatch file calles the vpipe command with the varian specific .yaml file
+'''
+#work_dir = .
 #
 # Input validator
 #
@@ -28,8 +32,8 @@ validateBatchName() {
 usage() { echo "Usage: $0 [ -r | -a | <BATCHES>... ]" 1>&2; exit $1; }
 while getopts "rah" o; do
 	case "${o}" in
-		r)	batches=( $(cut -f 2 ${work_dir}/samples.recent.tsv	| sort -r -u ) )	;;
-		a)	batches=( $(cut -f 2 ${work_dir}/samples.tsv	| sort -r -u ) )	;;
+		r)	batches=( $(cut -f 2 ./samples.recent.tsv	| sort -r -u ) )	;;
+		a)	batches=( $(cut -f 2 ./samples.tsv	| sort -r -u ) )	;;
 		h)	usage 0	;;
 		*)	usage 1	;;
 	esac
@@ -42,7 +46,7 @@ batches+=( "$@" )
 if (( ${#batches[@]} == 0 )); then
 	# default: all
 	echo "Default to recent  batches"
-	batches=( $(cut -f 2 ${work_dir}/samples.recent.tsv	| sort -r -u ) )
+	batches=( $(cut -f 2 ./samples.recent.tsv	| sort -r -u ) )
 fi
 
 # Validate everything
@@ -66,11 +70,11 @@ echo "Assembling..."
 # TODO this can be simplified by using xsv to merge the csv files
 ( 
 	for b in "${batches[@]}"; do
-		csv="${work_dir}/qa/qa.${b}.csv"
+		csv="./qa/qa.${b}.csv"
 		if [[ -r "${csv}" ]] && head -n 1 "${csv}"; then
 			break;
 		fi
 	done
-	cut -f 2 ${work_dir}/samples.tsv | sort -r -u | xargs -r -i tail -n '+2' '${work_dir}/qa/qa.{}.csv'
-) > ${work_dir}/qa.csv
+	cut -f 2 ./samples.tsv | sort -r -u | xargs -r -i tail -n '+2' './qa/qa.{}.csv'
+) > ./qa.csv
 echo "Done."

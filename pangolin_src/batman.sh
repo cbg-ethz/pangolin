@@ -185,8 +185,12 @@ case "$1" in
                         job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe_rsv_main.sbatch | sbatch --parsable ${hold} --job-name="rsv_main-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
-                        # schedule a gatherqa no mater what happens
+                        # schedule a gatherqa in each subvariant no mater what happens
+                        cd ${clusterdir_old}/${clusterdir}/RSVA/${working}/
                         job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
+                        cd ${clusterdir_old}/${clusterdir}/RSVB/${working}/
+                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
+                        cd ${clusterdir_old}/${clusterdir}/${working}/
                         # if no fail schedule a full job with snv
                         if (( shorah )); then
                                 job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe.sbatch)"
