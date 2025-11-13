@@ -9,6 +9,9 @@
 
 umask 0007
 
+scriptdir=/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src
+. ${scriptdir}/config/server.conf
+
 '''
 qa-launcher is called in batman.sh vpipe function which is started from cd ${clusterdir_old}/${clusterdir}/${working}/
 In vpipe_rsv_aviti_main.sbatch we cd into the variant specific working directory /cluster/project/pangolin/processes/rsv/*/working/ to run the variant specific sbatch file
