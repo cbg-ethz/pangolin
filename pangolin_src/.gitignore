@@ -30,6 +30,7 @@ status/
 
 docker-compose.yaml
 config/server_old.conf
+depr_working
 
 #logs
 slurm-*

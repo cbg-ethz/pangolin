@@ -8,7 +8,7 @@
 
 umask 0007
 prefix="/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe"
-profile_prefix="/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src"
+profile_prefix="/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/profiles"
 
 # unlock if crashed before finishing
 ${prefix}/vpipe --dryrun --unlock --configfile ${prefix}/vpipe_rsvb_aviti.yaml
