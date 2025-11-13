@@ -28,8 +28,6 @@ v3:
   primers_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_primers_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
 v532:
   name: v532
-  alias: 
-    - v532_pooled
   inserts_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_inserts_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
   primers_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_primers_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
 RSV_pooled:
@@ -54,5 +52,9 @@ RSV-A:
     - RSVA
     - rsva
     - rsv-a
+  inserts_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_inserts_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
+  primers_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_primers_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
+v532_pooled:
+  name: v532_pooled
   inserts_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_inserts_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
   primers_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working/references/primers/RSVA/RSVA_primers_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
