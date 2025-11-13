@@ -64,7 +64,7 @@ echo "Total batches: ${#batches[*]}"
 
 
 # run sub-jobs and waits for completion
-sbatch --wait --parsable --array="0-$(( ${#batches[@]} - 1 ))" gather1qa "${batches[@]}"
+sbatch --wait --parsable --array="0-$(( ${#batches[@]} - 1 ))" ${clusterdir_old}/${clusterdir}/${working_vpipe}/gather1qa "${batches[@]}"
 
 echo "Assembling..."
 # TODO this can be simplified by using xsv to merge the csv files
