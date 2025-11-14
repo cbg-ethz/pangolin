@@ -10,35 +10,40 @@ batches=()
 
 # if script wasn't editted on-the-fly, but parameters where passed
 #if (( ${#batches[@]} == 0 )) && (( $# )); then
+# If command-line arguments were given, treat them as batch names
 if (( $# )); then
-	batches+=( "$@" )
+	batches+=( "$@" ) # Add all arguments to the batches array
 fi
 
 umask 0007
 
-idx="$SLURM_ARRAY_TASK_ID"
+idx="$SLURM_ARRAY_TASK_ID" # Current SLURM array index
 
 echo "Running gather1qa script."
-
+# Check that idx is a non-negative integer
 if [[ "$idx" =~ ^[0-9]+$ ]] && (( idx >= 0 )); then
 	echo "JobIdx $idx"
 
-	batch=${batches[$idx]}
+	batch=${batches[$idx]} # Select batch corresponding to this array index
 
 	# check if samplename is ok
+	# If batch is empty → wrong array size or missing args
 	if [[ -z "${batch}" ]]; then
 		echo "wrong job index ${idx}"
 		echo "Max is ${#batches[@]}"
 		exit 1;
 	fi
+	# Define input/output paths
 	input_tsv="${TMPDIR:+$TMPDIR/}samples.qa-${batch}.tsv"
 	output_csv="./qa/qa.${batch}.csv"
 	echo "batch: ${batch}"
 	echo "output: ${output_csv}"
+	# Extract sample lines belonging to this batch
 	gawk -v b="${batch}" '$2==b' < ./samples.tsv > ${input_tsv}
 	echo "tsv: ${input_tsv}"
-	wc -l ${input_tsv}
+	wc -l ${input_tsv} # Show how many samples found
 else
+	# Index invalid → show how to run manually
 	echo "to run with all, use:"
 	echo " - sbatch --array=$(( ${batch[0]:--1} * -1))-$(( ${#batches[@]} - 1)) gather1qa $*"
 	exit 1
@@ -108,18 +113,22 @@ matchkeys=( "${!matchsearch[@]}" ) # keep all findings
 
 # labs
 declare -A labs
+# Loop over all YAML files matching batch.*.yaml in the vpipe_input directory
 for b in /cluster/project/pangolin/processes/rsv/vpipe_input/batch.*.yaml; do
+	# Validate filename and extract the batch name using regex
+    # Expected format: batch.YYYYMMDD_identifier.yaml
 	if [[ ! ${b} =~ batch\.([[:digit:]]{8}_[[:alnum:]-]+)\.yaml$ ]]; then
 		argh "Cannot parse: <${b}>"
 		continue
 	fi
-	batch="${BASH_REMATCH[1]}"
-
+	batch="${BASH_REMATCH[1]}" # Extracted batch name from regex capture group
+	# Extract the 'lab:' field from inside the YAML file
+    # Look for a line like: lab: ABC
 	if [[ ! "$(<${b})" =~ lab\ *:\ *([[:alnum:]]+)\ * ]]; then
 		argh "Cannot find lab for: <${b}>"
 		continue
 	fi
-	labs[${batch}]="${BASH_REMATCH[1]}"
+	labs[${batch}]="${BASH_REMATCH[1]}" # Store mapping: labs[batch] = labname
 done
 
 # header and data
@@ -150,6 +159,7 @@ echo
 ### - bwadir:	the maximum of the above (should be FR in the current MiSeq protocol)
 ### - bwa_instead_{mean,min,max}:	mean, minimum and maximum size of the inserts (in our protocol, that should be ~400)
 
+#this while loops through 	input_tsv="${TMPDIR:+$TMPDIR/}samples.qa-${batch}.tsv"
 filecounter=0
 while read subject sublvl len; do
 	qadata=( )
