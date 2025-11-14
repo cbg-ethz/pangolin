@@ -12,5 +12,5 @@ dependencies:
   - pip
   - pip:
       - fuc
-
+      - pyvcf3
 #Updated version on the 14.11.2025 due to conflicts with previousely used python 3.7 during the env create
