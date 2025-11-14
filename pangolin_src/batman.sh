@@ -564,7 +564,7 @@ case "$1" in
         #        echo "Branch: ${branch}\n${commit}"
         #;;
         rsv_vpipe_out_to_tsv)
-                conda activate downstream_analysis
+                conda activate rsv_downstream_analysis
 
                 cd ${downstream_analysis_dir}/
                 remote_downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler
