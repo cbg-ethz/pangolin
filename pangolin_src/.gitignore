@@ -31,6 +31,7 @@ status/
 docker-compose.yaml
 config/server_old.conf
 depr_working
+pangolin_src/conda_envs/depreciated_rsv_downstream_analysis.yaml
 
 #logs
 slurm-*

@@ -571,7 +571,7 @@ case "$1" in
                 mkdir -p ${remote_downstream_analysis_statusdir} 
 
                 ### 3. define the relevant folders per fragment and run the scrip per fragment
-                v_subtype=(RSVA RSVB)
+                v_subtype=(RSVA RSVB) 
                 process_fail=0  
                 for vir in "${v_subtype[@]}"; do
                         echo "Processing Virus: $vir"
@@ -643,17 +643,16 @@ case "$1" in
                                         touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_${vir}_fail"
                                         process_fail=$((process_fail + 1))
                                 fi
-                        fi
-
-                        # to track the whole process in one file:
-                        if [[ "$process_fail" == "0" ]] ; then
-                                echo "Downstream analysis succeeded."
-                                touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
-                        else
-                                echo "Downstream analysis failed."
-	        		touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
-                        fi             
+                        fi      
                 done
+                # to track the whole process in one file:
+                if [[ "$process_fail" == "0" ]] ; then
+                        echo "Downstream analysis succeeded."
+                        touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_success"            
+                else
+                        echo "Downstream analysis failed."
+	        	touch "${remote_downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
+                fi             
         ;;
         *)
                 echo "Unkown sub-command ${1}" > /dev/stderr
