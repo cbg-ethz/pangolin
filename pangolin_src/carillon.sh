@@ -324,15 +324,22 @@ if [ "$run_downstream" -eq "1" ]; then
         if [[ "$check_file_exists" == "0" ]]; then
             touch ${downstream_analysis_statusdir}/downstream_new
         fi
-         # if no vpipe is running check if downstream already ran on the latest batch:
+        #load the status of the last downstream analyisis:
+        ds_success="${downstream_analysis_statusdir}/rsv_downstream_analysis_success"
+        ds_fail="${downstream_analysis_statusdir}/rsv_downstream_analysis_fail"
+
+        # check if downstream already ran on the latest batch:
         lastbatch_downs=$(cat $(ls -Art ${downstream_analysis_statusdir}/downstream_new* | tail -n 1))
         echo "Last batch analysed by downstream analysis is ${lastbatch_downs}"
         vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
         vpipe_enddate=${vpipe_enddate#*.} #take only the date form the string stored in vpipe_ended
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
         echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
-        #### check the latest vpipe batch with the latest downstream analysis batch:
-        if [[ $lastbatch_downs != $lastbatch_vpipe ]]; then
+
+        #### check the latest vpipe batch with the latest downstream analysis batch and the success of the brevious downstream analysis:
+        # run case 1: $ds_success newer than $ds_fail  AND  lastbatch_downs != lastbatch_vpipe
+        # run case 2: $ds_fail newer than $ds_success
+        if { [[ "$lastbatch_downs" != "$lastbatch_vpipe" ]] && [[ "$ds_success" -nt "$ds_fail" ]]; } || [[ "$ds_fail" -nt "$ds_success" ]]; then
             echo "There is a new most recent batch that the downstream analyisis can run on"
             echo "starting postprocessing of vpipe output to tsv"
             #### RUN Downstream Analysis
