@@ -11,4 +11,3 @@ pangolin_src/movedatafiles.sh
 
 docker-compose.yaml
 time_docker_command.sh
-pangolin_src/conda_envs/depreciated_rsv_downstream_analysis.yaml
