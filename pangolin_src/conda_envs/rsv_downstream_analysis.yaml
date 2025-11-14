@@ -2,15 +2,13 @@ name: rsv_downstream_analysis
 channels:
   - conda-forge
   - bioconda
+
 dependencies:
-  - python=3.10
-  - pandas
-  - numpy
-  - pysam
-  - pyyaml
-  - biopython
-  - pip
-  - pip:
-      - fuc
-      - pyvcf3
-#Updated version on the 14.11.2025 due to conflicts with previousely used python 3.7 during the env create
+  - python==3.9.15
+  - fuc==0.38.0
+  - biopython==1.79
+  - PyVCF==0.6.8 # doesn't install on mac M2 chip
+  - pandas==1.5.0
+  - pysam==0.19.1
+  - pyyaml==6.0.2
+#https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/main/envs/downstream_analysis.yml
