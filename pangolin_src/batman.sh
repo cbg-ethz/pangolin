@@ -390,7 +390,7 @@ case "$1" in
         ;;
         get_vpipe_commit)
                 cd ${vpipe_code}
-                branch=$(git status | head -n 1 | sed -e 's/# On branch //')
+                branch=$(git status | head -n 1 | sed -e 's/ On branch //')
                 commit=$(git log -n 1 ${branch} | head -n 1)
                 echo "Branch: ${branch}\n${commit}"
         ;;
