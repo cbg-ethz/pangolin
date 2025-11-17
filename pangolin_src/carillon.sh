@@ -314,9 +314,15 @@ else
 fi
 
 
+
 #
-# postprocessing of vpipe output to tsv file for genspectrum upload
+# Phase 4: postprocessing of vpipe output to tsv file for genspectrum upload
 #
+
+echo "=============================================================================="
+echo "Spostprocessing of vpipe output to tsv file for genspectrum upload"
+echo "=============================================================================="
+
 if [ "$run_downstream" -eq "1" ]; then
     # 1. check if there is a current vpipe run: if not start the downstream processing of the results
     if [[ ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ]]; then

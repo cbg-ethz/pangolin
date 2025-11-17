@@ -295,125 +295,6 @@ case "$1" in
                 lquota -2 ${clusterdir_old}/${clusterdir}
                 lquota -2 ${SCRATCH}
         ;;
-        #use garbage.sh if needed
-        #garbage)
-        #        validateBatchName "$2"
-        #        cd ${clusterdir_old}/${clusterdir}
-#
-        #        for f in ${sampleset}/*/${2}; do
-        #                garbage=$(dirname "${f//${sampleset}/garbage}")
-        #                mkdir --mode=0770 -p "${garbage}"
-        #                mv -v "${f%/}" "${garbage}/"
-        #        done
-        #        for f in ${clusterdir_old}/${clusterdir}/vpipe_output/*/${2}/; do
-        #                garbage="${f//vpipe_output/garbage}"
-        #                mkdir --mode=0770 -p "${garbage%/}/"{raw_data,extracted_data}/
-        #                mv -vf "${f%/}/raw_data/"* "${garbage%/}/raw_data/"
-        #                rm "${f%/}/raw_data/"*.fa*
-        #                rmdir "${f%/}/raw_data/"
-        #                mv -vf "${f%/}/extracted_data/"* "${garbage%/}/extracted_data/"
-        #                rm "${f%/}/extracted_data/"*{.log,.benchmark,_fastqc.html}
-        #                rmdir "${f%/}/extracted_data/"
-        #                mv -vf "${f%/}/"* "${garbage%/}/"
-        #                rmdir "${f%/}"
-        #        done
-        #        mv "${sampleset}/batch.${2}.yaml" "${sampleset}/samples.${2}.tsv" "${sampleset}/missing.${2}.txt" "${sampleset}/projects.${2}.tsv" garbage/
-        #;;
-        # VILOCA procedure is deprecated and will be removed in future commits
-	#viloca)
-	#	cd ${vilocadir}/
-        #        conda activate 'viloca'
-	#	. run_workflow.sh
-	#	# write job chain list
-	#	#for v in "${list[@]}"; do
-	#	#	printf "%s\t%s\n" "${v}" "${job[$v]}"
-	#	#done
-        #        conda deactivate
-	#;;
-        #check_viloca)
-        #        cd ${vilocadir}/
-        #        grep -rq snake.err -e "JOB.*CANCELLED.*DUE TO TIME LIMIT"
-        #;;
-	#unlock_viloca)
-	#	cd ${vilocadir}/
-	#	conda activate 'viloca'
-	#	snakemake --unlock
-        #        conda deactivate
-	#;;
-	#archive_viloca_run)
-	#	validateBatchName $2
-	#	cd ${remote_viloca_basedir}
-	#	if [ ! -d results_archive ]; then
-	#		mkdir results_archive
-	#	fi
-	#	mkdir "results_archive/${2}"
-	#	mv "${vilocadir}/results/*" "results_archive/${2}"
-	#;;
-        #create_sample_list_viloca)
-        #        validateBatchName $2
-        #        echo ",sample,batch" > ${remote_viloca_basedir}/${viloca_staging}
-        #        cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${remote_viloca_basedir}/${viloca_staging}
-        #;;
-        #finalize_staging_viloca)
-        #        mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
-        #;;
-        #scanmissingsamples_viloca)
-        #        validateBatchName "$2"
-        #        for i in $(cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1}')
-        #        do
-        #                if [ ! -d ${remote_viloca_basedir}/results_archive/${2}/${i} ]
-        #                then
-        #                        echo ${i}
-        #                fi
-        #        done
-	#;;
-        # The sync procedure has been moved to its own process and is therefore deprecated here. It will be removed in future commits
-	#sync_fgcz)
-        #	while [[ -n $2 ]]; do
-	#		case "$2" in
-	#			--https)
-	#				type='https'
-	#			;;
-	#			--ftp)
-	#				type='ftp'
-	#			;;
-	#			*)
-	#				echo "Unkown parameter ${2}" > /dev/stderr
-	#				exit 2
-	#			;;
-	#		esac
-	#		shift
-	#	done
-	#	bfabricdir=${clusterdir_old}/${clusterdir}/../bfabric-downloads
-	#	cd ${bfabricdir}
-	#	sync_fgcz_statusdir=${status}/sync
-	#	mkdir -p $sync_fgcz_statusdir
-	#	fgcz_config=${clusterdir}/config/fgcz.conf
-#
-	#	echo "Sync FGCZ - bfabric"
-#
-        #        echo "Syncing from node $(hostname)"
-	#	conda activate sync
-	#	. <(grep '^projlist=' ${fgcz_config})
-	#	if [[ "${3}" = "--recent" ]]; then
-	#		limitlast='3 weeks ago'
-	#		${clusterdir}/exclude_list_bfabric.py -c ${fgcz_config} -r "${twoweeksago}" -o ${sync_fgcz_statusdir}/fgcz.exclude.lst
-	#		param=( '-e' "${sync_fgcz_statusdir}/fgcz.exclude.lst" "${projlist[@]}" )
-	#		echo -ne "syncing recent: ${limitlast}\texcluding: "
-	#		wc -l ${sync_fgcz_statusdir}/fgcz.exclude.lst
-	#	else
-	#		param=( "${projlist[@]}" )
-	#	fi
-        #        fail=0
-        #        if [[ "${type}" = "https" ]]; then
-        #                syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} -H "${param[@]}"|tee /dev/stderr)" || fail=1
-        #        else
-	#	        syncoutput="$(${clusterdir}/sync_sftp.sh -c ${fgcz_config} ${limitlast:+ -N "${limitlast}"} "${param[@]}"|tee /dev/stderr)" || fail=1
-        #        fi
-	#	checksyncoutput "fgcz" "$syncoutput"
-        #        (( fail == 0 )) &&  touch ${sync_fgcz_statusdir}/sync_fgcz_success || touch ${sync_fgcz_statusdir}/sync_fgcz_fail
-	#	conda deactivate
-	#;;
 	sortsamples)
 		#conda activate pybis
 		cd ${clusterdir_old}/${clusterdir}/
@@ -507,62 +388,12 @@ case "$1" in
                 validateBatchName "$2"
                 cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv
         ;;
-        #amplicon_coverage)
-        #        case "$2" in
-        #                --batch)
-        #                        validateBatchName "$3"
-        #                        echo "Running amplicon coverage on batch $3"
-        #                        amplicon_coverage_sample_list=${clusterdir_old}/${clusterdir}/${sampleset}/samples.${3}.tsv
-        #                        amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/${3}
-        #                ;;
-        #                --timeframe)
-        #                        echo "Running amplicon coverage for any sample within the timeframe $3"
-        #                        startdate=${3%%-*}
-        #                        enddate=${3##*-}
-        #                        amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
-        #                        if [ -f ${amplicon_coverage_sample_list} ]; then
-        #                                rm "${amplicon_coverage_sample_list}"
-        #                        fi
-        #                        alldates=$(cat ${clusterdir_old}/${clusterdir}/${working}/samples.tsv | awk '{print $2}' |  awk -F'_' '{print $1}' | awk -v var=$enddate 'NR==1 { print } NR != 1 && $1 <= var { print }' | awk -v var=$startdate 'NR==1 { print } NR != 1 && $1 >= var { print }' | sort | uniq)
-        #                        for i in $alldates; do
-        #                                grep ${i} ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
-        #                        done
-        #                        amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
-        #                ;;
-        #                --libkit)
-        #                        echo "Running amplicon coverage for any sample with library kit $3"
-        #                        grep ${3} ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
-        #                        amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
-        #                        amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
-        #                ;;
-        #        esac
-        #        conda activate amplicon_coverage
-        #        cd ${remote_amplicon_coverage_workdir}
-        #        if [ ! -d ${amplicon_coverage_outdir} ]; then
-        #                mkdir ${amplicon_coverage_outdir}
-        #                python ${remote_amplicon_coverage_code}/amplicon_covs.py \
-        #                -pv \
-        #                -s ${amplicon_coverage_sample_list} \
-        #                -r ${remote_primers_bed} \
-        #                -o ${amplicon_coverage_outdir} \
-        #                -f ${clusterdir_old}/${clusterdir}/${working}/samples || rmdir ${amplicon_coverage_outdir}
-        #        else
-        #                echo "ERROR: the amplicon coverage output directory ${amplicon_coverage_outdir} already exists. SKIPPING"
-        #                exit 5
-        #        fi
-        #;;
         get_vpipe_commit)
                 cd ${vpipe_code}
                 branch=$(git status | head -n 1 | sed -e 's/# On branch //')
                 commit=$(git log -n 1 ${branch} | head -n 1)
                 echo "Branch: ${branch}\n${commit}"
         ;;
-        #get_viloca_commit)
-        #        cd ${remote_viloca_basedir}/${viloca_processing}
-        #        branch=$(git status | head -n 1 | sed -e 's/# On branch //')
-        #        commit=$(git log -n 1 ${branch} | head -n 1)
-        #        echo "Branch: ${branch}\n${commit}"
-        #;;
         rsv_vpipe_out_to_tsv)
                 conda activate rsv_downstream_analysis
 

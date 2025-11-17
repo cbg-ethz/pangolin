@@ -28,9 +28,6 @@ declare -A lab
 : ${retries:=10}
 : ${iotimeout:=300}
 : ${protocolyaml:=/references/primers.yaml}
-#: ${viloca_basedir:?}
-#: ${viloca_samples:?}
-#: ${viloca_results:?}
 
 if [[ $(realpath $scriptdir) != $(realpath $basedir) ]]; then
     echo "$scriptdir vs $basedir"
@@ -44,7 +41,6 @@ fi
 
 set -e
 
-# cd ${basedir}
 
 umask 0002
 
@@ -140,29 +136,6 @@ callpullrsync_fordb() {
                 ${local_dataset}/${working}/samples/
 }
 export -f callpullrsync_fordb
-
-#callpullrsync_viloca() {
-#    scriptdir=/app/pangolin_src
-#	. ${scriptdir}/config/server.conf
-#
-#	local arglist=( )
-#	if (( ${#@} )); then
-#		arglist=( "${@/#/belfry@euler.ethz.ch::${work_viloca}/${viloca_results}}" )
-#	else
-#		#arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
-#		echo "rsync job didn't receive list"
-#		exit 1;
-#	fi
-#	exec	timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5))	\
-#		rsync	--timeout=${iotimeout}	\
-#		--password-file ${rsync_pass}	\
-#		-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user}  -oConnectTimeout=${contimeout}"	\
-#		-izrltH --fuzzy --fuzzy --inplace	\
-#		--link-dest=${$backupdir}/${viloca_backup_subdir}/	\
-#		"${arglist[@]}"	\
-#		${backupdir}/${viloca_backup_subdir}
-#}
-#export -f callpullrsync_viloca
 
 callpullrsync_rsync() {
     scriptdir=/app/pangolin_src
@@ -319,24 +292,6 @@ case "$1" in
 			touch ${statusdir}/pull_sortsamples_status_success
 		fi
     ;;
-	#pushsamplelist_viloca)
-    #    echo "Pushing the VILOCA sample list to the remote"
-	#	err=0
-	#	rsync	\
-	#		--password-file ${rsync_pass}	\
-	#		-e "ssh -i ${HOME}/.ssh/id_ed25519_rsv -l ${cluster_user} "	\
-	#		-izrltH --fuzzy --fuzzy --inplace	\
-	#		-p --chmod=Dg+s,ug+rw,o-rwx	\
-	#		-g --chown=:"${storgrp}"	\
-	#		${viloca_basedir}/${viloca_samples} \
-	#		belfry@euler.ethz.ch::${viloca_processing}/ || (( ++err ))
-	#	if (( err )); then
-	#		echo "Error: ${err} rsync job(s) failed"
-	#		touch ${viloca_statusdir}/pushsamplelist_viloca_fail
-	#	else
-	#		touch ${viloca_statusdir}/pushsamplelist_viloca_success
-	#	fi
-	#;;
     queue_upload)
         echo "Adding new samples to the upload list"
         validateBatchName "$2"
