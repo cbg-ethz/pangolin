@@ -11,3 +11,17 @@ pangolin_src/movedatafiles.sh
 
 docker-compose.yaml
 time_docker_command.sh
+
+# Ignore BWA index files
+*.amb
+*.ann
+*.bwt
+*.pac
+*.sa
+
+# Ignore FASTA index
+*.fai
+
+# Ignore benchmark files
+*.benchmark
+*.benchmark
