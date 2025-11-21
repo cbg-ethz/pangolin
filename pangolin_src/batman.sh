@@ -1,14 +1,14 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
+scriptdir=/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
-status=${clusterdir_old}/status
+status=${clusterdir_old}/${clusterdir}/status
 vilocadir=${remote_viloca_basedir}/${viloca_processing}
 
 
 
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/resources/miniconda3/bin/conda shell.bash hook)"
 
 #
 # Input validator
@@ -82,24 +82,24 @@ case "$1" in
                 ~/log/rotate
         ;;
         addsamples)
-                lst="${clusterdir_old}/${working}/samples.tsv"
+                lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
                 aviti=0
                 case "$2" in
                         --recent)
-                                lst="${clusterdir_old}/${working}/samples.recent.tsv"
+                                lst="${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"
-                                cat ${clusterdir_old}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
                         ;;
                         --year)
-                                lst="${clusterdir_old}/${working}/samples.recent.tsv"
+                                lst="${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
                                 echo "syncing year: ${year}"
-                                cat ${clusterdir_old}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
+                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
                         ;;
 			--all)
-                                lst="${clusterdir_old}/${working}/samples.tsv"
+                                lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
                                 echo "syncing all from $influenza_startdate"
-                                cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${working}/samples.tsv"
+                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
+                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
                         ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
@@ -107,84 +107,34 @@ case "$1" in
                         ;;
 
                 esac
-                mkdir -p --mode=2770 "${clusterdir_old}/${working}/samples/"
+                
                 #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-                sort -u ${clusterdir_old}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${working}/samples.tsv"
-                #IA_H1
-		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_H1/${working}/samples.tsv
-		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_H1/${working}/samples/"
-                lst="${clusterdir_old}/IA_H1/${working}/samples.tsv"
-                # Add abstractions and generalized to allow for new sequencing methods
-		mv ${clusterdir_old}/IA_H1/${working}/samples_aviti.tsv ${clusterdir_old}/IA_H1/${working}/samples_aviti.tsv.old
-                touch ${clusterdir_old}/IA_H1/${working}/samples_aviti.tsv
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
-                while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then 
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_H1/${working}/samples_aviti.tsv
-                        else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_H1/${working}/samples_pre-aviti.tsv
-                        fi
-                done < ${clusterdir_old}/${working}/samples.tsv
-                #IA_H3
-		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_H3/${working}/samples.tsv
-		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_H3/${working}/samples/"
-                lst="${clusterdir_old}/IA_H3/${working}/samples.tsv"
-                # Add abstractions and generalized to allow for new sequencing methods
-		mv ${clusterdir_old}/IA_H3/${working}/samples_aviti.tsv ${clusterdir_old}/IA_H3/${working}/samples_aviti.tsv.old
-                touch ${clusterdir_old}/IA_H3/${working}/samples_aviti.tsv
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
-                while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_H3/${working}/samples_aviti.tsv
-                        else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_H3/${working}/samples_pre-aviti.tsv
-                        fi
-                done < ${clusterdir_old}/${working}/samples.tsv
-                #IA_MP
-		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_MP/${working}/samples.tsv
-		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_MP/${working}/samples/"
-                lst="${clusterdir_old}/IA_MP/${working}/samples.tsv"
-                # Add abstractions and generalized to allow for new sequencing methods
-		mv ${clusterdir_old}/IA_MP/${working}/samples_aviti.tsv ${clusterdir_old}/IA_MP/${working}/samples_aviti.tsv.old
-                touch ${clusterdir_old}/IA_MP/${working}/samples_aviti.tsv
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
-                while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_MP/${working}/samples_aviti.tsv
-                        else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_MP/${working}/samples_pre-aviti.tsv
-                        fi
-                done < ${clusterdir_old}/${working}/samples.tsv
-                #IA_N1
-		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_N1/${working}/samples.tsv
-		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_N1/${working}/samples/"
-                lst="${clusterdir_old}/IA_N1/${working}/samples.tsv"
-                # Add abstractions and generalized to allow for new sequencing methods
-		mv ${clusterdir_old}/IA_N1/${working}/samples_aviti.tsv ${clusterdir_old}/IA_N1/${working}/samples_aviti.tsv.old
-                touch ${clusterdir_old}/IA_N1/${working}/samples_aviti.tsv
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
-                while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_N1/${working}/samples_aviti.tsv
-                        else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_N1/${working}/samples_pre-aviti.tsv
-                        fi
-                done < ${clusterdir_old}/${working}/samples.tsv
-                #IA_N2
-		cp ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/IA_N2/${working}/samples.tsv
-		cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${sampleset}/{}/" "${clusterdir_old}/IA_N2/${working}/samples/"
-                lst="${clusterdir_old}/IA_N2/${working}/samples.tsv"
-                # Add abstractions and generalized to allow for new sequencing methods
-		mv ${clusterdir_old}/IA_N2/${working}/samples_aviti.tsv ${clusterdir_old}/IA_N2/${working}/samples_aviti.tsv.old
-                touch ${clusterdir_old}/IA_N2/${working}/samples_aviti.tsv 
-                #mv ${clusterdir_old}/${working}/samples.tsv ${clusterdir_old}/${working}/samples.tsv_old
-                while IFS=$'\t' read -r col1 col2 col3 col4; do
-                        if [ "${#col2}" -eq 19 ]; then
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_N2/${working}/samples_aviti.tsv
-                        else
-                                echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/IA_N2/${working}/samples_pre-aviti.tsv
-                        fi
-                done < ${clusterdir_old}/${working}/samples.tsv
+                sort -u ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
+                ################ LOOP ################
+                influenza_subtypes_list=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)
+                #create a copy of the sample.tsv file in each subdirectroy --> in the future these could be adapted if needed
+                for iva_subtype in "${influenza_subtypes_list[@]}"; do
+                        cp ${clusterdir_old}/${clusterdir}/${working}/samples.tsv ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples.tsv
+                done
+
+                for iva_subtype in "${influenza_subtypes_list[@]}"; do
+                        mkdir -p --mode=2770 "${clusterdir_old}/${clusterdir}/${iva_subtype}/vpipe_output/"
+		        
+                        # copy/link vpipe_input samples to vpipe_output directory to create the output directory
+		        cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${clusterdir}/${sampleset}/{}/" "${clusterdir_old}/${clusterdir}/${iva_subtype}/vpipe_output/"
+                        # Add abstractions and generalized to allow for new sequencing methods
+		        mv ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv.old
+                        touch ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv
+                        # copy enties from samples.tsv to samples_aviti.tsv
+                        # TODO: outdated form to recognize the aviti based on string lenght --> to be corrected in the future!
+                        while IFS=$'\t' read -r col1 col2 col3 col4; do
+                                if [ "${#col2}" -eq 19 ]; then 
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv
+                                else
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_pre-aviti.tsv
+                                fi
+                        done < ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples.tsv
+                done
 	;;
         vpipe)
                 declare -A job
@@ -224,10 +174,10 @@ case "$1" in
                 # start first job
                 if (( aviti )); then
                         echo "Processing Aviti"
-                        cd ${clusterdir_old}/working/
+                        cd ${clusterdir_old}/${clusterdir}/working/
 			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_aviti_main.sbatch | sbatch --parsable ${hold} --job-name="FLU-AVITI-vpipe-<${tag}>-cons")"
                 else
-                        cd ${clusterdir_old}/working/
+                        cd ${clusterdir_old}/${clusterdir}/working/
 			job['seq']="$(sed "s/@TAG@/<${tag}>/g" vpipe_influenza_main.sbatch | sbatch --parsable ${hold} --job-name="FLU-ILLUMINA-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
@@ -250,7 +200,7 @@ case "$1" in
 
         ;;
         purgelogs)
-                find ${clusterdir_old}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
+                find ${clusterdir_old}/${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
         ;;
         scratch)
                 temp_scratch="${SCRATCH}/pangolin/temp"
@@ -292,7 +242,7 @@ case "$1" in
                 count_old=0
                 while read s; do
                         (( ++count_all ))
-                        if [[ -r "${clusterdir_old}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
+                        if [[ -r "${clusterdir_old}/${clusterdir}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
                                 (( ++count_old ))
                                 if (( purge )); then
                                         rm -rvf  "${temp_scratch}/samples/${s}"
@@ -314,17 +264,17 @@ case "$1" in
         ;;
         completion)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
-                        gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir_old}/${working}/slurm-${2}.out"
+                        gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir_old}/${clusterdir}/${working}/slurm-${2}.out"
                 fi
         ;;
         df)
-                #df ${clusterdir_old} ${SCRATCH}
-                lquota -2 ${clusterdir_old}
+                #df ${clusterdir_old}/${clusterdir} ${SCRATCH}
+                lquota -2 ${clusterdir_old}/${clusterdir}
                 lquota -2 ${SCRATCH}
         ;;
         garbage)
                 validateBatchName "$2"
-                cd ${clusterdir_old}
+                cd ${clusterdir_old}/${clusterdir}
 
                 for f in ${sampleset}/*/${2}; do
                         garbage=$(dirname "${f//${sampleset}/garbage}")
@@ -377,14 +327,14 @@ case "$1" in
         create_sample_list_viloca)
                 validateBatchName $2
                 echo ",sample,batch" > ${remote_viloca_basedir}/${viloca_staging}
-                cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${remote_viloca_basedir}/${viloca_staging}
+                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1,$2}' | tr " " "," | sed 's/^/,/' >> ${remote_viloca_basedir}/${viloca_staging}
         ;;
         finalize_staging_viloca)
                 mv ${remote_viloca_basedir}/${viloca_staging} ${remote_viloca_basedir}/${viloca_samples}
         ;;
         scanmissingsamples_viloca)
                 validateBatchName "$2"
-                for i in $(cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv | awk '{print $1}')
+                for i in $(cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv | awk '{print $1}')
                 do
                         if [ ! -d ${remote_viloca_basedir}/results_archive/${2}/${i} ]
                         then
@@ -408,7 +358,7 @@ case "$1" in
 			esac
 			shift
 		done
-		bfabricdir=${clusterdir_old}/bfabric-downloads
+		bfabricdir=${clusterdir_old}/${clusterdir}/bfabric-downloads
 		cd ${bfabricdir}
 		sync_fgcz_statusdir=${status}/sync
 		mkdir -p $sync_fgcz_statusdir
@@ -476,7 +426,7 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[gfb]} == 1 )); then
-			${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir_old}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+			${clusterdir}/sort_samples_pybis.py -c ${clusterdir}/config/gfb.conf --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml} --assume-same-protocol ${force} ${summary} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
 		else
 			echo "Skipping gfb"
 		fi
@@ -484,8 +434,8 @@ case "$1" in
 			. <(grep '^google_sheet_patches=' ${clusterdir}/config/fgcz.conf)
  
 			(( google_sheet_patches )) && ${clusterdir}/google_sheet_patches.py
- 			#${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
-          		${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+ 			#${clusterdir}/sort_samples_bfabric_tsv.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
+          		${clusterdir}/sort_samples_bfabric_tsv_aviti.py -c ${clusterdir}/config/fgcz.conf --no-fastqc --protocols=${clusterdir_old}/${clusterdir}/${working}/${protocolyaml}  --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv ${force} ${recent} && bash ${clusterdir}/movedatafiles.sh || fail=1
 
 		else
 			echo "Skipping fgcz"
@@ -514,8 +464,8 @@ case "$1" in
                         [[ $sample =~ $rxsample ]] || continue
                         # check the presence of fasta on each sample
                         echo -n ${sample}/${batch}
-                        #ls ${clusterdir_old}/${working}/samples/${sample}/${batch}
-                        if [[ -e ${clusterdir_old}/IA_H1/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_H3/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_MP/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_N1/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/IA_N2/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
+                        #ls ${clusterdir_old}/${clusterdir}/${working}/samples/${sample}/${batch}
+                        if [[ -e ${clusterdir_old}/${clusterdir}/IA_H1/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_H3/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_MP/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_N1/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_N2/${working}/results/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
                             # this will check for:
                             #  - references/ref_majority.fasta
                             #  - references/consensus.bcftools.fasta & .chain
@@ -534,10 +484,10 @@ case "$1" in
         listsampleset)
                 case "$2" in
                         --recent)
-                                ls -tr ${clusterdir_old}/${sampleset}/samples.20*.tsv | tail -n 12
+                                ls -tr ${clusterdir_old}/${clusterdir}/${sampleset}/samples.20*.tsv | tail -n 12
                         ;;
                         --all)
-                                ls ${clusterdir_old}/${sampleset}/samples.20*.tsv
+                                ls ${clusterdir_old}/${clusterdir}/${sampleset}/samples.20*.tsv
                         ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
@@ -547,14 +497,14 @@ case "$1" in
         ;;
         list_batch_samples)
                 validateBatchName "$2"
-                cat ${clusterdir_old}/${sampleset}/samples.${2}.tsv
+                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${2}.tsv
         ;;
         amplicon_coverage)
                 case "$2" in
                         --batch)
                                 validateBatchName "$3"
                                 echo "Running amplicon coverage on batch $3"
-                                amplicon_coverage_sample_list=${clusterdir_old}/${sampleset}/samples.${3}.tsv
+                                amplicon_coverage_sample_list=${clusterdir_old}/${clusterdir}/${sampleset}/samples.${3}.tsv
                                 amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/${3}
                         ;;
                         --timeframe)
@@ -565,15 +515,15 @@ case "$1" in
                                 if [ -f ${amplicon_coverage_sample_list} ]; then
                                         rm "${amplicon_coverage_sample_list}"
                                 fi
-                                alldates=$(cat ${clusterdir_old}/${working}/samples.tsv | awk '{print $2}' |  awk -F'_' '{print $1}' | awk -v var=$enddate 'NR==1 { print } NR != 1 && $1 <= var { print }' | awk -v var=$startdate 'NR==1 { print } NR != 1 && $1 >= var { print }' | sort | uniq)
+                                alldates=$(cat ${clusterdir_old}/${clusterdir}/${working}/samples.tsv | awk '{print $2}' |  awk -F'_' '{print $1}' | awk -v var=$enddate 'NR==1 { print } NR != 1 && $1 <= var { print }' | awk -v var=$startdate 'NR==1 { print } NR != 1 && $1 >= var { print }' | sort | uniq)
                                 for i in $alldates; do
-                                        grep ${i} ${clusterdir_old}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
+                                        grep ${i} ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv >> ${amplicon_coverage_sample_list}
                                 done
                                 amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
                         ;;
                         --libkit)
                                 echo "Running amplicon coverage for any sample with library kit $3"
-                                grep ${3} ${clusterdir_old}/${working}/samples.wastewateronly.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
+                                grep ${3} ${clusterdir_old}/${clusterdir}/${working}/samples.wastewateronly.tsv > ${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
                                 amplicon_coverage_sample_list=${remote_amplicon_coverage_tempdir}/samples.${3}.tsv
                                 amplicon_coverage_outdir=${remote_amplicon_coverage_workdir}/manual_${3}
                         ;;
@@ -587,7 +537,7 @@ case "$1" in
                         -s ${amplicon_coverage_sample_list} \
                         -r ${remote_primers_bed} \
                         -o ${amplicon_coverage_outdir} \
-                        -f ${clusterdir_old}/${working}/samples || rmdir ${amplicon_coverage_outdir}
+                        -f ${clusterdir_old}/${clusterdir}/${working}/samples || rmdir ${amplicon_coverage_outdir}
                 else
                         echo "ERROR: the amplicon coverage output directory ${amplicon_coverage_outdir} already exists. SKIPPING"
                         exit 5
@@ -620,7 +570,7 @@ case "$1" in
                 for fra in "${fragments[@]}"; do
                         echo "Processing fragment: $fra"
                         # 
-                        vpipe_dir=${clusterdir_old}/$fra/${working} #can this be generalized better?
+                        vpipe_dir=${clusterdir_old}/${clusterdir}/$fra/${working} #can this be generalized better?
                         location_dic=${ww_locations}
 
                         ### run the script per fragment and detect the error staus per frament

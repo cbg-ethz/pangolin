@@ -25,7 +25,12 @@ status/
 ._*
 .snapshot
 .ipynb_checkpoints
-downstream_analysis/
+
+*.log
+
+docker-compose.yaml
+config/server_old.conf
+depr_working
 
 #logs
 slurm-*
