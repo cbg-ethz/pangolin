@@ -1,0 +1,22 @@
+/root/pangolin vs /data/backup
+=========
+Data sync
+=========
+/root/pangolin vs /data/backup
+belry.sh sortsamples
+/root/pangolin/sort_samples_pybis.py -c /root/pangolin/config/gfb.conf --protocols=/mnt/cluster/s3c_setup/working//references/primers.yaml --assume-same-protocol --force --summary --recent=202302
+[················] 0/1 [K[████████████████] done.
+mv: cannot stat 'sampleset/samples.20230106_HN752DRX2.tsv.staging': No such file or directory
+All Ok
+Skipping fgcz
+Skipping h2030
+Skipping viollier
+DeprecationWarning: 'source deactivate' is deprecated. Use 'conda deactivate'.
+=================
+Check current run
+=================
+No current run.
+================
+Results handling
+================
+./carillon.sh: line 172: syntax error near unexpected token `else'

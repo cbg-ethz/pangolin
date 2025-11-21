@@ -1,0 +1,168 @@
+/home/bs-pangolin/pangolin vs /data/backup
+=========
+Data sync
+=========
+/home/bs-pangolin/pangolin vs /data/backup
+Handling raw-read upload requests for Viollier
+deactivated
+---------
+=================
+Check current run
+=================
+No current run.
+================
+Results handling
+================
+no newer results
+push data to vilolier -- deactivated
+=============
+Start new run
+=============
+Check batch against 20221222:
+/data/backup/sampleset/samples.20230106_HN752DRX2.tsv
+x 20221222 20230106
+!20230106:HN752DRX2
+Will start new job
+/home/bs-pangolin/pangolin vs /data/backup
+pushing recent: 
+/data/backup/sampleset/samples.20230106_HN752DRX2.tsv /data/backup/sampleset/samples.202302*.tsv
+cut: '/data/backup/sampleset/samples.202302*.tsv': No such file or directory
+.d..t...... USB_2023_01_02_da4d51fa--CP386--G4--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_da4d51fa--CP386--G4--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227059_HN752DRX2_1_USB_2023_01_02_da4d51fa--CP386--G4--type--opt_TACAGGCC_CATTCGCC_S223_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_77dda48a--CP386--G10--type--opt/20230106_HN752DRX2/raw_data/
+.d..t...... USB_2023_01_02_7a793713--CP386--D10--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_77dda48a--CP386--G10--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227107_HN752DRX2_1_USB_2023_01_02_77dda48a--CP386--G10--type--opt_AGTTGGCT_GGCACTCC_S271_L001_R1.fastq.gz
+<f.stp..... USB_2023_01_02_7a793713--CP386--D10--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227104_HN752DRX2_1_USB_2023_01_02_7a793713--CP386--D10--type--opt_TTGTTCTT_CTACAAGT_S268_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_7c9b313f--CP386--A9--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_7c9b313f--CP386--A9--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227093_HN752DRX2_1_USB_2023_01_02_7c9b313f--CP386--A9--type--opt_ACATCACC_GTTCTGGA_S257_L001_R1.fastq.gz
+.d..t...... USB_2023_01_02_7530e0f9--CP386--D3--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_7530e0f9--CP386--D3--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227048_HN752DRX2_1_USB_2023_01_02_7530e0f9--CP386--D3--type--opt_TGATCTAA_TTAACCTC_S212_L001_R2.fastq.gz
+<f+++++++++ USB_2023_01_02_7c9b313f--CP386--A9--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227093_HN752DRX2_1_USB_2023_01_02_7c9b313f--CP386--A9--type--opt_ACATCACC_GTTCTGGA_S257_L001_R2.fastq.gz
+<f+++++++++ USB_2023_01_02_77dda48a--CP386--G10--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227107_HN752DRX2_1_USB_2023_01_02_77dda48a--CP386--G10--type--opt_AGTTGGCT_GGCACTCC_S271_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/
+.d..t...... USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/
+<f+++++++++ USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/extracted_data/R1_fastqc.html
+<f+++++++++ USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/extracted_data/R2_fastqc.html
+<f+++++++++ USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227088_HN752DRX2_1_USB_2023_01_02_d46c0f4c--CP386--D8--type--opt_CCGCCTCG_ACGTAACA_S252_L001_R1.fastq.gz
+.d..t...... USB_2023_01_02_dae70beb--CP386--A7--type--opt/
+.d..t...... USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/
+<f+++++++++ USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/extracted_data/R1_fastqc.html
+<f+++++++++ USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/extracted_data/R2_fastqc.html
+<f+++++++++ USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227077_HN752DRX2_1_USB_2023_01_02_dae70beb--CP386--A7--type--opt_ACCTCTCA_GCGGTTAA_S241_L001_R1.fastq.gz
+.d..t...... USB_2023_01_02_ddd44336--CP386--H2--type--opt/
+.d..t...... USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/
+<f+++++++++ USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/extracted_data/R1_fastqc.html
+<f+++++++++ USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/extracted_data/R2_fastqc.html
+<f+++++++++ USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227044_HN752DRX2_1_USB_2023_01_02_ddd44336--CP386--H2--type--opt_ATCGTTAG_TGCGAAGT_S208_L001_R1.fastq.gz
+.d..t...... USB_2023_01_02_da2ea020--CP386--F5--type--opt/
+.d..t...... USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/
+<f+++++++++ USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/extracted_data/R1_fastqc.html
+<f+++++++++ USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/extracted_data/R2_fastqc.html
+<f+++++++++ USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227066_HN752DRX2_1_USB_2023_01_02_da2ea020--CP386--F5--type--opt_GAATGTAA_CTGGCACT_S230_L001_R1.fastq.gz
+/home/bs-pangolin/pangolin vs /data/backup
+=========
+Data sync
+=========
+/home/bs-pangolin/pangolin vs /data/backup
+Handling raw-read upload requests for Viollier
+deactivated
+---------
+=================
+Check current run
+=================
+No current run.
+================
+Results handling
+================
+no newer results
+push data to vilolier -- deactivated
+=============
+Start new run
+=============
+Check batch against 20221222:
+/data/backup/sampleset/samples.20230106_HN752DRX2.tsv
+x 20221222 20230106
+!20230106:HN752DRX2
+Will start new job
+/home/bs-pangolin/pangolin vs /data/backup
+pushing recent: 
+/data/backup/sampleset/samples.20230106_HN752DRX2.tsv /data/backup/sampleset/samples.202302*.tsv
+<f+++++++++ USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227077_HN752DRX2_1_USB_2023_01_02_dae70beb--CP386--A7--type--opt_ACCTCTCA_GCGGTTAA_S241_L001_R2.fastq.gz
+cut: '/data/backup/sampleset/samples.202302*.tsv': No such file or directory
+<f+++++++++ USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227088_HN752DRX2_1_USB_2023_01_02_d46c0f4c--CP386--D8--type--opt_CCGCCTCG_ACGTAACA_S252_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_d46c0f4c--CP386--D8--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227088_HN752DRX2_1_USB_2023_01_02_d46c0f4c--CP386--D8--type--opt_CCGCCTCG_ACGTAACA_S252_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227066_HN752DRX2_1_USB_2023_01_02_da2ea020--CP386--F5--type--opt_GAATGTAA_CTGGCACT_S230_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_dae70beb--CP386--A7--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227077_HN752DRX2_1_USB_2023_01_02_dae70beb--CP386--A7--type--opt_ACCTCTCA_GCGGTTAA_S241_L001_R2.fastq.gz
+.d..t...... USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/raw_data/
+<f.stp..... USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227044_HN752DRX2_1_USB_2023_01_02_ddd44336--CP386--H2--type--opt_ATCGTTAG_TGCGAAGT_S208_L001_R2.fastq.gz
+<f+++++++++ USB_2023_01_02_ddd44336--CP386--H2--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227044_HN752DRX2_1_USB_2023_01_02_ddd44336--CP386--H2--type--opt_ATCGTTAG_TGCGAAGT_S208_L001_R2.fastq.gz
+<f+++++++++ USB_2023_01_02_da2ea020--CP386--F5--type--opt/20230106_HN752DRX2/raw_data/BSSE_QGF_227066_HN752DRX2_1_USB_2023_01_02_da2ea020--CP386--F5--type--opt_GAATGTAA_CTGGCACT_S230_L001_R2.fastq.gz
+push succeeded
+starting jobs
+syncing recent: 202301, 202302
+cat: /cluster/project/pangolin/s3c_setup//cluster/project/pangolin/s3c_setup/sampleset/samples.202301*.tsv: No such file or directory
+cat: /cluster/project/pangolin/s3c_setup//cluster/project/pangolin/s3c_setup/sampleset/samples.202302*.tsv: No such file or directory
+sort: cannot read: /cluster/project/pangolin/s3c_setup//cluster/project/pangolin/s3c_setup/sampleset/samples.*.tsv: No such file or directory
+sed: can't read vpipe-no-shorah.bsub: No such file or directory
+No command is specified. Job not submitted.
+seq	
+seqqa	
+snv	
+snvqa	
+hugemem	
+hugememqa	
+20230106_HN752DRX2	173428
+/home/bs-pangolin/pangolin vs /data/backup
+Filesystem                                 1K-blocks       Used  Available Use% Mounted on
+nas12.ethz.ch:/fs1202/id_sis_rp_s3c_covid 5242880000 1032421376 4210458624  20% /data
+Filesystem                                    Inodes     IUsed     IFree IUse% Mounted on
+nas12.ethz.ch:/fs1202/id_sis_rp_s3c_covid 1135077120 602163974 532913146   54% /data
++-----------------------------+-------------+------------------+------------------+------------------+
+| Storage location:           | Quota type: | Used:            | Soft quota:      | Hard quota:      |
++-----------------------------+-------------+------------------+------------------+------------------+
+| /cluster/project/pangolin   | space       |        37.00 TiB |                - |        39.81 TiB |
+| /cluster/project/pangolin   | files       |         35839012 |                - |         80000006 |
++-----------------------------+-------------+------------------+------------------+------------------+
++-----------------------------+-------------+------------------+------------------+------------------+
+| Storage location:           | Quota type: | Used:            | Soft quota:      | Hard quota:      |
++-----------------------------+-------------+------------------+------------------+------------------+
+| /cluster/scratch/bs-pangoli | space       |        57.00 GiB |         2.27 TiB |         2.46 TiB |
+| /cluster/scratch/bs-pangoli | files       |            20422 |          1000000 |          1500000 |
++-----------------------------+-------------+------------------+------------------+------------------+
+Wed, 22 Feb 2023 17:34:28 +0100
+push succeeded
+starting jobs
+syncing recent: 202301, 202302
+cat: /cluster/project/pangolin/s3c_setup//cluster/project/pangolin/s3c_setup/sampleset/samples.202301*.tsv: No such file or directory
+cat: /cluster/project/pangolin/s3c_setup//cluster/project/pangolin/s3c_setup/sampleset/samples.202302*.tsv: No such file or directory
+sort: cannot read: /cluster/project/pangolin/s3c_setup//cluster/project/pangolin/s3c_setup/sampleset/samples.*.tsv: No such file or directory
+sed: can't read vpipe-no-shorah.bsub: No such file or directory
+No command is specified. Job not submitted.
+seq	
+seqqa	
+snv	
+snvqa	
+hugemem	
+hugememqa	
+20230106_HN752DRX2	173430
+/home/bs-pangolin/pangolin vs /data/backup
+Filesystem                                 1K-blocks       Used  Available Use% Mounted on
+nas12.ethz.ch:/fs1202/id_sis_rp_s3c_covid 5242880000 1032421376 4210458624  20% /data
+Filesystem                                    Inodes     IUsed     IFree IUse% Mounted on
+nas12.ethz.ch:/fs1202/id_sis_rp_s3c_covid 1135077120 602163974 532913146   54% /data
++-----------------------------+-------------+------------------+------------------+------------------+
+| Storage location:           | Quota type: | Used:            | Soft quota:      | Hard quota:      |
++-----------------------------+-------------+------------------+------------------+------------------+
+| /cluster/project/pangolin   | space       |        37.00 TiB |                - |        39.81 TiB |
+| /cluster/project/pangolin   | files       |         35839012 |                - |         80000006 |
++-----------------------------+-------------+------------------+------------------+------------------+
++-----------------------------+-------------+------------------+------------------+------------------+
+| Storage location:           | Quota type: | Used:            | Soft quota:      | Hard quota:      |
++-----------------------------+-------------+------------------+------------------+------------------+
+| /cluster/scratch/bs-pangoli | space       |        57.00 GiB |         2.27 TiB |         2.46 TiB |
+| /cluster/scratch/bs-pangoli | files       |            20422 |          1000000 |          1500000 |
++-----------------------------+-------------+------------------+------------------+------------------+
+Wed, 22 Feb 2023 17:34:30 +0100
