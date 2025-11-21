@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 
 # Script to garbage vpipe_outputs. Remember to blacklist them from vpipe run before running the garbage.sh script.
 # Input: Virus subtype e.g. RSVA/RSVB
