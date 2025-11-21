@@ -316,7 +316,7 @@ fi
 #
 
 echo "=============================================================================="
-echo "Spostprocessing of vpipe output to tsv file for genspectrum upload"
+echo "Postprocessing of vpipe output to tsv file for genspectrum upload"
 echo "=============================================================================="
 
 if [ "$run_downstream" -eq "1" ]; then
