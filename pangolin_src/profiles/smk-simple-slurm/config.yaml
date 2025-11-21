@@ -2,7 +2,7 @@ cluster:
   mkdir -p cluster_logs/{rule} &&
   sbatch
     --parsable
-    --job-name=COVID-vpipe-{rule}-{wildcards}
+    --job-name=RSV-vpipe-{rule}-{wildcards}
     --cpus-per-task={threads}
     --mem-per-cpu="$(( {resources.mem_mb} / {threads} ))"
     --time="{resources.runtime}"
