@@ -365,7 +365,7 @@ if [ "$run_downstream" -eq "1" ]; then
             echo "There is a new most recent batch that the downstream analyisis can run on"
             echo "starting postprocessing of vpipe output to tsv"
             #### RUN Downstream Analysis
-            ${remote_batman} vpipe_out_to_tsv
+            ${remote_batman} iva_vpipe_out_to_tsv
             ${scriptdir}/belfry.sh pull_downstream_status 
             if [[ -e ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail ]] && [[ ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/pull_sync_downstream_analysis_success ]]; then
                 echo -e "\e[31;1mPulling sync status of downstream_analysis script failed\e[0m"
