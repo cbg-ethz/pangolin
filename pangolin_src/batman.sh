@@ -194,18 +194,19 @@ case "$1" in
                         job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
                         cd ${clusterdir_old}/${clusterdir}/${working}/
                         # if no fail schedule a full job with snv
-                        if (( shorah )); then
-                                job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe.sbatch)"
-                                if [[ -n "${job['snv']}" ]]; then
-                                        # schedule a gatherqa no matter what happens to snv
-                                        job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
-                                        # schedule a hugemem job if snvjob failed
-                                        job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe-hugemem.sbatch)"
-                                        # schedule a qa afterward
-                                        [[ -n "${job['hugemem']}" ]]    && \
-                                                job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
-                                fi
-                        fi      
+                        #depreciated - will be removes in future
+                        #if (( shorah )); then
+                        #        job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe.sbatch)"
+                        #        if [[ -n "${job['snv']}" ]]; then
+                        #                # schedule a gatherqa no matter what happens to snv
+                        #                job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
+                        #                # schedule a hugemem job if snvjob failed
+                        #                job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe-hugemem.sbatch)"
+                        #                # schedule a qa afterward
+                        #                [[ -n "${job['hugemem']}" ]]    && \
+                        #                        job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
+                        #        fi
+                        #fi      
                 fi >&2
                 # write job chain list
                 for v in "${list[@]}"; do
@@ -225,66 +226,67 @@ case "$1" in
         purgelogs)
                 find ${clusterdir_old}/${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
         ;;
-        scratch)
-                temp_scratch="${SCRATCH}/pangolin/temp"
-                olderthan=60
-                purge=0
-                loop=0
-                filter=
-                while [[ -n $2 ]]; do
-                        case "$2" in
-                                --minutes-ago)
-                                        if [[ ! "${3}" =~ ^[[:digit:]]+$ ]]; then
-                                                echo "parameter of ${2} must be a number of minutes (digits only), got <${3}> instead" > /dev/stderr
-                                                exit 2
-                                        fi
-                                        shift
-                                        olderthan=$2
-                                ;;
-                                --loop)
-                                        loop=1
-                                ;&
-                                --purge)
-                                        purge=1
-                                ;;
-                                *)
-                                        echo "Unkown parameter ${2}" > /dev/stderr
-                                        exit 2
-                                ;;
-                        esac
-                        shift
-                done
-
-                if (( purge )); then
-                        echo "purging in ${temp_scratch}..."
-                else
-                        echo "listing in ${temp_scratch}..."
-                fi
-
-                count_all=0
-                count_old=0
-                while read s; do
-                        (( ++count_all ))
-                        if [[ -r "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
-                                (( ++count_old ))
-                                if (( purge )); then
-                                        rm -rvf  "${temp_scratch}/vpipe_output/samples/${s}"
-                                else
-                                        echo "${s}";
-                                fi
-                        fi;
-                done < <((cd "${temp_scratch}/" && find samples/ -type f ${filter} ) | grep -oP '(?<=samples/)[^/]+/[^/]+(?=/)' | sort -u) | tee /dev/stderr | wc -l  2>&1
-                echo "Samples: ${count_old} old / ${count_all} total"
-
-                if (( loop )); then
-                        echo -e '\n\e[38;5;45;1mYou just keep on trying\e[0m\n\e[38;5;208;1mTill you run out of cake\e[0m'
-                        if sleep "$(( 5 + olderthan))m"; then
-                                # loop if no breaks
-                                exec "${0}" scratch --minutes-ago "${olderthan}" --loop
-                        fi
-                        echo "I'm not even angry"
-                fi
-        ;;
+        #depreciated function - remove in future
+        #scratch)
+        #        temp_scratch="${SCRATCH}/pangolin/temp"
+        #        olderthan=60
+        #        purge=0
+        #        loop=0
+        #        filter=
+        #        while [[ -n $2 ]]; do
+        #                case "$2" in
+        #                        --minutes-ago)
+        #                                if [[ ! "${3}" =~ ^[[:digit:]]+$ ]]; then
+        #                                        echo "parameter of ${2} must be a number of minutes (digits only), got <${3}> instead" > /dev/stderr
+        #                                        exit 2
+        #                                fi
+        #                                shift
+        #                                olderthan=$2
+        #                        ;;
+        #                        --loop)
+        #                                loop=1
+        #                        ;&
+        #                        --purge)
+        #                                purge=1
+        #                        ;;
+        #                        *)
+        #                                echo "Unkown parameter ${2}" > /dev/stderr
+        #                                exit 2
+        #                        ;;
+        #                esac
+        #                shift
+        #        done
+#
+        #        if (( purge )); then
+        #                echo "purging in ${temp_scratch}..."
+        #        else
+        #                echo "listing in ${temp_scratch}..."
+        #        fi
+#
+        #        count_all=0
+        #        count_old=0
+        #        while read s; do
+        #                (( ++count_all ))
+        #                if [[ -r "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
+        #                        (( ++count_old ))
+        #                        if (( purge )); then
+        #                                rm -rvf  "${temp_scratch}/vpipe_output/samples/${s}"
+        #                        else
+        #                                echo "${s}";
+        #                        fi
+        #                fi;
+        #        done < <((cd "${temp_scratch}/" && find samples/ -type f ${filter} ) | grep -oP '(?<=samples/)[^/]+/[^/]+(?=/)' | sort -u) | tee /dev/stderr | wc -l  2>&1
+        #        echo "Samples: ${count_old} old / ${count_all} total"
+#
+        #        if (( loop )); then
+        #                echo -e '\n\e[38;5;45;1mYou just keep on trying\e[0m\n\e[38;5;208;1mTill you run out of cake\e[0m'
+        #                if sleep "$(( 5 + olderthan))m"; then
+        #                        # loop if no breaks
+        #                        exec "${0}" scratch --minutes-ago "${olderthan}" --loop
+        #                fi
+        #                echo "I'm not even angry"
+        #        fi
+        #;;
         completion)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
                         gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir_old}/${clusterdir}/${working}/slurm-${2}.out"
