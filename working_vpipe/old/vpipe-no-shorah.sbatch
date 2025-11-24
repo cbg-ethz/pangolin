@@ -13,16 +13,6 @@ logfile=/cluster/scratch/bs-pangolin/log.$LSB_JOBID
 # tee all output from this script into logfile
 exec > >(tee -a $logfile) 2>&1
 
-function sendmail {
-   # email proxy at bs-stadler04 since the smtp0 server is not reachable from euler directly:
-   echo "see $logfile and $LSB_OUTPUTFILE" | ssh bs-pangolin@d@bs-stadler04.ethz.ch ./sendmail.sh \
-	ivan.topolsky@bsse.ethz.ch carrara@nexus.ethz.ch shuqing.yu@nexus.ethz.ch \
-        schmittu@ethz.ch \
-        -s "'VPIPE FAILED: please check $LSB_OUTPUTFILE'"
-}
-
-trap sendmail ERR
-
 set -e
 
 umask 0007
