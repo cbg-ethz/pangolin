@@ -28,7 +28,7 @@ mkdir ${mode:+--mode=${mode}} -p ${statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${viloca_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${uploader_statusdir}
 mkdir ${mode:+--mode=${mode}} -p ${amplicon_coverage_statusdir}
-mkdir ${mode:+--mode=${mode}} -p ${downstream_analysis_statusdir} ###
+mkdir ${mode:+--mode=${mode}} -p ${downstream_analysis_statusdir}
 
 touch ${statusdir}/oh_hai_im_looping
 
@@ -47,40 +47,9 @@ echo '========='
 echo 'This is the Influenza automation'
 echo '========='
 
-#
-# Phase 1: periodic data sync
-#
-
-echo '========='
-echo 'Data sync'
-echo '========='
-
-set -e
-
-if [[ -n $skipsync ]]; then
-    echo "${skipsync} will be skipped."
-fi
-
-if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz
-    ${scriptdir}/belfry.sh pull_sync_status
-    if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
-        echo "\e[31;1Pulling sync status files failed\e[0m"
-        echo "The automation will not be aware of any new deliveries"
-    else
-        if [ $backup_fgcz_raw -eq "1" ]; then
-            ${remote_backup} pull_fgcz_data --recent
-            if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
-                echo "\e[31;1Backup of fgcz raw data failed\e[0m"
-                echo "The system will retry next loop"
-            fi
-        else
-            echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
-        fi
-    fi
-fi
 echo "Sorting samples"
-${remote_batman} sortsamples --recent $([[ ${statusdir}/syncopenbis_last -nt ${statusdir}/syncopenbis_new ]] && echo '--summary')
+${remote_batman} sortsamples --recent
+
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
     echo "\e[31;1Pulling sortsamples status files failed\e[0m"
@@ -141,7 +110,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
         case "$j" in
             seqqa)
                 if [ $backup_vpipe -eq "1" ]; then
-                    ${remote_backup} pullsamples_noshorah --recent
+                    ${remote_backup} pullsamples_noshorah --recent || echo "ERROR: failed to backup vpipe results"
                     if [[ ( -e ${statusdir}/pullsamples_noshorah_fail ) && ( ${statusdir}/pullsamples_noshorah_fail -nt ${statusdir}/pullsamples_noshorah_success ) ]]; then
                         echo "\e[31;1mpulling data for database failed\e[0m"
                         (( ++stillrunning ))
@@ -165,7 +134,7 @@ if [[ ( -e ${statusdir}/vpipe_started ) && ( ( ! -e ${statusdir}/vpipe_ended ) |
 
     if (( stillrunning == 0 )); then
         if [ $backup_vpipe -eq "1" ]; then
-            ${remote_backup} pullsamples_noshorah --recent
+            ${remote_backup} pullsamples_noshorah --recent || echo "ERROR: failed to backup vpipe results"
             if [[ ( ! -e ${statusdir}/pullsamples_noshorah_success ) || ( ${statusdir}/pullsamples_noshorah_success -nt ${statusdir}/pullsamples_noshorah_fail ) ]]; then
                 echo "Pulling data success!"
             else
@@ -287,9 +256,6 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
                 exit 1
             fi
         fi
-        if [[ ( ! -e ${statusdir}/syncopenbis_new ) || ( ( -e ${statusdir}/vpipe_started ) && ( ${statusdir}/vpipe_started -nt ${statusdir}/syncopenbis_new ) ) ]]; then
-            echo 'oops: something fishy: no downloaded data newer than last run ?' > /dev/stderr
-        fi
         # point of comparison for dates:
         if [[ -e ${statusdir}/vpipe_ended ]]; then
             lastrun=${statusdir}/vpipe_ended
@@ -343,9 +309,16 @@ else
     echo 'There is already a vpipe run going on'
 fi
 
+
+
 #
-# postprocessing of vpipe output to tsv file for SPSP upload
+# Phase 4: postprocessing of vpipe output to tsv file for genspectrum upload
 #
+
+echo "=============================================================================="
+echo "Postprocessing of vpipe output to tsv file for genspectrum upload"
+echo "=============================================================================="
+
 if [ "$run_downstream" -eq "1" ]; then
     # 1. check if there is a current vpipe run: if not start the downstream processing of the results
     if [[ ${statusdir}/vpipe_ended -nt ${statusdir}/vpipe_started ]]; then
@@ -353,15 +326,21 @@ if [ "$run_downstream" -eq "1" ]; then
         if [[ "$check_file_exists" == "0" ]]; then
             touch ${downstream_analysis_statusdir}/downstream_new
         fi
-        # if no vpipe is running check if downstream already ran on the latest batch:
+        #load the status of the last downstream analyisis:
+        ds_success="${downstream_analysis_statusdir}/iva_downstream_analysis_success"
+        ds_fail="${downstream_analysis_statusdir}/iva_downstream_analysis_fail"
+
+        # check if downstream already ran on the latest batch:
         lastbatch_downs=$(cat $(ls -Art ${downstream_analysis_statusdir}/downstream_new* | tail -n 1))
         echo "Last batch analysed by downstream analysis is ${lastbatch_downs}"
         vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
         vpipe_enddate=${vpipe_enddate#*.} #take only the date form the string stored in vpipe_ended
         lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
         echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
-        #### check the latest vpipe batch with the latest downstream analysis batch:
-        if [[ $lastbatch_downs != $lastbatch_vpipe ]]; then
+        #### check the latest vpipe batch with the latest downstream analysis batch and the success of the brevious downstream analysis:
+        # run case 1: $ds_success newer than $ds_fail  AND  lastbatch_downs != lastbatch_vpipe
+        # run case 2: $ds_fail newer than $ds_success
+        if { [[ "$lastbatch_downs" != "$lastbatch_vpipe" ]] && [[ "$ds_success" -nt "$ds_fail" ]]; } || [[ "$ds_fail" -nt "$ds_success" ]]; then
             echo "There is a new most recent batch that the downstream analyisis can run on"
             echo "starting postprocessing of vpipe output to tsv"
             #### RUN Downstream Analysis
@@ -372,10 +351,10 @@ if [ "$run_downstream" -eq "1" ]; then
                 echo "The automation will not be aware of postprocessing of vpipe output status"
             else
                 # check the status of the downstream processing
-                if [[ ( -e ${downstream_analysis_statusdir}/detect_AAMutations_fail ) && ( ${downstream_analysis_statusdir}/detect_AAMutations_fail -nt ${downstream_analysis_statusdir}/detect_AAMutations_success ) ]]; then #check the correct files
+                if [[ ( -e ${downstream_analysis_statusdir}/iva_downstream_analysis_fail ) && ( ${downstream_analysis_statusdir}/iva_downstream_analysis_fail -nt ${downstream_analysis_statusdir}/iva_downstream_analysis_success ) ]]; then #check the correct files
                         echo "\e[31;1Downstream_analysis detect_AAMutations.R script failed\e[0m"
                 else
-                    echo "\e[31;1Downstream_analysis detect_AAMutations.R script sucsess\e[0m"
+                    echo "\e[31;1Downstream_analysis detect_AAMutations.R script success\e[0m"
                     #create status file to store the latest batch in
                     echo $lastbatch_vpipe > ${downstream_analysis_statusdir}/downstream_new.${now}
                 fi
@@ -388,252 +367,6 @@ if [ "$run_downstream" -eq "1" ]; then
     fi
 else
     echo "skipping downstream analysis"
-fi
-
-#
-# Phase 4: run viloca on new samples if no viloca instance is running
-#
-if [ "$run_viloca" -eq "1" ]; then
-
-    echo "========================"
-    echo "Check current VILOCA run"
-    echo "========================"
-
-
-    if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
-        stillrunning=0
-        timelimit_reached=0
-        # skip missing
-        id=$(cat ${viloca_statusdir}/viloca_started)
-        id=${id#"Submitted batch job "}
-        if [[ -z "${id}" ]]; then
-            echo "VILOCA - $id : (not started)"
-        fi
-        # skip already finished
-        if [[ ( -e ${viloca_statusdir}/viloca_${j}_ended ) && ( ${viloca_statusdir}/viloca_${j}_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
-            old="$(<${viloca_statusdir}/viloca_${j}_ended)"
-            if [[ "${id}" == "${old}" ]]; then
-                echo "VILOCA : $id already finished"
-                stillrunning=0
-            else
-                echo "VILOCA : mismatch $id vs $old"
-            fi
-        fi
-        # cluster status
-        stat=$(${remote_batman} job "${id}" || echo "(no answer)")
-        if [[ ( -n "${stat}" ) && ( "${stat}" =~ ^(RUNNING|PENDING|COMPLETING|CONFIGURING|SUSPENDED|\(no answer \)).* ) ]]; then            # running
-            echo -n "VILOCA : $id : $stat"
-            echo "VILOCA : $id still running"
-            (( ++stillrunning ))
-        fi
-        if [[ ( -n "${stat}" ) && ( "${stat}" =~ ^( TIMEOUT ) ) ]]; then
-            echo -n "VILOCA : $id : $stat\n"
-            echo "VILOCA : $id reached time limit"
-            (( ++timelimit_reached ))
-        fi
-        if (( stillrunning == 0 )); then
-            if (( timelimit_reached > 0)); then
-                echo "Previous VILOCA run cancelled due to time limit. Restarting it"
-                ${remote_batman} unlock_viloca && \
-                ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
-                if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-                    cat ${viloca_statusdir}/viloca.${now} > ${viloca_statusdir}/viloca_started
-                    cat ${viloca_statusdir}/viloca_started
-                    printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
-                    ${remote_batman} get_viloca_commit | tee -a ${viloca_statusdir}/viloca_new.${now}
-                fi
-            else
-                lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-                echo "Archiving the VILOCA run on batch ${lastbatch_viloca} to make space in the results directory for a new run"
-                ${remote_batman} archive_viloca_run ${lastbatch_viloca} || echo -e '...\e[33;1mFAILED TO ARCHIVE THE VILOCA RUN on batch ${lastbatch_viloca}\e[0m'
-                echo "${id}" > ${viloca_statusdir}/viloca_${j}_ended
-                echo "$(basename $(realpath ${viloca_statusdir}/viloca_started))" > ${viloca_statusdir}/viloca_ended
-                if [ $backup_viloca -eq "1" ]; then
-                    ${remote_backup} pullresults_viloca --batch ${lastbatch_viloca} > ${viloca_statusdir}/backup_viloca_status_${now}
-                    if [[ ( ! -e ${viloca_statusdir}/backup_viloca_status_${now} ) || $(cat ${viloca_statusdir}/backup_viloca_status_${now}) -eq "SUCCESS" ]]; then
-                        echo "Backup of VILOCA results on bs-bewi08 success!"
-                    else
-                        echo "\e[31;1mBackup of VILOCA results on bs-bewi08 failed\e[0m"
-                    fi
-                else
-                    echo "\e[33;1mBackup of VILOCA results on bs-bewi08 DISABLED\e[0m"
-                fi
-            fi
-        else
-            echo VILOCA still running
-        fi
-    else
-        echo 'No current VILOCA run.'
-    fi
-
-    #
-    # Phase 5: restart VILOCA runs if new data
-    #
-
-    echo "===================="
-    echo "Start new VILOCA run"
-    echo "===================="
-    mustrun_viloca=0
-    if [[ ( ( ! -e ${viloca_statusdir}/viloca_ended ) && ( ! -e ${viloca_statusdir}/viloca_started ) ) || ( ${viloca_statusdir}/viloca_ended -nt ${viloca_statusdir}/viloca_started ) ]]; then
-        lastbatch_viloca=$(cat $(ls -Art ${viloca_statusdir}/viloca_new* | tail -n 1) | head -n 1)
-        echo "Last batch analysed by VILOCA is ${lastbatch_viloca}"
-        vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
-        vpipe_enddate=${vpipe_enddate#*.}
-        lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
-        echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
-        if [[ $lastbatch_viloca != $lastbatch_vpipe ]]; then
-            echo "There is a new most recent batch that VILOCA can run on"
-            t=$(${remote_batman} listsampleset --all | grep samples.${lastbatch_vpipe}.tsv)
-            if [[ ! $t =~ samples.([[:digit:]]{8})_([[:alnum:]]{5,}(-[[:digit:]]+)?).tsv$ ]]; then
-                            echo "oops: Can't parse <${t}> ?!" > /dev/stderr
-            fi
-            ${remote_batman} create_sample_list_viloca ${lastbatch_vpipe}
-            (( ++mustrun_viloca ))
-        else
-            echo "No new batch to run VILOCA on"
-            echo "Checking if the previous batch was successful"
-            not_processed=($(${remote_batman} scanmissingsamples_viloca $lastbatch_viloca))
-            if [ "${not_processed}" -gt "0" ]; then
-                echo "Not all samples have been successfully completed. Repeating the run"
-                (( ++mustrun_viloca ))
-            else
-                echo "Previous batch appears successful"
-                echo "Nothing to do for VILOCA"
-            fi
-        fi
-
-		# are we allowed to submit jobs ?
-        if (( donotsubmit_viloca == 1 )); then
-            echo -e '\e[35;1mWill NOT submit VILOCA jobs\e[0m...' > /dev/stderr
-            if (( mustrun_viloca > 0 )); then
-                echo 'VILOCA submit blocked' > ${viloca_statusdir}/viloca_submit_fail
-                echo -e '...\e[33;1mbut there are new VILOCA jobs that should be started !!!\e[0m' > /dev/stderr
-            else
-                echo '...and there is nothing VILOCA-related to run anyway' > /dev/stderr
-            fi
-        # start jobs ?
-        elif (( mustrun_viloca > 0 )); then
-            echo 'New VILOCA job waiting. Checking if Viloca is already running...'
-            if [[ ( -e ${viloca_statusdir}/viloca_started ) && ( ( ! -e ${viloca_statusdir}/viloca_ended ) || ( ${viloca_statusdir}/viloca_started -nt ${viloca_statusdir}/viloca_ended ) ) ]]; then
-                echo "BUT there is already a VILOCA instance running! Retrying during the next loop"
-            else
-                echo 'starting VILOCA jobs'
-				# we keep the staging file until the actual run so that, if anything goes wrong and VILOCA
-				# does not start for a while, the staging will be constantly updated with the latest batch
-				# and VILOCA will run only on the latest once it restarts
-				${remote_batman} finalize_staging_viloca
-                # must run
-                ${remote_batman} viloca > ${viloca_statusdir}/viloca.${now}    &&    \
-                    if [[ -s ${viloca_statusdir}/viloca.${now} ]]; then
-                        cat ${viloca_statusdir}/viloca.${now} | tee ${viloca_statusdir}/viloca_started
-                        echo ${lastbatch_vpipe} > ${viloca_statusdir}/viloca_new.${now}
-                        printf "%s\t$(date '+%H%M%S')\n" "${runreason[@]}" | tee -a ${viloca_statusdir}/viloca_new.${now}
-                        ${remote_batman} get_viloca_commit | tee -a ${viloca_statusdir}/viloca_new.${now}
-                        if [[ -n "${mailto[*]}" ]]; then
-                            (
-                                echo '(Possibly new) samples not having VILOCA results yet found:'
-                                printf ' - %s\n' "${lastbatch_vpipe}"
-                                echo -e '\nStarting VILOCA on Euler:'
-                                cat ${viloca_statusdir}/viloca_started
-                            ) | mail -s '[Automation-carillon] Starting VILOCA on Euler' "${mailto[@]}"
-                            # -r "${mailfrom}"
-                        fi
-                    else
-                        echo "ERROR: could not create ${viloca_statusdir}/viloca.${now}"
-                    fi
-            fi
-        else
-            echo 'No new VILOCA run to submit'
-        fi
-    else
-        echo 'There is already A VILOCA run going on'
-    fi
-else
-    echo 'Skipping VILOCA as per configuration'
-fi
-
-
-
-#
-# Phase 6: run uploader on new chunk
-#
-if [ ${donotsubmit_uploader} -eq "0" ]; then
-
-
-    echo "===================="
-    echo "Start new UPLOADER run"
-    echo "===================="
-    echo "Checking the upload quotas:"
-    echo "----"
-    if [[ ! -f ${uploader_number_status}.${now} ]]; then
-        echo "No status file with the amount of samples uploaded found. Assuming first run of the day"
-        echo 0 > ${uploader_number_status}.${now}
-    fi
-    uploaded_number=$(cat ${uploader_number_status}.${now})
-    echo "Daily sample number: ${uploaded_number}/${upload_number_quota}"
-    echo "Daily size: $((${uploaded_number} * ${upload_avg_size}))/${upload_size_quota} MB"
-    echo "----"
-    next_number=$((${uploaded_number} + ${uploader_sample_number}))
-    echo "asked to upload ${uploader_sample_number} new samples, consisting of about $((${uploader_sample_number} * ${upload_avg_size})) MB"
-    if [ "${next_number}" -gt "${upload_number_quota}" ] || [ "$((${next_number} * ${upload_avg_size}))" -gt "${upload_size_quota}" ]; then
-        echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
-        touch ${uploader_statusdir}/uploader_quota_hit.${now}
-    else
-        echo 'starting UPLOADER job'
-        ${scriptdir}/belfry.sh upload && \
-        echo $(( ${uploaded_number} + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
-        if [ ${clean_sendcrypt_temp} -eq "1" ]; then
-            echo "Cleaning the temporary folders generated by SendCrypt"
-            ${scriptdir}/belfry.sh clean_sendcrypt_temp
-        fi
-    fi
-
-    if [ $backup_uploader -eq "1" ]; then
-        ${scriptdir}/belfry.sh backup_uploader > ${uploader_statusdir}/backup_uploader_status_${now}
-        if [[ ( ! -e ${uploader_statusdir}/backup_uploader_status_${now} ) || $(cat ${uploader_statusdir}/backup_uploader_status_${now}) -eq "SUCCESS" ]]; then
-            echo "Backup of UPLADER results on bs-bewi08 success!"
-        else
-            echo "\e[31;1mBackup of UPLOADER results on bs-bewi08 failed\e[0m"
-        fi
-    else
-        echo "\e[33;1mBackup of UPLOADER results on bs-bewi08 DISABLED\e[0m"
-    fi 
-else
-    echo "Skipping UPLOADER as per configuration"
-fi
-
-
-#
-# Phase 7: run amplicon coverage on new batch
-#
-if [ $run_amplicon_coverage -eq "1" ]; then
-    echo "===================="
-    echo "Start new AMPLICON COVERAGE run"
-    echo "===================="
-    lastbatch_amplicon_coverage=$(cat $(ls -Art ${amplicon_coverage_statusdir}/amplicon_coverage_new* | tail -n 1) | head -n 1)
-    echo "Last batch analysed by AMPLICON COVERAGE is ${lastbatch_amplicon_coverage}"
-    vpipe_enddate=$(cat ${statusdir}/vpipe_ended)
-    vpipe_enddate=${vpipe_enddate#*.}
-    lastbatch_vpipe=$(cat ${statusdir}/vpipe_new.${vpipe_enddate} | head -n 1 | awk '{print $1}' | tail -n 1)
-    echo "The most recent completed V-Pipe run is on batch ${lastbatch_vpipe}"
-    if [[ $lastbatch_amplicon_coverage != $lastbatch_vpipe ]]; then
-        echo "There is a new most recent batch that AMPLICON COVERAGE can run on"
-        ${remote_batman} amplicon_coverage --batch ${lastbatch_vpipe} && echo ${lastbatch_vpipe} > ${amplicon_coverage_statusdir}/amplicon_coverage_new.${now}
-    else
-        echo "No new batch to run AMPLICON COVERAGE on"
-    fi
-    if [ ${backup_amplicon_cov} -eq "1" ]; then
-        ${remote_backup} pullresults_amplicon_cov > ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now}
-        if [[ ( ! -e ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} ) || $(cat ${amplicon_coverage_statusdir}/backup_ampliconcov_status_${now} | tail -n 1) -eq "SUCCESS" ]]; then
-            echo "Backup of AMPLICON COVERAGE results on bs-bewi08 success!"
-        else
-            echo "\e[31;1mBackup of AMPLICON COVERAGE results on bs-bewi08 failed\e[0m"
-        fi
-    else
-        echo "\e[33;1mBackup of AMPLICON COVERAGE results on bs-bewi08 DISABLED\e[0m"
-    fi 
-else
-    echo "Skipping AMPLICON COVERAGE as per configuration"
 fi
 
 

@@ -1,0 +1,17 @@
+FLU_pooled:
+  name: SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers/NA_primers.bed
+FLU_pooled_old:
+  name: SARS-CoV-2 ARTIC V5.3.2 NEB Ultra II
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers/NA_primers.bed
+Amplicon Barcoding:
+  name: Amplicon Barcoding
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers/NA_primers.bed
+test:
+  name: test
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers/NA_primers.bed
+FLU:
+  name: FLU
+  alias:
+    - Influenza
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers/NA_primers.bed

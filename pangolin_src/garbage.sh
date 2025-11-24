@@ -1,9 +1,10 @@
 #!/bin/bash
 
+# Script to garbage vpipe_outputs. Remember to blacklist them from vpipe run before running the garbage.sh script.
 # Input: Virus subtype e.g. IA_H1
 # Infput: Batch e.g. 20250417_2427493980
 
-dir=/cluster/project/pangolin/influenza_pipeline/pangolin/pangolin_src
+dir=/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src
 . ${dir}/config/server.conf
 . ${dir}/config/fgcz.conf
 
@@ -45,7 +46,7 @@ fi
 echo "Variant is: $variant"
 echo "Batch is: $batch"
 
-variant_base_dir="${clusterdir_old}/${variant}/${working}/results" #variant/workdir/results
+variant_base_dir="${clusterdir_old}/${clusterdir}/${variant}/vpipe_output" #variant/workdir/results
 
 cd $variant_base_dir
 garbage_dir="${variant_base_dir}/garbage"
@@ -84,8 +85,8 @@ for sample in "${samples_from_batch[@]}"; do
 done
 
 
-path_to_samples_tsv="${clusterdir_old}/${variant}/${working}/samples_aviti.tsv"
-backup_samples_tsv="${garbage_dir}/${batch}_backup_samples_aviti.tsv"
+path_to_samples_tsv="${clusterdir_old}/${clusterdir}/${variant}/${working}/samples.tsv"
+backup_samples_tsv="${garbage_dir}/${batch}_backup_samples.tsv"
 
 if [[ ! -f "${path_to_samples_tsv}" ]]; then
   echo "ERROR: File ${path_to_samples_tsv} not found!" >&2

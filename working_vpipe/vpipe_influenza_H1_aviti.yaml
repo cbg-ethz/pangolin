@@ -1,0 +1,40 @@
+general:
+    virus_base_config: ""
+    preprocessor: "skip"
+    aligner: "bwa"
+    primers_trimmer: "samtools"
+    threads: 6
+    snv_caller: "lofreq"
+input:
+    datadir: "/cluster/project/pangolin/processes/influenza/vpipe_input"
+    samples_file: "/cluster/project/pangolin/processes/influenza/IA_H1/working/samples.tsv"
+    read_length: 251
+    protocols_file: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/primers.yaml"
+    primers_bedfile: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed"
+    inserts_bedfile: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed"
+    reference: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/H1.fasta"
+    primers_trim_cutoff: 200
+output:
+    datadir: "/cluster/project/pangolin/processes/influenza/IA_H1/vpipe_output"
+    trim_primers: true
+    snv: true
+    local: false
+    global: false
+    QA: false
+    diversity: false
+gunzip:
+    mem: 100000
+sam2bam:
+    mem: 5000
+ref_bwa_index:
+    mem: 65536
+lofreq:
+    consensus: false
+    time: 160
+    mem: 4000
+snv:
+    consensus: false
+    localscratch: $TMPDIR
+    time: 240
+    mem: 1024
+    threads: 64

@@ -1,0 +1,43 @@
+general:
+    virus_base_config: ""
+    preprocessor: "skip"
+    aligner: "bwa"
+    primers_trimmer: "samtools"
+    snv_caller: "lofreq"
+    threads: 6
+
+input:
+    datadir: "/cluster/project/pangolin/influenza_pipeline/IA_H3/working/samples"
+    samples_file: "/cluster/project/pangolin/influenza_pipeline/IA_H3/working/samples_aviti.tsv"
+    read_length: 251
+    protocols_file: "references/primers.yaml"
+    reference: "references/nextstrain/H3.fasta"
+    primer_bedfile: "references/primers/HA_primers.bed"
+    primers_trim_cutoff: 200
+output:
+    datadir: "results"
+    trim_primers: true
+    snv: true
+    local: false
+    global: false
+    QA: false
+    diversity: false
+gunzip:
+    mem: 100000
+sam2bam:
+    mem: 5000
+ref_bwa_index:
+    mem: 65536
+lofreq:
+    consensus: false
+    time: 160
+    mem: 4000
+snv:
+    consensus: false
+    localscratch: $TMPDIR
+    time: 240
+    mem: 1024
+    threads: 64
+
+applications:
+    cojac: "/cluster/project/pangolin/test/cojac-wrapper"

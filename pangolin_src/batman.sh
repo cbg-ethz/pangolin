@@ -410,11 +410,11 @@ case "$1" in
                         # Check the result of the command and create the appropriate status file
                         if  [[ "$detect_command" == "0" ]] ; then
                                 #echo "Command succeeded."
-                                touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_success"
+                                touch "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_success"
 
                         else
                                 #echo "Command failed."
-                                touch "${downstream_analysis_statusdir}/detect_AAMutations_${fra}_fail"
+                                touch "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_fail"
                                 process_fail=$((process_fail + 1))
                         fi
 
@@ -422,11 +422,11 @@ case "$1" in
                 # to track the whole process in one file:
                 if [[ "$process_fail" == "0" ]]; then
                         #echo "Command succeeded."
-                        touch "${downstream_analysis_statusdir}/detect_AAMutations_success"
+                        touch "${downstream_analysis_statusdir}/iva_downstream_analysis_success"
 
                 else
                         #echo "Command failed."
-                        touch "${downstream_analysis_statusdir}/detect_AAMutations_fail"
+                        touch "${downstream_analysis_statusdir}/iva_downstream_analysis_fail"
                         
                 fi
 

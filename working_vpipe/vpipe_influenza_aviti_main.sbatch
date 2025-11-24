@@ -3,30 +3,31 @@
 #SBATCH --time=72:00:00
 
 echo "Starting main influenza A Aviti vpipe job with ID $SLURM_JOB_ID"
+file_path="/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe"
 
 # Array to store child job IDs
 child_jobs=()
 failure_detected=0
 
 # Submit child jobs
-cd /cluster/project/pangolin/influenza_pipeline/IA_H1/working/
-job_id=$(sbatch  /cluster/project/pangolin/influenza_pipeline/IA_H1/working/vpipe_influenza_aviti.sbatch | awk '{print $NF}')
+cd /cluster/project/pangolin/processes/influenza/IA_H1/working/
+job_id=$(sbatch ${file_path}/vpipe_influenza_H1_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child IA_H1 job $i with ID $job_id"
 child_jobs+=($job_id)
-cd /cluster/project/pangolin/influenza_pipeline/IA_H3/working/
-job_id=$(sbatch  /cluster/project/pangolin/influenza_pipeline/IA_H3/working/vpipe_influenza_aviti.sbatch | awk '{print $NF}')
+cd /cluster/project/pangolin/processes/influenza/IA_H3/working/
+job_id=$(sbatch  ${file_path}/vpipe_influenza_H3_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child IA_H3 job $i with ID $job_id"
 child_jobs+=($job_id)
-cd /cluster/project/pangolin/influenza_pipeline/IA_MP/working/
-job_id=$(sbatch  /cluster/project/pangolin/influenza_pipeline/IA_MP/working/vpipe_influenza_aviti.sbatch | awk '{print $NF}')
+cd /cluster/project/pangolin/processes/influenza/IA_MP/working/
+job_id=$(sbatch  ${file_path}/vpipe_influenza_MP_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child IA_MP job $i with ID $job_id"
-cd /cluster/project/pangolin/influenza_pipeline/IA_N1/working/
+cd /cluster/project/pangolin/processes/influenza/IA_N1/working/
 child_jobs+=($job_id)
-job_id=$(sbatch  /cluster/project/pangolin/influenza_pipeline/IA_N1/working/vpipe_influenza_aviti.sbatch | awk '{print $NF}')
+job_id=$(sbatch  ${file_path}/vpipe_influenza_N1_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child IA_N1 job $i with ID $job_id"
 child_jobs+=($job_id)
-cd /cluster/project/pangolin/influenza_pipeline/IA_N2/working/
-job_id=$(sbatch  /cluster/project/pangolin/influenza_pipeline/IA_N2/working/vpipe_influenza_aviti.sbatch | awk '{print $NF}')
+cd /cluster/project/pangolin/processes/influenza/IA_N2/working/
+job_id=$(sbatch  ${file_path}/vpipe_influenza_N2_aviti.sbatch | awk '{print $NF}')
 echo "Submitted child IA_N2 job $i with ID $job_id"
 child_jobs+=($job_id)
 

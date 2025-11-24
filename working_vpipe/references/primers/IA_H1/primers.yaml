@@ -1,0 +1,22 @@
+FLU_pooled:
+  name: SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel
+  inserts_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed
+FLU_pooled_old:
+  name: SARS-CoV-2 ARTIC V5.3.2 NEB Ultra II
+  inserts_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed
+Amplicon Barcoding:
+  name: Amplicon Barcoding
+  inserts_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed
+test:
+  name: test
+  inserts_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed
+FLU:
+  name: FLU
+  alias:
+    - Influenza
+  inserts_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed

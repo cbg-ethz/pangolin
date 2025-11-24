@@ -17,4 +17,4 @@ shift $((OPTIND-1))
 umask 0007
 
 echo "${https_proxy}"
-exec ./vpipe --configfile config.create-envs.yaml --conda-create-envs-only -j 1 "$@"
+exec ./vpipe --configfile config.create-envs.yaml --conda-prefix /cluster/project/pangolin/resources/snake-envs --conda-create-envs-only -j 1 "$@"

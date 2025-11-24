@@ -1,7 +1,7 @@
 # config: big ShoRAH run (8 threads only)
 
 input:
-  samples_file: samples.wastewateronly.tsv
+  samples_file: /cluster/project/pangolin/processes/influenza/working/samples.wastewateronly.tsv
 
 output:
   snv: true

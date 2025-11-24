@@ -9,7 +9,13 @@
 
 umask 0007
 
+scriptdir=/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src
+. ${scriptdir}/config/server.conf
 
+'''
+qa-launcher is called in batman.sh vpipe function which is started from cd ${clusterdir_old}/${clusterdir}/RSVA*B/${working}/
+the . in this script represent this working directory the script is launched from
+'''
 
 #
 # Input validator
@@ -24,53 +30,72 @@ validateBatchName() {
 }
 
 
-
+# Parse command-line options -r, -a, -h
 usage() { echo "Usage: $0 [ -r | -a | <BATCHES>... ]" 1>&2; exit $1; }
 while getopts "rah" o; do
 	case "${o}" in
-		r)	batches=( $(cut -f 2 samples.recent.tsv	| sort -r -u ) )	;;
-		a)	batches=( $(cut -f 2 samples.tsv	| sort -r -u ) )	;;
+		# -r : load batches from samples.recent.tsv (recent batches)
+		r)	batches=( $(cut -f 2 ./samples.recent.tsv	| sort -r -u ) )	;;
+		# -a : load batches from samples.tsv (all batches present)
+		a)	batches=( $(cut -f 2 ./samples.tsv	| sort -r -u ) )	;;
+		# -h : show usage message and exit successfully
 		h)	usage 0	;;
+		# Any unknown flag → print usage and exit with failure
 		*)	usage 1	;;
 	esac
 done
+# Shift off the processed option flags so "$@" now contains only the batch names,
+# if user passed explicit batch names instead of using -r or -a
 shift $((OPTIND-1))
 
+# Append all manually provided batch names to the batches array
 batches+=( "$@" )
 # TODO deduplicate
 
+# If no batches were collected through options or parameters
 if (( ${#batches[@]} == 0 )); then
 	# default: all
+	# Default fallback: load from samples.recent.tsv
+    # This will fail if samples.recent.tsv does not exist
 	echo "Default to recent  batches"
-	batches=( $(cut -f 2 samples.recent.tsv	| sort -r -u ) )
+	batches=( $(cut -f 2 ./samples.recent.tsv	| sort -r -u ) )
 fi
 
-# Validate everything
+# Validate each batch name using the validateBatchName() regex test
 for b in "${batches[@]}"; do
 	validateBatchName "${b}"
 done
 
+# Print summary of batches found or provided
 echo "Batches: ${batches[*]}"
 echo "Total batches: ${#batches[*]}" 
 
 
-#
-# submit to LSF
-#
+###########
+# Submit sub-jobs (gather1qa) via SLURM job arrays
+##########
 
+# Submit gather1qa as an array job:
+#   --array=0-(N-1)
+# Each array index will process one batch from the batches[] array.
+# --wait causes this sbatch call to block until ALL array jobs finish.
+sbatch --wait --parsable --array="0-$(( ${#batches[@]} - 1 ))" ${clusterdir_old}/${clusterdir}/${working_vpipe}/gather1qa "${batches[@]}"
 
-# run sub-jobs and waits for completion
-sbatch --wait --parsable --array="0-$(( ${#batches[@]} - 1 ))" gather1qa "${batches[@]}"
-
+##########
+# Assemble final qa.csv file from per-batch QA CSVs
+##########
 echo "Assembling..."
 # TODO this can be simplified by using xsv to merge the csv files
 ( 
+	# Find the first batch for which qa/<batch>.csv exists
+    # and print the header from that file
 	for b in "${batches[@]}"; do
-		csv="qa/qa.${b}.csv"
+		csv="./qa/qa.${b}.csv"
 		if [[ -r "${csv}" ]] && head -n 1 "${csv}"; then
 			break;
 		fi
 	done
-	cut -f 2 samples.tsv | sort -r -u | xargs -r -i tail -n '+2' 'qa/qa.{}.csv'
-) > qa.csv
+	# Now append all subsequent CSVs without their header lines
+	cut -f 2 ./samples.tsv | sort -r -u | xargs -r -i tail -n '+2' './qa/qa.{}.csv'
+) > ./qa.csv
 echo "Done."
