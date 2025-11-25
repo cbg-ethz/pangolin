@@ -396,13 +396,16 @@ case "$1" in
 
                 for fra in "${fragments[@]}"; do
                         echo "Processing fragment: $fra"
+                        # remove IA for the fragment to be used in the name of the config
+                        subtype_seg="${fra#IA_}"
                         # 
                         vpipe_dir=${clusterdir_old}/${clusterdir}/$fra/${working}
                         location_dic=${ww_locations}
+                        vpipe_config=${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe_influenza_${subtype_seg}_aviti.yaml
 
                         ### run the script per fragment and detect the error staus per frament
                         #the command which runs the analysis
-                        command_std_err=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir -l $location_dic | tee /dev/stderr)
+                        command_std_err=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir --vpipe_config $vpipe_config -l $location_dic | tee /dev/stderr)
                         detect_command=$?
                        
                         #If the command fails (non-zero exit code), the fail variable is set to 1.
