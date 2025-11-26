@@ -4,3 +4,24 @@ secrets
 pangolin_src/fgcz-gstore.uzh.ch
 uploader/__pycache__
 pangolin_src/downstream_analysis/ 
+pangolin_src/movedatafiles.sh
+*.tar
+
+*.log
+
+docker-compose.yaml
+time_docker_command.sh
+
+# Ignore BWA index files
+*.amb
+*.ann
+*.bwt
+*.pac
+*.sa
+
+# Ignore FASTA index
+*.fai
+
+# Ignore benchmark files
+*.benchmark
+*.benchmar
