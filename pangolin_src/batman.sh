@@ -307,6 +307,11 @@ case "$1" in
                                         recent="--recent=${influenza_startdate}"
                                         shrtrecent="-r ${influenza_startdate}"
                                 ;;
+                                --custom)
+                                        customdate=$(date '+%Y%m' --date='-7 month')
+                                        recent="--recent=${customdate}"
+                                        shrtrecent="-r ${customdate}"
+                                ;;
 				*)
 					echo "Unkown parameter ${2}" > /dev/stderr
 					exit 2
