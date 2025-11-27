@@ -434,7 +434,7 @@ case "$1" in
                         #the command which runs the analysis
                         command_std_err=$(${downstream_analysis_dir}/detect_AAMutations.R -d $vpipe_dir --vpipe_config $vpipe_config -l $location_dic 2>&1)
                         detect_command=$?
-                       
+                        echo $command_std_err
                         #If the command fails (non-zero exit code), the fail variable is set to 1.
                         #command_output=$($detect_command | tee /dev/stderr) || fail=1  #The tee /dev/stderr ensures the output of your command is printed to standard error (for debugging)
                         # Check the result of the command and create the appropriate status file
