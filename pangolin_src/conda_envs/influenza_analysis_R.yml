@@ -12,6 +12,6 @@ dependencies:
   - r-tidyverse=2.0
   - bioconductor-biostrings=2.74
   - r-seqinr=4.2
+  - r-rconfig==2.1
 pip:
   - addict==2.4.0
-  - rconfig==2.1
