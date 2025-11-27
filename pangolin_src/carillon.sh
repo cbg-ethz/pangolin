@@ -358,7 +358,7 @@ if [ "$run_downstream" -eq "1" ]; then
         #### check the latest vpipe batch with the latest downstream analysis batch and the success of the brevious downstream analysis:
         # run case 1: $ds_success newer than $ds_fail  AND  lastbatch_downs != lastbatch_vpipe
         # run case 2: $ds_fail newer than $ds_success
-        if { [[ "$lastbatch_downs" != "$lastbatch_vpipe" ]] && [[ "$ds_success" -nt "$ds_fail" ]]; } || [[ "$ds_fail" -nt "$ds_success" ]]; then
+        if [[ "$lastbatch_downs" != "$lastbatch_vpipe" ]] || [[ "$ds_fail" -nt "$ds_success" ]]; then
             echo "There is a new most recent batch that the downstream analyisis can run on"
             echo "starting postprocessing of vpipe output to tsv"
             #### RUN Downstream Analysis
