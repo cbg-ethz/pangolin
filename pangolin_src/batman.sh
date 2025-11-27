@@ -308,7 +308,7 @@ case "$1" in
                                         shrtrecent="-r ${influenza_startdate}"
                                 ;;
                                 --custom)
-                                        customdate=$(date '+%Y%m' --date='-8 month')
+                                        customdate="20250501"
                                         recent="--recent=${customdate}"
                                         shrtrecent="-r ${customdate}"
                                 ;;
