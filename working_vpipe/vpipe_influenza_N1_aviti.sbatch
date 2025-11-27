@@ -25,4 +25,4 @@ echo "${https_proxy}"
 mkdir -p cluster_logs/
 export SNAKEMAKE_PROFILE=$(realpath ${profile_prefix}/smk-simple-slurm/ )
 exec ${prefix}/vpipe --profile ${SNAKEMAKE_PROFILE}     \
-	--configfile vpipe_influenza_N1_aviti.yaml
+	--configfile ${prefix}/vpipe_influenza_N1_aviti.yaml
