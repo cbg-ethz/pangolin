@@ -9,10 +9,10 @@ input:
     datadir: "/cluster/project/pangolin/processes/influenza/vpipe_input"
     samples_file: "/cluster/project/pangolin/processes/influenza/IA_H1/working/samples.tsv"
     read_length: 251
-    protocols_file: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/primers.yaml"
-    primers_bedfile: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed"
-    inserts_bedfile: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed"
-    reference: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/H1.fasta"
+    protocols_file: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers.yaml"
+    primers_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/primers/HA_primers.bed"
+    inserts_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/HA_scheme.insert_mod.bed"
+    reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H1/nextstrain/H1.fasta"
     primers_trim_cutoff: 200
 output:
     datadir: "/cluster/project/pangolin/processes/influenza/IA_H1/vpipe_output"

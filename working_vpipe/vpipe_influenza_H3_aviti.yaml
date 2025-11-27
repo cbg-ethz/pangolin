@@ -9,9 +9,9 @@ input:
     datadir: "/cluster/project/pangolin/processes/influenza/vpipe_input"
     samples_file: "/cluster/project/pangolin/processes/influenza/IA_H3/working/samples.tsv"
     read_length: 251
-    protocols_file: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H3/primers.yaml"
-    reference: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H3/nextstrain/H3.fasta"
-    primer_bedfile: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/IA_H3/primers/HA_primers.bed"
+    protocols_file: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H3/primers.yaml"
+    reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H3/nextstrain/H3.fasta"
+    primer_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_H3/primers/HA_primers.bed"
     primers_trim_cutoff: 200
 output:
     datadir: "/cluster/project/pangolin/processes/influenza/IA_H3/vpipe_output"
