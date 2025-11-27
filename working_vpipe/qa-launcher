@@ -13,7 +13,7 @@ scriptdir=/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src
 . ${scriptdir}/config/server.conf
 
 '''
-qa-launcher is called in batman.sh vpipe function which is started from cd ${clusterdir_old}/${clusterdir}/RSVA*B/${working}/
+qa-launcher is called in batman.sh vpipe function which is started from cd ${clusterdir_old}/${clusterdir}/*/${working}/
 the . in this script represent this working directory the script is launched from
 '''
 
