@@ -15,3 +15,6 @@ FLU:
   alias:
     - Influenza
   primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers/MP_primers.bed
+v532_pooled:
+  name: v532_pooled
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers/MP_primers.bed
