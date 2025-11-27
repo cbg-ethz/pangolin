@@ -333,6 +333,21 @@ if [ "$run_downstream" -eq "1" ]; then
         ds_success="${downstream_analysis_statusdir}/iva_downstream_analysis_success"
         ds_fail="${downstream_analysis_statusdir}/iva_downstream_analysis_fail"
 
+        # Ensure status files exist
+        # Case 1: neither exists → create fail file newer than success file → downstream MUST run
+        if [[ ! -e "$ds_success" && ! -e "$ds_fail" ]]; then
+            echo "WARNING: downstream analysis status files don't exist. Will create them now"
+            touch "$ds_success"
+            sleep 1
+            touch "$ds_fail"   # fail newer → downstream forced
+        # Case 2: success missing but fail exists
+        elif [[ ! -e "$ds_success" ]]; then
+            echo "WARNING: Only iva_downstream_analysis_success file does not exist?"
+        # Case 3: fail missing but success exists
+        elif [[ ! -e "$ds_fail" ]]; then
+            echo "WARNING: Only iva_downstream_analysis_fail file does not exist?"
+        fi
+
         # check if downstream already ran on the latest batch:
         lastbatch_downs=$(cat $(ls -Art ${downstream_analysis_statusdir}/downstream_new* | tail -n 1))
         echo "Last batch analysed by downstream analysis is ${lastbatch_downs}"
