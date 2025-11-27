@@ -321,7 +321,7 @@ case "$1" in
 		done
 		fail=0
 		if  (( ${lab[fgcz]} == 1 )); then
-                        echo "Start sortsamples"
+                        echo "Start sortsamples $recent"
 			. <(grep '^google_sheet_patches=' ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf)
  
 			(( google_sheet_patches )) && ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/google_sheet_patches.py
