@@ -184,7 +184,10 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
     runreason=( )
     declare -A flowcell
     # if test -e ${statusdir}/vpipe_started; then
-    ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d')
+    #ref=$(date --reference="${statusdir}/vpipe_started" '+%Y%m%d') # this thakes the TIMESTAMP of vpipe.started file
+    # to make vpipe run on other batches read the ref date from vpipe ended file
+    ref=$(grep -oE '[0-9]{8}' "${statusdir}/vpipe_ended")
+
     limit=$(date --date='2 weeks ago' '+%Y%m%d')
     echo "Check batch against ${ref}:"
     #for t in ${cluster_mount}/${sampleset}/samples.20*.tsv; do
