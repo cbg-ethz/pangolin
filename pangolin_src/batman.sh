@@ -406,6 +406,23 @@ case "$1" in
 
                 for fra in "${fragments[@]}"; do
                         echo "Processing fragment: $fra"
+
+                        # Ensure status files exist
+                        # Case 1: neither exists → create fail file newer than success file → downstream MUST run
+                        if [[ ! -e "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_success" && ! -e "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_fail" ]]; then
+                            echo "WARNING: Fragment downstream analysis status files don't exist. Will create them now"
+                            touch "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_success"
+                            sleep 1
+                            touch "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_fail"   # fail newer → downstream forced
+                        # Case 2: success missing but fail exists
+                        elif [[ ! -e "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_success" ]]; then
+                            echo "WARNING: Only Fragment_success file does not exist?"
+                        # Case 3: fail missing but success exists
+                        elif [[ ! -e "${downstream_analysis_statusdir}/iva_downstream_analysis_${fra}_fail" ]]; then
+                            echo "WARNING: Only Fragment_fail file does not exist?"
+                        fi
+
+
                         # remove IA for the fragment to be used in the name of the config
                         subtype_seg="${fra#IA_}"
                         # 
