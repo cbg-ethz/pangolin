@@ -95,8 +95,6 @@ case "$1" in
                                 cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_N1/${working}/samples.recent.tsv"
                                 cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_N2/${working}/samples.recent.tsv"
                         ;;
-                        ;;
-                        ;;
                         --year)
                                 lst="${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
                                 echo "syncing year: ${year}"
