@@ -3,7 +3,7 @@
 #SBATCH --time=72:00:00
 
 echo "Starting main influenza A Aviti vpipe job with ID $SLURM_JOB_ID"
-file_path="/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe"
+file_path="/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe"
 
 # Array to store child job IDs
 child_jobs=()
