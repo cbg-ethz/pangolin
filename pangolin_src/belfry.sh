@@ -507,7 +507,7 @@ case "$1" in
             --password-file ${rsync_pass}       \
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
             -irltHLK --fuzzy --fuzzy --inplace       \
-            --files-from=:/samples/file_list.txt \
+            --files-from=:/file_list.txt \
             --link-dest=${archive_path}    \
             --exclude='alignments/'    \
             --exclude='extracted_data/'    \
@@ -521,7 +521,7 @@ case "$1" in
             --exclude='*.err.log'   \
             --exclude='*.benchmark' \
             --exclude='*fastq.gz' \
-            belfry@euler.ethz.ch::${working}/samples \
+            belfry@euler.ethz.ch::${working} \
             ${archive_path}/
     ;;
     checksum_tables)
