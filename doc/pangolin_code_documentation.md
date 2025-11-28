@@ -9,8 +9,7 @@ The automation is organized into three main subfolders:
 
 - pangolin_src: Contains the source code for Pangolin.
 - uploader: Handles the synchronization of uploaded samples.
-- working: Manages intermediate processes and data handling. --> pangolin/woking = NOT IN UNSE ANYMORE / ARTEFACT
-   - the ../woking is used as working directory, not pangolin/working
+- working: Manages intermediate processes and data handling. 
 
 #### General Logic
 The autoamtion is started by launching it's docker container on the wiseDB VM and interacts with Euler (sHPC) and databases such as b-fabric and SPSP.
@@ -102,6 +101,7 @@ For Influenza it is `/cluster/project/pangolin/influenza_pipeline/`
 - in pangolin/pancoling_scr/config there is a fgcz.yaml file where there is a badlist specified
 - put the delivery name (order) in this list
 - you can find the delivery name associated to the batch in sampleset folder: batch.BATCHNAME.tsv
+- remember to garbage the batch if it already run with vpipe
 
 Covid: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src/config/fgcz.conf`
 
@@ -110,7 +110,70 @@ Covid: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src/config/f
 **samples download from bfabric**
 `/cluster/project/pangolin/sampleset`
 
+
+
+# Euler
+## Folder structure and git branches
+```
+cd /cluster/project/pangolin
+|__ data
+   |__ fgcz_raw
+      |__ p23224 (raw data download from fgcz befabric)
+
+
+|__ processes
+   |__ rsv
+      |__ pangolin (git branch origin/rsv_automation_folder_restructuring)
+      |__ working
+      |__ vpipe_input (vpipe input data: reorganized and transfered from fgcz_raw with function batman.sh sortsamples)
+      |__ RSVA
+            |__ pangolin (git origin/rsv_automation_folder_restructuring)
+            |__ vpipe_output
+            |__ working
+      |__ RSVB
+            |__ pangolin (git origin/rsv_automation_folder_restructuring)
+            |__ vpipe_output
+            |__ working
+   |__ influenza
+      |__ pangolin (git origin/flu_automation_folder_restructuring)
+      |__ working
+      |__ vpipe_input
+      |__ IA_H1
+            |__ pangolin (git origin/flu_automation_folder_restructuring)
+            |__ vpipe_output
+            |__ working
+      |__ IA_H3
+            |__ ...
+      |__ IA_MP
+            |__ ...
+      |__ IA_N1
+            |__ ...
+      |__ IA_N2
+            |__ ...
+   |__ sars_cov_2
+      |__ amplicon_coverage
+      |__ explore-new-variants (ivan)
+      |__ garbage
+      |__ lollipop
+      |__ pangolin (git branch origin/sarscov2_folder_restructuring)
+      |__ vpipe_input
+      |__ vpipe_output
+      |__ working
+      |__ work-new-variants (test environment for new variants in lollipop)
+   |__ fgcz_sync 
+   |__ genspectrum_upload
+   |__ V-pipe
+
+
+|__resources
+   |__ rsv_downstream_analysis
+
+
+|__ research
+```
+
 # Main Folders General Structure
+
 ## pangolin_src
 This folder contains all the code that is used during the automation. The automation constantly runs in the background and tries to check if there are new samples uploaded to bfabric. If there are new samples, it fetches them and automatically starts vpipe (the alignment). 
 
@@ -324,6 +387,29 @@ Helper functions for carillon.sh (VM interaction / data sync)
 
 ### batman.sh
 
+#### vpipe) (RSV)
+vpipe triggers 2 things:
+1. the main.sbatch
+2. the qa
+Only if both ended successfully it created vpipe.ended in the status and will not run both again in the next loop.
+
+
+- qa-launcher is called in batman.sh vpipe function which is started from cd `${clusterdir_old}/${clusterdir}/${working}/`
+- In vpipe_rsv_aviti_main.sbatch we cd into the variant specific working directory `/cluster/project/pangolin/processes/rsv/*/working/` to run the variant specific sbatch file
+- the variant specific .sbatch file calles the vpipe command with the varian specific .yaml file
+
+**the qa logic**
+- qa-launcher is called in batman.sh vpipe function 
+- this looks for
+  - ./samples.recent.tsv
+  - ./samples.tsv
+  - /qa/ folder
+- then it runs the centrally stores ${clusterdir_old}/${clusterdir}/${working_vpipe}/gather1qa
+
+gather1qa:
+- checks the vpipe_input/batch.*.yaml for the current batch
+- then checke vpipe_output directory for the output files to gather the qa stats
+- they are outputted in `output_csv="/qa/qa.${batch}.csv"`
 
 #### Downstream analysis
 For Influenza and RSV the vpipe output has to be processed to get a table with the amino acid mutation frequency data which will be uploaded to the genspectrum dashboard. 
@@ -337,6 +423,9 @@ To start the downstream analysis the *remote_batman* script on euler is called w
 These functions are stored in the respective batman.sh script on euler and have differences which accomodate the differences between the downstream processing scripts. 
 
 **RSV: rsv_vpipe_out_to_tsv**
+##### Conda Env:
+The correct env lies in: https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/main/envs/downstream_analysis.yml
+
 This function is stored in batman.sh and executed on euler. The scripts that are celled in the function are stored in a public [git repository](https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/production/README.md)
 on the production branch. The git repo on euler can be found in `/cluster/project/pangolin/rsv_pipeline/rsv_downstream_analysis/RSV-wastewater-V-pipe`.
 The function calles 3 different scripts: */timeline.py*, */annotate_vcf.py* and */make_mutation_tsv_annotated.py*.
@@ -450,8 +539,13 @@ Is created my putting together the `rundate` and `"FlowCellID"` extracted from t
 ### garbage.sh
 **Garbage RSV/Influenza**
 If any batch already run v-pipe, use the garbage script for a cleanup of the folders from this batch. BEFORE: Add the batch to the **Bad List** as described above.
-Garbage script: `./cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src/garbage.sh --variant "RSVB" --batch "20250417_2427493980"`
-creates a garbage directroy in ./results and moves the sample/batch directrories inside the garbage directroy. Then checks if there are other batchech for the sample and if not deletes the sample directory form the ./results directroy.
+Garbage script: `./cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage.sh --variant "RSVB" --batch "20250417_2427493980"`
+creates a garbage directroy in ./vpipe_output and moves the sample/batch directrories inside the garbage directroy. Then checks if there are other batchech for the sample and if not deletes the sample directory form the ./results directroy.
+
+### garbage_vpipe_input.sh
+Garbages batches that were copied from fgcz_raw to the vpipe_input directroy (RSV/Influenza).
+This needs to be cleaned up as otherwise vpipe things it needs to run on the copied samples without results directory.
+`./cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage_vpipe_input.sh --batch "20250417_2427493980"`
 
 **Garbage Covid**
 `test_automation/pangolin/pangolin_scr/batman.sh garbage BATCHNAME`
@@ -856,16 +950,33 @@ The build must happen on a local machine, because the HPC clusters give access o
 Building an image for a linux host from an ARM host, means adapting the configuration.
 
 ## Adaptations
-### docker-compose
+If build locally, the docker-compose.yaml  file has to be adapted. First, the relevant folder have to be copied from wisedb to the local deploy folder (e.g. workdir, secrets, resources).
+Then the path in the docker-compose.yaml need to be adapted. (Both locally and on the vm (see below)).
+### docker-compose.yaml (local)
+All path need to point to the local version.
 - context: /Users/mcarrara/data/ww/local_deploy/pangolin
 - volumes: pointing to the local_deploy directory
 - secrets: pointing to the local_deploy directory
+### docker-compose.yaml (vm)
+This should be the original file, pointing to the folders on the VM.
+Change:
+``` 
+build:
+      context: /data/projects/wastewater_automation/pangolin 
+```
 
-## Building
+to:
+``` 
+image: $tag_of_the_image (e.g. pangolin_rsv:latest)
+``` 
+## Building (locally)
+For a local build on Mac OrbStack can be used.
 ```
 # define the target architecture
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
-docker-compose build --no-cache --progress=plain
+#add gtime -v to get overview of resources
+now=$(date '+%Y%m%d')
+gtime -v docker-compose build --no-cache --progress=plain > ${now}_docker_build.log
 # check the IMAGE ID with 
 docker images
 # add a meaningful tagging
@@ -879,28 +990,32 @@ docker save -o ./pangolin-pangolin.tar IMAGE_ID (e.g."f44abc678111")
   - on date 2025-04-14, the local deploy follows the commit 292bbba2c8644134f97f3e05614ead75a72e9d99
   - create a directory (or add it to the existing: `/data/projects/rsv_automation_restructuring/local_deploy`)
   - mkdir commit_"commit the container was build on"
-  - copy all relevant files back
+  - copy the .tar file there and the adapted docker-compose.yaml wiht the path pointing to the vm folders and the substitution of buil to image (see above)
+  
 
 - on wisedb, run:
 - this extractes the image
 ```
 #this extractes the image
 docker load -i pangolin-pangolin.tar
-
-#copy the docker-compose.yaml with the VM path and remove the "build:"section and add image: pangolin_rsv:latest
-
-cp ../../pangolin/docker-compose.yaml pangolin/to_use_on_vm_docker-compose.yaml
-#rename the files
-mv docker-compose.yaml docker-compose.old.txt
-mv to_use_on_vm_docker-compose.yaml docker-compose.yaml
+```
+- sometimes tagging again is necessary: `docker tag f44abc678111 pangolin_rsv:latest`
+- copy the `docker-compose.yaml` with the VM path and remove the `build:`section and add `image: pangolin_rsv:latest`
+```
 #start the image with 
 docker-compose -p pangolin_rsv up -d
-
-#docker run -d --name pangolin_rsv pangolin_rsv:latest
-
+docker-compose -p pangolin_iva up -d
+docker-compose -p sars_cov_2 up -d
 ```
 This will take the defined path form the docker-compose.yaml file to point to all the secret files etc on the VM.
 Make sure that the image already exists such that it is NOT BUILD on the VM!
+
+## Deploy on VM (not recommended - not tried yet)
+If the container has to be deployed on the VM try to set a low nice vlaue such that this porcess gets ressources last and does not interrupt any other processes on the VM.
+Set this in Dockerfile:
+```
+RUN nice -n 19 ionice -c 3 ulimit -v $((1024*1024)) && conda …
+```
 
 # RSV
 ## Folderstructure
@@ -929,8 +1044,33 @@ Main folder `/cluster/project/pangolin/processes/rsv`
 ### v-pipe
 For RSV there is a main sbatch job `/cluster/project/pangolin/processes/rsv/working/vpipe_rsv_aviti_main.sbatch`
 This job spinns the doughter jobs for RSVA and RSVB.
+It runs if:
+- the batch is not in fgcz.conf
+- the project.$batch.tsv is in vpipe_input directory
+- the batch is newer than the proviosly with vpipe analysed batch
 
 
+
+#### status file logic
+For vpipe there are mainly 4 status files created: vpipe_started, vpipe_ended, vpipe.${now}, vpipe_new.${now}
+Purpose:
+- vpipe_started: points at vpipe.${current date} (soft linked) 
+- vpipe_ended: saves the value of vpipe.${current date} inside, this is used to check when was the last completed vpipe run
+- vpipe.${now}: is created as soon as a new vpipe run is started, to track the date of the day vpipe was run
+- vpipe_new.${now}: stores the runreason inside, so the batch names of the batches that were not yet analyzed and thus triggered vpipe to be run
+
+- the TIMESTAMP of vpipe_ended and vpipe_started are compared to decide if vpipe is still running or not
+
+#### force run vpipe
+If e.g. a batch needed patching and the previous results were garbaged, vpipe will still think it ran successfully on it due to the status file logic which recored the last successfully ended vpipe batch.
+To rerun the last batch, delete the vpipe_status file so batman.sh scanmissingsamples will rerun and check the output directories.
+```
+docker exec -it $docker_image /bin/bash
+cd ../working/status
+# link the vpipe_started to a vpipe.${now} that date is before the batch you want to rerun
+ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
+# edit vpipe_ended, write in it vpipe.${now} 
+```
 
 # Naming conventions
 **Samples:**
@@ -938,3 +1078,5 @@ FlowCellArrayPosition_TreatmentPlant_SamplingDate
 
 **Batch:**
 SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
+
+
