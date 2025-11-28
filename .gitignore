@@ -5,6 +5,8 @@ pangolin_src/fgcz-gstore.uzh.ch
 uploader/__pycache__
 pangolin_src/downstream_analysis/ 
 pangolin_src/movedatafiles.sh
+pangolin_src/old/
+working_vpipe/old/
 *.tar
 
 *.log
