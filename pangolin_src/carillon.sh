@@ -281,9 +281,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
                 exit 1
             fi
         fi
-        if [[ ( ! -e ${statusdir}/syncopenbis_new ) || ( ( -e ${statusdir}/vpipe_started ) && ( ${statusdir}/vpipe_started -nt ${statusdir}/syncopenbis_new ) ) ]]; then
-            echo 'oops: something fishy: no downloaded data newer than last run ?' > /dev/stderr
-        fi
+        
         # point of comparison for dates:
         if [[ -e ${statusdir}/vpipe_ended ]]; then
             lastrun=${statusdir}/vpipe_ended
