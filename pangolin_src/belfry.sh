@@ -491,7 +491,7 @@ case "$1" in
 		fi
     ;;
     get_pangolin_commit)
-        cd ${clusterdir_old}/${clusterdir}/${sourcefiles_location}
+        cd ${codebasedir}
         branch=$(git status | head -n 1 | sed -e 's/ On branch //')
         commit=$(git log -n 1 ${branch} | head -n 1)
         echo "Branch: ${branch}\n${commit}"
