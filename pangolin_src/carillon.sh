@@ -48,7 +48,7 @@ echo 'This is the Influenza automation'
 echo '========='
 
 echo "Sorting samples"
-${remote_batman} sortsamples --custom #--recent
+${remote_batman} sortsamples --recent
 
 ${scriptdir}/belfry.sh pull_sortsamples_status
 if [[ ( -e ${statusdir}/pull_sortsamples_status_fail ) && ( ${statusdir}/pull_sortsamples_status_fail -nt ${statusdir}/pull_sortsamples_status_success ) ]]; then
