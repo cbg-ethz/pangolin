@@ -394,7 +394,8 @@ case "$1" in
         ;;
         iva_vpipe_out_to_tsv)
                 conda activate influenza_analysis_R
-
+                #since rconfig can not be installed with the conda config.yaml file this is a workaround
+                Rscript -e 'if(!requireNamespace("rconfig", quietly=TRUE)) install.packages("rconfig", repos="https://cran.r-project.org")'
                 ### create status directory to record the status of the donwstream analysis
                 cd ${downstream_analysis_dir}/
                 downstream_analysis_statusdir=${status}/downstream_analysis #this will be on euler

@@ -6,12 +6,18 @@ channels:
   - anaconda
 dependencies:
   - r=4.4
+  - r-base=4.4
   - r-optparse=1.7
   - r-data.table=1.15
   - r-yaml=2.3
   - r-tidyverse=2.0
   - bioconductor-biostrings=2.74
   - r-seqinr=4.2
-  - r-rconfig==2.1
+  - pip
+  - r-devtools
+  - r-curl 
 pip:
-  - addict==2.4.0
+  - addict==2.4
+#  - rconfig==2.1
+# conda rconfig is not the same as the one in R, thus the code below has to be run after conda env creation
+#Rscript -e 'if(!requireNamespace("rconfig", quietly=TRUE)) install.packages("rconfig", repos="https://cran.r-project.org")'
