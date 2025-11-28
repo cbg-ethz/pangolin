@@ -11,6 +11,7 @@ working/samples*
 working/slurm-*
 working/cluster_logs
 working/vpipe_output
+working/uploads/
 pangolin_src/movedatafiles.sh
 .snakemake
 movedatafiles.sh
