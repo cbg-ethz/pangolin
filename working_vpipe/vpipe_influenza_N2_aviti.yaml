@@ -7,7 +7,7 @@ general:
     snv_caller: "lofreq"
 input:
     datadir: "/cluster/project/pangolin/processes/influenza/vpipe_input"
-    samples_file: "/cluster/project/pangolin/processes/influenza/IA_N2/working/samples.tsv"
+    samples_file: "/cluster/project/pangolin/processes/influenza/IA_N2/working/samples.recent.tsv"
     read_length: 251
     protocols_file: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N2/primers.yaml"
     reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N2/nextstrain/N2.fasta"
