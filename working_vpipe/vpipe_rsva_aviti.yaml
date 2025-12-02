@@ -7,7 +7,7 @@ general:
     snv_caller: "lofreq"
 input:
     datadir: "/cluster/project/pangolin/processes/rsv/vpipe_input"
-    samples_file: "/cluster/project/pangolin/processes/rsv/RSVA/working/samples.tsv"
+    samples_file: "/cluster/project/pangolin/processes/rsv/RSVA/working/samples.recent.tsv"
     read_length: 251
     protocols_file: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/RSVA/primers.yaml"
     reference: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/RSVA/concat_EPI_ISL_412866_EPI_ISL_1653999.fasta"
