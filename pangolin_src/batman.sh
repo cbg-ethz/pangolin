@@ -414,7 +414,7 @@ case "$1" in
                         path_to_vcf="${clusterdir_old}/${clusterdir}/$vir/vpipe_output/*/*/variants/SNVs/snvs.vcf"        # input path example string: samples/sample_name*/batch*/variants/SNVs/snvs.vcf
                         path_to_annotated_vcf="${clusterdir_old}/${clusterdir}/$vir/vpipe_output/*/*/variants/SNVs/snvs_annotated.vcf"
                         path_to_coverage="${clusterdir_old}/${clusterdir}/$vir/vpipe_output/*/*/alignments/coverage.tsv.gz"       #/cluster/project/pangolin/rsv_pipeline/working/samples/*/*/alignments/coverage.tsv.gz
-                        path_to_samples_tsv="${clusterdir_old}/${clusterdir}/$vir/${working}/samples.tsv"
+                        path_to_samples_tsv="${clusterdir_old}/${clusterdir}/$vir/${working}/samples.recent.tsv"
                         path_to_output="${clusterdir_old}/${clusterdir}/$vir/${working}"        # output from timeline.py will be input for downstream analysis --timeline_tsv
                         path_to_config="${clusterdir_old}/${clusterdir}/${working_vpipe}/${configfile}"
         
