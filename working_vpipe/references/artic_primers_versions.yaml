@@ -1,5 +1,7 @@
 v542:
   name: SARS-CoV-2 ARTIC V5.4.2 NEB Ultra II
+  alias:
+    - SARS-Cov2 ARTIC V5.4.2, RSV, IAV Bioconcept Panel
   inserts_bedfile: references/primers/v542/SARS-CoV-2.insert.bed
   primers_bedfile: references/primers/v542/SARS-CoV-2.primer.bed
   primers_file: references/primers/v542/SARS-CoV-2.tsv
