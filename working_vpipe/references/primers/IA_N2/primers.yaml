@@ -1,3 +1,6 @@
+v542:
+  name: SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel
+  primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N2/primers/NA_primers.bed
 FLU_pooled:
   name: SARS-Cov2 Artic, RSV, Influenza Library Consumables Bioconcept Panel
   primers_bedfile: /cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N2/primers/NA_primers.bed
