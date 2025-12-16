@@ -1,3 +1,7 @@
+"v542":
+  name: "RSV Subtype A and B"
+  inserts_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/RSVA/RSVA_inserts_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
+  primers_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/RSVA/RSVA_primers_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
 "RSV Subtype A and B":
   name: "RSV Subtype A and B"
   inserts_bedfile: /cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/RSVA/RSVA_inserts_400_V3.0_lifted_EPI_ISL_412866_EPI_ISL_1653999.bed
