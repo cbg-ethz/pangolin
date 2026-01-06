@@ -555,6 +555,25 @@ moves the samples from sampleset to `/cluster/project/pangolin/garbage`
 
 ## FGCZ Sync
 
+There is a separate automation running on a VM that manages the data sync from FGCZ to Euler. 
+The automation runs on the WiseDB VM.
+Data is synced to Euler at: `/cluster/project/pangolin/data/fgcz_raw/p23224`
+**Repositories:**
+WiseDB: `/data/projects/fgcz_data_sync_automation`
+Euler: `/cluster/project/pangolin/processes/fgcz_sync`
+
+Similar to other automations, this process begins when the container starts on WiseDB. 
+The `entrypoint.sh` script is triggered, which eventually starts `quasimodo.sh`. This runs `fgcz_sync.sh` in an infinite while loop.
+
+The script `fgcz_sync.sh` checks configurations in `server.conf` and then initiates the sync by 
+calling `remote_batman sync_fgcz` (a function within the batman.sh script stored on Euler).
+
+The `sync_fgcz` function checks the provided parameters. Using the config file `fgcz.conf` and the script 
+`exclude_list_bfabric.py`, it first creates an exclude list containing orders that should not be used 
+for regular processing. This list is then passed to the script `sync_sftp.sh`, 
+which performs the actual data sync by running an `lftp mirror` command.
+
+
 ### Merging orders 
 It can happend that ordres (Batches) need to be merged e.g. if one sequencing run did not result in high enough read depth etc. Then the automation will first see it as a separate batch.
 These have to be merged by adding the order in the fuselist in `/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync/config/fgcz.conf`.
@@ -568,8 +587,27 @@ Currently, the created new Batchname for the combined data does not have 19 char
 To make vpipe see the batch as relevant, add the new batch name to the file: `/cluster/project/pangolin/working/avi_batches.tsv`
 Makre sure the batch is present in: `/cluster/project/pangolin/working/samples_aviti.tsv`
 
+It can happen that orders (Batches) need to be merged, for example, 
+if one sequencing run did not result in high enough read depth. 
+Initially, the automation will see these as separate batches.
+These must be merged by adding the order to the fuselist in: 
+`/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync/config/fgcz.conf`
+The next time the sync automation runs, it will take the two orders, 
+create a new Batch Name, and place all related FASTQ files into this new batch.
+The remaining (original) batches need to be added to the **badlist** in the same configuration file (`fgcz.conf`) 
+so that they are ignored and only the merged batch is used for further processing.
+
+**Important Actions:**
+
+1. Cleanup: Garbage collect the already created V-Pipe results of the partial batches using: `./batman.sh garbage BATCHNAME` (see Automation section above).
+2. Notification: Contact SPSP to correct the .cram file upload (the single batches need to be removed and only the combined batch is relevant).
+
+*Note on Aviti Batches:* Currently, the newly created Batch Name for the combined data does not have 19 characters (checked in `batman.sh addsamples`). Consequently, the automation will not recognize it as an Aviti batch and V-Pipe will ignore it. To ensure V-Pipe recognizes the batch as relevant:
+1. Add the new batch name to: `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+2. Make sure the batch is present in: `/cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv`
+
 **Timeframe**
-The autoamtion only checks if there are missing vpipe results from the last 2 weeky samples. If the order is longer in the past adapt the timeframe in which the automation checks manually in the container on *wiseDB VM*
+The automation only checks for missing V-Pipe results from samples processed in the last 2 weeks. If the order is older than that, you must manually adapt the timeframe in the container on the *WiseDB VM*.
 In carillon.sh :
 ```Bash
 echo "============="
