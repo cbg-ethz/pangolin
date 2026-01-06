@@ -1,40 +1,49 @@
-# Pangolin
-Pangolin is an automation primarily designed to monitor the upload of new samples to B-fabric, and subsequent alignment of these samples to a reference genomes with the help of V-pipe. When new samples are detected, Pangolin automatically synchronizes them to Euler for downstream processing. Once the samples are synced, V-Pipe is executed to process the data, and both the samples and results are backed up to Bewi08.
+# Introduction
 
+This document describes the automated data processing pipeline used for wastewater-based viral surveillance. The purpose of this system is to enable standardized, reproducible, and timely monitoring of selected respiratory viruses using high-throughput sequencing data derived from wastewater samples.
 
-In addition to its automated processes, Pangolin also offers some manual (not yet automated) functionalities. 
-One such feature is Lollipop, which is used for the deconvolution step in virus analysis.
+Wastewater samples are collected and initially processed at EAWAG. The processed samples are then transferred to the Functional Genomics Center Zurich (FGCZ), where sequencing is performed. Following sequencing, the resulting raw sequencing data (FastQ files) are made available to our system for downstream analysis.
 
-The automation is organized into three main subfolders:
+The current surveillance scope includes COVID-19 (SARS-CoV-2), respiratory syncytial virus (RSV), and influenza virus. Due to differences in epidemiological and analytical requirements, the processing strategy differs between virus types. For SARS-CoV-2, the pipeline includes a deconvolution step aimed at identifying co-circulating viral variants and estimating their relative abundance within the sample. In contrast, the RSV and influenza pipelines focus on detecting viral presence and assessing sequencing coverage at predefined genomic regions, without variant deconvolution.
 
-- pangolin_src: Contains the source code for Pangolin.
-- uploader: Handles the synchronization of uploaded samples.
-- working: Manages intermediate processes and data handling. 
+The overall system is composed of four major automations. One automation is dedicated to monitoring the FGCZ sequencing project and automatically detecting and downloading newly available sequencing data. The remaining three automations are virus-specific and handle the processing of FastQ files using the appropriate reference genomes and analysis logic for COVID-19, RSV, and influenza, respectively.
 
-#### General Logic
-The autoamtion is started by launching it's docker container on the wiseDB VM and interacts with Euler (sHPC) and databases such as b-fabric and SPSP.
-Additionally backups are done on the bewi08 VM.
+Following the automated analyses, additional manual post-processing and interpretation steps are performed. These steps are outside the scope of this document and are therefore not described in detail here.
 
+## Automation Architecture and Execution Logic
 
-**Status Files**
-Generally status files are created directly on wisedb in `workdir/status. If a command is executed on euler (with the batman.sh script) status files are created on euler and synced to wisedb.
+All automations are executed on a dedicated virtual machine, referred to as the WiseDB VM, which serves as the central control node of the system. Each automation is launched within a dedicated Docker container to ensure reproducibility and isolation of the execution environment.
 
-# Main Working Folders
-**V-pipe**
-There is one v-pipe installation which is called from everywhere (all the viruses): '/cluster/project/pangolin/V-pipe'
+Upon container startup, predefined entry-point scripts are executed automatically. These scripts initialize and trigger the respective automations without manual intervention, ensuring consistent startup behavior across runs.
 
-**work-vp-test**
-Working folder to run lollipop for covid. Points also at '/cluster/project/pangolin/V-pipe'. This should be included in the future in pangolin/working (main covid working directory).
+The WiseDB VM coordinates the overall workflow and communicates with the high-performance computing cluster Euler, where the computationally intensive analysis steps are executed. Orchestration and control remain on the WiseDB VM but are strongly dependent on status files generated during the individual analysis steps. The VM continuously checks for the presence of specific status files and uses their existence to determine whether subsequent analysis steps should be triggered or not.
 
+In addition, a separate virtual machine, referred to as the Bewi08 VM, is used for uploading and storing backups generated during the processing workflow.
+# Main Working Folders Overview
+## Euler
 
-**Covid**
-The SARS CoV19 directory where the regular analysis takes place (lollipop) is `/cluster/project/pangolin/work-vp-test`
-   - corresponding blacklist: `/cluster/project/pangolin/resources/lollipop_blacklist.txt`
-- the vpipe is run in : `/cluster/project/pangolin/working` (go here to check the slurm-out of vpipe)
-   - in the slurm-out (main) it tells you which batches it checks for new samples, but this does not mean that it runs on all of these batches, it only checks if there are samples that have not yet been aligned by v-pipe!
-- config files for covid vpipe: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src`
+`/cluster/project/pangolin/processes`
+- Git repors and working folders of the 3 Virus Automations and the FGCZ datasync
+- This path also contains the V-pipe installation that is used for all 3 virus automations
+- This folder also contains relevant resouces for the genspectrum upload (should be moved to resources)
 
-**Patching**
+`/cluster/project/pangolin/data`
+- synced data from fgcz (specifically in `/cluster/project/pangolin/data/fgcz_raw/p23224`)
+  
+`/cluster/project/pangolin/resources`
+- resources and helper scripts / git repos needed in the automations
+- not all of this is acutally used, thus here are some important git repos and ifles highlighted:
+  - cowwid
+  - dbsse-user-setup.md/euler-user-setup.md ?
+  - lollipop_blacklist.txt : covid specific list with batch names or samples that should not be used for deconvolution with lollipop
+
+`/cluster/project/pangolin/research`
+- folder for research
+
+## WiseDB
+[WIP]
+
+# Patching
 #Patching
 [WIP] this paragraph is only in notes style and need to be worked over!
 If there are wrong sample names in the order from fgcz, we need to patch the names. For this a file like the following has to be created: `/cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.23224.39798.tsv`
@@ -464,14 +473,14 @@ cd /cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 #sortsample
 This is an essential function that takes the rawdata and sorts them to create the input data format for vpipe. 
 
-````
+```
 ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py \
   -c ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf \
   --no-fastqc \
   --protocols=${clusterdir_old}/${clusterdir}/pangolin/${working}/${protocolyaml} \
   --libkit-override=${clusterdir_old}/${clusterdir}/${sampleset}/patch.fgcz-libkit.tsv \
   ${force} ${recent}
-`````
+```
 **1. Arguments maped to argparse in sort_samples_bfabric_tsv_aviti.py**
 
 | Bash Argument              | Python `argparse` Option | Destination Variable (`args.<var>`) | Purpose / Description                                                                                                            |
@@ -553,8 +562,8 @@ moves the samples from sampleset to `/cluster/project/pangolin/garbage`
 *Remember* to first black list the batch in `test_automation/pangolin/pangolin_scr/config/fgcz.conf`
 
 
-## FGCZ Sync
-
+# FGCZ Sync Autoamtion
+(updated on 6 Jan 2026)
 There is a separate automation running on a VM that manages the data sync from FGCZ to Euler. 
 The automation runs on the WiseDB VM.
 Data is synced to Euler at: `/cluster/project/pangolin/data/fgcz_raw/p23224`
@@ -623,7 +632,7 @@ limit=$(date --date='2 weeks ago' '+%Y%m%d') <----------------------------------
 
 
 
-# Euler
+# Euler conda setup
 Base conda: 
 ```Bash 
 eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
@@ -1117,4 +1126,21 @@ FlowCellArrayPosition_TreatmentPlant_SamplingDate
 **Batch:**
 SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
 
+# Appendix
+## Old working folders
+This section should be kept to give an idea when old folders on Euler have to be searched.
+The old setup is stored on Euler: `/cluster/project/pangolin/old_setup/not_necessary`
+**V-pipe**
+There is one v-pipe installation which is called from everywhere (all the viruses): '/cluster/project/pangolin/V-pipe'
+
+**work-vp-test**
+Working folder to run lollipop for covid. Points also at '/cluster/project/pangolin/V-pipe'. This should be included in the future in pangolin/working (main covid working directory).
+
+
+**Covid**
+The SARS CoV19 directory where the regular analysis takes place (lollipop) is `/cluster/project/pangolin/work-vp-test`
+   - corresponding blacklist: `/cluster/project/pangolin/resources/lollipop_blacklist.txt`
+- the vpipe is run in : `/cluster/project/pangolin/working` (go here to check the slurm-out of vpipe)
+   - in the slurm-out (main) it tells you which batches it checks for new samples, but this does not mean that it runs on all of these batches, it only checks if there are samples that have not yet been aligned by v-pipe!
+- config files for covid vpipe: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src`
 
