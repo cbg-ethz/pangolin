@@ -143,6 +143,9 @@ cd /cluster/project/pangolin
             |__ pangolin (git origin/rsv_automation_folder_restructuring)
             |__ vpipe_output
             |__ working
+         |__ rsv_downstream_analysis
+            |__ RSV-wastewater-V-pipe (git status origin/production)
+            |__ downstream_analysis_statusdir
    |__ influenza
       |__ pangolin (git origin/flu_automation_folder_restructuring)
       |__ working
@@ -170,14 +173,19 @@ cd /cluster/project/pangolin
       |__ working
       |__ work-new-variants (test environment for new variants in lollipop)
    |__ fgcz_sync 
+      |__ pangolin (git branch origin/fgcz_sync_automation_folder_restructuring)
+      |__ ... 
    |__ genspectrum_upload
-   |__ V-pipe
+      |__ WISE-mut-freq-data-uploader (git branch pangolin_dev)
+   |__ V-pipe (git branch origin/rubicon)
 
 
 |__resources
-   |__ rsv_downstream_analysis
-
-
+   |__ cowwid (git branch origin/master)
+      |__ covvfit (used to generate plots for reporting mail)
+      |__ for_communication (used to generate plots for reporting mail)
+      |__ genspectrum_upload (scripts used for the genspectrum upload of RSV and Influenza)
+   |__ lollipop_blacklist.txt (Blacklist for Covid lollipop !untracked! TODO!)
 |__ research
 ```
 
@@ -542,7 +550,7 @@ and a shell script movedatafiles.sh
 Those files define and enact how data are copied or linked into the final sampleset layout: `<sampleset>/<sample>/<batch>/{raw_data,extracted_data}
 `
 **Internal Batch Name**
-Is created my putting together the `rundate` and `"FlowCellID"` extracted from the raw_data *DmxStats* *.json file. 
+Is created by putting together the `rundate` and `"FlowCellID"` extracted from the raw_data *DmxStats* *.json file. 
 
 
 ### garbage.sh
@@ -1111,13 +1119,13 @@ Purpose:
 #### force run vpipe
 If e.g. a batch needed patching and the previous results were garbaged, vpipe will still think it ran successfully on it due to the status file logic which recored the last successfully ended vpipe batch.
 To rerun the last batch, delete the vpipe_status file so batman.sh scanmissingsamples will rerun and check the output directories.
-```
+````
 docker exec -it $docker_image /bin/bash
 cd ../working/status
 # link the vpipe_started to a vpipe.${now} that date is before the batch you want to rerun
 ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
 # edit vpipe_ended, write in it vpipe.${now} 
-```
+````
 
 # Naming conventions
 **Samples:**
