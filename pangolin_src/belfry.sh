@@ -506,7 +506,7 @@ case "$1" in
         rsync   \
             --password-file ${rsync_pass}       \
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-            -irltHLK --fuzzy --fuzzy --inplace       \
+            -irltHLK --omit-dir-times --fuzzy --fuzzy --inplace       \
             --files-from=:/file_list.txt \
             --link-dest=${archive_path}    \
             --exclude='alignments/'    \
