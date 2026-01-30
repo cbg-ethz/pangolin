@@ -135,6 +135,7 @@ case "$1" in
 
 	bring_results)
 		TSV=samples.wastewateronly.tsv
+		TSV_sixmonth=samples.tsv_six_months_ago.tsv
 		overwrite=0
 		if [[ -n "$2" ]]; then
 			case "$2" in
@@ -156,6 +157,14 @@ case "$1" in
 			exit 1
 		fi
 
+		# bring TSV_sixmonth list in
+		if cp ${clusterdir_old}/${clusterdir}/${working}/${TSV_sixmonth} ${clusterdir_old}/${clusterdir}/${worktest}/; then
+			continue
+		else
+			echo "Cannot find ${TSV_sixmonth}"
+			exit 1
+		fi
+
 		if (( overwrite )); then
 			echo "Entirely rebuilding results/ directory"
 		else
@@ -168,7 +177,7 @@ case "$1" in
 			rmdir --ignore-fail-on-non-empty ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
 			if (( overwrite )); then
 				rm -rvf ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
-			elif [[ -e ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/ ]]; then
+			elif [[ -e ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/alignments/REF_aln_trim.bam ]]; then
 				continue
 			fi
 
@@ -176,7 +185,8 @@ case "$1" in
 			if grep -q ${s} /cluster/project/pangolin/resources/lollipop_blacklist.txt || grep -q ${b} /cluster/project/pangolin/resources/lollipop_blacklist.txt; then
 				echo "Skipping ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/ in /cluster/project/pangolin/resources/lollipop_blacklist.txt"
 			else
-				cp -alv ${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/{references,alignments} ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
+				#cp -alv ${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/{references,alignments} ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
+				cp -alv ${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/ ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
 			fi
 		done < ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}
         for i in $(cat /cluster/project/pangolin/resources/lollipop_blacklist.txt); do
@@ -185,6 +195,13 @@ case "$1" in
                 [[ ! $line =~ $i ]] && echo "$line"
             done <${clusterdir_old}/${clusterdir}/${worktest}/${TSV} > ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}_temp
             mv ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}_temp ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}
+        done
+		for i in $(cat /cluster/project/pangolin/resources/lollipop_blacklist.txt); do
+            while read -r line
+            do
+                [[ ! $line =~ $i ]] && echo "$line"
+            done <${clusterdir_old}/${clusterdir}/${worktest}/${TSV_sixmonth} > ${clusterdir_old}/${clusterdir}/${worktest}/${TSV_sixmonth}_temp
+            mv ${clusterdir_old}/${clusterdir}/${worktest}/${TSV_sixmonth}_temp ${clusterdir_old}/${clusterdir}/${worktest}/${TSV_sixmonth}
         done
 	;;
 
