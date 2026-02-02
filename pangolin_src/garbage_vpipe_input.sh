@@ -96,3 +96,20 @@ echo "claining sample.tsv file: path_to_samples_tsv=${path_to_samples_tsv} "
 mv "${path_to_samples_tsv}" "${backup_samples_tsv}"
 awk -v batch="$batch" -F'\t' '$2 != batch' "${backup_samples_tsv}" > "${path_to_samples_tsv}"
 
+#cleanup mutation frequency table
+influenza_subtypes_list=(IA_H1 IA_H3 IA_N1 IA_N2)
+
+for iva_subtype in "${influenza_subtypes_list[@]}"; do
+  subtype_seg="${iva_subtype#IA_}"
+  mutation_file_path="/cluster/project/pangolin/processes/influenza/${iva_subtype}/working/mutation_frequencies/${batch}_${subtype_seg}_Mutations_Dashboard.tsv"
+  base_mutation_file_path="/cluster/project/pangolin/processes/influenza/${iva_subtype}/working/mutation_frequencies"
+
+  if [[ ! -f "${mutation_file_path}" ]]; then
+    echo "ERROR: File ${mutation_file_path} not found!" >&2
+    exit 1
+  fi
+
+  mv "$mutation_file_path" "${base_mutation_file_path}/old/"
+
+  echo "moved ${mutation_file_path} to old"
+done
