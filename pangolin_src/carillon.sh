@@ -287,7 +287,7 @@ if [[ ( ( ! -e ${statusdir}/vpipe_ended ) && ( ! -e ${statusdir}/vpipe_started )
         else
             aviti=""
         fi
-        ${remote_batman} addsamples --recent && \
+        ${remote_batman} addsamples --all && \
         ${remote_batman} vpipe ${shorah} ${aviti} --tag "$(join_by ';' "${runreason[@]}")" > ${statusdir}/vpipe.${now} &&  \
         if [[ -s ${statusdir}/vpipe.${now} ]]; then
             ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
