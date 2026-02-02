@@ -96,3 +96,21 @@ echo "claining sample.tsv file: path_to_samples_tsv=${path_to_samples_tsv} "
 mv "${path_to_samples_tsv}" "${backup_samples_tsv}"
 awk -v batch="$batch" -F'\t' '$2 != batch' "${backup_samples_tsv}" > "${path_to_samples_tsv}"
 
+#move mutation frequency tables
+path_to_mutation_frequency_table_rsva="${clusterdir_old}/${clusterdir}/RSVA/${working}/MutationFrequencies/${batch}_EPI_ISL_412866_Mutations_Dashboard.tsv"
+base_path_to_mutation_frequency_table_rsva="${clusterdir_old}/${clusterdir}/RSVA/${working}/MutationFrequencies/"
+path_to_mutation_frequency_table_rsvb="${clusterdir_old}/${clusterdir}/RSVB/${working}/MutationFrequencies/${batch}_EPI_ISL_1653999_Mutations_Dashboard.tsv"
+base_path_to_mutation_frequency_table_rsvb="${clusterdir_old}/${clusterdir}/RSVB/${working}/MutationFrequencies/"
+
+if [[ ! -f "${path_to_mutation_frequency_table_rsva}" ]]; then
+  echo "ERROR: File ${path_to_mutation_frequency_table_rsva} not found!" >&2
+  exit 1
+fi
+
+if [[ ! -f "${path_to_mutation_frequency_table_rsvb}" ]]; then
+  echo "ERROR: File ${path_to_mutation_frequency_table_rsvb} not found!" >&2
+  exit 1
+fi
+
+mv $path_to_mutation_frequency_table_rsva "${base_path_to_mutation_frequency_table_rsva}/old/"
+mv $path_to_mutation_frequency_table_rsvb "${base_path_to_mutation_frequency_table_rsvb}/old/"
