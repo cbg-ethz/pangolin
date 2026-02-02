@@ -101,10 +101,38 @@ case "$1" in
                                 cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
                         ;;
 			--all)
+                                # "all" = all batches from influenza_startdate onward
+                                # influenza_startdate expected format: YYYYMMDD (e.g. 20251128)
+                                startmonth="${influenza_startdate:0:6}"   # YYYYMM
+
                                 lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-                                echo "syncing all from $influenza_startdate"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
+                                echo "syncing all from ${influenza_startdate} (month >= ${startmonth})"
+
+                                samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"
+
+                                # collect all samples files from startmonth onward (based on filename YYYYMM)
+                                mapfile -t files < <(
+                                    ls -1 "${samples_dir}/samples."*.tsv 2>/dev/null \
+                                    | awk -v start="${startmonth}" '
+                                        match($0, /samples\.([0-9]{6})/, m) {
+                                            if (m[1] >= start) print $0
+                                        }
+                                    '
+                                )
+
+                                if (( ${#files[@]} == 0 )); then
+                                    echo "ERROR: no samples files found from month ${startmonth} in ${samples_dir}" >&2
+                                    exit 1
+                                fi
+
+                                # write samples.tsv and samples.recent.tsv (deduplicated)
+                                sort -u "${files[@]}" > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
+                                sort -u "${files[@]}" > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
+
+                                # also write subtype samples.recent.tsv
+                                for iva_subtype in IA_H1 IA_H3 IA_MP IA_N1 IA_N2; do
+                                    sort -u "${files[@]}" > "${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples.recent.tsv"
+                                done
                         ;;
                         *)
                                 echo "Unkown parameter ${2}" > /dev/stderr
