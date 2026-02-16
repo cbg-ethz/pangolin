@@ -114,6 +114,7 @@ if v pipe already run ont he wronly named file, these have to be grabaged! (see 
 
 - run [batman.sh](http://batman.sh) grabage BATCH_NAME to clean all the folders form the already created results
 - in the next loop the sort samples takes care of the patching automatically
+- For influenza and rsv garbaging on vpipe_input and vpipe_output needs to be done (see section "Garbaging Batches")
 
 library prep:
 
@@ -603,7 +604,9 @@ Those files define and enact how data are copied or linked into the final sample
 **Internal Batch Name**
 Is created by putting together the `rundate` and `"FlowCellID"` extracted from the raw_data *DmxStats* *.json file.
 
-##### garbage.sh
+#### Garbaging Batches - garbage.sh
+
+In case of sample name correction both vpipe_input and vpipe_output folders need to be cleaned up / sample directories there must be garbaged!
 
 **Garbage RSV/Influenza**
 If any batch already run v-pipe, use the garbage script for a cleanup of the folders from this batch. BEFORE: Add the batch to the **Bad List** as described above.
@@ -1255,7 +1258,40 @@ SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
 
 These are steps that are performed outside the automation as a semi automated postprocessing script
 
+### Json file postprocessing steps
+
+Lollipop generates the file containing the time-dependent COVID variant deconvolution:`/cluster/project/pangolin/processes/sars_cov_2/lollipop/variants/deconvoluted_upload.json`
+
+This file is postprocessed in several ways and subsequently uploaded (CovSpectrum, Polybox, wiseDB).
+The postprocessing steps are described below.
+
+#### `make_curves.sh`
+
+```
+cd /cluster/project/pangolin/
+resources/cowwid/for_communication/scripts/make_curves.sh
+```
+
+This Bash script calls three Python scripts:
+
+* `enhanced_nested_json_stitching.py`
+* `ww_cov_curves_v-pipe.py`
+* `merge_json.py`
+ 
+**High-Level Logic:**
+
+Since Lollipop is run only on a chunk of the data, the deconvolution outputs must be “stitched” together to obtain a complete `deconvolution.json` file covering the entire cohort (all data since the beginning).
+This ensures that downstream processes, which are already established and depend on a stable data format, do not break.
+The stitching is performed by `enhanced_nested_json_stitching.py` and is described in the section **#curvestitching**.
+The resulting stitched file is then passed to `ww_cov_curves_v-pipe.py`, where the curves are filtered and restructured into three different output formats.
+This script is described in **#MultiPlatformVariantExport**.
+Finally, `merge_json.py` processes the data specifically for upload to wiseDB.
+The Lollipop-generated file contains data only for currently tracked treatment plants. However, wiseDB requires data for all treatment plants, including discontinued ones. Therefore, historical data from discontinued treatment plants is merged into the JSON file before upload.
+An overview of this script is provided in **#historicalmergejson**.
+
 ### Curve stitching
+
+#curvestitching
 
 Relevant folder with scripts on euler: `/cluster/project/pangolin/resources/cowwid/json_parser_for_variant_curve_stitching`
 
@@ -1275,7 +1311,7 @@ new_only_few_month_curve="/cluster/project/pangolin/processes/sars_cov_2/lollipo
 
 - after that the enhanced_nested_json_stitching.py script is called from the make_curves.sh script
 
-#### Purpose
+**Purpose**
 
 This script stitches two nested JSON datasets containing time series data
 (e.g. SARS-CoV-2 variant proportions) by location and variant, while enforcing
@@ -1284,7 +1320,7 @@ a strict alignment of time points.
 The output guarantees that, within each location, all variants share the
 same date grid and can therefore be compared, plotted, or diffed reliably.
 
-#### Input Data Model
+**Input Data Model**
 
 The input JSON files are expected to have the structure:
 
@@ -1311,43 +1347,35 @@ The input JSON files are expected to have the structure:
 #### Core Stitching Rules
 
 1. Stitching cutoff (per location):
-   - The stitch date for a location is the earliest date present in the NEW file
-     for that location.
+   - The stitch date for a location is the earliest date present in the NEW file for that location.
    - OLD data is kept only for dates strictly before the stitch date.
    - NEW data is kept for all dates.
    - If a date exists in both OLD and NEW, NEW always takes precedence.
 
-2. Date identity:
+1. Date identity:
    - Dates are treated as the primary key of the time series.
-   - Internally, time series are indexed by date to avoid order-dependent logic
-     and to enforce one entry per date.
+   - Internally, time series are indexed by date to avoid order-dependent logic and to enforce one entry per date.
 
-3. Shared date grid (critical invariant):
-   - For each location, a shared date grid is constructed as the union of all
-     dates observed in OLD and NEW across all variants.
+1. Shared date grid (critical invariant):
+   - For each location, a shared date grid is constructed as the union of all dates observed in OLD and NEW across all variants.
    - Every variant at that location is expanded to this grid.
    - Missing dates are filled with zero-valued entries:
        proportion = 0
        proportionLower = 0
        proportionUpper = 0
 
-4. Newly introduced variants:
-   - Variants that appear only in the NEW file are back-filled with zeros for
-     all earlier dates in the location’s grid.
+1. Newly introduced variants:
+   - Variants that appear only in the NEW file are back-filled with zeros for all earlier dates in the location’s grid.
    - This ensures all variants align in time, even if they emerge later.
 
-5. Locations present in only one file:
-   - If a location exists only in OLD or only in NEW, its data is preserved,
-     but the shared date grid invariant is still enforced within that location.
+1. Locations present in only one file:
+   - If a location exists only in OLD or only in NEW, its data is preserved, but the shared date grid invariant is still enforced within that location.
 
 #### Design Rationale
 
-- Lists are unsuitable for time series logic because their index has no
-  semantic meaning. Dates are therefore treated as explicit keys.
-- Enforcing a shared date grid avoids downstream issues in plotting,
-  statistical comparison, and DeepDiff-based validation.
-- Zero-filling missing dates makes variant curves directly comparable and
-  preserves total alignment across variants.
+- Lists are unsuitable for time series logic because their index has no semantic meaning. Dates are therefore treated as explicit keys.
+- Enforcing a shared date grid avoids downstream issues in plotting, statistical comparison, and DeepDiff-based validation.
+- Zero-filling missing dates makes variant curves directly comparable and preserves total alignment across variants.
 
 #### Output Guarantees
 
@@ -1365,6 +1393,267 @@ The input JSON files are expected to have the structure:
         --new newer.json \
         --output stitched.json
 ```
+
+### Variant Deconvolution Processing & Export Pipeline
+
+#MultiPlatformVariantExport
+
+#### Overview
+
+This script:
+
+- Loads smoothed variant time-series data
+- Applies location-specific start-date filtering
+- Generates multi-location plots
+- Produces three different JSON outputs, each tailored to a different downstream consumer
+  - The key difference between outputs is how the same processed data is filtered and structured.
+
+#### Workflow
+
+```Bash
+1. Load smoothed JSON
+2. Apply start-date filtering
+      ↓
+   → Base dataset ("update_data")
+      ↓
+3. Plot generation (uses this dataset)
+      ↓
+4. Write Combined JSON
+5. Apply blacklist → Cov-Spectrum JSON
+6. Restructure → FOPH/BAG JSON
+
+``` 
+
+#### Usage
+
+```bash
+cd /cluster/project/pangolin/resources/cowwid/for_communication/scripts/
+python ww_cov_curves_v-pipe.py path/to/config.yaml
+```
+
+The script requires exactly one argument:
+
+* `config.yaml`: YAML configuration file containing all input/output paths and parameters.
+
+#### Input Data Format
+
+The smoothed JSON (`jsonfile_smooth`) must follow this structure:
+
+```json
+{
+  "Location_A": {
+    "Variant_X": {
+      "timeseriesSummary": [
+        {
+          "date": "YYYY-MM-DD",
+          "proportion": 0.123,
+          "proportionUpper": 0.150,
+          "proportionLower": 0.100
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Processing Steps
+
+#### Json Output Files
+
+The script produces three JSON outputs.
+
+##### 1. Combined Processed Data
+
+**File:** `update_data_combined_file`
+
+**What it contains:** 
+
+- Filtered time-series data (start-date rules applied)
+- adds "mutationOccurrences"
+
+**Structure:**
+
+```json
+{
+  "Location_A": {
+    "Variant_X": {
+      "timeseriesSummary": [...],
+      "mutationOccurrences": null
+    }
+  }
+}
+```
+
+Location-specific start dates can be defined inside the script:
+
+```python
+only_start_from = {
+    "Kanton Zürich": "2021-08-15",
+    "Lausanne (VD)": "2023-01-01",
+    "Basel (BS)": "2024-02-01"
+}
+```
+
+- All timepoints earlier than the defined threshold are removed.
+- This ensures reporting begins only from approved dates.
+
+Purpose:
+
+* Internal dashboards
+* Reporting systems
+* Archival storage
+* plotting
+
+**Notes on Plot Generation:**
+
+* Fixed 3 × 2 subplot grid (supports up to 6 locations)
+* One panel per location
+* All variants plotted per panel
+* Confidence intervals shown as shaded ribbons
+* Only last 80 timepoints per variant are plotted
+
+Saved in `plots_dir`:
+
+```
+combined-vpipe.pdf
+combined-vpipe.svg
+combined-vpipe.png
+```
+
+
+---
+
+##### 2. Cov-Spectrum Export
+
+**File:** `update_data_covspectrum_file`
+
+**What changes compared to Combined?**
+- Applies blacklist filtering
+- Removes specific (location, date) entries from all variants
+
+**Additional Processing:**
+
+Entries defined in `blacklist` are removed:
+
+```yaml
+blacklist:
+  - location: "Location_A"
+    date: "YYYY-MM-DD"
+    reason: "Data quality issue"
+```
+
+All matching dates are removed from all variants at that location.
+
+Purpose:
+
+* Clean upload to Cov-Spectrum
+* Removal of problematic reporting dates
+
+---
+
+##### 3. FOPH/BAG Reformatted Export
+
+**File:** `reformatted`
+
+**What changes compared to Combined?**
+- No blacklist removal
+- Data is restructured
+
+Data is reorganized by **variant** first:
+
+```json
+{
+  "Variant_X": {
+    "Location_A": {
+      "timeseriesSummary": [...]
+    }
+  }
+}
+```
+
+Purpose:
+
+* Submission to FOPH/BAG (Polybox)
+* Variant-centric reporting format
+
+
+#### Assumptions & Constraints
+
+* Smoothed JSON must follow expected nested structure.
+* All variants must have defined colors.
+* Plot layout supports up to 6 locations (fixed grid).
+* Proportions expected within [0,1].
+* Blacklist entries must reference valid location/date pairs.
+
+### `merge_json.py` documentation (for WiseDB upload)
+
+#historicalmergejson
+
+This script `merge_json.py` processes the data exclusively for the upload to the wiseDB. 
+The lollipop generated file only outputs data for currently tracked treatment plats. 
+However, the wiseDB wants data of everything. Thus, the "historical" data with discontinued treatment plats is merged to the json file for the wiseDB upload.
+
+Merge two nested JSON files into a single JSON, while **blocking duplicates at the first two nesting levels** (e.g. `location/variant` collisions).
+
+**Usage:**
+
+```bash
+python merge_json.py static_historical_first.json stitched_second.json output_merged.json
+# real example:
+python $curve_analysis_dir/scripts/historical/merge_json.py \
+"$curve_analysis_dir/resources/curves_untracked_wwtps.json" \
+"$analysis_dir/results/stitched_curve_${ts}.json" \
+"$curve_analysis_dir/output/ww_update_data_wisebd.json" \
+ > "$curve_analysis_dir/logs/merge_json_${ts}.log" 2>&1
+```
+
+**Arguments**
+
+* `first_json`: base JSON (kept unless overridden by merge rules)
+* `second_json`: JSON to merge into the first
+* `output_json`: path to write merged result
+
+**Data flow for wiseDB upload:**
+
+```Bash
+1. Lollipop output
+      ↓
+2. processing with enhanced_nested_json_stitching.py
+      ↓
+3. processing with merge_json.py
+      ↓
+4. upload to wiseDB with ww_cov_uploader_v-pipe.py
+``` 
+
+#### Merge rules (high-level)
+
+The merge is recursive:
+
+* **dict + dict**: merge keys
+
+  * if a key exists in both:
+
+    * values are merged recursively if possible
+    * otherwise, the value from `second_json` overrides
+* **list + list**: concatenated (`a + b`)
+* **anything else**: value from `second_json` overrides
+
+**Duplicate protection (the main safety check):**
+
+Before merging, the script checks **only the first two levels**:
+
+* For every `top_key` in `second_json` (level 1)
+* For every `sub_key` under that top key if it’s a dict (level 2)
+* If `first_json[top_key][sub_key]` already exists → **error + exit**
+
+This prevents silent overwrites of entries like:
+
+* `Location/Variant`
+* `Project/Sample`
+* `Group/Item`
+
+(If you *want* second.json to overwrite existing `top_key/sub_key` entries, you would need to remove/relax the duplicate check—currently it is strict by design.)
+
 
 ## Appendix
 
