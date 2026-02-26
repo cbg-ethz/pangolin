@@ -18,9 +18,13 @@ All automations are executed on a dedicated virtual machine, referred to as the 
 
 Upon container startup, predefined entry-point scripts are executed automatically. These scripts initialize and trigger the respective automations without manual intervention, ensuring consistent startup behavior across runs.
 
-The WiseDB VM coordinates the overall workflow and communicates with the high-performance computing cluster Euler, where the computationally intensive analysis steps are executed. Orchestration and control remain on the WiseDB VM but are strongly dependent on status files generated during the individual analysis steps. The VM continuously checks for the presence of specific status files and uses their existence to determine whether subsequent analysis steps should be triggered or not.
+The WiseDB VM coordinates the overall workflow and communicates with the high-performance computing cluster Euler via forced ssh commands, where the computationally intensive analysis steps are executed. Orchestration and control remain on the WiseDB VM but are strongly dependent on status files generated during the individual analysis steps. The VM continuously checks for the presence of specific status files and uses their existence to determine whether subsequent analysis steps should be triggered or not.
 
 In addition, a separate virtual machine, referred to as the Bewi08 VM, is used for uploading and storing backups generated during the processing workflow.
+
+### Note on documentation
+There is a mixture of absolute path or path described with variables (e.g. ${clusterdir_old}). The variables are virus specific and defined in `pangolin/pangolin_src/config/server.conf`.
+**TBD**: replace all the absolute path with the variables to make the documentation more general
 
 ## Main Working Folders Overview
 
@@ -31,6 +35,9 @@ In addition, a separate virtual machine, referred to as the Bewi08 VM, is used f
 - Git repors and working folders of the 3 Virus Automations and the FGCZ datasync
 - This path also contains the V-pipe installation that is used for all 3 virus automations
 - This folder also contains relevant resouces for the genspectrum upload (should be moved to resources)
+- **Covid** `/cluster/project/pangolin/processes/sars_cov_2`
+- **RSV** `/cluster/project/pangolin/processes/rsv`
+- **Influenza** `/cluster/project/pangolin/processes/influenza`
 
 `/cluster/project/pangolin/data`
 
@@ -39,16 +46,16 @@ In addition, a separate virtual machine, referred to as the Bewi08 VM, is used f
 `/cluster/project/pangolin/resources`
 
 - resources and helper scripts / git repos needed in the automations
-- not all of this is acutally used, thus here are some important git repos and ifles highlighted:
-  - cowwid
-  - dbsse-user-setup.md/euler-user-setup.md ?
-  - lollipop_blacklist.txt : covid specific list with batch names or samples that should not be used for deconvolution with lollipop
+- not all of this is acutally used, thus here are some important git repos and files highlighted:
+  - cowwid: main git repo for ww processing resources
+  - (dbsse-user-setup.md/euler-user-setup.md ?)
+  - lollipop_blacklist.txt : covid specific list with batch names or samples that should not be used for deconvolution with lollipop (should be moved to cowwid git repo)
 
 `/cluster/project/pangolin/research`
 
 - folder for research
 
-### WiseDB
+### WiseDB VM
 
 `/data/projects/fgcz_data_sync_automation`
 
@@ -70,91 +77,10 @@ In addition, a separate virtual machine, referred to as the Bewi08 VM, is used f
 
 - script used to upload sample specific data to the wiseDB (e.g. cram files etc.)
 
-## Patching
-
-[#Patching]
-
-[WIP] this paragraph is only in notes style and need to be worked over!
-If there are wrong sample names in the order from fgcz, we need to patch the names. For this a file like the following has to be created: `/cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.23224.39798.tsv`
-
-- the previous v-pipe reults need to be garbaged
-- v-pipe needs to rerun
-
-To patch the libkit:
-
-- Check from the emails which delivery is the first one FGCZ generated with V542
-- if you have the date, check on bfabric which order matches that date
-- Write down all orders starting from that first order, up to the latest we received with the correct kit (which is order o39518, i.e. batch 20250822_2506652341)
-- Stop the sarscov2 automation on wisedb. The name now is pangolin-sars_cov_2-1
-- In directory /cluster/project/pangolin/processes/sars_cov_2/vpipe_input you have a file called patch.fgcz-libkit.tsv . The file is structure as follows:
-- p25650  o26956  SARS-CoV-2 ARTIC V3 NexteraXT
-- Please add one line per order to patch. The last column is the libkit that should be actually used must match the libkit definitions we have. Please use SARS-CoV-2 ARTIC V5.4.2 NEB Ultra II
-- Find the batch names of all orders you added. To do that, for each order name you can do
-- cd /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
-- grep -rl batch.*.tsv -e <order_name>
-- That should give you the filename of the tsv file for that specific order. The batch name is in the filename
-- Garbage all batches that match the patched orders
-- /cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/batman.sh garbage <batch> | tee garbage.log
-- check the log for sanity check. Please note that some errors of files not found are acceptable, if the garbage still works on at least one file (or the main sample folder) for the sample. The error comes from the garbaging trying to garbage everything, and for some samples not everything is available
-- After garbaging, restart the automation on wisedb and check that Vpipe is ran
-
-2 things we can patch:
-
-1. sample names (everywhere / matadata and sample files)
-2. library prep kit in the metadata
-3. for all other issues we need to go back to fgcz
-
-For all 3 pipeline go to sampleset dir (the following is only for covid)
-
-- create a patch file in the format: patch.projct.order.tsv
-- the first column = old name
-- second col = new name we want to assign
-
-if v pipe already run ont he wronly named file, these have to be grabaged! (see master file)
-
-- run [batman.sh](http://batman.sh) grabage BATCH_NAME to clean all the folders form the already created results
-- in the next loop the sort samples takes care of the patching automatically
-- For influenza and rsv garbaging on vpipe_input and vpipe_output needs to be done (see section "Garbaging Batches")
-
-library prep:
-
-- only for covid
-- as this information is important for lollipop
-- also in sampleset folder there is a file: pathc.fgcz-libkit.tsv
-- in there is the structure: project order lib kit, to assing the correct libkit to the order
-- garbaging as above
-  - this is only possible to patch like this if the whole order (all amples) have the same libkit assigned, if there is sample specific libkits then fgcz needs to correct the metadata themself
-
-## Automation
-
-### Overview
-
-The folder for the covid autoamtion on euler is: '/cluster/project/pangolin/test_automation/pangolin'
-'/cluster/project/pangolin/test_automation' is the main folder in the covid automation. However, the working in test_automation is outdated and we use '/cluster/project/pangolin/working'.
-In this working folder there is also the results directory (huge directory which sould not be copied!) - this will be restructured soon.
-
-**RSV**
-For RSV it is `/cluster/project/pangolin/rsv_pipeline`
-
-**Influenza**
-For Influenza it is `/cluster/project/pangolin/influenza_pipeline/`
-
-### Bad List
-
-**For Covid, Influenza and RSV!!**
-(similar to blacklist for covid-lollipop but here we define it for the fgcz downloads!)
-
-- in pangolin/pancoling_scr/config there is a fgcz.yaml file where there is a badlist specified
-- put the delivery name (order) in this list
-- you can find the delivery name associated to the batch in sampleset folder: batch.BATCHNAME.tsv
-- remember to garbage the batch if it already run with vpipe
-
-Covid: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src/config/fgcz.conf`
-
-**samples download from bfabric**
-`/cluster/project/pangolin/sampleset`
-
 ## Euler
+
+The automation runs on the wisedbVM but data processing is done on Euler and processing steps are coordinated via:
+SSH forced command / Restricted SSH key / Command-restricted key / SSH wrapper execution model
 
 ### Folder structure and git branches
 
@@ -224,17 +150,33 @@ cd /cluster/project/pangolin
 |__ research
 ```
 
-### Main Folders General Structure
+### Bad List
 
-#### pangolin_src
+**For Covid, Influenza and RSV!!**
+(similar to blacklist for covid-lollipop but here we define it for the process that copies the raw data from the fgcz download folder to the vpipe_input directories per virus (function `sortsamples`!)
 
-This folder contains all the code that is used during the automation. The automation constantly runs in the background and tries to check if there are new samples uploaded to bfabric. If there are new samples, it fetches them and automatically starts vpipe (the alignment).
+- For every virsu in `pangolin/pancoling_scr/config` there is a `fgcz.yaml` file where there is a badlist specified
+- put the delivery name (orderID) that should not be processed with vpipe in this list
+- you can find the delivery name associated to the batch in vpipe_input folder: batch.BATCHNAME.tsv
+- **Remember** to garbage the batch if it already run with vpipe
+
+Example Covid: `/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/config/fgcz.conf`
+
+**samples download from bfabric**
+`/cluster/project/pangolin/data/fgcz_raw/p23224`
+
+___
+
+### pangolin_src Folders General Structure
+
+This folder contains all the code that is used in the automation. The automation constantly runs in the background and tries to check if there are new samples available on bfabric. If there are new samples, it mirrors them transforms them into the correct input format and starts vpipe.
 
 In the folder are several scripts to run the Automation. Once the docker image  is created the first script that is celled is entrypoint.sh which then further distributes the tasks and starts the automation.
+___
 
-##### entrypoint.sh
+**entrypoint.sh**
 
-The `entrypoint.sh` script in the `flu_automation` branch of the `cbg-ethz/pangolin` repository is designed to set up necessary credentials and configurations for the automation of influenza sequencing processes. It performs the following key actions:
+The `entrypoint.sh` script is meant to set up necessary credentials and configurations for the automation. It performs the following key actions:
 
 1. **Credential Setup:** Copies various secret files, such as SSH keys and configuration files, into appropriate directories to establish secure connections with external servers and services.
 
@@ -244,7 +186,9 @@ The `entrypoint.sh` script in the `flu_automation` branch of the `cbg-ethz/pango
 
 By executing these steps, the script prepares the environment for automated data processing and secure communication with external platforms.
 
-##### quasimodo.sh
+___ 
+
+**quasimodo.sh**
 
 This script is designed to run a monitoring process called "carillon" in a loop, with some additional checks and configurations to handle potential issues like storage problems or system crashes. Here's a breakdown of what the script does:
 
@@ -279,25 +223,13 @@ This script is designed to run a monitoring process called "carillon" in a loop,
      - It re-enters the script directory, which is necessary if an NFS crash makes the current working directory inaccessible.
      - The `ring_carillon` function is called again.
      - It checks if the stop file exists (`${statusdir}/stop`). If the stop file is found, it exits the loop gracefully.
-     - The current date is printed in RFC 2822 format after each loop.
+     - The current date is printed after each loop.
 
-8. **Kerberos Ticket Renewal (Commented Out)**:
-   - There is an optional command for renewing a Kerberos ticket, which is currently commented out. This may be necessary for authenticating with certain systems in the environment where the script runs.
+___
 
-**Summary:**
+**carillon.sh**
 
-This script is intended to monitor a system or application in a repetitive manner using the "carillon" process. It has features to:
-
-- Handle failures in storage operations.
-- Periodically renew its running state to avoid stale directory handles (especially useful in networked file systems).
-- Manage failure conditions and exit appropriately based on whether singleshot mode is enabled.
-- It logs its operations and attempts to self-correct in case of errors.
-
-The script is designed for an environment with potential network storage (NFS) and remote server access, and it takes measures to ensure that it can continue functioning even when minor errors or crashes occur.
-
-##### carillon.sh
-
-The script is an automation tool designed to perform a series of tasks for managing data processing and analysis runs on a remote computing cluster. Here's a detailed breakdown of what the script does:
+The script is the "heart" of the automation designed to perform a series of tasks for managing data processing on Euler.
 
 1. **Initialization**
    - The script starts by defining paths, sourcing a configuration file, and setting default values.
@@ -336,7 +268,7 @@ The script is an automation tool designed to perform a series of tasks for manag
 
 7. **Phase 4 & 5: Viloca**
 
-- TODO
+- outdated (not used anymore)
 
 1. **Phase 6: Uploader to SPSP and Backup to bs-bewi08**
    - **Quota Check**:
@@ -355,11 +287,14 @@ The script is an automation tool designed to perform a series of tasks for manag
 
 - TODO
 
-##### belfry.sh
+___
 
-Batch Processing Script -
-Helper functions for carillon.sh (VM interaction / data sync)
+**belfry.sh**
 
+- Batch Processing Script
+- Helper functions for carillon.sh executed on VM 
+- **Functions that run on the VM**
+  
  **Rsync Commands**:
 
 - The script uses `rsync` to manage the transfer of data between local and remote servers.
@@ -441,77 +376,149 @@ Helper functions for carillon.sh (VM interaction / data sync)
    - **`timeout`**:
      - Used in `rsync` commands to ensure they do not run indefinitely. Commands will be killed if they exceed the allowed time.
 
-##### batman.sh
+___
 
+### **batman.sh**
+**TBD** - this sction is stillunstructured (However, most important functions should already be here)
+**Disclaimer** There are virus specific functions that are described here as they are stored in the virus specific batman.sh script
 
-######  vpipe) (RSV)
+- Batch Processing Script
+- Helper functions for carillon.sh executed on Euler
+- **Functions that run on EULER**
+
+___
+
+**`vpipe)`** (RSV)
 
 vpipe triggers 2 things:
 
-1. the main.sbatch
-2. the qa
+1. the main.sbatch which runs vpipe
+2. the qa (quality assurance)
 Only if both ended successfully it created vpipe.ended in the status and will not run both again in the next loop.
 
-- qa-launcher is called in batman.sh vpipe function which is started from cd `${clusterdir_old}/${clusterdir}/${working}/`
-- In vpipe_rsv_aviti_main.sbatch we cd into the variant specific working directory `/cluster/project/pangolin/processes/rsv/*/working/` to run the variant specific sbatch file
-- the variant specific .sbatch file calles the vpipe command with the varian specific .yaml file
+* The `qa-launcher` is called within the `vpipe` function defined in `batman.sh`. The workflow first changes into the variant-specific working directory, while the actual `qa-launcher` script itself is stored centrally in
+  `${clusterdir_old}/${clusterdir}/${working_vpipe}/`.
+  This setup ensures that the executable scripts are maintained in a central location, whereas log files are written to the virus-specific working directory.
 
-**the qa logic**
+* In `vpipe_rsv_aviti_main.sbatch`, the workflow changes into the variant-specific working directory
+  `/cluster/project/pangolin/processes/rsv/*/working/`
+  before submitting and executing the corresponding variant-specific `.sbatch` script.
+  Similar to the `qa-launcher`, the `.sbatch` scripts are stored centrally in
+  `${clusterdir_old}/${clusterdir}/${working_vpipe}/`,
+  but they are executed from within the variant-specific working directory so that log files are generated there.
 
-- qa-launcher is called in batman.sh vpipe function
+* The variant-specific `.sbatch` script executes the `vpipe` command using the corresponding variant-specific `.yaml` configuration file. These configuration files are also stored centrally in
+  `${clusterdir_old}/${clusterdir}/${working_vpipe}/`.
+
+
+**The qa logic**
+
+- ``qa-launcher`` is called in batman.sh vpipe function
 - this looks for
   - ./samples.recent.tsv
   - ./samples.tsv
-  - /qa/ folder
-- then it runs the centrally stores ${clusterdir_old}/${clusterdir}/${working_vpipe}/gather1qa
+  - /qa/ folder in the variant specific working directory
+- then it runs the centrally stores `${clusterdir_old}/${clusterdir}/${working_vpipe}/gather1qa`
 
-gather1qa:
+`gather1qa`
 
-- checks the vpipe_input/batch.*.yaml for the current batch
+- checks the `vpipe_input/batch.*.yaml` for the current batch
 - then checke vpipe_output directory for the output files to gather the qa stats
-- they are outputted in `output_csv="/qa/qa.${batch}.csv"`
+- they are outputted in `output_csv="/qa/qa.${batch}.csv"` in the variant specific working directory
 
-###### Downstream analysis
+___
+
+**Downstream analysis**
+
+*Goal: generate amino acid mutation frequency table form vpipe output*
 
 For Influenza and RSV the vpipe output has to be processed to get a table with the amino acid mutation frequency data which will be uploaded to the genspectrum dashboard.
 The function that takes the vpipe output and transforms it to a .tsv file is refered to as *downstream analysis*. This Analysis differes between RSV and Influenza as the provided code stems from different sources.
-The scripts that perform the data transformation are uniformly stored in a folder on Euler calles *rsv_downstream_analysis* or *influenza_downstream_analysis* respectively.
+The scripts that perform the data transformation are stored in a folder on Euler calles *rsv_downstream_analysis* or *influenza_downstream_analysis* respectively.
 
 In *carillon.sh* first, it is checked if there is an ongoing vpipe run and if so, nothing happens. If the last vpipe run completed and the downstream analysis has not yet been run for this batch the downstream analysis will start.
 These checks are done via the status files created throughout the pipline.
 
-To start the downstream analysis the *remote_batman* script on euler is called with the respective name of the function (Influenza:vpipe_out_to_tsv , RSV: rsv_vpipe_out_to_tsv).
-These functions are stored in the respective batman.sh script on euler and have differences which accomodate the differences between the downstream processing scripts.
+To start the downstream analysis the *remote_batman* (forced command from VM to Euler) script on euler is called with the respective name of the function (Influenza:vpipe_out_to_tsv , RSV: rsv_vpipe_out_to_tsv).
 
-**RSV: rsv_vpipe_out_to_tsv**
+___
 
-**Conda Env**
+**1. RSV: `rsv_vpipe_out_to_tsv`**
 
-The correct env lies in: <https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/main/envs/downstream_analysis.yml>
+*Conda Env:* The required Conda environment is defined in:
+https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/main/envs/downstream_analysis.yml
+and on Euler:
+`/cluster/project/pangolin/processes/rsv/rsv_downstream_analysis/RSV-wastewater-V-pipe/envs/downstream_analysis.yml`
 
-This function is stored in batman.sh and executed on euler. The scripts that are celled in the function are stored in a public [git repository](https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/production/README.md)
-on the production branch. The git repo on euler can be found in `/cluster/project/pangolin/rsv_pipeline/rsv_downstream_analysis/RSV-wastewater-V-pipe`.
-The function calles 3 different scripts: */timeline.py*, */annotate_vcf.py* and */make_mutation_tsv_annotated.py*.
-It tracks sucessfull run of the script by means of status files.
-It loops through the 2 RSV subtypes and defines the subtype specific input path needed to run the scripts, as well as subtype specific variables.
-*/timeline.py* creates the timeline file for all the subtype spcific samples. This file in needed in */make_mutation_tsv_annotated.py* to filter for
-the relevant samples to create the output file.
-*/annotate_vcf.py* loops thought the snvs.vcf files and creates amonoacide annotated snvs_annotated.vcf in the respective directory where snvs.vcf is located.
-For this it needs the genbank reference file (path stored in server.conf).
-Once both scripts run sucessfully */make_mutation_tsv_annotated.py* is called. The input requires the new timeline.tsv file and the annotated vcf file.
-It takes the information from the annotated vcf file and transforms then into a table that can be uploaded to genspectrum.
-The output is stored in `/cluster/project/pangolin/rsv_pipeline/*/working/MutationFrequencies`. (Note that the first batches up to 20250321_2429695737 only contain the nucleotide mutation frequency and not the amino acid mutation frequencies!)
+**Conda Environment**
 
-**Influenza: vpipe_out_to_tsv**
-The files for the analysis are in a currently local version stored on euler at: `/cluster/project/pangolin/influenza_pipeline/influenza_downstream_analysis` (tbd: update to git repo).
-This function is embedding the /detect_AAMutations.R script which runs the transformation of the vpipe output to the .tsv table for uploading. The function ensures that this script is run on each of the fragments and creates the status files accordingly.
-As input the function needs the fragment specific vpipe working folder as well as the path to the location.tsv file (which is stored in server.conf).
-As output it generates the mutation frequency table in `/cluster/project/pangolin/influenza_pipeline/*/working/MutationFrequencies`.
+The required Conda environment is defined in:
+[https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/main/envs/downstream_analysis.yml](https://github.com/cbg-ethz/RSV-wastewater-V-pipe/blob/main/envs/downstream_analysis.yml)
 
-**what happend to these files?**
+**Execution**
+
+The downstream analysis function is implemented in `batman.sh` and executed on Euler.
+
+The scripts it calls are maintained in the public repository (production branch):
+[https://github.com/cbg-ethz/RSV-wastewater-V-pipe](https://github.com/cbg-ethz/RSV-wastewater-V-pipe)
+
+Production clone on Euler:
+`/cluster/project/pangolin/processes/rsv/rsv_downstream_analysis/RSV-wastewater-V-pipe`
+
+The function executes three scripts:
+
+* `timeline.py`
+* `annotate_vcf.py`
+* `make_mutation_tsv_annotated.py`
+
+Execution success is tracked via status files. The function iterates over both RSV subtypes and sets subtype-specific input paths and variables.
+
+**Script Overview**
+
+* `timeline.py`: Generates a subtype-specific `timeline.tsv` file.
+* `annotate_vcf.py`: Annotates `snvs.vcf` files with amino acid information, producing `snvs_annotated.vcf` in the same directory. Requires the GenBank reference defined in `server.conf`.
+* `make_mutation_tsv_annotated.py`: Uses `timeline.tsv` and the annotated VCF files to generate a amino acid mutation frequency table for Genspectrum upload.
+
+**Output**
+
+Results are written to:
+`/cluster/project/pangolin/processes/rsv/*/working/MutationFrequencies`
+
+Batches up to `20250321_2429695737` contain only nucleotide mutation frequencies. Later batches include amino acid mutation frequencies.
+
+___
+
+**2. Influenza: `vpipe_out_to_tsv`**
+
+**Location**
+
+The analysis files are stored in a Git repo that is cloned to Euler at:
+`${clusterdir_old}/${clusterdir}/influenza_downstream_analysis/AA_mutationAnalysis_IAV`
+https://github.com/anikajohn/AA_mutationAnalysis_IAV
+
+
+**Execution**
+
+The function embeds the script `detect_AAMutations.R`, which converts the V-pipe output into a `.tsv` table for genspectrum upload.
+
+It runs the script separately for each fragment and tracks successful execution using status files.
+
+**Input**
+
+* Fragment-specific V-pipe working directory
+* Path to `location.tsv` (defined in `server.conf`)
+
+**Output**
+
+Amino acid mutation frequency table for Genspectrum upload tables are written to:
+`/cluster/project/pangolin/influenza_pipeline/*/working/mutation_frequencies`
+
+___
+
+**What happend to these files?**
 The Files are manually checked and then uploaded to genspectrum (automation tbd).
 
-**how to run the downstream analysis manually?**
+**How to run the downstream analysis manually?**
 Influenza:
 
 ```Bash
@@ -526,11 +533,13 @@ cd /cluster/project/pangolin/rsv_pipeline/pangolin/pangolin_src
 ./batman.sh rsv_vpipe_out_to_tsv
 ```
 
-###### Sortsample
+___
+
+**Sortsample**
 
 [#sortsample]
 
-This is an essential function that takes the rawdata and sorts them to create the input data format for vpipe.
+This is an **essential** function that takes the rawdata and sorts them to create the input data format for vpipe.
 
 ```Bash
 ${clusterdir_old}/${clusterdir}/${sourcefiles_location}/sort_samples_bfabric_tsv_aviti.py \
@@ -588,8 +597,8 @@ The script then reads the configuration file (fgcz.conf) using some custom loade
 The script performs two big phases:
 
 **Phase 1 – Data gathering:**
-It walks through the download directory (basedir/download/projects/*) and collects run information from Stats.json, dataset.tsv, etc.
-It builds an internal structure called batches, where each key is an order and the value holds all metadata for that order/run (samples, lanes, flowcell, rundate, etc.).
+It walks through the download directory (`basedir/download/projects/*`) and collects run information from Stats.json, dataset.tsv, etc.
+It builds an internal structure called `batches`, where each key is an order and the value holds all metadata for that order/run (samples, lanes, flowcell, rundate, etc.).
 
 **Phase 2 – Output building:**
 It writes:
@@ -604,7 +613,11 @@ Those files define and enact how data are copied or linked into the final sample
 **Internal Batch Name**
 Is created by putting together the `rundate` and `"FlowCellID"` extracted from the raw_data *DmxStats* *.json file.
 
-#### Garbaging Batches - garbage.sh
+___
+
+### Garbaging Batches - garbage.sh
+
+[#garbage]
 
 In case of sample name correction both vpipe_input and vpipe_output folders need to be cleaned up / sample directories there must be garbaged!
 
@@ -623,6 +636,63 @@ This needs to be cleaned up as otherwise vpipe things it needs to run on the cop
 `test_automation/pangolin/pangolin_scr/batman.sh garbage BATCHNAME`
 moves the samples from sampleset to `/cluster/project/pangolin/garbage`
 *Remember* to first black list the batch in `test_automation/pangolin/pangolin_scr/config/fgcz.conf`
+
+
+### Patching
+
+[#Patching]
+
+[WIP] this paragraph is only in notes style and need to be worked over!
+If there are wrong sample names in the order from fgcz, we need to patch the names. For this a file like the following has to be created: `/cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.23224.39798.tsv`
+
+- the previous v-pipe reults need to be garbaged
+- v-pipe needs to rerun
+
+To patch the libkit:
+
+- Check from the emails which delivery is the first one FGCZ generated with V542
+- if you have the date, check on bfabric which order matches that date
+- Write down all orders starting from that first order, up to the latest we received with the correct kit (which is order o39518, i.e. batch 20250822_2506652341)
+- Stop the sarscov2 automation on wisedb. The name now is pangolin-sars_cov_2-1
+- In directory /cluster/project/pangolin/processes/sars_cov_2/vpipe_input you have a file called patch.fgcz-libkit.tsv . The file is structure as follows:
+- p25650  o26956  SARS-CoV-2 ARTIC V3 NexteraXT
+- Please add one line per order to patch. The last column is the libkit that should be actually used must match the libkit definitions we have. Please use SARS-CoV-2 ARTIC V5.4.2 NEB Ultra II
+- Find the batch names of all orders you added. To do that, for each order name you can do
+- cd /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
+- grep -rl batch.*.tsv -e <order_name>
+- That should give you the filename of the tsv file for that specific order. The batch name is in the filename
+- Garbage all batches that match the patched orders
+- /cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/batman.sh garbage <batch> | tee garbage.log
+- check the log for sanity check. Please note that some errors of files not found are acceptable, if the garbage still works on at least one file (or the main sample folder) for the sample. The error comes from the garbaging trying to garbage everything, and for some samples not everything is available
+- After garbaging, restart the automation on wisedb and check that Vpipe is ran
+
+2 things we can patch:
+
+1. sample names (everywhere / matadata and sample files)
+2. library prep kit in the metadata
+3. for all other issues we need to go back to fgcz
+
+For all 3 pipeline go to sampleset dir (the following is only for covid)
+
+- create a patch file in the format: patch.projct.order.tsv
+- the first column = old name
+- second col = new name we want to assign
+
+if v pipe already run ont he wronly named file, these have to be grabaged! (see master file)
+
+- run [batman.sh](http://batman.sh) grabage BATCH_NAME to clean all the folders form the already created results
+- in the next loop the sort samples takes care of the patching automatically
+- For influenza and rsv garbaging on vpipe_input and vpipe_output needs to be done (see section "Garbaging Batches")
+
+library prep:
+
+- only for covid
+- as this information is important for lollipop
+- also in sampleset folder there is a file: pathc.fgcz-libkit.tsv
+- in there is the structure: project order lib kit, to assing the correct libkit to the order
+- garbaging as above
+  - this is only possible to patch like this if the whole order (all amples) have the same libkit assigned, if there is sample specific libkits then fgcz needs to correct the metadata themself
+
 
 ## FGCZ Sync Autoamtion
 
@@ -1654,6 +1724,31 @@ This prevents silent overwrites of entries like:
 
 (If you *want* second.json to overwrite existing `top_key/sub_key` entries, you would need to remove/relax the duplicate check—currently it is strict by design.)
 
+## Backups
+
+24 February 2026 preliminary notes:
+
+- backup to bewi08 via **rsync deamon**
+- runns is the fgcz sync automation (for raw data = raw downloads form fgcz data)
+- in fgcz_sync.sh backup is triggered with the function: `${remote_backup} pull_fgcz_data --recent`
+- `remote_backup`is defined in the .ssh/authorized_keys on the bewi08 vm (it is a bash script on the bewi08 VM `/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh`)
+- in this script the function `pull_fgcz_data` is defined
+- it rsyncs the data in folder: `belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project}`
+  - this is a rsync **daemon module** that is defined on euler / in the pangolin git repo in `pangolin_src/config/rsyncd.config`
+  - in this file the path what data it should sync is defined and needs to be up to date
+
+```Bash
+Bfabric storage (real filesystem path, hidden)
+        ↓
+rsync daemon exports it as module "bfabric-downloads"
+        ↓
+Your backup VM connects via rsync protocol
+        ↓
+Your script copies module/p23224
+        ↓
+Stored locally in ${basedir}/${bfabric_downloads}/${bfabric_project}
+```
+
 
 ## Appendix
 
@@ -1674,3 +1769,7 @@ The SARS CoV19 directory where the regular analysis takes place (lollipop) is `/
 - the vpipe is run in : `/cluster/project/pangolin/working` (go here to check the slurm-out of vpipe)
   - in the slurm-out (main) it tells you which batches it checks for new samples, but this does not mean that it runs on all of these batches, it only checks if there are samples that have not yet been aligned by v-pipe!
 - config files for covid vpipe: `/cluster/project/pangolin/test_automation/pangolin/pangolin_src`
+
+The folder for the covid autoamtion on euler is: '/cluster/project/pangolin/test_automation/pangolin'
+'/cluster/project/pangolin/test_automation' is the main folder in the covid automation. However, the working in test_automation is outdated and we use '/cluster/project/pangolin/working'.
+In this working folder there is also the results directory (huge directory which sould not be copied!) - this will be restructured soon.

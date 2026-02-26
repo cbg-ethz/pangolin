@@ -8,6 +8,74 @@ TODO:
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
 
+
+23 Feb 2026
+
+- stoped the iva and rsv autoamtion
+- needed to garbage the latest batch 20260220_2529664984 for all iva subvariants as there was the sam2bam problem and lofreq timeout
+- RSV: lofreq timeout for sample C1_10_2026_01_28/20260220_2529664984
+  - **Slow sample:** `Processed 2233180 reads`
+  - **Fast sample:** `Processed 422663 reads`
+- rsv and iva the lofreq time was adjusted in the vpipe yaml file from 160 to 200
+- docker iva and rsv start
+
+
+23 Feb 2026 backup notes:
+
+Example backup log section:
+
+```Bash 
+
+=========
+Data sync
+=========
+Running in FTP mode
+Sync FGCZ - bfabric
+Syncing from node eu-login-39
+syncing recent: 20250823	excluding: 35 /cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst
+connect sftp://carrara:<PASSWORD>@fgcz-gstore.uzh.ch:666
+lftp -c set cmd:move-background false; set net:timeout 30; set net:max-retries 10; set net:reconnect-interval-base 8; set xfer:timeout 300; connect sftp://carrara:<PASSWORD>@fgcz-gstore.uzh.ch:666; cd /projects; mirror --only-newer --continue --no-perms --parallel=8 --loop  --directory=p23224 -O /cluster/project/pangolin/data/fgcz_raw  --newer-than='20250823'  --exclude-rx-from='/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst'
+No files to sync found
+/app/fgcz_sync vs /app/workdir
+belfry.sh pull_sync_status
+Pulling the updated status of the raw data sync
+Unknown --groupmap name on receiver: bs-pangolin-group
+>f..t...... fgcz.exclude.lst
+>f..t...... sync_fgcz_success
+ssh: connect to host bs-bewi08 port 22: Connection timed out
+Mon, 23 Feb 2026 14:00:49 +0000
+loop...
+Starting loop for: 7200 sec
+The scripts are in /app/fgcz_sync
+The base working directory for the automation is /app/workdir
+The current automation run is based on:
+/app/fgcz_sync vs /app/workdir
+belfry.sh get_pangolin_commit
+fatal: not a git repository (or any of the parent directories): .git
+fatal: not a git repository (or any of the parent directories): .git
+Branch: \n
+=========
+Data sync
+=========
+Running in FTP mode
+Sync FGCZ - bfabric
+Syncing from node eu-login-30
+syncing recent: 20250823	excluding: 35 /cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst
+connect sftp://carrara:<PASSWORD>@fgcz-gstore.uzh.ch:666
+lftp -c set cmd:move-background false; set net:timeout 30; set net:max-retries 10; set net:reconnect-interval-base 8; set xfer:timeout 300; connect sftp://carrara:<PASSWORD>@fgcz-gstore.uzh.ch:666; cd /projects; mirror --only-newer --continue --no-perms --parallel=8 --loop  --directory=p23224 -O /cluster/project/pangolin/data/fgcz_raw  --newer-than='20250823'  --exclude-rx-from='/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst'
+No files to sync found
+/app/fgcz_sync vs /app/workdir
+belfry.sh pull_sync_status
+Pulling the updated status of the raw data sync
+Unknown --groupmap name on receiver: bs-pangolin-group
+>f..t...... fgcz.exclude.lst
+>f..t...... sync_fgcz_success
+ssh: connect to host bs-bewi08 port 22: Connection timed out
+Mon, 23 Feb 2026 14:23:13 +0000
+
+```
+
+
 2 feb 2026:
 
 - sample named needed to be patched: order o40900 batch 20260123_2519411291
