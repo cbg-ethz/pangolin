@@ -186,9 +186,10 @@ case "$1" in
 				echo "Skipping ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/ in /cluster/project/pangolin/resources/lollipop_blacklist.txt"
 			else
 				#cp -alv ${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/{references,alignments} ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
-				cp -alv ${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/ ${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/
+				cp -alv "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/${b}/." "${clusterdir_old}/${clusterdir}/${worktest}/results/${s}/${b}/"
 			fi
 		done < ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}
+
         for i in $(cat /cluster/project/pangolin/resources/lollipop_blacklist.txt); do
             while read -r line
             do
@@ -196,6 +197,7 @@ case "$1" in
             done <${clusterdir_old}/${clusterdir}/${worktest}/${TSV} > ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}_temp
             mv ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}_temp ${clusterdir_old}/${clusterdir}/${worktest}/${TSV}
         done
+
 		for i in $(cat /cluster/project/pangolin/resources/lollipop_blacklist.txt); do
             while read -r line
             do
