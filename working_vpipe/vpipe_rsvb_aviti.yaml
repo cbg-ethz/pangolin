@@ -28,7 +28,7 @@ ref_bwa_index:
     mem: 65536
 lofreq:
     consensus: false
-    time: 200
+    time: 800
     mem: 4000
 snv:
     consensus: false
