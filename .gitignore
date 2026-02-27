@@ -15,3 +15,5 @@ working/uploads/
 pangolin_src/movedatafiles.sh
 .snakemake
 movedatafiles.sh
+/pangolin_src/movedatafiles.sh
+/pangolin/pangolin_src/movedatafiles.sh

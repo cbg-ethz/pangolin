@@ -34,3 +34,4 @@ slurm-*
 
 # local dev
 miniconda3
+movedatafiles.sh
