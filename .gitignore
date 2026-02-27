@@ -6,6 +6,7 @@ uploader/__pycache__
 pangolin_src/downstream_analysis
 pangolin_src/movedatafiles.sh
 *.tar
+old/
 
 *.log
 
