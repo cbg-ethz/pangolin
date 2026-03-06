@@ -8,6 +8,10 @@ TODO:
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
 
+3 March 2026:
+- The bsse IT added a firewall rule to explicitally allow the systems to communicate with eachother
+- Before this there were no backups of every thing incl. the raw data to bewi08: Mind august 2025 - March 2026
+  - the raw data is now backing up again
 
 23 Feb 2026
 
