@@ -626,11 +626,24 @@ If any batch already run v-pipe, use the garbage script for a cleanup of the fol
 Garbage script: `./cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage.sh --variant "RSVB" --batch "20250417_2427493980"`
 creates a garbage directroy in ./vpipe_output and moves the sample/batch directrories inside the garbage directroy. Then checks if there are other batchech for the sample and if not deletes the sample directory form the ./results directroy.
 
+`pangolin_src/garbage_covid_batches.sh`
+  
+- script to garbage batches for both subtypes
+- to have less maual interaction if (multiple) batches need to be grabaged for both variants
+- Run instrctions: do into the script and change the batches you want to garbage
+
 **Overview garbage_vpipe_input.sh**
 
 Garbages batches that were copied from fgcz_raw to the vpipe_input directroy (RSV/Influenza).
 This needs to be cleaned up as otherwise vpipe things it needs to run on the copied samples without results directory.
 `./cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage_vpipe_input.sh --batch "20250417_2427493980"`
+
+`pangolin_src/vpipe_input_garbage_covid_batches.sh`
+
+- script to garbage input files batches (by design for both subtypes as there is only one input directory per virus)
+- to have less maual interaction if multiple batches need to be grabaged
+- Run instrctions: do into the script and change the batches you want to garbage
+
 
 **Garbage Covid**
 `test_automation/pangolin/pangolin_scr/batman.sh garbage BATCHNAME`
@@ -1749,6 +1762,9 @@ Your script copies module/p23224
 Stored locally in ${basedir}/${bfabric_downloads}/${bfabric_project}
 ```
 
+Backup directory on Bewi08:
+
+- raw data: `/links/shared/covid19-pangolin/backup/bfabric-downloads/p23224`
 
 ## Appendix
 
