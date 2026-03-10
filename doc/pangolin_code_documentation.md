@@ -613,98 +613,170 @@ Those files define and enact how data are copied or linked into the final sample
 **Internal Batch Name**
 Is created by putting together the `rundate` and `"FlowCellID"` extracted from the raw_data *DmxStats* *.json file.
 
+**movedatafiles.sh**
+
+A sample row is written into movedatafiles.sh if all of the following hold:
+
+Folder-level conditions: 
+
+- the delivery folder is found under basedir/download/...
+- the folder name is not in badlist
+- a valid stats JSON is found
+- order can be determined
+- flowcell can be parsed
+- rundate can be parsed
+- the run is not excluded by --recent
+- the folder contains at least 2 valid samples with nonzero reads
+- the folder is not dropped by the fuselist logic
+
+Sample-level conditions:
+
+- the sample has nonzero reads in the stats JSON
+- the row in dataset.tsv can be matched to a sample in batches[b]['samples']
+- directly, or
+- after suffix removal, or
+- by fuzzy prefix matching
+- the row contains usable Read1 [File] and, if paired-end, Read2 [File]
+
+If those conditions are met, the script prints mkdir and cp commands for that sample into movedatafiles.sh.
+
+**Observation: samples are only copied tinot vpipe:input directory once the fastQC files are there. Currently it is not clear for me where this condition is placed as in the script sort_samples_bfabric_tsv_aviti.py the flag --no-fastqc is set which should cancel all dependency on fastqc files. (needs to be checked further!)**
 ___
 
 ### Garbaging Batches - garbage.sh
 
 [#garbage]
 
-In case of sample name correction both vpipe_input and vpipe_output folders need to be cleaned up / sample directories there must be garbaged!
+In cases where samples or batches need to be removed, scripts are available that move the data to a **garbage** directory instead of deleting it. For example, when correcting a sample name, both the `vpipe_input` and `vpipe_output` folders must be cleaned so that the patching file is applied and the corrected name is used. The corresponding sample directories therefore need to be moved to the **garbage** directory.
+
+Another use case is the accidental delivery of an experimental batch to the FGCZ project that was not announced beforehand. In such cases, first add the batch to the corresponding **blacklist/bad list** (as described above) to prevent reruns. Only afterwards should the already processed batch be moved to garbage.
 
 **Garbage RSV/Influenza**
-If any batch already run v-pipe, use the garbage script for a cleanup of the folders from this batch. BEFORE: Add the batch to the **Bad List** as described above.
-Garbage script: `./cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage.sh --variant "RSVB" --batch "20250417_2427493980"`
-creates a garbage directroy in ./vpipe_output and moves the sample/batch directrories inside the garbage directroy. Then checks if there are other batchech for the sample and if not deletes the sample directory form the ./results directroy.
+
+Garbage script:
+`/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage.sh --variant "RSVB" --batch "20250417_2427493980"`
+
+This script creates a `garbage` directory in `./vpipe_output` and moves the corresponding sample/batch directories there. It then checks whether additional batches exist for the same sample. If none exist, the sample directory is removed from the `./results` directory.
 
 `pangolin_src/garbage_covid_batches.sh`
-  
-- script to garbage batches for both subtypes
-- to have less maual interaction if (multiple) batches need to be grabaged for both variants
-- Run instrctions: do into the script and change the batches you want to garbage
 
-**Overview garbage_vpipe_input.sh**
+* Script to garbage batches for both subtypes (RSVA and RSVB)
+* Reduces manual interaction when multiple batches need to be garbaged for both variants
+* To use it, edit the script and specify the batches to remove
 
-Garbages batches that were copied from fgcz_raw to the vpipe_input directroy (RSV/Influenza).
-This needs to be cleaned up as otherwise vpipe things it needs to run on the copied samples without results directory.
-`./cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage_vpipe_input.sh --batch "20250417_2427493980"`
+**Overview `garbage_vpipe_input.sh`**
+
+This script garbages batches that were copied from `fgcz_raw` to the `vpipe_input` directory (RSV/Influenza). These files must be removed, for example in the case of sample renaming; otherwise, V-pipe may attempt to reprocess the copied samples with the old names.
+
+Example:
+`/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage_vpipe_input.sh --batch "20250417_2427493980"`
 
 `pangolin_src/vpipe_input_garbage_covid_batches.sh`
 
-- script to garbage input files batches (by design for both subtypes as there is only one input directory per virus)
-- to have less maual interaction if multiple batches need to be grabaged
-- Run instrctions: do into the script and change the batches you want to garbage
-
+* Script to garbage input batches (designed for both subtypes, since there is only one input directory per virus)
+* Reduces manual interaction when multiple batches need to be removed
+* To use it, edit the script and specify the batches to garbage
 
 **Garbage Covid**
-`test_automation/pangolin/pangolin_scr/batman.sh garbage BATCHNAME`
-moves the samples from sampleset to `/cluster/project/pangolin/garbage`
-*Remember* to first black list the batch in `test_automation/pangolin/pangolin_scr/config/fgcz.conf`
+`/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_scr/batman.sh garbage BATCHNAME`
+
+*Important:* first blacklist the batch (if it should not be processed) in
+`/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_scr/config/fgcz.conf`.
 
 
 ### Patching
 
 [#Patching]
 
-[WIP] this paragraph is only in notes style and need to be worked over!
-If there are wrong sample names in the order from fgcz, we need to patch the names. For this a file like the following has to be created: `/cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.23224.39798.tsv`
+Two types of patches are supported:
 
-- the previous v-pipe reults need to be garbaged
-- v-pipe needs to rerun
+1. **Sample names** (metadata and sample files)
+2. **Library prep kit** in the metadata
 
-To patch the libkit:
+All other issues must be corrected by **FGCZ**.
 
-- Check from the emails which delivery is the first one FGCZ generated with V542
-- if you have the date, check on bfabric which order matches that date
-- Write down all orders starting from that first order, up to the latest we received with the correct kit (which is order o39518, i.e. batch 20250822_2506652341)
-- Stop the sarscov2 automation on wisedb. The name now is pangolin-sars_cov_2-1
-- In directory /cluster/project/pangolin/processes/sars_cov_2/vpipe_input you have a file called patch.fgcz-libkit.tsv . The file is structure as follows:
-- p25650  o26956  SARS-CoV-2 ARTIC V3 NexteraXT
-- Please add one line per order to patch. The last column is the libkit that should be actually used must match the libkit definitions we have. Please use SARS-CoV-2 ARTIC V5.4.2 NEB Ultra II
-- Find the batch names of all orders you added. To do that, for each order name you can do
-- cd /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
-- grep -rl batch.*.tsv -e <order_name>
-- That should give you the filename of the tsv file for that specific order. The batch name is in the filename
-- Garbage all batches that match the patched orders
-- /cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/batman.sh garbage <batch> | tee garbage.log
-- check the log for sanity check. Please note that some errors of files not found are acceptable, if the garbage still works on at least one file (or the main sample folder) for the sample. The error comes from the garbaging trying to garbage everything, and for some samples not everything is available
-- After garbaging, restart the automation on wisedb and check that Vpipe is ran
+**Sample name patching**
 
-2 things we can patch:
+If sample names in the FGCZ order are incorrect, they must be patched using a patch file placed in the corresponding `vpipe_input` directory.
 
-1. sample names (everywhere / matadata and sample files)
-2. library prep kit in the metadata
-3. for all other issues we need to go back to fgcz
+Example:
+`/cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.<project>.<order>.tsv`
 
-For all 3 pipeline go to sampleset dir (the following is only for covid)
+File format:
 
-- create a patch file in the format: patch.projct.order.tsv
-- the first column = old name
-- second col = new name we want to assign
+* column 1: old sample name
+* column 2: corrected sample name
 
-if v pipe already run ont he wronly named file, these have to be grabaged! (see master file)
+Example filename:
+`patch.23224.39798.tsv`
 
-- run [batman.sh](http://batman.sh) grabage BATCH_NAME to clean all the folders form the already created results
-- in the next loop the sort samples takes care of the patching automatically
-- For influenza and rsv garbaging on vpipe_input and vpipe_output needs to be done (see section "Garbaging Batches")
+If V-pipe has already processed the incorrectly named samples, the previous results must first be garbaged.
 
-library prep:
+Cleanup steps:
 
-- only for covid
-- as this information is important for lollipop
-- also in sampleset folder there is a file: pathc.fgcz-libkit.tsv
-- in there is the structure: project order lib kit, to assing the correct libkit to the order
-- garbaging as above
-  - this is only possible to patch like this if the whole order (all amples) have the same libkit assigned, if there is sample specific libkits then fgcz needs to correct the metadata themself
+* **Covid:**
+
+  ```
+  /cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/batman.sh garbage <BATCH_NAME>
+  ```
+
+* **RSV / Influenza:**
+  garbage both `vpipe_input` and `vpipe_output` directories (see section *Garbaging Batches*).
+
+After cleanup, the next automation loop will run `sort_samples`, which automatically applies the patch.
+
+
+**Libkit patching (Covid only)**
+
+Library prep kit patching is required when the libkit recorded in the metadata is incorrect. This information is used downstream (e.g. in lollipop).
+
+Steps:
+
+1. Identify the first order where the new libkit was used (via email or B-Fabric).
+2. List all affected orders up to the latest one delivered with the correct kit.
+3. Stop the **SARS-CoV-2 automation** on `wisedb`.
+4. Edit the file:
+
+   ```
+   /cluster/project/pangolin/processes/sars_cov_2/vpipe_input/patch.fgcz-libkit.tsv
+   ```
+
+File structure:
+
+```
+project   order   libkit
+```
+
+Example:
+
+```
+p25650   o26956   SARS-CoV-2 ARTIC V3 NexteraXT
+```
+
+Add one line per order to patch. The libkit name must exactly match the pipeline libkit definitions
+(e.g. `SARS-CoV-2 ARTIC V5.4.2 NEB Ultra II`).
+
+Next, identify the corresponding batch names:
+
+```
+cd /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
+grep -rl -e <order_name> batch.*.tsv
+```
+
+Garbage all affected batches:
+
+```
+/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/batman.sh garbage <batch> | tee garbage.log
+```
+
+Check the log for sanity. Some “file not found” errors can occur if certain expected files are missing.
+
+Finally:
+
+* restart the automation on `wisedb`
+* confirm that V-pipe reruns
+
+Note: this patching method only works if **all samples in an order use the same libkit**. If libkits differ between samples within the same order, the metadata must be corrected by **FGCZ**.
 
 
 ## FGCZ Sync Autoamtion
@@ -1739,6 +1811,10 @@ This prevents silent overwrites of entries like:
 
 ## Backups
 
+### Backup of raw data form FGCZ
+
+happen in the fgcz data sync automation
+
 24 February 2026 preliminary notes:
 
 - backup to bewi08 via **rsync deamon**
@@ -1765,6 +1841,24 @@ Stored locally in ${basedir}/${bfabric_downloads}/${bfabric_project}
 Backup directory on Bewi08:
 
 - raw data: `/links/shared/covid19-pangolin/backup/bfabric-downloads/p23224`
+
+Ports:
+
+- wisedbVM → bs-bewi08 (port 22)
+- bs-bewi08 → euler.ethz.ch (port 873)
+
+There are special firewall rules in place to allow communication between the systems. In case of problem, contance BSSE IT Helpdesk.
+
+**Exclude list / blacklist for backup:** (on wisedbVM)
+`/data/projects/fgcz_data_sync_automation/workdir/status/remote_sync/fgcz.exclude.lst`
+
+**STATUS Files** (on backup machine bewi08)
+`/links/shared/covid19-pangolin/backup/automation_backups/status`
+
+### Backup of proecessed data
+
+do they happen in the sars_cov_2 automation?
+
 
 ## Appendix
 
