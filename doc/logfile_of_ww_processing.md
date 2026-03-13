@@ -8,7 +8,22 @@ TODO:
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
 
+
+13 March 2026:
+
+Batch 20260306_2530611610
+
+- needed to exclude samples as no time / memory combination was found such that lofreq finished in time
+- Excluded:
+  - IA_H1 sample C3_25_2026_02_17: Processed 898074 reads (/)`/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-60210251.err.log`)
+  - RSVA/B sample B3_17_2026_02_22: Processed 7534734 reads (`/cluster/project/pangolin/processes/rsv/RSVA/working/cluster_logs/lofreq/lofreq-60189290.err.log`)
+- to be able to exclude these samples a new functionality had to be introduced in the automation: sample specific badlist
+  - added variables in fgct.conf where single samples can be added
+  - added filtering for these samples in batman.sh addsamples and scanmissingsamples
+
+
 3 March 2026:
+
 - The bsse IT added a firewall rule to explicitally allow the systems to communicate with eachother
 - Before this there were no backups of every thing incl. the raw data to bewi08: Mind august 2025 - March 2026
   - the raw data is now backing up again
