@@ -82,93 +82,237 @@ case "$1" in
                 ~/log/rotate
         ;;
         addsamples)
-                lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-                aviti=0
+                # ---- Core paths and defaults ----------------------------------------
+                shared_workdir="${clusterdir_old}/${clusterdir}/${working}"   # shared working directory
+                samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"    # directory containing all samples.*.tsv files
+                copy_list_name="samples.tsv"                                  # subtype list used later for copying
+                aviti=0                                                       # legacy flag kept for compatibility
+
+                # ---- Exclusion settings ---------------------------------------------
+                # Load global and subtype-specific sample exclusions from fgcz.conf.
+                . <(
+                        grep -E '^(exclude_samples|exclude_samples_ia_h1|exclude_samples_ia_h3|exclude_samples_ia_mp|exclude_samples_ia_n1|exclude_samples_ia_n2)=' \
+                        "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf" \
+                        || true
+                )
+
+                influenza_subtypes_list=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)       # influenza subtype directories to prepare
+
+                # ---- Helper: filter a TSV stream by sample name ----------------------
+                # Removes rows whose sample name in column 1 appears in the provided
+                # comma-separated exclusion list.
+                filter_excluded_samples() {
+                        local excl="$1"
+                        awk -F '\t' -v excl="$excl" '
+                        BEGIN {
+                                n = split(excl, a, ",")
+                                for (i = 1; i <= n; i++) {
+                                        gsub(/^[ \t]+|[ \t]+$/, "", a[i])     # trim whitespace around sample names
+                                        if (a[i] != "")
+                                                drop[a[i]] = 1                # mark sample for exclusion
+                                }
+                        }
+                        !($1 in drop)                                         # keep only non-excluded sample rows
+                        '
+                }
+
+                # ---- Helper: build one filtered samples file -------------------------
+                # Applies global exclusions first, then subtype-specific exclusions,
+                # sorts uniquely, and writes the result to the requested output file.
+                build_filtered_samples_file() {
+                        local output_file="$1"
+                        local subtype_exclude="$2"
+                        shift 2
+
+                        cat "$@" \
+                                | filter_excluded_samples "${exclude_samples:-}" \
+                                | filter_excluded_samples "${subtype_exclude}" \
+                                | sort -u \
+                                > "${output_file}"
+                }
+
+                # ---- Helper: collect the source samples.*.tsv files for a mode ------
+                # Populates the global array "mode_files".
+                collect_mode_files() {
+                        local mode="$1"
+                        mode_files=()
+
+                        case "$mode" in
+                                recent)
+                                        # Use the last and current month.
+                                        mapfile -t mode_files < <(
+                                                ls -1 "${samples_dir}"/samples."${lastmonth}"*.tsv \
+                                                      "${samples_dir}"/samples."${thismonth}"*.tsv 2>/dev/null \
+                                                | sort -u
+                                        )
+                                ;;
+                                year)
+                                        # Use all files for the selected year.
+                                        mapfile -t mode_files < <(
+                                                ls -1 "${samples_dir}"/samples."${year}"*.tsv 2>/dev/null
+                                        )
+                                ;;
+                                all)
+                                        # Use all files from influenza_startdate onward.
+                                        local startmonth="${influenza_startdate:0:6}"   # YYYYMM
+                                        mapfile -t mode_files < <(
+                                                ls -1 "${samples_dir}"/samples.*.tsv 2>/dev/null \
+                                                | awk -v start="${startmonth}" '
+                                                        match($0, /samples\.([0-9]{6})/, m) {
+                                                                if (m[1] >= start) print $0
+                                                        }
+                                                '
+                                        )
+                                ;;
+                        esac
+
+                        # Abort if no matching files were found.
+                        if (( ${#mode_files[@]} == 0 )); then
+                                echo "ERROR: no matching samples files found in ${samples_dir}" >&2
+                                exit 1
+                        fi
+                }
+
+                # ---- Helper: build subtype lists for one target filename ------------
+                # Example target names:
+                #   samples.recent.tsv
+                #   samples.tsv
+                write_subtype_lists() {
+                        local target_name="$1"
+                        shift
+
+                        local iva_subtype
+                        local exclude_var
+                        local subtype_exclude
+
+                        for iva_subtype in "${influenza_subtypes_list[@]}"; do
+                                exclude_var="exclude_samples_${iva_subtype,,}"          # e.g. IA_H1 -> exclude_samples_ia_h1
+                                subtype_exclude="${!exclude_var:-}"                     # read subtype-specific exclusion list
+
+                                build_filtered_samples_file \
+                                        "${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/${target_name}" \
+                                        "${subtype_exclude}" \
+                                        "$@"
+                        done
+                }
+
+                # ---- Helper: split a subtype list into Aviti vs pre-Aviti ----------
+                # Uses the current batch-name length heuristic from the original code.
+                split_aviti_lists() {
+                        local subtype_list_file="$1"
+                        local subtype_workdir="$2"
+
+                        mv "${subtype_workdir}/samples_aviti.tsv" \
+                           "${subtype_workdir}/samples_aviti.tsv.old" 2>/dev/null || true
+
+                        : > "${subtype_workdir}/samples_aviti.tsv"                    # fresh Aviti list
+                        : > "${subtype_workdir}/samples_pre-aviti.tsv"                # fresh pre-Aviti list
+
+                        while IFS=$'\t' read -r col1 col2 col3 col4; do
+                                if [ "${#col2}" -eq 19 ]; then
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> "${subtype_workdir}/samples_aviti.tsv"
+                                else
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> "${subtype_workdir}/samples_pre-aviti.tsv"
+                                fi
+                        done < "${subtype_list_file}"
+                }
+
+                # ---- Mode-specific sample lists -------------------------------------
                 case "$2" in
                         --recent)
-                                lst="${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
-                                echo "syncing recent: ${lastmonth}, ${thismonth}"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_H1/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_H3/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_MP/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_N1/${working}/samples.recent.tsv"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.{${lastmonth},${thismonth}}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/IA_N2/${working}/samples.recent.tsv"
+                                copy_list_name="samples.recent.tsv"                    # subtype copy list for recent mode
+                                echo "syncing recent: ${lastmonth}, ${thismonth}"      # show selected months
+
+                                collect_mode_files recent                              # gather recent source files
+
+                                # Build shared recent list.
+                                build_filtered_samples_file \
+                                        "${shared_workdir}/samples.recent.tsv" \
+                                        "" \
+                                        "${mode_files[@]}"
+
+                                # Build subtype recent lists.
+                                write_subtype_lists "samples.recent.tsv" "${mode_files[@]}"
                         ;;
                         --year)
-                                lst="${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
-                                echo "syncing year: ${year}"
-                                cat ${clusterdir_old}/${clusterdir}/${sampleset}/samples.${year}*.tsv | sort -u > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
+                                copy_list_name="samples.recent.tsv"                    # subtype copy list for yearly mode
+                                echo "syncing year: ${year}"                           # show selected year
+
+                                collect_mode_files year                                # gather yearly source files
+
+                                # Build shared yearly list.
+                                build_filtered_samples_file \
+                                        "${shared_workdir}/samples.recent.tsv" \
+                                        "" \
+                                        "${mode_files[@]}"
+
+                                # Build subtype yearly lists.
+                                write_subtype_lists "samples.recent.tsv" "${mode_files[@]}"
                         ;;
-			--all)
-                                # "all" = all batches from influenza_startdate onward
-                                # influenza_startdate expected format: YYYYMMDD (e.g. 20251128)
-                                startmonth="${influenza_startdate:0:6}"   # YYYYMM
+                        --all)
+                                copy_list_name="samples.recent.tsv"                    # keep copy scope limited to startdate onward
+                                echo "syncing all from ${influenza_startdate}"         # show selected start date
 
-                                lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-                                echo "syncing all from ${influenza_startdate} (month >= ${startmonth})"
+                                collect_mode_files all                                 # gather files from influenza_startdate onward
 
-                                samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"
+                                # Build the selected-range shared lists.
+                                build_filtered_samples_file \
+                                        "${shared_workdir}/samples.tsv" \
+                                        "" \
+                                        "${mode_files[@]}"
 
-                                # collect all samples files from startmonth onward (based on filename YYYYMM)
-                                mapfile -t files < <(
-                                    ls -1 "${samples_dir}/samples."*.tsv 2>/dev/null \
-                                    | awk -v start="${startmonth}" '
-                                        match($0, /samples\.([0-9]{6})/, m) {
-                                            if (m[1] >= start) print $0
-                                        }
-                                    '
-                                )
+                                build_filtered_samples_file \
+                                        "${shared_workdir}/samples.recent.tsv" \
+                                        "" \
+                                        "${mode_files[@]}"
 
-                                if (( ${#files[@]} == 0 )); then
-                                    echo "ERROR: no samples files found from month ${startmonth} in ${samples_dir}" >&2
-                                    exit 1
-                                fi
-
-                                # write samples.tsv and samples.recent.tsv (deduplicated)
-                                sort -u "${files[@]}" > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-                                sort -u "${files[@]}" > "${clusterdir_old}/${clusterdir}/${working}/samples.recent.tsv"
-
-                                # also write subtype samples.recent.tsv
-                                for iva_subtype in IA_H1 IA_H3 IA_MP IA_N1 IA_N2; do
-                                    sort -u "${files[@]}" > "${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples.recent.tsv"
-                                done
+                                # Build subtype selected-range lists.
+                                write_subtype_lists "samples.recent.tsv" "${mode_files[@]}"
                         ;;
                         *)
-                                echo "Unkown parameter ${2}" > /dev/stderr
+                                echo "Unkown parameter ${2}" > /dev/stderr             # reject unsupported mode
                                 exit 2
                         ;;
-
                 esac
-                
-                #cp -vrf --link ${clusterdir}/${sampleset}/*/ ${clusterdir}/${working}/samples/   ## failure: "no rule to create {SAMPLE}/extract/R1.fastq"
-                sort -u ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-                ################ LOOP ################
-                influenza_subtypes_list=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)
-                #create a copy of the sample.tsv file in each subdirectroy --> in the future these could be adapted if needed
-                for iva_subtype in "${influenza_subtypes_list[@]}"; do
-                        cp ${clusterdir_old}/${clusterdir}/${working}/samples.tsv ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples.tsv
-                done
 
+                # ---- Canonical full sample lists ------------------------------------
+                # These are built from all available samples.*.tsv files, regardless of
+                # mode, because other parts of the workflow often expect them.
+                mapfile -t all_batch_files < <(
+                        ls -1 "${samples_dir}"/samples.*.tsv 2>/dev/null
+                )
+
+                if (( ${#all_batch_files[@]} == 0 )); then
+                        echo "ERROR: no samples.*.tsv files found in ${samples_dir}" >&2
+                        exit 1
+                fi
+
+                # Build shared full samples.tsv.
+                build_filtered_samples_file \
+                        "${shared_workdir}/samples.tsv" \
+                        "" \
+                        "${all_batch_files[@]}"
+
+                # Build subtype full samples.tsv files.
+                write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
+
+                # ---- Prepare subtype output trees -----------------------------------
                 for iva_subtype in "${influenza_subtypes_list[@]}"; do
-                        mkdir -p --mode=2770 "${clusterdir_old}/${clusterdir}/${iva_subtype}/vpipe_output/"
-		        
-                        # copy/link vpipe_input samples to vpipe_output directory to create the output directory
-		        cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${clusterdir}/${sampleset}/{}/" "${clusterdir_old}/${clusterdir}/${iva_subtype}/vpipe_output/"
-                        # Add abstractions and generalized to allow for new sequencing methods
-		        mv ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv.old
-                        touch ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv
-                        # copy enties from samples.tsv to samples_aviti.tsv
-                        # TODO: outdated form to recognize the aviti based on string lenght --> to be corrected in the future!
-                        while IFS=$'\t' read -r col1 col2 col3 col4; do
-                                if [ "${#col2}" -eq 19 ]; then 
-                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_aviti.tsv
-                                else
-                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples_pre-aviti.tsv
-                                fi
-                        done < ${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/samples.tsv
+                        subtype_workdir="${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}"   # subtype working directory
+                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${iva_subtype}/vpipe_output"   # subtype output root
+                        subtype_copy_list="${subtype_workdir}/${copy_list_name}"       # subtype-specific list controlling copy scope
+
+                        mkdir -p --mode=2770 "${subtype_output_dir}"                   # ensure subtype output root exists
+
+                        # Copy/link only the sample directories that survived filtering
+                        # for this subtype and for the selected mode.
+                        cut -f1 "${subtype_copy_list}" \
+                                | xargs -r -P 8 -I {} cp -vrf --link "${samples_dir}/{}" "${subtype_output_dir}/"
+
+                        # Split the subtype list used for copying into Aviti vs pre-Aviti.
+                        split_aviti_lists "${subtype_copy_list}" "${subtype_workdir}"
                 done
-	;;
+        ;;
         vpipe)
                 declare -A job
                 list=('seq' 'seqqa' 'snv' 'snvqa' 'hugemem' 'hugememqa')
@@ -368,26 +512,95 @@ case "$1" in
 	;;
         scanmissingsamples)
                 sample_list=$2
-                while read sample batch other; do
-                        # look for only guaranteed samples
+                # load exclusion lists from fgcz.conf if present
+                . <(
+                        grep -E '^(exclude_samples|exclude_samples_ia_h1|exclude_samples_ia_h3|exclude_samples_ia_mp|exclude_samples_ia_n1|exclude_samples_ia_n2)=' \
+                        "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf" \
+                        || true
+                )
+                # convert comma-separated exclusion variables into bash arrays
+                IFS=',' read -r -a excluded_samples <<< "${exclude_samples:-}"
+                IFS=',' read -r -a excluded_samples_ia_h1 <<< "${exclude_samples_ia_h1:-}"
+                IFS=',' read -r -a excluded_samples_ia_h3 <<< "${exclude_samples_ia_h3:-}"
+                IFS=',' read -r -a excluded_samples_ia_mp <<< "${exclude_samples_ia_mp:-}"
+                IFS=',' read -r -a excluded_samples_ia_n1 <<< "${exclude_samples_ia_n1:-}"
+                IFS=',' read -r -a excluded_samples_ia_n2 <<< "${exclude_samples_ia_n2:-}"
+                # helper: check if a sample name exists inside a given list
+                sample_in_list() {
+                        local sample_name="$1"
+                        shift
+                        local item
+                        for item in "$@"; do
+                                item="${item#"${item%%[![:space:]]*}"}"
+                                item="${item%"${item##*[![:space:]]}"}"
+                                if [[ -n "$item" && "$sample_name" == "$item" ]]; then
+                                        return 0
+                                fi
+                        done
+                        return 1
+                }
+                # iterate over sample list file
+                while IFS=$'\t' read -r sample batch other; do
                         [[ $sample =~ $rxsample ]] || continue
-                        # check the presence of fasta on each sample
-                        echo -n ${sample}/${batch}
-                        #ls ${clusterdir_old}/${clusterdir}/${working}/samples/${sample}/${batch}
-                        if [[ -e ${clusterdir_old}/${clusterdir}/IA_H1/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_H3/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_MP/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_N1/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf && -e ${clusterdir_old}/${clusterdir}/IA_N2/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
-                            # this will check for:
-                            #  - references/ref_majority.fasta
-                            #  - references/consensus.bcftools.fasta & .chain
-                            #  - references/frameshift_deletions_check.tsv
-                            #  etc.
-                            #  see V-pipe's rule 'prepare_upload' in publish.smk
-                            echo ' -  .'
-                        else
-                            echo -e "\r+${batch/_/:}\t!${sample}\e[K"
-                            true
-                            exit 0
+
+                        # global exclude
+                        sample_in_list "$sample" "${excluded_samples[@]}" && continue
+
+                        # initialize per-sample variables that may be disabled by subtype exclusion
+                        # initialize per-sample subtype checks (1 = required, 0 = ignore)
+                        check_h1=1
+                        check_h3=1
+                        check_mp=1
+                        check_n1=1
+                        check_n2=1
+
+                        # disable subtype checks if sample is listed in subtype exclusion list
+                        sample_in_list "$sample" "${excluded_samples_ia_h1[@]}" && check_h1=0
+                        sample_in_list "$sample" "${excluded_samples_ia_h3[@]}" && check_h3=0
+                        sample_in_list "$sample" "${excluded_samples_ia_mp[@]}" && check_mp=0
+                        sample_in_list "$sample" "${excluded_samples_ia_n1[@]}" && check_n1=0
+                        sample_in_list "$sample" "${excluded_samples_ia_n2[@]}" && check_n2=0
+                        
+                         # skip sample if all subtype checks are disabled/empty
+                        if (( !check_h1 && !check_h3 && !check_mp && !check_n1 && !check_n2 )); then
+                                continue
                         fi
-                done < $sample_list
+
+                        echo -n "${sample}/${batch}" # print sample identifier
+
+                        missing=0 # flag to track missing outputs
+
+                        # check presence of subtype-specific V-pipe outputs
+                        if (( check_h1 )) && [[ ! -e ${clusterdir_old}/${clusterdir}/IA_H1/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
+                                echo "${sample} missing in h1"
+                                missing=1
+                        fi
+                        if (( check_h3 )) && [[ ! -e ${clusterdir_old}/${clusterdir}/IA_H3/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
+                                echo "${sample} missing in h3"
+                                missing=1
+                        fi
+                        if (( check_mp )) && [[ ! -e ${clusterdir_old}/${clusterdir}/IA_MP/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
+                                echo "${sample} missing in mp"
+                                missing=1
+                        fi
+                        if (( check_n1 )) && [[ ! -e ${clusterdir_old}/${clusterdir}/IA_N1/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
+                                echo "${sample} missing in n1"
+                                missing=1
+                        fi
+                        if (( check_n2 )) && [[ ! -e ${clusterdir_old}/${clusterdir}/IA_N2/vpipe_output/${sample}/${batch}/variants/SNVs/snvs.vcf ]]; then
+                                echo "${sample} missing in n2"
+                                missing=1
+                        fi
+
+                        # report result for this sample
+                        if (( !missing )); then
+                                echo ' -  .' # all required subtype outputs exist
+                        else
+                                echo -e "\r+${batch/_/:}\t!${sample}\e[K" # report missing sample
+                                true
+                                exit 0 # stop early if a missing sample is detected
+                        fi
+                done < "$sample_list"
                 exit 1
         ;;
         listsampleset)
