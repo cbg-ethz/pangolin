@@ -155,7 +155,7 @@ cd /cluster/project/pangolin
 **For Covid, Influenza and RSV!!**
 (similar to blacklist for covid-lollipop but here we define it for the process that copies the raw data from the fgcz download folder to the vpipe_input directories per virus (function `sortsamples`!)
 
-- For every virsu in `pangolin/pancoling_scr/config` there is a `fgcz.yaml` file where there is a badlist specified
+- For every virus in `pangolin/pancoling_scr/config` there is a `fgcz.yaml` file where there is a badlist specified
 - put the delivery name (orderID) that should not be processed with vpipe in this list
 - you can find the delivery name associated to the batch in vpipe_input folder: batch.BATCHNAME.tsv
 - **Remember** to garbage the batch if it already run with vpipe
@@ -378,7 +378,7 @@ ___
 
 ___
 
-### **batman.sh**
+### **batman .sh**
 **TBD** - this sction is stillunstructured (However, most important functions should already be here)
 **Disclaimer** There are virus specific functions that are described here as they are stored in the virus specific batman.sh script
 
@@ -642,6 +642,82 @@ If those conditions are met, the script prints mkdir and cp commands for that sa
 
 **Observation: samples are only copied tinot vpipe:input directory once the fastQC files are there. Currently it is not clear for me where this condition is placed as in the script sort_samples_bfabric_tsv_aviti.py the flag --no-fastqc is set which should cancel all dependency on fastqc files. (needs to be checked further!)**
 ___
+
+### **batman .sh `addsamples`**
+
+Builds the sample lists used by the workflow, now with support for configurable sample exclusion from `fgcz.conf`.
+
+What it does:
+
+* reads all relevant `samples.*.tsv` files from `${sampleset}`
+* applies `exclude_samples` first
+* applies subtype-specific exclusions on top of that
+* writes:
+
+  * shared `samples.tsv` / `samples.recent.tsv`
+  * subtype-specific `samples.tsv` / `samples.recent.tsv`
+
+Practical effect:
+
+* a sample in `exclude_samples` is removed everywhere
+* a sample in a subtype-specific exclude list is removed only from that subtype
+* excluded samples are also not copied into subtype-specific output folders
+
+Config keys:
+
+* RSV:
+
+  * `exclude_samples`
+  * `exclude_samples_rsva`
+  * `exclude_samples_rsvb`
+* Influenza:
+
+  * `exclude_samples`
+  * `exclude_samples_ia_h1`
+  * `exclude_samples_ia_h3`
+  * `exclude_samples_ia_mp`
+  * `exclude_samples_ia_n1`
+  * `exclude_samples_ia_n2`
+
+Expected format in `fgcz.conf`:
+
+```bash
+exclude_samples="SAMPLE_A,SAMPLE_B"
+exclude_samples_rsva="SAMPLE_X"
+exclude_samples_ia_h1="SAMPLE_Y"
+```
+
+Important note:
+
+* filtering is done on column 1 of the TSV, so exclusion is by sample name only
+
+### **batman .sh `scanmissingsamples`**
+
+Checks whether the expected subtype-specific V-pipe output exists for each sample/batch pair, while respecting the same exclusion settings.
+
+What it does:
+
+* reads a sample list file (`samples.tsv` or `samples.recent.tsv`)
+* skips globally excluded samples completely
+* skips subtype checks for samples excluded only in that subtype
+* reports the first sample that is missing required output files
+
+Practical effect:
+
+* a globally excluded sample is never checked
+* a subtype-excluded sample is still checked for the other subtypes
+* if a sample is excluded from all subtype checks, it is skipped entirely
+
+Required output checked:
+
+* RSV: subtype `snvs.vcf` files in `RSVA` / `RSVB`
+* Influenza: subtype `snvs.vcf` files in `IA_H1`, `IA_H3`, `IA_MP`, `IA_N1`, `IA_N2`
+
+In short:
+
+* `addsamples` decides which samples enter each workflow branch
+* `scanmissingsamples` verifies only the outputs that are still expected after exclusions
+
 
 ### Garbaging Batches - garbage.sh
 
@@ -1258,21 +1334,18 @@ Building an image for a linux host from an ARM host, means adapting the configur
 
 ### Adaptations
 
-If build locally, the docker-compose.yaml  file has to be adapted. First, the relevant folder have to be copied from wisedb to the local deploy folder (e.g. workdir, secrets, resources).
+If build locally, the docker-compose.yaml  file has to be adapted.
 Then the path in the docker-compose.yaml need to be adapted. (Both locally and on the vm (see below)).
 
 #### docker-compose.yaml (local)
 
-All path need to point to the local version.
+The context path need to point to the local version.
 
 - context: /Users/mcarrara/data/ww/local_deploy/pangolin
-- volumes: pointing to the local_deploy directory
-- secrets: pointing to the local_deploy directory
 
 #### docker-compose.yaml (vm)
 
-This should be the original file, pointing to the folders on the VM.
-Change:
+On the VM change:
 
 ```Bash
 build:
@@ -1285,8 +1358,11 @@ to:
 image: $tag_of_the_image (e.g. pangolin_rsv:latest)
 ```
 
+such that the docker is not build on the vm!
+
 #### Building (locally)
 
+First **Ensure you have the latest changes pulles on Euler and the wisedb and locally**
 For a local build on Mac OrbStack can be used.
 
 ```Bash
@@ -1305,6 +1381,15 @@ docker save -o ./pangolin-pangolin.tar IMAGE_ID (e.g."f44abc678111")
 
 #### Deploy
 
+If a Container is redeployed e.g. after a change in the code base the automation docker was rebuild on the latest version of the git commit) the old Contaier need to be stoped and removed.
+`4a63309c0de4   sars_cov_2:latest                  "/app/pangolin_src/e…"   3 months ago    Exited (137) 3 minutes ago                                                                              sars_cov_2-sars_cov_2-1`
+`4a63309c0de4   f517e39ff0e6                       "/app/pangolin_src/e…"   3 months ago    Exited (137) 14 minutes ago                                                                              sars_cov_2-sars_cov_2-1`
+How to stop and remove the docker
+- `docker ps -a`: to find the name
+- first `docker stop <containername>`
+- if the docker stops or fails we need to remove the old container with : `docker rm <container name>`
+- `docker image rm <image name>`
+
 - Transfer the tar archive to wisedb in directory
   - on date 2025-04-14, the local deploy follows the commit 292bbba2c8644134f97f3e05614ead75a72e9d99
   - create a directory (or add it to the existing: `/data/projects/rsv_automation_restructuring/local_deploy`)
@@ -1318,6 +1403,7 @@ docker save -o ./pangolin-pangolin.tar IMAGE_ID (e.g."f44abc678111")
 ##this extractes the image
 docker load -i pangolin-pangolin.tar
 ```
+Loaded image ID: sha256:0ebb8da8c6c4da48090efcd8acd37b817f2cd0fe72f3622e92260e4625e2a45a
 
 - sometimes tagging again is necessary: `docker tag f44abc678111 pangolin_rsv:latest`
 - copy the `docker-compose.yaml` with the VM path and remove the `build:`section and add `image: pangolin_rsv:latest`
@@ -1326,7 +1412,7 @@ docker load -i pangolin-pangolin.tar
 ##start the image with 
 docker-compose -p pangolin_rsv up -d
 docker-compose -p pangolin_iva up -d
-docker-compose -p sars_cov_2 up -d
+docker compose -p sars_cov_2 up -d
 ```
 
 This will take the defined path form the docker-compose.yaml file to point to all the secret files etc on the VM.
