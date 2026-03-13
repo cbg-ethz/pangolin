@@ -29,8 +29,8 @@ ref_bwa_index:
     mem: 65536
 lofreq:
     consensus: false
-    time: 200
-    mem: 4000
+    time: 1000
+    mem: 8000
 snv:
     consensus: false
     localscratch: $TMPDIR

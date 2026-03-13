@@ -7,14 +7,14 @@ general:
     snv_caller: "lofreq"
 input:
     datadir: "/cluster/project/pangolin/processes/influenza/vpipe_input"
-    samples_file: "/cluster/project/pangolin/processes/influenza/IA_MP/working/samples.recent.tsv"
+    samples_file: "/cluster/project/pangolin/processes/influenza/IA_N1/working/samples.recent.tsv"
     read_length: 251
-    protocols_file: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers.yaml"
-    reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/nextstrain/MP.fasta"
-    primer_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers/MP_primers.bed"
+    protocols_file: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers.yaml"
+    reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/nextstrain/N1.fasta"
+    primer_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_N1/primers/NA_primers.bed"
     primers_trim_cutoff: 200
 output:
-    datadir: "/cluster/project/pangolin/processes/influenza/IA_MP/vpipe_output"
+    datadir: "/cluster/project/pangolin/processes/influenza/IA_N1/vpipe_output"
     trim_primers: true
     snv: true
     local: false
@@ -29,8 +29,8 @@ ref_bwa_index:
     mem: 65536
 lofreq:
     consensus: false
-    time: 200
-    mem: 4000
+    time: 800
+    mem: 8000
 snv:
     consensus: false
     localscratch: $TMPDIR

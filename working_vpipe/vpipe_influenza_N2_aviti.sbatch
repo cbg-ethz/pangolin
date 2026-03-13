@@ -6,10 +6,12 @@
 #SBATCH --oversubscribe
 #SBATCH --time=24:00:00
 
+set -euo pipefail
+
 umask 0007
 
-prefix="/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe"
-profile_prefix="/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src/profiles"
+readonly prefix="/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe"
+readonly profile_prefix="/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src/profiles"
 
 # unlock if crashed before finishing
 ${prefix}/vpipe --dryrun --unlock --configfile ${prefix}/vpipe_influenza_N2_aviti.yaml
