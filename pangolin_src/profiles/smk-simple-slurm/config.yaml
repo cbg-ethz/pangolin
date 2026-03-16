@@ -20,6 +20,10 @@ default-resources:
   - disk_mb=1000
   - runtime=15
 restart-times: 1
+set-resources:
+  lofreq:
+    mem_mb: 32000
+    runtime: 4320
 max-jobs-per-second: 30
 max-status-checks-per-second: 30
 local-cores: 1
