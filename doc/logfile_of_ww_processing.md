@@ -1,4 +1,24 @@
 
+## TODO Checklist
+
+### Pipeline setup and cleanup
+- [ ] Revise the SARS-CoV-2 setup to ensure it is configured correctly, uses the correct files, and is fully tracked in git.
+- [ ] Clean up duplicated COVID files and relative paths in code and `.sbatch` files so it is clear what is actually used in the analysis.
+
+### Uploads and automation
+- [ ] Investigate why the `genspectrum` upload API review/approval step fails.
+- [ ] Investigate repeated failures when copying/linking files in the RSV or IVA automation.
+- [ ] Add batch information to the `spsp` upload log.
+
+### LoFreq and resource handling
+- [ ] Reduce the temporary LoFreq resource increase again after this season.
+- [ ] Consider subsampling raw `.fastq` files as an alternative.
+- [ ] Consider adding a subsampling function directly into the automation.
+
+### Influenza experimental dataset
+- [x] Blacklist the influenza experimental dataset once the full sample or batch name, including sequencing date, is known.
+  Not needed, as the batch was not submitted to the regular processing project.
+
 TODO:
 - iva and rsv are structured and folder are cleanedup, however, sarscov should be once more revised to ensure it is setup correctly and uses the correct files and everything is tracked on git
   - for covid there are still duplicated files and many relativ path in the code /.sbatch files which makes it hard to track what is acutally used in the analysis
@@ -8,6 +28,14 @@ TODO:
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
 
+16 March 2026:
+
+- Performed regular processing tasks.
+- Discussed how to proceed with samples showing unexpectedly increased read depth, and considered alternatives to excluding them from the analysis.
+- Tested dynamic resources in the profile. Conclusion: this is not supported in Snakemake 7.32.4.
+- Increased LoFreq resources to allow runs of up to 3 days and 32 GB RAM.
+- To do: This should remain an intermediate solution only and be reduced again after this season.
+- Alternative to do: Subsample the raw `.fastq` files or add a subsampling function to the automation.
 
 13 March 2026:
 
@@ -15,11 +43,16 @@ Batch 20260306_2530611610
 
 - needed to exclude samples as no time / memory combination was found such that lofreq finished in time
 - Excluded:
-  - IA_H1 sample C3_25_2026_02_17: Processed 898074 reads (/)`/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-60210251.err.log`)
+  - IA_H1 sample C3_25_2026_02_17: Processed 898074 reads (`/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-60210251.err.log`)
   - RSVA/B sample B3_17_2026_02_22: Processed 7534734 reads (`/cluster/project/pangolin/processes/rsv/RSVA/working/cluster_logs/lofreq/lofreq-60189290.err.log`)
 - to be able to exclude these samples a new functionality had to be introduced in the automation: sample specific badlist
   - added variables in fgct.conf where single samples can be added
   - added filtering for these samples in batman.sh addsamples and scanmissingsamples
+
+
+Order 41026 (https://fgcz-bfabric.uzh.ch/bfabric/order/show.html?id=41026&tab=comments)
+  - comment of bfabric: "from this order on, we're adjusting the annealing temperature for IAV to 62C, since we observed better coverage for H1, H3, N1 and N2 with this temperature"
+Observation: since this change we observe lofreq timeout, suggesting more reads to process
 
 
 3 March 2026:
@@ -131,7 +164,7 @@ curve stitching:
 
 KW2: 9 Jan 2026
 - reactivated the covid raw carm file backup to wiseDB VM
-- received the oder ID of influenza experimental data set which i only can blacklist once the full name (including the sequencing date) is known --> todo for 25 januar!
+- received the oder ID of influenza experimental data set which i only can blacklist once the full name (including the sequencing date) is known --> not needed, as the batch was not submitted to the regular processing project
 - started onboarding severin in kw2
 
 16 dec 25:
