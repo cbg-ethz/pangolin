@@ -104,9 +104,9 @@ cd /cluster/project/pangolin
             |__ pangolin (git origin/rsv_automation_folder_restructuring)
             |__ vpipe_output
             |__ working
-         |__ rsv_downstream_analysis
-            |__ RSV-wastewater-V-pipe (git status origin/production)
-            |__ downstream_analysis_statusdir
+      |__ rsv_downstream_analysis
+         |__ RSV-wastewater-V-pipe (git status origin/production)
+         |__ downstream_analysis_statusdir
    |__ influenza
       |__ pangolin (git origin/flu_automation_folder_restructuring)
       |__ working
@@ -123,6 +123,8 @@ cd /cluster/project/pangolin
             |__ ...
       |__ IA_N2
             |__ ...
+      |__ influenza_downstream_analysis
+            |__ AA_mutationAnalysis_IAV (git branch origin/automation)
    |__ sars_cov_2
       |__ amplicon_coverage
       |__ explore-new-variants (ivan)
@@ -149,6 +151,15 @@ cd /cluster/project/pangolin
    |__ lollipop_blacklist.txt (Blacklist for Covid lollipop !untracked! TODO!)
 |__ research
 ```
+
+**Git:**
+
+Pangolin: https://github.com/cbg-ethz/pangolin/tree/master
+V-pipe: https://github.com/cbg-ethz/V-pipe
+cowwid: https://github.com/cbg-ethz/cowwid
+WISE-mut-freq-data-uploader: https://github.com/GenSpectrum/WISE-mut-freq-data-uploader
+RSV-wastewater-V-pipe: https://github.com/cbg-ethz/RSV-wastewater-V-pipe/tree/production
+AA_mutationAnalysis_IAV: https://github.com/anikajohn/AA_mutationAnalysis_IAV/tree/automation
 
 ### Bad List
 
@@ -855,178 +866,134 @@ Finally:
 Note: this patching method only works if **all samples in an order use the same libkit**. If libkits differ between samples within the same order, the metadata must be corrected by **FGCZ**.
 
 
-## FGCZ Sync Autoamtion
+Here is a cleaned-up and more structured version, keeping it concise and improving clarity:
 
-(updated on 6 Jan 2026)
-There is a separate automation running on a VM that manages the data sync from FGCZ to Euler.
-The automation runs on the WiseDB VM.
-Data is synced to Euler at: `/cluster/project/pangolin/data/fgcz_raw/p23224`
-**Repositories:**
-WiseDB: `/data/projects/fgcz_data_sync_automation`
-Euler: `/cluster/project/pangolin/processes/fgcz_sync`
-
-Similar to other automations, this process begins when the container starts on WiseDB.
-The `entrypoint.sh` script is triggered, which eventually starts `quasimodo.sh`. This runs `fgcz_sync.sh` in an infinite while loop.
-
-The script `fgcz_sync.sh` checks configurations in `server.conf` and then initiates the sync by
-calling `remote_batman sync_fgcz` (a function within the batman.sh script stored on Euler).
-
-The `sync_fgcz` function checks the provided parameters. Using the config file `fgcz.conf` and the script
-`exclude_list_bfabric.py`, it first creates an exclude list containing orders that should not be used
-for regular processing. This list is then passed to the script `sync_sftp.sh`,
-which performs the actual data sync by running an `lftp mirror` command.
-
-### Merging orders
-
-It can happend that ordres (Batches) need to be merged e.g. if one sequencing run did not result in high enough read depth etc. Then the automation will first see it as a separate batch.
-These have to be merged by adding the order in the fuselist in `/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync/config/fgcz.conf`.
-The next time the sync autoamtion is running it will rake the 2 orders and create a new Batchname and places all related fastq files in this new batch.
-The remaining Batches need to be added to the badlist in `/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync/config/fgcz.conf`such that they are ingored and only the merged batch is used for further processing.
-Remember to grabage the already created vpipe results of the half batches: `./batman.sh garbage BATCHNAME` (see Autoamtion above)
-
-If this happens, remember to contact SPSP to correct the .cram file upload (the single batches need to be taken down and only the combined batch is relevant).
-
-Currently, the created new Batchname for the combined data does not have 19 characters. Thus, the automation will not see that this is an aviti batch and vpipe will ignore the batch.
-To make vpipe see the batch as relevant, add the new batch name to the file: `/cluster/project/pangolin/working/avi_batches.tsv`
-Makre sure the batch is present in: `/cluster/project/pangolin/working/samples_aviti.tsv`
-
-It can happen that orders (Batches) need to be merged, for example,
-if one sequencing run did not result in high enough read depth.
-Initially, the automation will see these as separate batches.
-These must be merged by adding the order to the fuselist in:
-`/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync/config/fgcz.conf`
-The next time the sync automation runs, it will take the two orders,
-create a new Batch Name, and place all related FASTQ files into this new batch.
-The remaining (original) batches need to be added to the **badlist** in the same configuration file (`fgcz.conf`)
-so that they are ignored and only the merged batch is used for further processing.
-
-**Important Actions:**
-
-1. Cleanup: Garbage collect the already created V-Pipe results of the partial batches using: `./batman.sh garbage BATCHNAME` (see Automation section above).
-2. Notification: Contact SPSP to correct the .cram file upload (the single batches need to be removed and only the combined batch is relevant).
-
-*Note on Aviti Batches:* Currently, the newly created Batch Name for the combined data does not have 19 characters (checked in `batman.sh addsamples`). Consequently, the automation will not recognize it as an Aviti batch and V-Pipe will ignore it. To ensure V-Pipe recognizes the batch as relevant:
-
-1. Add the new batch name to: `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
-2. Make sure the batch is present in: `/cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv`
-
-**Timeframe**
-The automation only checks for missing V-Pipe results from samples processed in the last 2 weeks. If the order is older than that, you must manually adapt the timeframe in the container on the *WiseDB VM*.
-In carillon.sh :
-
-```Bash
-echo "============="
-echo "Start new run"
-echo "============="
-.
-.
-.
-limit=$(date --date='2 weeks ago' '+%Y%m%d') <--------------------------------------
-.
-.
-```
-
-## Euler conda setup
+### Euler conda setup
 
 Base conda:
 
-```Bash
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+```bash
+eval "$(/cluster/project/pangolin/resources/miniconda3/bin/conda shell.bash hook)"
 ```
 
-Notes on conda envs:
+Notes on conda environments:
 
-- If creating a new conda env which should be runnig on euler thes env has to be created **manually** before the automation can use it
-- for this go to euler and activate the base env
-- then create the new env form the .yaml file
+* New environments must be created **manually on Euler** before they can be used in the automation.
+* Activate the base environment, then create the new environment from the `.yaml` file:
 
-```Bash
-conda env create -f environment.yaml ##create conda env from existing yaml file
+```bash
+conda env create -f environment.yaml
 ```
 
-- if all the dependencies are solved the environment can be used
-  - if packages need to be updates changed etc. save the new env
-  - `conda env export --no-builds > environment.yaml`
-- this process has to be repreated each time an environment changes / updates / adds
+* Once dependencies are resolved, the environment is ready to use.
+* If packages are updated or changed, export the updated environment:
 
-## Single Tool Documentation
+```bash
+conda env export --no-builds > environment.yaml
+```
 
-### Uploader to SPSP
+* This process must be repeated whenever the environment is modified.
 
-To upload samples to SPSP we use *sendcrypt* which is the tool provided by SPSP for the upload. Different functionas and parts of scripts are involved in the uploader process:
+---
 
-The upload happens in the folder on wise_db: wastewater_automation/pangolin/uploader.
-To clarify/keep in mind: the wastewater_automation container also is responsible to analyse the covid data (run the vpipe analysis etc.) but also includes the upload of *ALL* the multiviral samples!
+## FGCZ Sync Automation
 
-wise_db: wastewater_automation/pangolin/uploader_legacy
+*(updated: 6 Jan 2026)*
 
-- depreciated
-- contains the information of the pure covid uploads before the mulitviral samples
+A dedicated automation on the **WiseDB VM** manages data synchronization from FGCZ to Euler.
 
-wise_db:/data/projects/dataset/archive → after upload, upload information it is archived there!
+* Synced data location on Euler:
+  `/cluster/project/pangolin/data/fgcz_raw/p23224`
 
-**belfry.sh**
-Since the upload of the samples happens from the VM (wise:db) to SPSP the functions related to the upload are stored in there.
+**Repositories:**
 
-- queue_upload) creates batches_to_upload.tsv
-- upload) function doing the upload
-- clean_sendcrypt_temp)
+* WiseDB: `/data/projects/fgcz_data_sync_automation`
+* Euler: `/cluster/project/pangolin/processes/fgcz_sync`
 
-*queue_upload*
+---
 
-This function of belfry.sh adds new samples to the batches_to_upload.tsv list which is required in *prepare.sh* to create the actual list of samples to upload (to_upload.txt) that is needed for the upload.
-It gets the samples.BATCH.tsv from euler. And adds the samples to batches_to_upload.tsv which is then sortet such that the latest batch is on top.
+### Workflow
 
-*upload*
+The automation starts when the container on WiseDB is launched:
 
-This function first creates a file (${uploader_tempdir}/cram_to_download.txt) to store the path of the .cram files of the new samples. This list is then used to rsync the new .creamfiles for the upload to the wise_db VM since the upload to SPSP needs to be done form the VM (technical pakage version reasons).
-It also rsyncs the timeline.tsv and qa.csv file to have it in the package to be uploaded to SPSP. Then the upload.sh script is run to prepare the correct metadata.tsv table for the upload. If the metadata file in not empty the sendCrypt is run.
-The upload is performed by useind the commands update (updates sendCrypt to always have the lates version), version (to record the sendCrypt version used) and send (whcih performed the upload). The send command take time since it takes the whole package and compresses it into a .gz folder and uploads it to SPSP.
-After the upload was sucessfull the information is stored in the archive folder on wise_db and the .cram files are deleted.
+* `entrypoint.sh` → starts `quasimodo.sh`
+* `quasimodo.sh` → runs `fgcz_sync.sh` in a continuous loop
 
-*clean_sendcrypt_temp*
+`fgcz_sync.sh`:
 
-The sendcrypt send command creates a compressed version of the .cram files and the matedata and stores it in sendcrypt. folder. This needs to be deleted after the upload to avoid heavy storage usage.
+* Reads configuration from `server.conf`
+* Triggers the sync via `remote_batman sync_fgcz` (function in `batman.sh` on Euler)
 
-**entrypont.sh**
-The first script that is run when the container is created. It stores the GPG keys for the upload to SPSP. We need 2 keys to encrypt the data in the upload process one for us and another for SPSP (we need to have both).
-This setup is included in the entrypoint.sh script. (sendcrypt documentation on how to get them etc.)
+`sync_fgcz`:
 
-**setup.sh**
-setup.sh is called in entrypoint.sh (the script that sets up the container). Each time the container is recreated we run the installation of sendcrypt to have it in the container available. This installation is done as part of the setup.sh script.
+* Builds an exclude list using:
 
-**prepare.sh**
+  * `fgcz.conf`
+  * `exclude_list_bfabric.py`
+* Passes the exclude list to `sync_sftp.sh`
+* `sync_sftp.sh` performs the actual sync via `lftp mirror`
 
-- stored at:/data/projects/wastewater_automation/pangolin/uploader
-- called form belfry.sh upload) function.
-- output: {uploader_tempdir}/to_upload.txt
+---
 
-This script prepared the list of samples to be uploaded to SPSP. First, it cleans up the to_upload.txt created fromt he previous run. Then it runs an inline Python script which created the to_upload.txt of the currently new samples.
-It checks the list of batches_to_upload.tsv created in ____ and filteres out the blacklisted smaples and the already uploaded samples (${uploader_workdir}/all_uploaded.tsv) .
-Then it takes the *sample_number* which is the max nr. of samples to be uploaded at once and provides them in the to_upload.txt file which is the basis for which samples to upload.
+### Merging Orders
 
-**upload.sh**
+If sequencing depth is insufficient, multiple orders (batches) may need to be merged.
 
-- stored at:/data/projects/wastewater_automation/pangolin/uploader
-- called form belfry.sh upload) function.
+Steps:
 
-This script does not run the upload with sendcrypt but prepares the metadata.tsv file in the format that sendcrypt requires.
-It first checks the to_upload.txt files created in prepare.sh (which is called in belfry.sh) and goes through each sample line by line. It created the path to the dehuman.cram file and if it exists first makes a copy of it with the name *samplename.cram* file. This is necessary becasue by design vpipe output is called dehuman.cram for every sample. So for the upload they could not be differenciated.
-Then the metadata line is created for this sample by running the create_metadata_line.py script which actually extracts the necessary information form the provided sample and wirtes it into the metadata.tsv file.
-Lastly, the sample name is written in to the file that archives the uploaded run and the whole metadata.tsv is outputted.
+1. Add the orders to the **fuselist** in:
+   `/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync/config/fgcz.conf`
 
-**create_metadata_line.py**
-tbd
+2. On the next sync run:
 
-### Amplicon Coverage Covid
+   * A new merged batch is created
+   * FASTQ files from all listed orders are combined
 
-The Amplicon Coverage plot is created automatically by the automation and can be found for each batch at:
-`/cluster/project/pangolin/work-amplicon-coverage`
+3. Add the original (partial) batches to the **badlist** in `fgcz.conf`
 
-## Primer Update in Regular Processing
+4. Garbage existing V-pipe results of the partial batches:
+
+   ```
+   ./batman.sh garbage <BATCHNAME>
+   ```
+
+5. Notify SPSP to correct `.cram` uploads (remove partial batches, keep merged batch only)
+
+
+**Aviti Batches (Special Case)**
+
+*Merged batches* may not follow the expected 19-character naming convention and can be ignored by V-pipe.
+
+To ensure processing:
+
+* Add the merged batch to:
+  `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+
+* Confirm that the automation processed the merged batch correctly by verifying that it is listed in:
+  `/cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv`
+
+---
+
+### Timeframe Limitation
+
+The automation only considers samples from the **last 2 weeks**.
+
+For older orders, adjust the timeframe in the WiseDB container:
+
+File: `carillon.sh`
+
+```bash
+limit=$(date --date='2 weeks ago' '+%Y%m%d')
+```
+
+___
+
+## Maintenance
+
+### Primer Update in Regular Processing
 
 If there is a primer update (e.g., an ARTIC release), follow the steps below to ensure correct integration of the new primer scheme into the `v-pipe` analysis.
-Typically, a `.bed` file for the primers is available from the [ARTIC GitHub repository](https://github.com/artic-network/primer-schemes), which can be downloaded and used with a custom script to generate the required files.
+Typically, a `.bed` file for the primers is available from the [ARTIC GitHub repository](https://github.com/quick-lab/primerschemes/tree/main/primerschemes/artic-sars-cov-2/400/v5.4.2) ([Outdated Repo](https://github.com/artic-network/primer-schemes)), which can be downloaded and used with a custom script to generate the required files.
 For analysis, the following files are required and must be referenced in:
 
 ```Bash
@@ -1117,24 +1084,9 @@ Use the `batman.sh` garbage function to remove the corresponding batch:
 batman.sh garbage <batch_name>
 ```
 
-## bewi08 VM
 
-We make regular backup of the analysed data. This is done by a VM called `bewi08`.
-Inside this we have a script that runs these backup: `/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh`.
 
-The folder `/links/shared/covid19-pangolin` is mount to thin VM. This folder is stored inside a physical storage in D-BSSE.
-If there is some storage maintenance done in the storage at the D-BSSE the link to this folder can break. Then, the folder has to be remounted to the VM with the following commands:
-
-1. to unmount the backup folder on bewi08: `sudo umount /links/shared/covid19-pangolin`
-2. to mount: `sudo mount /links/shared/covid19-pangolin`
-
-basedir=/links/shared/covid19-pangolin/backup
-bfabric_downloads=bfabric-downloads
-bfabric_project=p23224
-
-exclude list for the backup: `/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst`
-
-## Storage Cleanup
+### Storage Cleanup
 
 The bioinformatics pipeline generates a significant amount of data that is regularly backed up on the Beerenwinkel group's shared folder, and is not necessary for research. Such data can be safely deleted from the computing cluster to minimize the space requirements.
 The cleanup_storage.sh script contains the functions necessary to safely delete the temporary data.
@@ -1211,40 +1163,7 @@ If `type` is `fgcz`:
 If `type` is `lollipop`
 Follow the same logic as for any other virus, but rely on the different file structure
 
-## CovvFit
 
-[CovvFit](https://github.com/cbg-ethz/covvfit/tree/main) is a toold for Fitness estimates of SARS-CoV-2 variants from variant abundance data. It is part of the regular processing.
-
-However, the following is only an INTERMEDIATE solution until covvfit will be art of v-pipe (at the end of 2025).
-The purpose of this folder is to run the covvfit analyisis discribed in htis tutorial: <https://github.com/cbg-ethz/covvfit/blob/main/docs/running_deconv/lollipop.md>
-
-**Disclaimer**
-the lollipop installation used for regular processing in in vpipe. This repo is only an **intermediate** solution until covvfit will be a rule provided by vpipe.
-Thus, also the Lollipop installation should be **removed** once covvfit is integrated in v-pipe!
-
-#### Folder strucutre
-
-- analysis: store the config, scripts and results
-- envs: store the conda env needed to run covvid (incl. lollipop)
-- git: stores the lollipop installation to run covvfit
-
-#### Procedure
-
-1. regular processing incl. lollipop run --> this provides the updated files (e.g. tallymut.tsv) to run the **second** lollipop here without smoothing
-2. rerun lollipop with: `/cluster/project/pangolin/cowwid/covvfit/analysis/lollipop/scripts/run_covvfit_lollipop.sbatch`
-3. run covvfit with: `/cluster/project/pangolin/cowwid/covvfit/analysis/covvfit_analysis/scripts/run_covvfit.sh`
-
-#### running the code
-
-```Bash
-cd /cluster/project/pangolin/cowwid/covvfit/analysis/lollipop/scripts
-sbatch /run_covvfit_lollipop.sbatch
-```
-
-```Bash
-cd /cluster/project/pangolin/cowwid/covvfit/analysis/covvfit_analysis/scripts
-./run_covvfit.sh
-```
 
 ## V-pipe
 
@@ -1260,6 +1179,44 @@ this should have all the samples of the wastewater cohort.
 - rule "deconvolution" runs LolliPop. LolliPop itself filters by "location", and runs deconvolution over the time-seires (by "date").
 if location or date information are missing, there won't be any corresponding points in the curve.
 
+**Example: RSV v-pipe**
+
+For RSV there is a main sbatch job `/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/vpipe_rsv_aviti_main.sbatch`
+This job spinns the sub-jobs for RSVA and RSVB.
+
+V-pipe runs if:
+
+- the batch is not in `fgcz.conf`
+- the `project.$batch.tsv` is in `vpipe_input` directory
+- the batch is newer than the previousely analyzed batch (from the log file)
+
+**status file logic**
+
+For vpipe there are main 4 status files created: `vpipe_started`, `vpipe_ended`, `vpipe.${now}`, `vpipe_new.${now}`
+Purpose:
+
+- `vpipe_started`: points at `vpipe.${current date}` (soft linked)
+- `vpipe_ended`: saves the value of `vpipe.${current date}` inside, this is used to check when was the last completed vpipe run
+- `vpipe.${now}`: is created as soon as a new vpipe run is started, to track the date of the day vpipe was run
+- `vpipe_new.${now}`: stores the runreason inside, so the batch names of the batches that were not yet analyzed and thus triggered vpipe to be run
+
+- the *TIMESTAMP* of vpipe_ended and vpipe_started are compared to decide if vpipe is still running or not
+
+**How to force run vpipe in the automation?**
+
+If e.g. a batch needed patching and the previous results were garbaged, vpipe will still think it ran successfully on it due to the status file logic which recored the last successfully ended vpipe batch.
+To rerun the last batch, delete the vpipe_status file so batman.sh scanmissingsamples will rerun and check the output directories.
+
+- link the `vpipe_started` to a `vpipe.${now}` that date is before the batch you want to rerun
+- edit `vpipe_ended`, write in it `vpipe.${now}` 
+
+```bash
+docker exec -it $docker_image /bin/bash
+cd ../working/status
+ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
+```
+
+
 ### Manually run v-pipe
 
 - What if vpipe is not running on some samples because they are older than 6 months? Manually run vpipe on those samples
@@ -1272,67 +1229,34 @@ if location or date information are missing, there won't be any corresponding po
 - bonus points, change the name of the slurm job for easier tracking: ##SBATCH --job-name="COVID-Aviti-vpipe"  to ##SBATCH --job-name=“manual-Aviti-vpipe”
 - Run the sbatch file sbatch vpipe_aviti_manual.sbatch
 
-## Lollipop
+### Lollipop
 
 [#Lollipop]
 
 [WIP]
 
-## wiseDB
 
-[#wisedb]
+## WiseDB VM 
 
-## Sequence upload
+[#wisedbvm]
 
-If uploads to wiseDB fail form the uploader script, an mail is sent with the header "all_upload_extract_load error". This means that something with the file changed and thus the upload was rejected.
-This error will stop the whole wiseDB uploading pipeline for EVERYBODY! Thu, it is crucial to monitor this and reject the upload immediately once you see that the upload did nod succeed.
-To reject the upload:
+### Building Docker Container on the WiseDB VM 
 
-- go to <https://wisedb.ethz.ch/admin/site/upload/otherfileuploadbatch/>
-- login with your credentials (every user has it's own credentials)
-- on the left scroll down to: UPLOAD > other file batches
-- find the just uploaded file and click on it
-- check the file and klick reject
+[#docker]
+[#wisedbvm]
 
-Then figure out what is wrong with the file and reupload the corrected file.
-In case someting does not work as described contact Severing Olloz or Patrick Schmidhalter.
-
-## wisedb_uploader
-
-The sequence upload to wiseDB happen from the wiseVM. (TODO: can this be done directly from Euler to avoid double data transfer?)
-The uploader script is: `/data/projects/wisedb_uploader/upload_to_wisedb.sh`
-This script expects two arguments. The first one is the path to the sample data directory (e.g. `/data/projects/wisedb_uploader/tmp_toupload`).
-This directory should contain samples in the following strucutre:
-
-```Bash
-sample
-|_ batch
-   |_alignments
-   |_raw_uploads
-   |_references
-```
-
-The second one is a random string which serves as a switch and will be removed soon, since the else of the function is depreciated.
-Importantly, in the request the file order and checksum order is fixed and cannot be changed!
-In case of "Bad request" a person vom wiseDB needs to be contacted.
-Import checks are based on the metadata which are taken from the file string. There is no metadata file. Uploaded file contents are not checked.
-
-## wiseVM 
-
-[#wisevm]
-
-### Background
+**Background**
 
 the wisdb VM showed limitations in the amount of allocated memory. Building a new image has become impossible, due the memory requirement of mamba/conda for updating an environment.
 The agreed solution is to build the image locally, transfer it to wisedb, and deploy. That will be the solution until the memory problems are solved.
 
-### Procedure
+**Procedure**
 
 The build must happen on a local machine, because the HPC clusters give access only to singularity and not to docker.
 
 Building an image for a linux host from an ARM host, means adapting the configuration.
 
-### Adaptations
+**Adaptations**
 
 If build locally, the docker-compose.yaml  file has to be adapted.
 Then the path in the docker-compose.yaml need to be adapted. (Both locally and on the vm (see below)).
@@ -1381,9 +1305,8 @@ docker save -o ./pangolin-pangolin.tar IMAGE_ID (e.g."f44abc678111")
 
 #### Deploy
 
-If a Container is redeployed e.g. after a change in the code base the automation docker was rebuild on the latest version of the git commit) the old Contaier need to be stoped and removed.
-`4a63309c0de4   sars_cov_2:latest                  "/app/pangolin_src/e…"   3 months ago    Exited (137) 3 minutes ago                                                                              sars_cov_2-sars_cov_2-1`
-`4a63309c0de4   f517e39ff0e6                       "/app/pangolin_src/e…"   3 months ago    Exited (137) 14 minutes ago                                                                              sars_cov_2-sars_cov_2-1`
+If a Container is redeployed e.g. after a change in the code base the automation docker was rebuild on the latest version of the git commit) the old Container need to be stoped and removed.
+
 How to stop and remove the docker
 - `docker ps -a`: to find the name
 - first `docker stop <containername>`
@@ -1403,7 +1326,6 @@ How to stop and remove the docker
 ##this extractes the image
 docker load -i pangolin-pangolin.tar
 ```
-Loaded image ID: sha256:0ebb8da8c6c4da48090efcd8acd37b817f2cd0fe72f3622e92260e4625e2a45a
 
 - sometimes tagging again is necessary: `docker tag f44abc678111 pangolin_rsv:latest`
 - copy the `docker-compose.yaml` with the VM path and remove the `build:`section and add `image: pangolin_rsv:latest`
@@ -1418,6 +1340,8 @@ docker compose -p sars_cov_2 up -d
 This will take the defined path form the docker-compose.yaml file to point to all the secret files etc on the VM.
 Make sure that the image already exists such that it is NOT BUILD on the VM!
 
+___
+
 #### Deploy on VM (not recommended - not tried yet)
 
 If the container has to be deployed on the VM try to set a low nice vlaue such that this porcess gets ressources last and does not interrupt any other processes on the VM.
@@ -1427,86 +1351,46 @@ Set this in Dockerfile:
 RUN nice -n 19 ionice -c 3 ulimit -v $((1024*1024)) && conda …
 ```
 
-## RSV
-
-### Folderstructure
-
-Main folder `/cluster/project/pangolin/processes/rsv`
-
-```bash
--- working
--- v-pipe input
--- RSVA
-      |__ pangolin
-      |__ v-pipe output
-      |__ working
--- RSVB
-      |__ pangolin
-      |__ v-pipe output
-      |__ working
+___
 
 
-/cluster/project/pangolin
---resources
-|__ rsv_downstream_analysis
-```
 
-#### RSV v-pipe
+## Covid Json File Postprocessing
 
-For RSV there is a main sbatch job `/cluster/project/pangolin/processes/rsv/working/vpipe_rsv_aviti_main.sbatch`
-This job spinns the doughter jobs for RSVA and RSVB.
-It runs if:
+(These are steps that are performed outside the automation as a semi automated postprocessing script)
 
-- the batch is not in fgcz.conf
-- the project.$batch.tsv is in vpipe_input directory
-- the batch is newer than the proviosly with vpipe analysed batch
-
-##### status file logic
-
-For vpipe there are mainly 4 status files created: vpipe_started, vpipe_ended, vpipe.${now}, vpipe_new.${now}
-Purpose:
-
-- vpipe_started: points at vpipe.${current date} (soft linked)
-- vpipe_ended: saves the value of vpipe.${current date} inside, this is used to check when was the last completed vpipe run
-- vpipe.${now}: is created as soon as a new vpipe run is started, to track the date of the day vpipe was run
-- vpipe_new.${now}: stores the runreason inside, so the batch names of the batches that were not yet analyzed and thus triggered vpipe to be run
-
-- the TIMESTAMP of vpipe_ended and vpipe_started are compared to decide if vpipe is still running or not
-
-##### force run vpipe
-
-If e.g. a batch needed patching and the previous results were garbaged, vpipe will still think it ran successfully on it due to the status file logic which recored the last successfully ended vpipe batch.
-To rerun the last batch, delete the vpipe_status file so batman.sh scanmissingsamples will rerun and check the output directories.
-
-- link the vpipe_started to a vpipe.${now} that date is before the batch you want to rerun
-- edit vpipe_ended, write in it vpipe.${now} 
-
-```bash
-docker exec -it $docker_image /bin/bash
-cd ../working/status
-ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
-```
-
-## Naming conventions
-
-**Samples:**
-FlowCellArrayPosition_TreatmentPlant_SamplingDate
-
-**Batch:**
-SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
-
-## Postprocessing
-
-These are steps that are performed outside the automation as a semi automated postprocessing script
-
-### Json file postprocessing steps
+**Json file postprocessing steps**
 
 Lollipop generates the file containing the time-dependent COVID variant deconvolution:`/cluster/project/pangolin/processes/sars_cov_2/lollipop/variants/deconvoluted_upload.json`
 
 This file is postprocessed in several ways and subsequently uploaded (CovSpectrum, Polybox, wiseDB).
 The postprocessing steps are described below.
 
-#### `make_curves.sh`
+**Overview**
+
+```mermaid
+  flowchart TD
+    A["deconvoluted_upload.json<br/>(Lollipop output)"]
+        --> B["make_curves.sh"]
+
+    B --> C["enhanced_nested_json_stitching.py"]
+    X["old backup <br/>deconvoluted_upload.json"] --> C
+    C --> D["stitched full-history JSON"]
+
+    D --> E["ww_cov_curves_v-pipe.py"]
+    E --> F["update_data_combined_file<br/>(combined processed JSON <br/>+ plots)"]
+    E --> G["update_data_covspectrum<br/>_file<br/>(CovSpectrum export)"]
+    E --> H["reformatted<br/>(BAG / Polybox export)"]
+
+    D --> I["merge_json.py"]
+    Y["curves_untracked_wwtps<br/>.json<br/>(historical discontinued WWTPs)"] --> I
+    I --> J["ww_update_data_wisebd<br/>.json<br/>(wiseDB upload JSON)"]
+    J --> K["ww_cov_uploader_v-pipe.py<br/>(wiseDB upload)"]
+```
+
+___
+
+### `make_curves.sh`
 
 ```
 cd /cluster/project/pangolin/
@@ -1703,7 +1587,9 @@ The smoothed JSON (`jsonfile_smooth`) must follow this structure:
 
 The script produces three JSON outputs.
 
-##### 1. Combined Processed Data
+___
+
+**_1. Combined Processed Data_**
 
 **File:** `update_data_combined_file`
 
@@ -1764,7 +1650,7 @@ combined-vpipe.png
 
 ---
 
-##### 2. Cov-Spectrum Export
+**2. Cov-Spectrum Export**
 
 **File:** `update_data_covspectrum_file`
 
@@ -1792,7 +1678,7 @@ Purpose:
 
 ---
 
-##### 3. FOPH/BAG Reformatted Export
+**3. FOPH/BAG Reformatted Export**
 
 **File:** `reformatted`
 
@@ -1818,13 +1704,15 @@ Purpose:
 * Variant-centric reporting format
 
 
-#### Assumptions & Constraints
+**Assumptions & Constraints**
 
 * Smoothed JSON must follow expected nested structure.
 * All variants must have defined colors.
 * Plot layout supports up to 6 locations (fixed grid).
 * Proportions expected within [0,1].
 * Blacklist entries must reference valid location/date pairs.
+
+___
 
 ### `merge_json.py` documentation (for WiseDB upload)
 
@@ -1865,8 +1753,9 @@ python $curve_analysis_dir/scripts/historical/merge_json.py \
       ↓
 4. upload to wiseDB with ww_cov_uploader_v-pipe.py
 ``` 
+___
 
-#### Merge rules (high-level)
+**Merge rules (high-level)**
 
 The merge is recursive:
 
@@ -1895,7 +1784,181 @@ This prevents silent overwrites of entries like:
 
 (If you *want* second.json to overwrite existing `top_key/sub_key` entries, you would need to remove/relax the duplicate check—currently it is strict by design.)
 
-## Backups
+___
+
+
+## Postprocessing and uploads
+
+[#wisedb]
+
+### Json upload - wiseDB
+
+If uploads to wiseDB fail form the uploader script, an mail is sent with the header "all_upload_extract_load error". This means that something with the file changed and thus the upload was rejected.
+This error will stop the whole wiseDB uploading pipeline for EVERYBODY! Thus, it is crucial to monitor this and reject the upload immediately once you see that the upload did nod succeed.
+To reject the upload:
+
+- go to <https://wisedb.ethz.ch/admin/site/upload/otherfileuploadbatch/>
+- login with your credentials (every user has it's own credentials)
+- on the left scroll down to: UPLOAD > other file batches
+- find the just uploaded file and click on it
+- check the file and klick reject
+
+Then figure out what is wrong with the file and reupload the corrected file.
+In case someting does not work as described contact someone from the wiseDB team.
+
+### Sequence upload wisedb_uploader - wiseDB
+
+[WIP] currently out of order
+
+The sequence upload to wiseDB happen from the wiseVM. (TODO: can this be done directly from Euler to avoid double data transfer?)
+The uploader script is: `/data/projects/wisedb_uploader/upload_to_wisedb.sh`
+This script expects two arguments. The first one is the path to the sample data directory (e.g. `/data/projects/wisedb_uploader/tmp_toupload`).
+This directory should contain samples in the following strucutre:
+
+```Bash
+sample
+|_ batch
+   |_alignments
+   |_raw_uploads
+   |_references
+```
+
+The second one is a random string which serves as a switch and will be removed soon, since the else of the function is depreciated.
+Importantly, in the request the file order and checksum order is fixed and cannot be changed!
+In case of "Bad request" a person vom wiseDB needs to be contacted.
+Import checks are based on the metadata which are taken from the file string. There is no metadata file. Uploaded file contents are not checked.
+
+
+### Uploader to SPSP
+
+[WIP] currently out of order
+
+To upload samples to SPSP we use *sendcrypt* which is the tool provided by SPSP for the upload. Different functionas and parts of scripts are involved in the uploader process:
+
+The upload happens in the folder on wise_db: wastewater_automation/pangolin/uploader.
+To clarify/keep in mind: the wastewater_automation container also is responsible to analyse the covid data (run the vpipe analysis etc.) but also includes the upload of *ALL* the multiviral samples!
+
+wise_db: wastewater_automation/pangolin/uploader_legacy
+
+- depreciated
+- contains the information of the pure covid uploads before the mulitviral samples
+
+wise_db:/data/projects/dataset/archive → after upload, upload information it is archived there!
+
+**belfry.sh**
+Since the upload of the samples happens from the VM (wise:db) to SPSP the functions related to the upload are stored in there.
+
+- queue_upload) creates batches_to_upload.tsv
+- upload) function doing the upload
+- clean_sendcrypt_temp)
+
+*queue_upload*
+
+This function of belfry.sh adds new samples to the batches_to_upload.tsv list which is required in *prepare.sh* to create the actual list of samples to upload (to_upload.txt) that is needed for the upload.
+It gets the samples.BATCH.tsv from euler. And adds the samples to batches_to_upload.tsv which is then sortet such that the latest batch is on top.
+
+*upload*
+
+This function first creates a file (${uploader_tempdir}/cram_to_download.txt) to store the path of the .cram files of the new samples. This list is then used to rsync the new .creamfiles for the upload to the wise_db VM since the upload to SPSP needs to be done form the VM (technical pakage version reasons).
+It also rsyncs the timeline.tsv and qa.csv file to have it in the package to be uploaded to SPSP. Then the upload.sh script is run to prepare the correct metadata.tsv table for the upload. If the metadata file in not empty the sendCrypt is run.
+The upload is performed by useind the commands update (updates sendCrypt to always have the lates version), version (to record the sendCrypt version used) and send (whcih performed the upload). The send command take time since it takes the whole package and compresses it into a .gz folder and uploads it to SPSP.
+After the upload was sucessfull the information is stored in the archive folder on wise_db and the .cram files are deleted.
+
+*clean_sendcrypt_temp*
+
+The sendcrypt send command creates a compressed version of the .cram files and the matedata and stores it in sendcrypt. folder. This needs to be deleted after the upload to avoid heavy storage usage.
+
+**entrypont.sh**
+The first script that is run when the container is created. It stores the GPG keys for the upload to SPSP. We need 2 keys to encrypt the data in the upload process one for us and another for SPSP (we need to have both).
+This setup is included in the entrypoint.sh script. (sendcrypt documentation on how to get them etc.)
+
+**setup.sh**
+setup.sh is called in entrypoint.sh (the script that sets up the container). Each time the container is recreated we run the installation of sendcrypt to have it in the container available. This installation is done as part of the setup.sh script.
+
+**prepare.sh**
+
+- stored at:/data/projects/wastewater_automation/pangolin/uploader
+- called form belfry.sh upload) function.
+- output: {uploader_tempdir}/to_upload.txt
+
+This script prepared the list of samples to be uploaded to SPSP. First, it cleans up the to_upload.txt created fromt he previous run. Then it runs an inline Python script which created the to_upload.txt of the currently new samples.
+It checks the list of batches_to_upload.tsv created in ____ and filteres out the blacklisted smaples and the already uploaded samples (${uploader_workdir}/all_uploaded.tsv) .
+Then it takes the *sample_number* which is the max nr. of samples to be uploaded at once and provides them in the to_upload.txt file which is the basis for which samples to upload.
+
+**upload.sh**
+
+- stored at:/data/projects/wastewater_automation/pangolin/uploader
+- called form belfry.sh upload) function.
+
+This script does not run the upload with sendcrypt but prepares the metadata.tsv file in the format that sendcrypt requires.
+It first checks the to_upload.txt files created in prepare.sh (which is called in belfry.sh) and goes through each sample line by line. It created the path to the dehuman.cram file and if it exists first makes a copy of it with the name *samplename.cram* file. This is necessary becasue by design vpipe output is called dehuman.cram for every sample. So for the upload they could not be differenciated.
+Then the metadata line is created for this sample by running the create_metadata_line.py script which actually extracts the necessary information form the provided sample and wirtes it into the metadata.tsv file.
+Lastly, the sample name is written in to the file that archives the uploaded run and the whole metadata.tsv is outputted.
+
+**create_metadata_line.py**
+tbd
+
+### Amplicon Coverage Covid
+
+The Amplicon Coverage plot is created automatically by the automation and can be found for each batch at:
+`/cluster/project/pangolin/work-amplicon-coverage`
+
+___
+
+### CovvFit
+
+[CovvFit](https://github.com/cbg-ethz/covvfit/tree/main) is a tool for Fitness estimates of SARS-CoV-2 variants from variant abundance data. It is part of the regular processing.
+
+However, the following is only an INTERMEDIATE solution until covvfit will be art of v-pipe (at the end of 2025).
+The purpose of this folder is to run the covvfit analyisis discribed in htis tutorial: <https://github.com/cbg-ethz/covvfit/blob/main/docs/running_deconv/lollipop.md>
+
+**Disclaimer**
+the lollipop installation used for regular processing in in vpipe. This repo is only an **intermediate** solution until covvfit will be a rule provided by vpipe.
+Thus, also the Lollipop installation should be **removed** once covvfit is integrated in v-pipe!
+
+**Folder strucutre**
+
+- analysis: store the config, scripts and results
+- envs: store the conda env needed to run covvid (incl. lollipop)
+- git: stores the lollipop installation to run covvfit
+
+**Procedure**
+
+1. regular processing incl. lollipop run --> this provides the updated files (e.g. tallymut.tsv) to run the **second** lollipop here without smoothing
+2. rerun lollipop with: `/cluster/project/pangolin/cowwid/covvfit/analysis/lollipop/scripts/run_covvfit_lollipop.sbatch`
+3. run covvfit with: `/cluster/project/pangolin/cowwid/covvfit/analysis/covvfit_analysis/scripts/run_covvfit.sh`
+
+**running the code**
+
+```Bash
+cd /cluster/project/pangolin/cowwid/covvfit/analysis/lollipop/scripts
+sbatch /run_covvfit_lollipop.sbatch
+```
+
+```Bash
+cd /cluster/project/pangolin/cowwid/covvfit/analysis/covvfit_analysis/scripts
+./run_covvfit.sh
+```
+___
+
+## Backups [WIP]
+
+### bewi08 VM
+
+We make regular backup of the analysed data. This is done by a VM called `bewi08`.
+Inside this we have a script that runs these backup: `/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh`.
+
+The folder `/links/shared/covid19-pangolin` is mount to thin VM. This folder is stored inside a physical storage in D-BSSE.
+If there is some storage maintenance done in the storage at the D-BSSE the link to this folder can break. Then, the folder has to be remounted to the VM with the following commands:
+
+1. to unmount the backup folder on bewi08: `sudo umount /links/shared/covid19-pangolin`
+2. to mount: `sudo mount /links/shared/covid19-pangolin`
+
+basedir=/links/shared/covid19-pangolin/backup
+bfabric_downloads=bfabric-downloads
+bfabric_project=p23224
+
+exclude list for the backup: `/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst`
 
 ### Backup of raw data form FGCZ
 
@@ -1947,6 +2010,15 @@ do they happen in the sars_cov_2 automation?
 
 
 ## Appendix
+
+
+### Naming conventions
+
+**Samples:**
+FlowCellArrayPosition_TreatmentPlant_SamplingDate
+
+**Batch:**
+SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
 
 ### Old working folders
 
