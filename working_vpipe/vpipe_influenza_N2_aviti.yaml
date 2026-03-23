@@ -5,6 +5,7 @@ general:
     primers_trimmer: "samtools"
     threads: 6
     snv_caller: "lofreq"
+    temp_prefix: /cluster/scratch/bs-pangolin/pangolin/temp_n2
 input:
     datadir: "/cluster/project/pangolin/processes/influenza/vpipe_input"
     samples_file: "/cluster/project/pangolin/processes/influenza/IA_N2/working/samples.recent.tsv"
