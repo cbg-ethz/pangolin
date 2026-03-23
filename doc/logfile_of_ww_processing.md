@@ -1,21 +1,26 @@
+# Log book wastewater
 
 ## TODO Checklist
 
 ### Pipeline setup and cleanup
+
 - [ ] Revise the SARS-CoV-2 setup to ensure it is configured correctly, uses the correct files, and is fully tracked in git.
 - [ ] Clean up duplicated COVID files and relative paths in code and `.sbatch` files so it is clear what is actually used in the analysis.
 
 ### Uploads and automation
+
 - [ ] Investigate why the `genspectrum` upload API review/approval step fails.
 - [ ] Investigate repeated failures when copying/linking files in the RSV or IVA automation.
 - [ ] Add batch information to the `spsp` upload log.
 
 ### LoFreq and resource handling
+
 - [ ] Reduce the temporary LoFreq resource increase again after this season.
 - [ ] Consider subsampling raw `.fastq` files as an alternative.
 - [ ] Consider adding a subsampling function directly into the automation.
 
 ### Influenza experimental dataset
+
 - [x] Blacklist the influenza experimental dataset once the full sample or batch name, including sequencing date, is known.
   Not needed, as the batch was not submitted to the regular processing project.
 
@@ -27,6 +32,10 @@ TODO:
 - genspectrum upload: the api review and approve of the sequenced fails
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
+
+23 March 2026:
+
+- note form fgcz about sequencing troubles in order 41461 
 
 16 March 2026:
 
