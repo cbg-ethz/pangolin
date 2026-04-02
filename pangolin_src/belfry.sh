@@ -383,7 +383,7 @@ case "$1" in
             --exclude='*.err.log'   \
             --exclude='*.benchmark' \
             --exclude='*fastq.gz' \
-            belfry@euler.ethz.ch::${working}/samples \
+            belfry@euler.ethz.ch::${working} \
             ${local_dataset}/${working}/samples/
         rsync \
             --password-file ${rsync_pass}	\
