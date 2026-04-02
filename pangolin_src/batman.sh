@@ -73,7 +73,7 @@ fi
 case "$1" in
         rsync)
                 # rsync daemon : see ${SSH_ORIGINAL_COMMAND}
-                rsync --server --daemon .
+                rsync --server --daemon --config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf" .
         ;;
         logrotate)
                 # rotate logs
