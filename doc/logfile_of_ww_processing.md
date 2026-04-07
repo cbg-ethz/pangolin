@@ -32,10 +32,182 @@ TODO:
 - genspectrum upload: the api review and approve of the sequenced fails
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
+- TODO: rename batch garbage_scripts to not have covid in name!!
+
+7 April 2026:
+- added orders to all fuselists in fgcz.conf file (fgcz sync , rsv, influenza, sars_cov2 autoamtion): `fuselist=o41461_Aviti_260320_AV166,o41461_Aviti_260325_AV167`
+Sars_cov2:
+- in sars_cov2 on wisedbVM changed: `carillon.sh limit=$(date --date='2 weeks ago' '+%Y%m%d') to limit=$(date --date='4 weeks ago' '+%Y%m%d')` such that the batches are merged
+- added the merged batch `20260320_o41461` to `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+- `bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh garbage 20260325_2531482360`
+- `bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh garbage 20260320_2531490855`
+- `kkirschen@wisedb:data/projects$ docker restart sars_cov_2-sars_cov_2-1`
+- --> results in rerun
+
+rsv:
+- from the batch `o41461_Aviti_260325_AV167` it was still trying to run lofreq for some samples
+  - RSVA: `B3_17_2026_03_07/20260325_2531482360` --> (14M reads... way too much to finish lofreq) `Processed 14769174 reads` (`/cluster/project/pangolin/processes/rsv/RSVA/working/cluster_logs/lofreq/lofreq-62402726.err.log`)
+  - RSVB: `H2_10_2026_03_07/20260325_2531482360` lofreq did not finish --> 4M reads (`Processed 4227544 reads` `/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/lofreq/lofreq-62565123.err.log`)
+    - `B3_17_2026_03_07/20260325_2531482360` - Processed 13722226 reads - `/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/lofreq/lofreq-62565121.err.log`
+    - `H2_10_2026_03_07/20260325_2531482360` - Processed 4227544 reads - `/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/lofreq/lofreq-62565123.err.log`
+    - `H2_10_2026_03_07/20260325_2531482360` - finished? yes snvs.vcf file is in folder
+  - added sample `B3_17_2026_03_07` to exclude list:`/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/config/fgcz.conf`
+
+- stoped the automation of wisedb `kkirschen@wisedb:data/projects$ docker stop pangolin_rsv-pangolin_rsv-1` so it does not constantly try to rerun the incomplete sample
+- scanceled the running rsv jobs on euler 
+- garbage batches:
+  - edited script `/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/garbage_covid_batches.sh` to add the batches to garbage for both variants
+  - `bs-pangolin@eu-login-36:/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src$ ./garbage_covid_batches.sh`
+  - edited script: `/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/vpipe_input_garbage_covid_batches.sh` to include the batches
+  - `bs-pangolin@eu-login-36:/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src$ ./vpipe_input_garbage_covid_batches.sh`
+    - error in script as the mutation tables were not yet created and thus were not found to be deleted - acceptable error - proceeding
+  - restart autoamtion on wise db vm
+    - in container on wisedbVM changed: `carillon.sh limit=$(date --date='2 weeks ago' '+%Y%m%d') to limit=$(date --date='4 weeks ago' '+%Y%m%d')` such that the batches are merged
+- failed; why?
+  - in /cluster/project/pangolin/processes/rsv/working/samples.recent.tsv the two other batches are still added! why?
+  - garbage input dir did not move the samples.BATCH.tsv file form the input directory, and vpipe will run on these files.
+  - added section into: `garbage_vpipe_input.sh`
+```Bash
+# Move batch metadata files into garbage so addsamples cannot recreate them
+for meta_file in \
+  "${vpipe_input_dir}/batch.${batch}.yaml" \
+  "${vpipe_input_dir}/samples.${batch}.tsv" \
+  "${vpipe_input_dir}/missing.${batch}.txt" \
+  "${vpipe_input_dir}/projects.${batch}.tsv"
+do
+  if [[ -e "${meta_file}" ]]; then
+    mv "${meta_file}" "${garbage_dir}/"
+    echo "Moved metadata file to garbage: ${meta_file}"
+  else
+    echo "Metadata file not found, skipping: ${meta_file}"
+  fi
+done
+
+```
+
+influenza:
+- from the batch `o41461_Aviti_260325_AV167` it was still trying to run lofreq for some samples
+  - `B1_05_2026_02_27/20260325_2531482360` - Processed 592136 reads - `/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-62573875.err.log`
+  - `B1_05_2026_02_27/20260325_2531482360` --> it seems that the autoamtion tries to run the sample 2x in a row and thus fails, this should be sorted out once the batch is deleted and rerun with the combined sequences
+- stopped the automation on wisedb: `kkirschen@wisedb:data/projects$ docker stop pangolin_iva-pangolin_influenza-1`
+- scanceled the running influenza jobs on euler 
+- garbage batches:
+  - added similar script as above to influenza:
+  - `/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src/garbage_multiple_batches_vpipe_input.sh`
+  - `/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src/garbage_multiple_batches_vpipe_output.sh`
+  - run:
+    - `bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src$ ./garbage_multiple_batches_vpipe_output.sh`
+    - `bs-pangolin@eu-login-36:/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src$ ./garbage_multiple_batches_vpipe_input.sh`
+    - connection interrupted, needed to restart both scripts
+  - added section into: `garbage_vpipe_input.sh`
+  
+```Bash
+# Move batch metadata files into garbage so addsamples cannot recreate them
+for meta_file in \
+  "${vpipe_input_dir}/batch.${batch}.yaml" \
+  "${vpipe_input_dir}/samples.${batch}.tsv" \
+  "${vpipe_input_dir}/missing.${batch}.txt" \
+  "${vpipe_input_dir}/projects.${batch}.tsv"
+do
+  if [[ -e "${meta_file}" ]]; then
+    mv "${meta_file}" "${garbage_dir}/"
+    echo "Moved metadata file to garbage: ${meta_file}"
+  else
+    echo "Metadata file not found, skipping: ${meta_file}"
+  fi
+done
+```
+
+- rerun `./garbage_multiple_batches_vpipe_input.sh`
+- only added batch 20260320_2531490855 and rerun the script
+- on wisedb VM restarted the influenza automation and changed `carillon.sh limit=$(date --date='2 weeks ago' '+%Y%m%d') to limit=$(date --date='4 weeks ago' '+%Y%m%d')` such that the batches are merged and processed
+
+
+TODO: rename rsv batch garbage_scripts to not have covid in name!!!
+TODO:
+- for rsv the batch 20260320_2531490855 was reprocessed becasue in the input garbaging script in only ran the first batch!
+  - needs to be deleted and downstream analysis rerun for rsv:
+  - run both garbaging scripts with only batch 20260320_2531490855
+  - rerun downstream analysis
+
+
+2 April 2026
+
+- (linked rsync.conf file to the version stored on git)
+```Bash
+#commands in homedirectory bs-pangolin
+rm rsyncd.conf # menoved old link: rsyncd.conf -> /cluster/home/bs-pangolin/rsyncd.conf_new
+ln -s /cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync/config/rsyncd.conf rsyncd.conf
+```
+
+- updated the `sars-cov` rsync case to use the git-managed config file directly with
+  `--config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf"`
+- this means the rsync daemon no longer depends on `~/rsyncd.conf` or the default `/etc/rsyncd.conf`
+- added notes to the backup documentation describing how the FGCZ raw-data rsync backup works and where the config is loaded from
+
+30 March 2026 
+
+**SPSP upload issue:**
+- changed settings in server.conf (covid autoamtion): donotsubmit_uploader=0
+- in belfry changed the path on line 386 from` belfry@euler.ethz.ch::${working}/samples` to `belfry@euler.ethz.ch::${working}` 
+- changed the same inside the container !
+- Then the issue occured that file mermissions on raw_data on the wisedb are not the one form the container
+- Tried changeing the ownership but were not able to
+- contacted system admin to look into it
+
+Log of changing folder ownership:
+- change raw_data/working/samples directory ownership on wisedb so it is writable for the spsp uploads:
+```Bash
+ssh wisedb
+cd /raw_data/working
+# first test
+find samples -user mcarrara 
+find samples -user mcarrara | wc -l
+> 1246
+
+#now change ownership:
+cd #got to home
+sudo find /raw_data/working/samples -user mcarrara -exec chown kkirschen {} +
+cd /raw_data/working/samples
+sudo find . -user mcarrara -exec chown kkirschen {} +
+
+``` 
+
+`sudo`: runs the command with elevated privileges, so ownership changes are allowed
+`find .` :starts searching in the current directory . and all subdirectories
+`-user mcarrara`: matches only entries owned by the user mcarrara
+
+`-exec chown kkirschen {} +`
+for all matched entries, run:
+`chown kkirschen <matched files...>`
+
+Here:
+`{}` is replaced by the matched paths
+`+` means find passes many files at once to chown, which is faster than one-by-one
+
+
+Alternative:
+
+  change owner and group:
+  `chown -R user:group directory`
+
+  Only Change owner:
+  `chown -R alice myfolder`
+  `chgrp -R group directory`
+
+```Bash
+kkirschen@wisedb:raw_data/working$ sudo chown kkirschen samples
+[sudo] password for kkirschen:
+chown: cannot access 'samples': Permission denied
+
+```
+
+
+
 
 23 March 2026:
 
-- note form fgcz about sequencing troubles in order 41461 
+- note form fgcz about sequencing troubles in order 41461
 
 16 March 2026:
 
@@ -43,7 +215,7 @@ TODO:
 - Discussed how to proceed with samples showing unexpectedly increased read depth, and considered alternatives to excluding them from the analysis.
 - Tested dynamic resources in the profile. Conclusion: this is not supported in Snakemake 7.32.4.
 - Increased LoFreq resources to allow runs of up to 3 days and 32 GB RAM.
-- To do: This should remain an intermediate solution only and be reduced again after this season.
+- #TODO: This should remain an intermediate solution only and be reduced again after this season.
 - Alternative to do: Subsample the raw `.fastq` files or add a subsampling function to the automation.
 
 13 March 2026:
