@@ -67,11 +67,10 @@ for sample in "${samples_from_batch[@]}"; do
   mkdir -p "${garbage_dir}/${sample}"
   #if directory exists then:
   if [[ -d "${vpipe_input_dir}/${sample}/${batch}" ]]; then 
-    #rsync -a "${vpipe_input_dir}/${sample}/${batch}" "${garbage_dir}/${sample}" &&  rm -r "${vpipe_input_dir}/${sample}/${batch}" 
     if [[ -e "${garbage_dir}/${sample}/" ]]; then
       mv "${garbage_dir}/${sample}/" "${garbage_dir}/${sample}.bak.$(date +%Y%m%d%H%M%S)"
     fi
-    mv "${variant_base_dir}/${sample}/${batch}" "${garbage_dir}/${sample}/"
+    mv "${vpipe_input_dir}/${sample}/${batch}" "${garbage_dir}/${sample}/"
 
     #now check if the sample has another batch directory inside; if not delete sample folder
     if [[ -d "${vpipe_input_dir}/${sample}/" && -z $(ls -A "${vpipe_input_dir}/${sample}/") ]]; then #-d "$dir" ensures it actually exists and is a directory.]ls -A lists all entries except ./..; if its output is zero-length (-z), the directory is empty.
