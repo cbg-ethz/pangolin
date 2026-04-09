@@ -67,7 +67,11 @@ for sample in "${samples_from_batch[@]}"; do
   mkdir -p "${garbage_dir}/${sample}"
   #if directory exists then:
   if [[ -d "${vpipe_input_dir}/${sample}/${batch}" ]]; then 
-    rsync -a "${vpipe_input_dir}/${sample}/${batch}" "${garbage_dir}/${sample}" &&  rm -r "${vpipe_input_dir}/${sample}/${batch}" 
+    if [[ -e "${garbage_dir}/${sample}/" ]]; then
+      mv "${garbage_dir}/${sample}/" "${garbage_dir}/${sample}.bak.$(date +%Y%m%d%H%M%S)"
+    fi
+    mv "${vpipe_input_dir}/${sample}/${batch}" "${garbage_dir}/${sample}/"
+
     #now check if the sample has another batch directory inside; if not delete sample folder
     if [[ -d "${vpipe_input_dir}/${sample}/" && -z $(ls -A "${vpipe_input_dir}/${sample}/") ]]; then #-d "$dir" ensures it actually exists and is a directory.]ls -A lists all entries except ./..; if its output is zero-length (-z), the directory is empty.
       echo "Moved directory to garbage: ${vpipe_input_dir}/${sample}/"
@@ -81,6 +85,22 @@ for sample in "${samples_from_batch[@]}"; do
   fi
 
 done
+
+# Move batch metadata files into garbage so addsamples cannot recreate them
+for meta_file in \
+  "${vpipe_input_dir}/batch.${batch}.yaml" \
+  "${vpipe_input_dir}/samples.${batch}.tsv" \
+  "${vpipe_input_dir}/missing.${batch}.txt" \
+  "${vpipe_input_dir}/projects.${batch}.tsv"
+do
+  if [[ -e "${meta_file}" ]]; then
+    mv "${meta_file}" "${garbage_dir}/"
+    echo "Moved metadata file to garbage: ${meta_file}"
+  else
+    echo "Metadata file not found, skipping: ${meta_file}"
+  fi
+done
+
 
 
 path_to_samples_tsv="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
@@ -96,6 +116,20 @@ echo "claining sample.tsv file: path_to_samples_tsv=${path_to_samples_tsv} "
 mv "${path_to_samples_tsv}" "${backup_samples_tsv}"
 awk -v batch="$batch" -F'\t' '$2 != batch' "${backup_samples_tsv}" > "${path_to_samples_tsv}"
 
+path_to_recent_samples_tsv="${clusterdir_old}/${clusterdir}/${variant}/${working}/samples.recent.tsv"
+backup_recent_samples_tsv="${garbage_dir}/${batch}_backup_samples.recent.tsv"
+
+if [[ ! -f "${path_to_recent_samples_tsv}" ]]; then
+  echo "ERROR: File ${path_to_recent_samples_tsv} not found!" >&2
+  exit 1
+fi
+
+echo "claining recent.sample.tsv file: path_to_recent_samples_tsv=${path_to_recent_samples_tsv} "
+
+mv "${path_to_recent_samples_tsv}" "${backup_recent_samples_tsv}"
+awk -v batch="$batch" -F'\t' '$2 != batch' "${backup_recent_samples_tsv}" > "${path_to_recent_samples_tsv}"
+
+
 #move mutation frequency tables
 path_to_mutation_frequency_table_rsva="${clusterdir_old}/${clusterdir}/RSVA/${working}/MutationFrequencies/${batch}_EPI_ISL_412866_Mutations_Dashboard.tsv"
 base_path_to_mutation_frequency_table_rsva="${clusterdir_old}/${clusterdir}/RSVA/${working}/MutationFrequencies/"
@@ -104,13 +138,19 @@ base_path_to_mutation_frequency_table_rsvb="${clusterdir_old}/${clusterdir}/RSVB
 
 if [[ ! -f "${path_to_mutation_frequency_table_rsva}" ]]; then
   echo "ERROR: File ${path_to_mutation_frequency_table_rsva} not found!" >&2
-  exit 1
+  #exit 1 #tollerate this error as often the file not yet exists
+else
+  mv $path_to_mutation_frequency_table_rsva "${base_path_to_mutation_frequency_table_rsva}/old/"
+  echo "moved ${path_to_mutation_frequency_table_rsva} to old"
 fi
 
 if [[ ! -f "${path_to_mutation_frequency_table_rsvb}" ]]; then
   echo "ERROR: File ${path_to_mutation_frequency_table_rsvb} not found!" >&2
-  exit 1
+  #exit 1 #tollerate this error as often the file not yet exists
+else
+  mv $path_to_mutation_frequency_table_rsvb "${base_path_to_mutation_frequency_table_rsvb}/old/"
+  echo "moved ${path_to_mutation_frequency_table_rsvb} to old"
 fi
 
-mv $path_to_mutation_frequency_table_rsva "${base_path_to_mutation_frequency_table_rsva}/old/"
-mv $path_to_mutation_frequency_table_rsvb "${base_path_to_mutation_frequency_table_rsvb}/old/"
+
+

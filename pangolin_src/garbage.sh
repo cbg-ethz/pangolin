@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Script to garbage vpipe_outputs. Remember to blacklist them from vpipe run before running the garbage.sh script.
 # Input: Virus subtype e.g. RSVA/RSVB
 # Infput: Batch e.g. 20250417_2427493980
@@ -70,7 +72,12 @@ for sample in "${samples_from_batch[@]}"; do
   mkdir -p "${garbage_dir}/${sample}"
   #if directory exists then:
   if [[ -d "${variant_base_dir}/${sample}/${batch}" ]]; then 
-    rsync -a "${variant_base_dir}/${sample}/${batch}" "${garbage_dir}/${sample}" &&  rm -r "${variant_base_dir}/${sample}/${batch}" 
+    if [[ -e "${garbage_dir}/${sample}/" ]]; then
+      mv "${garbage_dir}/${sample}/" "${garbage_dir}/${sample}.bak.$(date +%Y%m%d%H%M%S)"
+    fi
+    mv "${variant_base_dir}/${sample}/${batch}" "${garbage_dir}/${sample}/"
+
+    
     #now check if the sample has another batch directory inside; if not delete sample folder
     if [[ -d "${variant_base_dir}/${sample}/" && -z $(ls -A "${variant_base_dir}/${sample}/") ]]; then #-d "$dir" ensures it actually exists and is a directory.]ls -A lists all entries except ./..; if its output is zero-length (-z), the directory is empty.
       echo "Moved directory to garbage: ${variant_base_dir}/${sample}/"
@@ -98,4 +105,17 @@ echo "claining sample.tsv file: path_to_samples_tsv=${path_to_samples_tsv} "
 
 mv "${path_to_samples_tsv}" "${backup_samples_tsv}"
 awk -v batch="$batch" -F'\t' '$2 != batch' "${backup_samples_tsv}" > "${path_to_samples_tsv}"
+
+path_to_recent_samples_tsv="${clusterdir_old}/${clusterdir}/${variant}/${working}/samples.recent.tsv"
+backup_recent_samples_tsv="${garbage_dir}/${batch}_backup_samples.recent.tsv"
+
+if [[ ! -f "${path_to_recent_samples_tsv}" ]]; then
+  echo "ERROR: File ${path_to_recent_samples_tsv} not found!" >&2
+  exit 1
+fi
+
+echo "claining recent.sample.tsv file: path_to_recent_samples_tsv=${path_to_recent_samples_tsv} "
+
+mv "${path_to_recent_samples_tsv}" "${backup_recent_samples_tsv}"
+awk -v batch="$batch" -F'\t' '$2 != batch' "${backup_recent_samples_tsv}" > "${path_to_recent_samples_tsv}"
 
