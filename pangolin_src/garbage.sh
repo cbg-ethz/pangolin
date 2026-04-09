@@ -71,7 +71,6 @@ for sample in "${samples_from_batch[@]}"; do
   mkdir -p "${garbage_dir}/${sample}"
   #if directory exists then:
   if [[ -d "${variant_base_dir}/${sample}/${batch}" ]]; then 
-    #rsync -a "${variant_base_dir}/${sample}/${batch}" "${garbage_dir}/${sample}" &&  rm -r "${variant_base_dir}/${sample}/${batch}" 
     if [[ -e "${garbage_dir}/${sample}/" ]]; then
       mv "${garbage_dir}/${sample}/" "${garbage_dir}/${sample}.bak.$(date +%Y%m%d%H%M%S)"
     fi
