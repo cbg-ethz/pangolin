@@ -34,6 +34,181 @@ TODO:
 - spsp upload add batch to upload log
 - TODO: rename batch garbage_scripts to not have covid in name!!
 
+9 April 2026
+
+- mail for fgcz: while in theory the reads should be okay, the savest would be to only use the second sequencing results
+- Thus, goal is to revert the merging and rerun the analysis
+- plan:
+  - stop all container
+  - garbage the fused batch 20260320_o41461
+  - take out the batches from fuselist and only add the first batch (o41461_Aviti_260320_AV166) to badlist in fgcz.conf (all autoamtions)
+  - restart automations and confirm for each that the correct samples are in samples.recent.tsv
+  - #TODO: cleanup the aviti_batches.tsv in covid autoamtion
+
+Covid:
+- stop the docker container
+- added o41461_Aviti_260320_AV166 to bad list in fgcz.conf and removed the fuselist
+- `bs-pangolin@eu-login-28:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh garbage 20260320_o41461`
+- `kkirschen@wisedb:nas/kkirschen$ docker start sars_cov_2-sars_cov_2-1`
+- confiremed that merged batch and blacklisted batch are not is saples.recent.tsv `bs-pangolin@eu-login-28:/cluster/project/pangolin/processes/sars_cov_2/working$ less samples.recent.tsv`
+- run lollipop
+
+influenza:
+- IA_MP lofrec on samples B3_17_2026_03_20/20260402_2531558689 and F3_15_2026_03_08/20260320_o41461 take very long, will add them to the fgcz.conf to be excluded (MP is anyway not reproted)
+- stoped docker container
+- - added the fusebatch to garbage scripts
+- `bs-pangolin@eu-login-19:/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src$ ./garbage_multiple_batches_vpipe_output.sh`
+- added o41461_Aviti_260320_AV166 to bad list in fgcz.conf and removed the fuselist
+- `/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src$ ./garbage_multiple_batches_vpipe_input.sh`
+- created scripts to restore the garbaged batches:
+  `./restore_vpipe_output_batch_from_garbage.sh`
+  `./restore_vpipe_input_batch_from_garbage.sh`
+- start the autoamtion
+
+Influenza sinle batch rerun:
+---
+Error report
+-	IA_N1 – failed 
+-	Error group extract: D2_16_2026_02_28, H1_25_2026_02_27, A3_17_2026_03_05, F1_17_2026_02_27, C3_25_2026_03_05, C2_16_2026_02_25, D1_10_2026_02_27, H3_16_2026_03_08, C1_10_2026_02_25, F1_17_2026_02_27, E3_15_2026_03_04, E2_05_2026_03_05, H2_10_2026_03_07
+-	Due to stale file handle (/cluster/project/pangolin/processes/influenza/IA_N1/vpipe_output/G2_10_2026_03_05/20260325_2531482360/extracted_data/extract_R2.err.log)
+-	Error lofreq: B3_17_2026_03_20,
+---
+
+- garbaged all samples in IA_N1/vpipe_output from batch 20260325_2531482360 (/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src/20260409_garbage_batches_IA_N1.log)
+- next run should rerun N1
+- #TODO: if influnza does not restrt in time - manually trun off automation (so it does not accidetally retrgger vpipe), and manually run the N1 - vpipe script
+- `kkirschen@wisedb:nas/kkirschen$ docker stop pangolin_iva-pangolin_influenza-1`
+- copied smaples.recent.tsv form IA_H1 to IA_N1 to manually start vpipe
+- run: `bs-pangolin@eu-login-19:/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe$ sbatch vpipe_influenza_N1_aviti.sbatch` - did not work
+- restarted the automation and run this way
+
+rsv:
+- stoped docker container
+- added the fusebatch to garbage scripts
+- `bs-pangolin@eu-login-12:/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src$ ./garbage_multiple_batches_vpipe_output.sh`
+- added o41461_Aviti_260320_AV166 to bad list in fgcz.conf and removed the fuselist
+- `bs-pangolin@eu-login-05:/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src$ ./garbage_multiple_batches_vpipe_input.sh`
+- `kkirschen@wisedb:nas/kkirschen$ docker start pangolin_rsv-pangolin_rsv-1`
+
+General:
+- Done: change all garbage scripts to use mv!!!!!
+- fgcz_sync automation: removed the fuse batches and added the failed sequencing batch to the badlist
+- added batch 20260320_2531490855 to lollipop blacklist
+
+- #TODO:create the restore scrips also for rsv
+
+8 April 2026
+
+general observation: euler is rather slow since at least yesterday
+Covid:
+- error: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/.snakemake/log/2026-04-08T084639.883505.snakemake.log
+- vpipe_output/B1_05_2026_02_27/20260320_o41461/raw_uploads/raw_reads.err.log --> [mem_sam_pe] paired reads have different names: "AV233803:AV167:2531482360:1:10102:0424:0064", "AV233803:AV166:2531490855:1:10801:0595:0062"
+  - usually this is a preprocessing error, this the sample B1_05_2026_02_27 was deleted form output to trigger rerun
+  - vpipe_output/A1_05_2026_02_25/20260320_o41461/raw_uploads/raw_reads.err.log as well
+- rerun the 2 samples 
+  - error again same rule unfiltered_cram: /cluster/project/pangolin/processes/sars_cov_2/working/slurm-COVID-AVITI-vpipe-cons-62693578.err
+  - rule log: `/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/unfiltered_cram/unfiltered_cram-62694452.err.log` --> [mem_sam_pe] paired reads have different names: "AV233803:AV167:2531482360:1:10102:0262:0007", "AV233803:AV166:2531490855:1:10801:0135:0025"
+- need to delete the sample in vpipe_input! as the output is only a link to vpipe input and this no recpoying is forced if only the link is deleted!
+  - `bs-pangolin@eu-login-30:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output$ rm -rf A1_05_2026_02_25`
+  - `bs-pangolin@eu-login-30:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output$ rm -r B1_05_2026_02_27`
+  - `bs-pangolin@eu-login-30:/cluster/project/pangolin/processes/sars_cov_2/vpipe_input$ rm -r A1_05_2026_02_25`
+  - `bs-pangolin@eu-login-30:/cluster/project/pangolin/processes/sars_cov_2/vpipe_input$ rm -r B1_05_2026_02_27`
+  - `kkirschen@wisedb:nas/kkirschen$ docker restart sars_cov_2-sars_cov_2-1`
+/cluster/project/pangolin/processes/sars_cov_2/working/slurm-COVID-AVITI-vpipe-cons-62719983.err
+```Bash
+sacct: error: _open_persist_conn: failed to open persistent connection to host:slurmdbd-slurm-24-production.euler.hpc.ethz.ch:6829: Connection refused
+sacct: error: Sending PersistInit msg: Connection refused
+sacct: error: Problem talking to the database: Connection refused
+sacct: error: _open_persist_conn: failed to open persistent connection to host:slurmdbd-slurm-24-production.euler.hpc.ethz.ch:6829: Connection refused
+sacct: error: Sending PersistInit msg: Connection refused
+sacct: error: Problem talking to the database: Connection refused
+sacct: error: _open_persist_conn: failed to open persistent connection to host:slurmdbd-slurm-24-production.euler.hpc.ethz.ch:6829: Connection refused
+sacct: error: Sending PersistInit msg: Connection refused
+sacct: error: Problem talking to the database: Connection refused
+sacct: error: _open_persist_conn: failed to open persistent connection to host:slurmdbd-slurm-24-production.euler.hpc.ethz.ch:6829: Connection refused
+sacct: error: Sending PersistInit msg: Connection refused
+sacct: error: Problem talking to the database: Connection refused
+sacct: error: _open_persist_conn: failed to open persistent connection to host:slurmdbd-slurm-24-production.euler.hpc.ethz.ch:6829: Connection refused
+sacct: error: Sending PersistInit msg: Connection refused
+sacct: error: Problem talking to the database: Connection refused
+sacct: error: _open_persist_conn: failed to open persistent connection to host:slurmdbd-slurm-24-production.euler.hpc.ethz.ch:6829: Connection refused
+sacct: error: Sending PersistInit msg: Connection refused
+sacct: error: Problem talking to the database: Connection refused
+```
+- still error in unfiltered cram: 
+  - B1_05_2026_02_27/20260320_o41461: `[mem_sam_pe] paired reads have different names: "AV233803:AV167:2531482360:1:10102:0262:0007", "AV233803:AV166:2531490855:1:10801:0135:0025"` (/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/unfiltered_cram/unfiltered_cram-62720347.err.log)
+  - A1_05_2026_02_25/20260320_o41461: `[mem_sam_pe] paired reads have different names: "AV233803:AV167:2531482360:1:10102:0281:0023", "AV233803:AV166:2531490855:1:10801:0324:0006"`(/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/unfiltered_cram/unfiltered_cram-62720348.err.log)
+
+Influenza:
+- IA_H1 - lofreq (B1_05_2026_02_27): /cluster/project/pangolin/processes/influenza/IA_H1/working/slurm-62688121.out
+  - `/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-62688203.err.log` --> Processed 599940 reads --> not so much, why does it not run???
+- in a previous log file it seems that vpipe started 2x on the same sample --> FATAL(lofreq_filter.c|main_filter:953): Cowardly refusing to overwrite file '/cluster/project/pangolin/processes/influenza/IA_H1/vpipe_output/B1_05_2026_02_27/20260320_o41461/variants/SNVs/snvs.vcf'. Exiting... (`/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-62676688.err.log`)
+IA_N1:
+- stale file handle: (B3_17_2026_03_20) `/cluster/project/pangolin/processes/influenza/IA_N1/working/cluster_logs/lofreq/lofreq-62680116.err.log`
+- (B3_17_2026_03_20/20260402_2531558689)
+- (F3_15_2026_03_08/20260320_o41461): FATAL(lofreq_indelqual.c|main_indelqual:390): Cowardly refusing to overwrite file '/cluster/project/pangolin/processes/influenza/IA_N1/vpipe_output/F3_15_2026_03_08/20260320_o41461/variants/SNVs/REF_aln_indelqual.bam'. Exiting... --> `/cluster/project/pangolin/processes/influenza/IA_N1/working/cluster_logs/lofreq/lofreq-62688321.err.log`
+- `kkirschen@wisedb:nas/kkirschen$ docker stop pangolin_iva-pangolin_influenza-1`
+- scancel all inlfuenza jobs
+- moved the vpipe.conf file back to the working directory, as this is the fall back file i learned: `/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/vpipe.config`
+- `kkirschen@wisedb:nas/kkirschen$ docker start pangolin_iva-pangolin_influenza-1`
+
+- Influenza Main Job: `/cluster/project/pangolin/processes/influenza/working/slurm-62701154.out`
+  ```Bash
+  Starting main influenza A Aviti vpipe job with ID 62701154
+  Submitted child IA_H1 job with ID 62701227
+  Submitted child IA_H3 job with ID 62701229
+  Submitted child IA_MP job with ID 62701230
+  Submitted child IA_N1 job with ID 62701231
+  Submitted child IA_N2 job with ID 62701232
+  Waiting for child job 62701227 to finish...
+  Child job 62701227 failed with status TIMEOUT
+  Waiting for child job 62701229 to finish...
+  slurm_load_jobs error: Invalid job id specified
+  Child job 62701229 completed successfully
+  Waiting for child job 62701230 to finish...
+  slurm_load_jobs error: Invalid job id specified
+  Child job 62701230 failed with status FAILED
+  Waiting for child job 62701231 to finish...
+  slurm_load_jobs error: Invalid job id specified
+  Child job 62701231 failed with status FAILED
+  Waiting for child job 62701232 to finish...
+  slurm_load_jobs error: Invalid job id specified
+  Child job 62701232 completed successfully
+  One or more child jobs failed. Marking parent job as failed.
+
+  ```
+- IA_H1: lofreq time limit (/cluster/project/pangolin/processes/influenza/IA_H1/working/slurm-62701227.out)
+  - in this log it says canceled due to timelimit, however, if we look at the time it is runtime=4320 --> which is 3 days and the job only ran 3 hours!
+  - The key point is:
+    runtime=4320 means a time request of 72 hours
+    but the cancellation shown is for 62701227, not 62701350
+    So this log does not prove that lofreq exceeded its own runtime. It proves that some other submitted cluster job did.
+  -----> We have *3 layers of jobs*
+  - first layer is the influenza *main* job that spinns
+    - the second layer the IA subtype jobs that spinns
+      - the third layer, the single rules
+  - we only increased the time of the single rules in the config file but not the time of the main jobs, so if they are reaching the time limit the rules are cancelled as well!
+- #DONE: Increase the job submission time of the main and the child jobs to 3 days for influenza and rsv (changed the .sbatch files headers)
+
+- commented out the temp_prefix in the segment yaml file to exclude issues with the new temp directory setup..
+
+rsv:
+- `/cluster/project/pangolin/processes/rsv/working/slurm-62616659.out` --> slurm_load_partitions: Unable to contact slurm controller (connect failure)
+- `kkirschen@wisedb:nas/kkirschen$ docker stop pangolin_rsv-pangolin_rsv-1`
+- `bs-pangolin@eu-login-30:/cluster/project/pangolin/processes/rsv/vpipe_input$ ls *20260320_2531490855*` --> batch files are still there
+- rename:
+  - `garbage_covid_batches.sh`--> `garbage_multiple_batches_vpipe_output.sh`
+  - `vpipe_input_garbage_covid_batches.sh`-->`garbage_multiple_batches_vpipe_input.sh`
+- in the garbage files above only include the batch 20260320_2531490855 and run (logfile 20260408)
+- 
+- `kkirschen@wisedb:nas/kkirschen$ docker start pangolin_rsv-pangolin_rsv-1`
+
+
+- TODO: restart rav automation
+  - in the rsv and iva config reactivate the tmp directory ? maybe?
+  - restart the influenza docker 
+
+
 7 April 2026:
 - added orders to all fuselists in fgcz.conf file (fgcz sync , rsv, influenza, sars_cov2 autoamtion): `fuselist=o41461_Aviti_260320_AV166,o41461_Aviti_260325_AV167`
 Sars_cov2:
@@ -50,7 +225,7 @@ rsv:
   - RSVB: `H2_10_2026_03_07/20260325_2531482360` lofreq did not finish --> 4M reads (`Processed 4227544 reads` `/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/lofreq/lofreq-62565123.err.log`)
     - `B3_17_2026_03_07/20260325_2531482360` - Processed 13722226 reads - `/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/lofreq/lofreq-62565121.err.log`
     - `H2_10_2026_03_07/20260325_2531482360` - Processed 4227544 reads - `/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/lofreq/lofreq-62565123.err.log`
-    - `H2_10_2026_03_07/20260325_2531482360` - finished? yes snvs.vcf file is in folder
+    - `H2_10_2026_03_07/20260325_2531482360` - finished? snvs.vcf file is in folder
   - added sample `B3_17_2026_03_07` to exclude list:`/cluster/project/pangolin/processes/rsv/pangolin/pangolin_src/config/fgcz.conf`
 
 - stoped the automation of wisedb `kkirschen@wisedb:data/projects$ docker stop pangolin_rsv-pangolin_rsv-1` so it does not constantly try to rerun the incomplete sample
@@ -66,7 +241,7 @@ rsv:
 - failed; why?
   - in /cluster/project/pangolin/processes/rsv/working/samples.recent.tsv the two other batches are still added! why?
   - garbage input dir did not move the samples.BATCH.tsv file form the input directory, and vpipe will run on these files.
-  - added section into: `garbage_vpipe_input.sh`
+  - added section into: `garbage_vpipe_input.sh`:
 ```Bash
 # Move batch metadata files into garbage so addsamples cannot recreate them
 for meta_file in \
@@ -87,7 +262,7 @@ done
 
 influenza:
 - from the batch `o41461_Aviti_260325_AV167` it was still trying to run lofreq for some samples
-  - `B1_05_2026_02_27/20260325_2531482360` - Processed 592136 reads - `/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-62573875.err.log`
+  - `B1_05_2026_02_27/20260325_2531482360` Stale file handle - Processed 592136 reads - `/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/lofreq/lofreq-62573875.err.log`
   - `B1_05_2026_02_27/20260325_2531482360` --> it seems that the autoamtion tries to run the sample 2x in a row and thus fails, this should be sorted out once the batch is deleted and rerun with the combined sequences
 - stopped the automation on wisedb: `kkirschen@wisedb:data/projects$ docker stop pangolin_iva-pangolin_influenza-1`
 - scanceled the running influenza jobs on euler 
@@ -123,12 +298,12 @@ done
 - on wisedb VM restarted the influenza automation and changed `carillon.sh limit=$(date --date='2 weeks ago' '+%Y%m%d') to limit=$(date --date='4 weeks ago' '+%Y%m%d')` such that the batches are merged and processed
 
 
-TODO: rename rsv batch garbage_scripts to not have covid in name!!!
-TODO:
+Done: rename rsv batch garbage_scripts to not have covid in name!!!
+Done:
 - for rsv the batch 20260320_2531490855 was reprocessed becasue in the input garbaging script in only ran the first batch!
   - needs to be deleted and downstream analysis rerun for rsv:
   - run both garbaging scripts with only batch 20260320_2531490855
-  - rerun downstream analysis
+
 
 
 2 April 2026
