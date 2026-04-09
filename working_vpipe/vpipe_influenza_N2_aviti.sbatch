@@ -4,7 +4,7 @@
 #SBATCH --mail-type=END
 #SBATCH --mem-per-cpu=16384
 #SBATCH --oversubscribe
-#SBATCH --time=24:00:00
+#SBATCH --time=72:00:00
 
 set -euo pipefail
 
