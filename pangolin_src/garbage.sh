@@ -68,13 +68,13 @@ mapfile -t samples_from_batch < <(cut -f1 "$sampleset_file")
 # Loop over the array:
 for sample in "${samples_from_batch[@]}"; do
   echo "Processing sample: $sample"
-  #create the directory in the garbage folder
-  mkdir -p "${garbage_dir}/${sample}"
   #if directory exists then:
   if [[ -d "${variant_base_dir}/${sample}/${batch}" ]]; then 
     if [[ -e "${garbage_dir}/${sample}/" ]]; then
       mv "${garbage_dir}/${sample}/" "${garbage_dir}/${sample}.bak.$(date +%Y%m%d%H%M%S)"
     fi
+    #create the directory in the garbage folder
+    mkdir -p "${garbage_dir}/${sample}"
     mv "${variant_base_dir}/${sample}/${batch}" "${garbage_dir}/${sample}/"
 
     
