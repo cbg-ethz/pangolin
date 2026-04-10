@@ -11,8 +11,8 @@ input:
     samples_file: "/cluster/project/pangolin/processes/influenza/IA_MP/working/samples.recent.tsv"
     read_length: 251
     protocols_file: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers.yaml"
-    reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/nextstrain/N1.fasta"
-    primer_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers/NA_primers.bed"
+    reference: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/nextstrain/MP.fasta"
+    primer_bedfile: "/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe/references/primers/IA_MP/primers/MP_primers.bed"
     primers_trim_cutoff: 200
 output:
     datadir: "/cluster/project/pangolin/processes/influenza/IA_MP/vpipe_output"
