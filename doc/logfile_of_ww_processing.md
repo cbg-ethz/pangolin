@@ -34,6 +34,22 @@ TODO:
 - spsp upload add batch to upload log
 - TODO: rename batch garbage_scripts to not have covid in name!!
 
+10 April 2026 
+
+- covid und influenza run done
+- covid postprocessing
+- git commit and push
+- deleted /cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv from `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+- create the restore scrips also for rsv
+- postprocessing of influenza
+
+
+- #done: document the restor script and the actual way to merge and garbage!
+- #TODO: pull all git repos everywhere
+  - done: influenza euler and everything on wisedb except fgcz_sync
+  - still todo: rsv euler
+- #TODO: uncomment the tmp dir for the next processing
+
 9 April 2026
 
 - mail for fgcz: while in theory the reads should be okay, the savest would be to only use the second sequencing results
@@ -43,7 +59,7 @@ TODO:
   - garbage the fused batch 20260320_o41461
   - take out the batches from fuselist and only add the first batch (o41461_Aviti_260320_AV166) to badlist in fgcz.conf (all autoamtions)
   - restart automations and confirm for each that the correct samples are in samples.recent.tsv
-  - #TODO: cleanup the aviti_batches.tsv in covid autoamtion
+  - #done: cleanup the aviti_batches.tsv in covid autoamtion
 
 Covid:
 - stop the docker container
@@ -76,7 +92,7 @@ Error report
 
 - garbaged all samples in IA_N1/vpipe_output from batch 20260325_2531482360 (/cluster/project/pangolin/processes/influenza/pangolin/pangolin_src/20260409_garbage_batches_IA_N1.log)
 - next run should rerun N1
-- #TODO: if influnza does not restrt in time - manually trun off automation (so it does not accidetally retrgger vpipe), and manually run the N1 - vpipe script
+-  if influnza does not restrt in time - manually trun off automation (so it does not accidetally retrgger vpipe), and manually run the N1 - vpipe script
 - `kkirschen@wisedb:nas/kkirschen$ docker stop pangolin_iva-pangolin_influenza-1`
 - copied smaples.recent.tsv form IA_H1 to IA_N1 to manually start vpipe
 - run: `bs-pangolin@eu-login-19:/cluster/project/pangolin/processes/influenza/pangolin/working_vpipe$ sbatch vpipe_influenza_N1_aviti.sbatch` - did not work
@@ -95,7 +111,7 @@ General:
 - fgcz_sync automation: removed the fuse batches and added the failed sequencing batch to the badlist
 - added batch 20260320_2531490855 to lollipop blacklist
 
-- #TODO:create the restore scrips also for rsv
+- #done:create the restore scrips also for rsv
 
 8 April 2026
 
