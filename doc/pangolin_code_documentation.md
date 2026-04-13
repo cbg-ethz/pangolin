@@ -771,6 +771,102 @@ Example:
 `/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_scr/config/fgcz.conf`.
 
 
+### Restore scripts
+
+Two maintenance scripts are available to undo a previous "garbage" operation for a specific influenza batch:
+
+- `pangolin_src/restore_vpipe_input_batch_from_garbage.sh`
+- `pangolin_src/restore_vpipe_output_batch_from_garbage.sh`
+
+They are intended to be used after the batch was previously moved away with:
+
+- `pangolin_src/garbage_vpipe_input.sh --batch <batch>`
+- `pangolin_src/garbage.sh --variant <variant> --batch <batch>`
+
+These restore scripts are currently written as operator scripts rather than generic CLIs. In particular, the batch id, logfile path, and in the output case the list of restored variants, are hardcoded inside the script and must be reviewed before execution.
+
+If both `garbage/<sample>/` and `garbage/<sample>.bak.<timestamp>/` exist, the restore scripts only inspect `garbage/<sample>/`; any batch directories previously moved into the `.bak.*` backup location are ignored and must be restored manually.
+___
+
+**`restore_vpipe_input_batch_from_garbage.sh`**
+
+Purpose:
+Restore one batch from `vpipe_input/garbage` back into the active `vpipe_input` tree.
+
+What it does:
+
+- Loads the cluster paths from `pangolin_src/config/server.conf` and `pangolin_src/config/fgcz.conf`.
+- Uses the hardcoded batch id stored in `readonly batch=...`.
+- Looks for the batch sample list in one of these files:
+  - `${clusterdir_old}/${clusterdir}/vpipe_input/projects.<batch>.tsv`
+  - `${clusterdir_old}/${clusterdir}/vpipe_input/garbage/projects.<batch>.tsv`
+- Reads the first column of that TSV as the list of samples belonging to the batch.
+- For each sample, moves the directory `vpipe_input/garbage/<sample>/<batch>` back to `vpipe_input/<sample>/<batch>`.
+- Removes `vpipe_input/garbage/<sample>` if it becomes empty after the move.
+- Moves these batch-level metadata files from `vpipe_input/garbage/` back to `vpipe_input/` when present:
+  - `batch.<batch>.yaml`
+  - `samples.<batch>.tsv`
+  - `missing.<batch>.txt`
+  - `projects.<batch>.tsv`
+- Appends all output to the hardcoded logfile.
+
+Safety checks:
+
+- Fails if neither active nor garbaged `projects.<batch>.tsv` exists.
+- Skips samples that do not currently have a garbaged batch directory.
+- Aborts if the destination `vpipe_input/<sample>/<batch>` already exists.
+- Aborts if one of the metadata files already exists at the restore destination.
+
+Typical use:
+
+1. Confirm the correct batch id in the script.
+2. Confirm the logfile path is still appropriate.
+3. Run the script on the cluster host.
+4. Verify that the batch directory and metadata files are back under `vpipe_input/`.
+
+___
+
+**`restore_vpipe_output_batch_from_garbage.sh`**
+
+Purpose:
+Restore one batch from the garbaged `vpipe_output` trees back into the active `vpipe_output` directories for all configured influenza subvariants.
+
+What it does:
+
+- Loads the cluster paths from `pangolin_src/config/server.conf` and `pangolin_src/config/fgcz.conf`.
+- Uses the hardcoded batch id stored in `readonly batch=...`.
+- Uses the hardcoded variant list:
+  - `IA_H1`
+  - `IA_H3`
+  - `IA_MP`
+  - `IA_N1`
+  - `IA_N2`
+- Reads the sample list from either:
+  - `${clusterdir_old}/${clusterdir}/vpipe_input/projects.<batch>.tsv`
+  - `${clusterdir_old}/${clusterdir}/vpipe_input/garbage/projects.<batch>.tsv`
+- For each variant and each sample, moves `.../<variant>/vpipe_output/garbage/<sample>/<batch>` back to `.../<variant>/vpipe_output/<sample>/<batch>`.
+- Removes `.../garbage/<sample>` if it becomes empty after the move.
+- Appends all output to the hardcoded logfile.
+
+Safety checks:
+
+- Fails if neither active nor garbaged `projects.<batch>.tsv` exists.
+- Skips sample/variant combinations that do not currently have a garbaged batch directory.
+- Aborts if the destination `vpipe_output/<sample>/<batch>` already exists.
+
+Important limitation:
+
+- This script restores directories only. It does not rebuild or restore the cleaned `samples.tsv` and `samples.recent.tsv` files that were modified by `garbage.sh`.
+- The complementary cleanup and restoration of those TSVs is therefore still a manual operational concern unless another script handles it.
+
+Operational notes:
+
+- The input restore should normally be run before re-enabling processing of a batch, because the output restore relies on the same batch sample list.
+- The scripts use `mv`, so the restore is a real relocation, not a copy.
+- Both scripts log with `exec >> logfile 2>&1`, meaning stdout and stderr are permanently redirected to the configured log file for the full run.
+
+___
+
 ### Patching
 
 [#Patching]
@@ -943,19 +1039,22 @@ Steps:
 
 1. Add the orders to the **fuselist** in:
    `/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync/config/fgcz.conf`
+   and in the relevant virus automations
+   `/cluster/project/pangolin/processes/*/pangolin/pangolin_src/config/fgcz.conf`
 
-2. On the next sync run:
+2. Add the merged `BATCH` to `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+
+3. On the next sync run:
 
    * A new merged batch is created
    * FASTQ files from all listed orders are combined
-
-3. Add the original (partial) batches to the **badlist** in `fgcz.conf`
 
 4. Garbage existing V-pipe results of the partial batches:
 
    ```
    ./batman.sh garbage <BATCHNAME>
    ```
+--> ensure that the project.BATCH.tsv files are no longer in the `vpipe_input` folders
 
 5. Notify SPSP to correct `.cram` uploads (remove partial batches, keep merged batch only)
 
@@ -1960,7 +2059,44 @@ bfabric_project=p23224
 
 exclude list for the backup: `/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst`
 
-### Backup of raw data form FGCZ
+### Rsync Backup Configuration for FGCZ Data (raw data)
+
+#### Overview
+
+The backup of FGCZ raw data is performed via rsync from the backup server (`bs-bewi08`) to the Euler cluster. The process uses SSH tunneling to connect to Euler's rsync daemon, which serves data from predefined modules. The `rsyncd.conf` file configures these modules (e.g., paths, permissions).
+
+#### Key Components
+
+- **Client (Backup Server)**: `automation_backups.sh` (branch: `sarscov2_automation_backups`) initiates the rsync pull using SSH:
+
+```bash
+rsync -e "ssh -i key -l user" host::module /local/path
+```
+
+- **Server (Euler)**: SSH key is restricted by `authorized_keys` to run:
+  `command="/path/to/batman.sh ${SSH_ORIGINAL_COMMAND}"`
+  This executes `batman.sh` with the rsync command as arguments.
+- **batman.sh** (branch: `sarscov2_folder_restructuring`, file: `pangolin_src/batman.sh`): Parses the command and runs the rsync daemon:
+
+```bash
+rsync --server --daemon --config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf" .
+```
+
+- **rsyncd.conf** (branch: `sarscov2_folder_restructuring`, file: `pangolin_src/config/rsyncd.conf`): Defines modules (e.g., `[bfabric-downloads]` with path and settings). Located at `${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf` on Euler.
+
+#### How It Works
+
+1. Backup server SSH-connects to Euler with rsync command.
+2. Euler's `authorized_keys` forces execution of `batman.sh rsync --server --daemon .` (original command).
+3. `batman.sh` launches rsync daemon with custom config, serving data from modules.
+4. Rsync transfers data (full or recent, based on `--recent` flag).
+5. Status logged as `SUCCESS`/`FAILED`.
+
+#### Recent Change
+
+Added `--config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf"` to `batman.sh`'s rsync case to use the git-managed config from the `sarscov2_folder_restructuring` branch instead of default `/etc/rsyncd.conf`. Ensures consistent module definitions across environments. Test by running the backup and checking logs.
+
+### Backup of raw data form FGCZ - dev notes to be reviewved and cleaned up after backup issue resolvement
 
 happen in the fgcz data sync automation
 
@@ -2004,7 +2140,84 @@ There are special firewall rules in place to allow communication between the sys
 **STATUS Files** (on backup machine bewi08)
 `/links/shared/covid19-pangolin/backup/automation_backups/status`
 
-### Backup of proecessed data
+### Systems / scriprs working together
+
+On the wisedbVM
+
+```Bash
+if [[ "${skipsync}" != "fgcz" ]]; then
+    ${remote_batman} sync_fgcz --ftp --recent
+    ${scriptdir}/belfry.sh pull_sync_status
+    if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
+        echo "\e[31;1Pulling sync status files failed\e[0m"
+        echo "The automation will not be aware of any new deliveries"
+    else
+        if [ $backup_fgcz_raw -eq "1" ]; then
+            # Backup of the raw data form fgcz to the backup location
+            # remote_backup is a wrapper for executing a remote command over SSH where the function pull_fgcz_data is defined in a .sh script on the backup machine
+            ${remote_backup} pull_fgcz_data --recent
+            if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then #check the correct files
+                echo "\e[31;1Backup of fgcz raw data failed\e[0m"
+                echo "The system will retry next loop"
+            fi
+        else
+            echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
+        fi
+    fi
+fi
+```
+
+On the backup machine bewi08 where remote_backup is executed:
+```Bash
+pull_fgcz_data)
+        echo "backup of the FGCZ raw data"
+        custom_date=$(date -d "6 months ago" +%Y/%m/%d)
+        err=0
+        if [[ "${2}" = "--recent" ]]; then
+            dirs=$(rsync --timeout=${iotimeout} \
+             --password-file ~/rsync.pass.euler \
+             -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
+             --list-only \
+             belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project}/ |\
+             awk -v d="$custom_date" '$3 > d { print $5 }' | tail -n +2)
+            timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+                rsync --timeout=${iotimeout}  \
+                     --password-file ~/rsync.pass.euler \
+                     -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
+                     -izrlH --fuzzy --inplace \
+                     -p --chmod=Dg+s,ug+rw,o-rwx \
+                     -g --chown=:"${storgrp}" \
+                     --files-from=<( printf "%s\n" "${dirs[@]}" ) \
+                     belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project} \
+                     ${basedir}/${bfabric_downloads}/${bfabric_project} || (( ++err ))
+        else
+            timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
+                rsync --timeout=${iotimeout}  \
+                        --password-file ~/rsync.pass.euler      \
+                        -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}"    \
+                        -izrlH --fuzzy --inplace       \
+                        -p --chmod=Dg+s,ug+rw,o-rwx     \
+                        -g --chown=:"${storgrp}"        \
+                        belfry@euler.ethz.ch::${bfabric_downloads}/ \
+                        ${basedir}/${bfabric_downloads}/ || (( ++err ))
+        fi
+        if (( err )); then
+            echo "FAILED" | tee ${backup_statusdir}/pull_fgcz_status_${now}
+        else
+            echo "SUCCESS" | tee ${backup_statusdir}/pull_fgcz_status_${now}
+        fi
+    ;;
+```
+
+On Euler:
+the rsync daemon is started with an explicit config path:
+`--config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf"`
+
+This means it no longer depends on a `~/rsyncd.conf` file or the default `/etc/rsyncd.conf`.
+
+
+
+### Backup of processed data
 
 do they happen in the sars_cov_2 automation?
 
