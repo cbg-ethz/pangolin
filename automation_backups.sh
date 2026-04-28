@@ -157,14 +157,14 @@ case "$1" in
         if [[ "${2}" = "--recent" ]]; then
             dirs=$(rsync --timeout=${iotimeout} \
              --password-file ~/rsync.pass.euler \
-             -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
+             -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry_raw_data_backup -l ${cluster_user} -oConnectTimeout=${contimeout}" \
              --list-only \
              belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project}/ |\
 	     awk -v d="$custom_date" '$3 > d { print $5 }' | tail -n +2)
             timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync --timeout=${iotimeout}  \
                      --password-file ~/rsync.pass.euler \
-                     -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
+                     -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry_raw_data_backup -l ${cluster_user} -oConnectTimeout=${contimeout}" \
                      -izrlH --fuzzy --inplace \
                      -p --chmod=Dg+s,ug+rw,o-rwx \
                      -g --chown=:"${storgrp}" \
@@ -175,7 +175,7 @@ case "$1" in
             timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
                 rsync --timeout=${iotimeout}  \
                         --password-file ~/rsync.pass.euler      \
-                        -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}"    \
+                        -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry_raw_data_backup -l ${cluster_user} -oConnectTimeout=${contimeout}"    \
                         -izrlH --fuzzy --inplace       \
                         -p --chmod=Dg+s,ug+rw,o-rwx     \
                         -g --chown=:"${storgrp}"        \
