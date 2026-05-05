@@ -28,4 +28,4 @@ secrets:
   id_ed25519_wisedb:
     file: /data/projects/fgcz_data_sync_automation/secrets/id_ed25519_wisedb
   id_ed25519_wisedb_backups:
-    file: /data/projects/wastewater_automation/secrets/id_ed25519_wisedb_backups
+    file: /data/projects/fgcz_data_sync_automation/secrets/id_ed25519_wisedb_backups

@@ -58,6 +58,8 @@ if [[ "${skipsync}" != "fgcz" ]]; then
         echo "The automation will not be aware of any new deliveries"
     else
         if [ $backup_fgcz_raw -eq "1" ]; then
+            # Backup of the raw data form fgcz to the backup location
+            # remote_backup is a wrapper for executing a remote command over SSH where the function pull_fgcz_data is defined in a .sh script on the backup machine
             ${remote_backup} pull_fgcz_data --recent
             if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then #check the correct files
                 echo "\e[31;1Backup of fgcz raw data failed\e[0m"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 usage() { echo "Usage: $0 [-c <configfile>] [ -N <newerthan> ] [ -e <exclude-rx-file> ] [filter [...]]" 1>&2; exit $1; }
 
@@ -64,5 +64,5 @@ else
     #mirror="mirror --ignore-time -v --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"}${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
     mirror="mirror --only-newer --continue --no-perms --parallel=${parallel} --loop ${source} -O ${download} ${newerthan:+ --newer-than="'${newerthan}'"} ${exrxfile:+ --exclude-rx-from="'${exrxfile}'"}"
     echo lftp -c "$settings; ${connect_echo}; cd $expname; $mirror"
-    exec lftp -c "$settings; $connect; cd $expname; $mirror"
+    exec lftp -c "$settings; $connect; cd ${expname}; $mirror"
 fi

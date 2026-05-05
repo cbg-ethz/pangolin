@@ -1,11 +1,12 @@
 #!/bin/bash
 
-scriptdir=/cluster/project/pangolin/fgcz_sync_automation/pangolin/fgcz_sync
+scriptdir=/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync
+. ${scriptdir}/config/fgcz.conf	
 . ${scriptdir}/config/server.conf
 
-status=${clusterdir_old}/status
+status=${clusterdir_old}/processes/status
 
-eval "$(/cluster/project/pangolin/test_automation/miniconda3/bin/conda shell.bash hook)"
+eval "$(/cluster/project/pangolin/resources/miniconda3/bin/conda shell.bash hook)"
 
 #
 # Input validator
@@ -65,6 +66,10 @@ if [[ "$1" == "--limited" ]]; then
 fi
 
 case "$1" in
+        rsync)
+                # rsync daemon : see ${SSH_ORIGINAL_COMMAND}
+                rsync --server --daemon --config "${clusterdir}/config/rsyncd.conf" .
+        ;;
         sync_fgcz)
         # Loop through all the parameters passed after the first one
         if [[ -n $2 ]]; then
