@@ -19,10 +19,6 @@
 - [ ] Consider subsampling raw `.fastq` files as an alternative.
 - [ ] Consider adding a subsampling function directly into the automation.
 
-### Influenza experimental dataset
-
-- [x] Blacklist the influenza experimental dataset once the full sample or batch name, including sequencing date, is known.
-  Not needed, as the batch was not submitted to the regular processing project.
 
 TODO:
 - iva and rsv are structured and folder are cleanedup, however, sarscov should be once more revised to ensure it is setup correctly and uses the correct files and everything is tracked on git
@@ -33,6 +29,191 @@ TODO:
 - repeated fail to copy/link files in the rsv or iva automation
 - spsp upload add batch to upload log
 - TODO: rename batch garbage_scripts to not have covid in name!!
+
+5 Mai 2026
+
+- vpipe errors in covid processing (dehuman rule)
+  - `Stale file handle - samtools sort: truncated file. Aborting` (/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65395531.err.log)
+  - `Can't open /cluster/scratch/bs-pangolin/pangolin/temp/vpipe_output/B3_15_2026_04_19/20260430_2532670531/raw_uploads/dehuman.sam: No such file or directory.` (/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65408000.err.log)
+  - `samtools sort: fail to open "/cluster/scratch/bs-pangolin/pangolin/temp/vpipe_output/B2_05_2026_04_18/20260430_2532670531/raw_uploads/dehuman.tmp.0000.bam": No such file or directory` (/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65407998.err.log)
+  - `samtools sort: error closing output file "vpipe_output/B2_05_2026_04_18/20260430_2532670531/raw_uploads/dehuman.cram"tee: vpipe_output/B2_05_2026_04_18/20260430_2532670531/raw_uploads/dehuman.err.log: Stale file handle` (/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65401594.err.log)
+  - `tee: vpipe_output/B3_15_2026_04_19/20260430_2532670531/raw_uploads/dehuman.err.log: Stale file handle` (/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65394080.err.log)
+-> this points to inconsistent I/O load, filesystem latency
+  - suggested solution:  as vpipe writes a lot of temp files, the temp directory should be on the node scratch. This makes the rule faster and avoids such errors.
+  - add snakemake --rerun-incomplete to vpipe run
+
+Why are the jobs not scheduled and wait in PENDING for hours?
+- Reason=Nodes_required_for_job_are_DOWN,_DRAINED,_REBOOTING_or_reserved_for_jobs_in_higher_priority_partitions
+- the rule requests:mem=64G
+```Bash
+ sacct -j 65429171
+JobID           JobName  Partition    Account  AllocCPUS      State ExitCode
+------------ ---------- ---------- ---------- ---------- ---------- --------
+65429171     COVID-vpi+ normal.24h normal/es+          0    PENDING      0:0
+bs-pangolin@eu-login-09:/cluster/project/pangolin/processes/sars_cov_2/working$ scontrol show job 65429171
+JobId=65429171 JobName=COVID-vpipe-GROUP-dataset=vpipe_output/B3_15_2026_04_19/20260430_2532670531
+   UserId=bs-pangolin(556383) GroupId=bs-pangolin-group(460972) MCS_label=N/A
+   Priority=6304 Nice=0 Account=normal/es_beere QOS=es_beere/normal/24
+   JobState=PENDING Reason=Nodes_required_for_job_are_DOWN,_DRAINED,_REBOOTING_or_reserved_for_jobs_in_higher_priority_partitions Dependency=(null)
+   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:00 TimeLimit=09:00:00 TimeMin=N/A
+   SubmitTime=2026-05-05T10:45:34 EligibleTime=2026-05-05T10:45:34
+   AccrueTime=2026-05-05T10:45:34
+   StartTime=Unknown EndTime=Unknown Deadline=N/A
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-05-05T11:41:45 Scheduler=Main
+   Partition=normal.24h AllocNode:Sid=eu-a2p-476:553040
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=
+   NumNodes=1-1 NumCPUs=4 NumTasks=1 CPUs/Task=4 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=4,mem=64G,node=1,billing=277872
+   AllocTRES=(null)
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:1 CoreSpec=*
+   MinCPUsNode=4 MinMemoryCPU=16G MinTmpDiskNode=1250M
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null)
+   Command=/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/.snakemake/tmp.1dvmnlrd/snakejob.dehuman.afd8038e-868a-58c0-9bba-414ee9308e0d.sh
+   WorkDir=/cluster/project/pangolin/processes/sars_cov_2/pangolin/working
+   StdErr=/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65429171.err.log
+   StdIn=/dev/null
+   StdOut=/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65429171.out.log
+   TresPerTask=cpu=4
+
+
+bs-pangolin@eu-login-09:/cluster/project/pangolin/processes/sars_cov_2/working$ sinfo -p normal.24h -o "%20P %8a %10l %6D %10t %N"
+#everything is up
+bs-pangolin@eu-login-09:/cluster/project/pangolin/processes/sars_cov_2/working$ squeue -j 65429171 --start
+             JOBID PARTITION     NAME     USER ST          START_TIME  NODES SCHEDNODES           NODELIST(REASON)
+          65429171 normal.24 COVID-vp bs-pango PD                 N/A      1 (null)               (Priority)
+
+
+```
+
+Problem:
+- the main sbatch job that starts snakemake has run time of 3h, this is usually enought as vpipe is immediately launched 
+- this week however the vpipe jobs had very long waiting time, causing the main job to be out of time before vpipe ended
+- resulting in a new vpipe main job was started and the analysis step was retriggert altough the first one is still running
+- this leads to overwriting in the temp directory and probably causes the errors described above
+
+Solution:
+- idealy snakemake sould not be launched from a sbatch job (as described in the snakemake docs) as this can lead to uncontroled behavior
+- will be written to the dev board https://github.com/cbg-ethz/Development_privat/issues/118
+- Temp fix: increased main job time to 5h
+
+
+4 Mai
+
+- wisedbvm was restarted and all docker container stopped on the 30th April 2026
+- on the 4th may the fgcz sync and the sars cov autoamtion was started again
+- influenza and rsv was not started as the summer schedule begins now (covid only)
+
+regular processing:
+
+- slurm jobs stayed in pending status for hours - manually canceled the jobs and restart the automation ()
+
+28 April 2026:
+
+Backup issue:
+
+- The backup of the raw data is currently configured to be done in the fgcz_sync autoamtion (all other data backups are done in the sars cov automation)
+- problem statement: it uses the same keys as the covid automation and thus accesses all the config files from there
+- 2 solution approaches:
+  - get a separate ssh keys for the raw data backups and configure this in the current setup --> choosen approach
+  - move the raw data backup to the covid automation and keep useing the covid keys
+
+Logs of the day:
+
+- added the rsync deamon to batman.sh in fgcz sync automation
+- created new set of keys on bewi08: `id_ed25519_belfry_raw_data_backup`
+- added key with correct path (fgcz_sync automation) to authorized_keys on euler
+- checked path in rsyncd.conf file in sars cov and fgcz_sync authomation
+
+next:
+
+- stop the fgcz sync automation - done
+- add the new key to the backup function on bewi08 (pull_fgcz_data function) - done
+- git commit and pull all changes (euler, bewi08, wisedb vm)
+- on euler mv the current rsyncd.conf to backup `bs-pangolin@eu-login-20:~$ mv rsyncd.conf rsyncd.conf.backup_28042026` (currently the rsyncd.conf file in the home directory of euler is used that was linked to the file of the fgcz_sync autoamtion) ((to test the new setup, the file needs to be removed / moved))
+- restart the automation
+
+Problem statement:
+
+- the fgcz_sync automation folder on wisedb is owned by old user
+- this prevents from git pull
+
+```Bash
+kkirschen@wisedb:data/projects$ find fgcz_data_sync_automation -user mcarrara | wc -l
+654
+kkirschen@wisedb:data/projects$ find fgcz_data_sync_automation | wc -l
+654 # all files in the directory fgcz_data_sync_automation are owned by mcarrara
+kkirschen@wisedb:data/projects$ sudo chown -R kkirschen fgcz_data_sync_automation
+```
+
+- now the whole container needs to be rebuild as the old uid is in the build container and the files can not be read
+- after the rebuild, docker log error:
+
+```Bash
+automation_backups.sh pull_fgcz_data
+backup of the FGCZ raw data
+rsync error: syntax or usage error (code 1) at clientserver.c(1296) [Receiver=3.2.7]
+rsync: did not see server greeting
+rsync error: error starting client-server protocol (code 5) at main.c(1839) [Receiver=3.2.5]
+rsync error: syntax or usage error (code 1) at clientserver.c(1296) [Receiver=3.2.7]
+rsync: did not see server greeting
+rsync error: error starting client-server protocol (code 5) at main.c(1839) [Receiver=3.2.5]
+FAILED
+```
+
+- revert to home directory rsync.conf file -> did not solve
+- revert to old key on bewi08 --> the old key is working --> something must be wrong with the new keys somehow
+  - now move again the rsync.conf to see if this also causes a problem -> works --> so there is only a problem with the new key?
+
+- 29 April 2026 - update: the new key works if it accesses sars cov automation --> no key problem but a batman.sh problem!
+#TODO: cleanup old fgcz docker on wisedb
+
+
+21 April 2026:
+
+Conclusion: the sync issue "fix" with the temp dir did not fix the sync issue
+
+  
+- influenza fail: "[mem_sam_pe] paired reads have different names:"
+- Stoped influenza automation on wisedb vm `kkirschen@wisedb:data/projects$ docker stop pangolin_iva-pangolin_influenza-1`
+  - H1: sample 
+    - E2_05_2026_04_02 (`/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/GROUP/GROUP-64283027.err.log`)
+    - D2_16_2026_03_29 (`/cluster/project/pangolin/processes/influenza/IA_H1/working/cluster_logs/GROUP/GROUP-64283082.err.log`)
+    - rm -r the two samples from `/cluster/project/pangolin/processes/influenza/IA_H1/vpipe_output`
+  - H3:
+    - E2_05_2026_04_02 (`/cluster/project/pangolin/processes/influenza/IA_H3/working/cluster_logs/GROUP/GROUP-64283026.err.log`)
+    - `/cluster/project/pangolin/processes/influenza/IA_H3/vpipe_output$ rm -r E2_05_2026_04_02`
+  - N2:
+    - D2_16_2026_03_29 (`/cluster/project/pangolin/processes/influenza/IA_N2/working/cluster_logs/GROUP/GROUP-64283172.err.log`)
+    - `/cluster/project/pangolin/processes/influenza/IA_N2/vpipe_output$ rm -r D2_16_2026_03_29`
+- Start Influenza automation `kkirschen@wisedb:data/projects$ docker start pangolin_iva-pangolin_influenza-1`
+
+RSV:
+- Both A and B fail
+- kkirschen@wisedb:data/projects$ docker stop pangolin_rsv-pangolin_rsv-1
+- canceled all the related running jobs on euler
+- RSVA:
+  - E1_17_2026_03_25 (`/cluster/project/pangolin/processes/rsv/RSVA/working/cluster_logs/GROUP/GROUP-64285308.err.log`)
+  - `/cluster/project/pangolin/processes/rsv/RSVA/vpipe_output$ rm -r E1_17_2026_03_25`
+- RSVB:
+  - E1_17_2026_03_25 (`/cluster/project/pangolin/processes/rsv/RSVB/working/cluster_logs/GROUP/GROUP-64285304.err.log`)
+  - `/cluster/project/pangolin/processes/rsv/RSVB/vpipe_output$ rm -r E1_17_2026_03_25`
+- Start RSV automation
+
+
+
+- covid analysis done
+- rsv done
+- influenza done
+
+11 April 2025:
+
+- git pull all rsv and influnza on euler
+- uncommented the tmp directory in the config file
+- uploaded covid
+- #TODO: genspectrum updates: commit and push changes once tested and approved
 
 10 April 2026 
 
@@ -45,10 +226,10 @@ TODO:
 
 
 - #done: document the restor script and the actual way to merge and garbage!
-- #TODO: pull all git repos everywhere
+- #doen: pull all git repos everywhere
   - done: influenza euler and everything on wisedb except fgcz_sync
   - still todo: rsv euler
-- #TODO: uncomment the tmp dir for the next processing
+- #done: uncomment the tmp dir for the next processing
 
 9 April 2026
 
