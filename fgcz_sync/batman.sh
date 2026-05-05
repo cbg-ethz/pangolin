@@ -68,7 +68,7 @@ fi
 case "$1" in
         rsync)
                 # rsync daemon : see ${SSH_ORIGINAL_COMMAND}
-                rsync --server --daemon --config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf" .
+                rsync --server --daemon --config "${clusterdir}/config/rsyncd.conf" .
         ;;
         sync_fgcz)
         # Loop through all the parameters passed after the first one
