@@ -1416,18 +1416,18 @@ How to stop and remove the docker
   - on date 2025-04-14, the local deploy follows the commit 292bbba2c8644134f97f3e05614ead75a72e9d99
   - create a directory (or add it to the existing: `/data/projects/rsv_automation_restructuring/local_deploy`)
   - mkdir commit_"commit the container was build on"
-  - copy the .tar file there and the adapted docker-compose.yaml wiht the path pointing to the vm folders and the substitution of buil to image (see above)
+  - copy the .tar file
   
 - on wisedb, run:
-- this extractes the image
+- this extractes the image:
 
 ```Bash
 ##this extractes the image
 docker load -i pangolin-pangolin.tar
 ```
 
-- sometimes tagging again is necessary: `docker tag f44abc678111 pangolin_rsv:latest`
-- copy the `docker-compose.yaml` with the VM path and remove the `build:`section and add `image: pangolin_rsv:latest`
+- sometimes tagging again is necessary: `docker tag f44abc678111 IMAGE:latest`
+- copy the `docker-compose.yaml` and remove the `build:`section and add `image: IMAGE:latest`
 
 ```bash
 ##start the image with 
@@ -2232,6 +2232,145 @@ FlowCellArrayPosition_TreatmentPlant_SamplingDate
 
 **Batch:**
 SequencingRunDate_FlowCellID (named in batman.sh sortsamples function)
+
+### Workflow visulaizations
+
+#### Carillon.sh medium-level
+```mermaid
+flowchart TD
+    A[Start automation loop] --> B[Sync sample/batch metadata]
+    B --> C{V-Pipe run active?}
+    C -->|Yes| D[Monitor run and trigger backup on finished stages]
+    D --> E{Run fully finished?}
+    E -->|Yes| F[Queue latest batch for upload]
+    E -->|No| G[Continue]
+    C -->|No| H[Scan sample sets for new or incomplete batches]
+    H --> I{New work found and submission allowed?}
+    I -->|Yes| J[Prepare sample lists and submit V-Pipe]
+    I -->|No| G
+    F --> K[Run uploader workflow if enabled]
+    J --> K
+    G --> K
+    K --> L[Run amplicon coverage if enabled]
+    L --> M[Run archive/checksum workflow if enabled]
+    M --> N[End]
+
+```
+
+#### Carillon.sh low-level
+
+```mermaid
+flowchart TD
+    A[Start automation loop] --> B[belfry.sh <br/>sync_sampleset_batch_files]
+    B --> C[remote_batman <br/>sortsamples --recent]
+
+    C --> D{Is a V-Pipe run <br/>currently active?}
+
+    D -->|Yes| E[Check job states on cluster]
+    E --> F{Did a job/stage finish?}
+    F -->|Yes| G[Trigger V-Pipe result backup]
+    G --> H{Did the overall V-Pipe <br/>run finish?}
+    H -->|Yes| I[Queue latest completed <br/>batch for upload]
+    H -->|No| J[Continue to downstream <br/>steps]
+    F -->|No| J
+
+    D -->|No| K[Scan sample sets for new <br/>or incomplete batches]
+    K --> L{New work found?}
+    L -->|No| J
+    L -->|Yes| M{Submission allowed?}
+    M -->|No| J
+    M -->|Yes| N[Prepare sample lists and <br/>run addsamples --recent]
+    N --> O[Submit new V-Pipe run]
+
+    I --> P{SPSP Uploader enabled?}
+    O --> P
+    J --> P
+
+    P -->|Yes| Q[Check daily upload quota]
+    Q --> R{Quota available?}
+    R -->|Yes| S[Run upload]
+    S --> T[Optional cleanup of <br/>SendCrypt temp files]
+    T --> U[Backup uploader results]
+    R -->|No| U
+    P -->|No| V{Amplicon coverage <br/>enabled?}
+    U --> V
+
+    V -->|Yes| W{New completed V-Pipe <br/>batch available?}
+    W -->|Yes| X[Run amplicon_coverage <br/>for latest batch]
+    X --> Y[Backup amplicon <br/>coverage results]
+    W -->|No| Z{Archive enabled?}
+    V -->|No| Z
+    Y --> Z
+
+    Z -->|Yes| AA[List files to archive]
+    AA --> AB[Archive files]
+    AB --> AC[Generate checksum tables]
+    Z -->|No| AD[Finish]
+    AC --> AD
+
+```
+
+####  pangolin_src/batman.sh sortsamples
+
+```mermaid
+flowchart TD
+    A["Start<br/>sortsamples"] --> B["Parse options<br/>--summary / <br/>--force / <br/>--recent / <br/>--year"]
+    B --> C{"FGCZ lab<br/>enabled?"}
+    C -->|No| Z1["Skip FGCZ branch"]
+    C -->|Yes| D{"Google Sheet<br/>patches enabled?"}
+
+    D -->|Yes| E["Run<br/>google_sheet_patches.py"]
+    D -->|No| F["Run sorting pipeline"]
+    E --> F
+
+    F --> G["Run <br/>sort_samples_bfabric_tsv_aviti.py <br/>with config, protocols, <br/>libkit override,<br/>and recent/force options"]
+    G --> H{"Sorting script<br/>succeeded?"}
+    H -->|No| Y["Mark sortsamples<br/>as failed"]
+    H -->|Yes| I["Run<br/>movedatafiles.sh"]
+    I --> J{"Move/copy step<br/>succeeded?"}
+    J -->|No| Y
+    J -->|Yes| X["Mark sortsamples<br/>as successful"]
+
+    Z1 --> X
+
+```
+#####  pangolin_src/sort_samples_bfabric_tsv_aviti.py
+
+```mermaid
+flowchart TD
+    A["Start<br/>sort_samples_bfabric_<br/>tsv_aviti.py"] --> B["Load config,<br/>protocol mapping,<br/>and libkit overrides"]
+    B --> C["Scan download area for<br/>FastQC folders"]
+    C --> D["Scan download area for<br/>sample delivery folders"]
+
+    D --> E["For each delivery:<br/>find stats JSON and <br/>dataset.tsv"]
+    E --> F{"Can run metadata be<br/>parsed correctly?"}
+    F -->|No| G["Skip delivery"]
+    F -->|Yes| H["Extract order, flowcell,<br/>run folder, run date,<br/>read structure, <br/>and samples"]
+
+    H --> I{"Pass recent/date<br/>filter?"}
+    I -->|No| G
+    I -->|Yes| J["Detect zero-yield <br/>/ bad samples<br/>and require enough <br/>valid samples"]
+
+    J --> K{"Enough valid<br/>samples?"}
+    K -->|No| G
+    K -->|Yes| L["Read dataset.tsv for<br/>plates, order, <br/>and library kit info"]
+
+    L --> M["Build batch-level metadata"]
+    M --> N{"Replicate / fused<br/>order?"}
+    N -->|Yes| O["Merge or append into<br/>existing batch logic"]
+    N -->|No| P["Keep as standalone batch"]
+    O --> Q["Match FastQC and finalize<br/>batch record"]
+    P --> Q
+    G --> R{"More deliveries?"}
+    Q --> R
+    R -->|Yes| E
+    R -->|No| S["Create or update <br/>batch outputs"]
+
+    S --> T["Write samples.<batch>.tsv,<br/>projects.<batch>.tsv,<br/>batch.<batch>.yaml,<br/>and missing.<batch>.txt"]
+    T --> U["Generate movedatafiles.sh<br/>with mkdir/copy commands<br/>for FASTQ and FastQC files"]
+    U --> X["Finish"]
+
+```
 
 ### Old working folders
 
