@@ -30,6 +30,31 @@ TODO:
 - spsp upload add batch to upload log
 - TODO: rename batch garbage_scripts to not have covid in name!!
 
+6 Mai 2026
+
+- regular processing sars cov - still one sample is failing: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65515832.err.log
+
+```Bash
+[main] Real time: 8325.299 sec; CPU: 32545.488 sec
+tee: vpipe_output/B3_15_2026_04_19/20260430_2532670531/raw_uploads/dehuman.err.log: Stale file handle
+[E::sam_parse1] SEQ and QUAL are of different length
+samtools sort: truncated file. Aborting
+```
+
+- try to fix by deleting the sample from the vpipe_output directory and rerun the analysis
+
+
+SPSP upload issue notes:
+
+- in the sars cov automation
+- belfry.sh upload)
+- the 3rd rsync was commendted out because the rsync deamon module poinnt to the wrong path 
+  - needs to be fixed in the future!
+  - #TODO
+- pangolin/uploader/rsv_exceptions
+
+  - changed the dictionary to have commas
+
 5 Mai 2026
 
 - vpipe errors in covid processing (dehuman rule)
