@@ -92,9 +92,9 @@ upload:
     orig_cram: True
     
 dehuman:
-    mem: 65536
-    threads: 16
-    time: 540
+    mem: 34000
+    threads: 4
+    time: 280
     keep_host: True
     catchup: False
     
