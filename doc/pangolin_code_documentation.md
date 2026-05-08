@@ -651,7 +651,7 @@ Sample-level conditions:
 
 If those conditions are met, the script prints mkdir and cp commands for that sample into movedatafiles.sh.
 
-**Observation: samples are only copied tinot vpipe:input directory once the fastQC files are there. Currently it is not clear for me where this condition is placed as in the script sort_samples_bfabric_tsv_aviti.py the flag --no-fastqc is set which should cancel all dependency on fastqc files. (needs to be checked further!)**
+**Observation: samples are only copied into vpipe:input directory once the fastQC files are there. Currently it is not clear for me where this condition is placed as in the script sort_samples_bfabric_tsv_aviti.py the flag --no-fastqc is set which should cancel all dependency on fastqc files. (needs to be checked further!)**
 ___
 
 ### **batman .sh `addsamples`**
@@ -2039,185 +2039,227 @@ cd /cluster/project/pangolin/cowwid/covvfit/analysis/covvfit_analysis/scripts
 ./run_covvfit.sh
 ```
 ___
-
 ## Backups [WIP]
 
-### bewi08 VM
+### 1. Overview
 
-We make regular backup of the analysed data. This is done by a VM called `bewi08`.
-Inside this we have a script that runs these backup: `/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh`.
+This document describes the backup setup for FGCZ raw data.
 
-The folder `/links/shared/covid19-pangolin` is mount to thin VM. This folder is stored inside a physical storage in D-BSSE.
-If there is some storage maintenance done in the storage at the D-BSSE the link to this folder can break. Then, the folder has to be remounted to the VM with the following commands:
+**FGCZ raw data backup**
 
-1. to unmount the backup folder on bewi08: `sudo umount /links/shared/covid19-pangolin`
-2. to mount: `sudo mount /links/shared/covid19-pangolin`
+   * FGCZ raw data is backed up from Euler to the backup server `bs-bewi08` / `bewi08`.
+   * The main backup script is located here:
+     `/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh`
+   * The process uses rsync over SSH.
+   * It is initiated by the `fgcz_sync` automation.
+   * The rsync daemon on Euler serves data from predefined modules configured in `rsyncd.conf`.
 
+
+### 2. Infrastructure
+
+**Machines involved**
+
+* **wisedbVM**
+
+  * Starts the FGCZ sync automation.
+  * Triggers the backup of FGCZ raw data through `remote_backup`.
+
+* **bewi08 / bs-bewi08**
+
+  * Backup VM / backup server.
+  * Runs `automation_backups.sh`.
+  * Pulls data from Euler using rsync.
+  * Stores backup status files.
+
+* **Euler**
+
+  * ETH cluster where the FGCZ data is served from.
+  * Uses a restricted SSH key setup to force execution of `batman.sh`.
+  * Starts an rsync daemon using a custom `rsyncd.conf`.
+
+**Storage**
+
+The folder `/links/shared/covid19-pangolin` is mounted on the VM `bewi08`.
+This folder is stored on a physical storage system in D-BSSE.
+
+If storage maintenance is performed at D-BSSE, the link to this folder can break. In that case, the folder has to be remounted on the VM.
+
+To unmount the backup folder on `bewi08`:
+
+```bash
+sudo umount /links/shared/covid19-pangolin
+```
+
+To mount it again:
+
+```bash
+sudo mount /links/shared/covid19-pangolin
+```
+
+**Network and ports**
+
+* `wisedbVM` → `bs-bewi08`: port 22
+* `bs-bewi08` → `euler.ethz.ch`: port 873
+
+There are special firewall rules in place to allow communication between the systems. In case of problems, contact the BSSE IT Helpdesk.
+
+### 3. Backup workflows
+
+**FGCZ raw data backup**
+
+Regular backups of raw data are performed by the VM `bewi08`.
+
+The script responsible for these backups is:
+
+```text
+/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh
+```
+
+Relevant variables:
+
+```bash
 basedir=/links/shared/covid19-pangolin/backup
 bfabric_downloads=bfabric-downloads
 bfabric_project=p23224
+```
 
-exclude list for the backup: `/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst`
+Exclude list for the backup:
 
-### Rsync Backup Configuration for FGCZ Data (raw data)
+```text
+/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst
+```
 
-#### Overview
+The backup of FGCZ raw data is performed via rsync from the backup server `bs-bewi08` to the Euler cluster.
 
-The backup of FGCZ raw data is performed via rsync from the backup server (`bs-bewi08`) to the Euler cluster. The process uses SSH tunneling to connect to Euler's rsync daemon, which serves data from predefined modules. The `rsyncd.conf` file configures these modules (e.g., paths, permissions).
+The process uses SSH tunneling to connect to Euler's rsync daemon. The rsync daemon serves data from predefined modules. These modules, including their paths and permissions, are configured in `rsyncd.conf`.
 
-#### Key Components
+This process is initiated by the `fgcz_sync` automation.
 
-- **Client (Backup Server)**: `automation_backups.sh` (branch: `sarscov2_automation_backups`) initiates the rsync pull using SSH:
+Raw data backup directory on `bewi08`:
+
+```text
+/links/shared/covid19-pangolin/backup/bfabric-downloads/p23224
+```
+
+### 4. Configuration and paths
+
+**Main scripts**
+
+* `bewi08`:
+
+```text
+/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh
+```
+
+* Euler:
+
+```text
+/cluster/project/pangolin/processes/fgcz_sync/pangolin/fgcz_sync/fgcz_sync.sh
+```
+
+* `batman.sh`:
+
+  * Branch: `fgcz_sync_automation_folder_restructuring`
+  * File: `pangolin_src/batman.sh`
+
+* `rsyncd.conf`:
+
+  * Branch: `fgcz_sync_automation_folder_restructuring`
+  * File: `pangolin_src/config/rsyncd.conf`
+  * Located on Euler
+  * Defines modules such as `[bfabric-downloads]`, including paths and settings
+
+**Exclude lists**
+
+Exclude list / blacklist for backup on `wisedbVM`:
+
+```text
+/data/projects/fgcz_data_sync_automation/workdir/status/remote_sync/fgcz.exclude.lst
+```
+
+Exclude list for the backup:
+
+```text
+/cluster/project/pangolin/processes/status/sync/fgcz.exclude.lst
+```
+
+**Status files**
+
+Status files on the backup machine `bewi08`:
+
+```text
+/links/shared/covid19-pangolin/backup/automation_backups/status
+```
+
+Backup status is logged as either:
+
+```text
+SUCCESS
+FAILED
+```
+
+### 5. How the FGCZ rsync backup works
+
+**High-level flow**
+
+```text
+wisedbVM
+   |
+   | triggers fgcz_sync / remote_backup
+   v
+bs-bewi08 / bewi08
+   |
+   | rsync over SSH
+   v
+Euler
+   |
+   | forced command via authorized_keys
+   v
+batman.sh starts rsync daemon using rsyncd.conf
+   |
+   v
+FGCZ raw data modules
+```
+
+**Step-by-step process**
+
+1. The `wisedbVM` starts the FGCZ sync automation.
+
+2. The automation calls `remote_backup pull_fgcz_data --recent`.
+
+3. On `bewi08`, the `pull_fgcz_data` function runs the rsync pull.
+
+4. `bewi08` connects to Euler via SSH.
+
+5. On Euler, the SSH key is restricted by `authorized_keys` to run:
+
+   ```bash
+   command="/path/to/batman.sh ${SSH_ORIGINAL_COMMAND}"
+   ```
+
+6. This executes `batman.sh` with the rsync command as arguments.
+
+7. `batman.sh` parses the command and starts the rsync daemon:
+
+   ```bash
+   rsync --server --daemon --config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf" .
+   ```
+
+8. The rsync daemon serves data from the modules defined in `rsyncd.conf`.
+
+9. Rsync transfers either the full dataset or only recent data, depending on the `--recent` flag.
+
+10. The backup status is written as `SUCCESS` or `FAILED`.
+
+**Example rsync pull command**
+
+The backup VM `bewi08` initiates the rsync pull using SSH:
 
 ```bash
 rsync -e "ssh -i key -l user" host::module /local/path
 ```
 
-- **Server (Euler)**: SSH key is restricted by `authorized_keys` to run:
-  `command="/path/to/batman.sh ${SSH_ORIGINAL_COMMAND}"`
-  This executes `batman.sh` with the rsync command as arguments.
-- **batman.sh** (branch: `sarscov2_folder_restructuring`, file: `pangolin_src/batman.sh`): Parses the command and runs the rsync daemon:
-
-```bash
-rsync --server --daemon --config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf" .
-```
-
-- **rsyncd.conf** (branch: `sarscov2_folder_restructuring`, file: `pangolin_src/config/rsyncd.conf`): Defines modules (e.g., `[bfabric-downloads]` with path and settings). Located at `${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf` on Euler.
-
-#### How It Works
-
-1. Backup server SSH-connects to Euler with rsync command.
-2. Euler's `authorized_keys` forces execution of `batman.sh rsync --server --daemon .` (original command).
-3. `batman.sh` launches rsync daemon with custom config, serving data from modules.
-4. Rsync transfers data (full or recent, based on `--recent` flag).
-5. Status logged as `SUCCESS`/`FAILED`.
-
-#### Recent Change
-
-Added `--config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf"` to `batman.sh`'s rsync case to use the git-managed config from the `sarscov2_folder_restructuring` branch instead of default `/etc/rsyncd.conf`. Ensures consistent module definitions across environments. Test by running the backup and checking logs.
-
-### Backup of raw data form FGCZ - dev notes to be reviewved and cleaned up after backup issue resolvement
-
-happen in the fgcz data sync automation
-
-24 February 2026 preliminary notes:
-
-- backup to bewi08 via **rsync deamon**
-- runns is the fgcz sync automation (for raw data = raw downloads form fgcz data)
-- in fgcz_sync.sh backup is triggered with the function: `${remote_backup} pull_fgcz_data --recent`
-- `remote_backup`is defined in the .ssh/authorized_keys on the bewi08 vm (it is a bash script on the bewi08 VM `/links/shared/covid19-pangolin/backup/automation_backups/pangolin/automation_backups.sh`)
-- in this script the function `pull_fgcz_data` is defined
-- it rsyncs the data in folder: `belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project}`
-  - this is a rsync **daemon module** that is defined on euler / in the pangolin git repo in `pangolin_src/config/rsyncd.config`
-  - in this file the path what data it should sync is defined and needs to be up to date
-
-```Bash
-Bfabric storage (real filesystem path, hidden)
-        ↓
-rsync daemon exports it as module "bfabric-downloads"
-        ↓
-Your backup VM connects via rsync protocol
-        ↓
-Your script copies module/p23224
-        ↓
-Stored locally in ${basedir}/${bfabric_downloads}/${bfabric_project}
-```
-
-Backup directory on Bewi08:
-
-- raw data: `/links/shared/covid19-pangolin/backup/bfabric-downloads/p23224`
-
-Ports:
-
-- wisedbVM → bs-bewi08 (port 22)
-- bs-bewi08 → euler.ethz.ch (port 873)
-
-There are special firewall rules in place to allow communication between the systems. In case of problem, contance BSSE IT Helpdesk.
-
-**Exclude list / blacklist for backup:** (on wisedbVM)
-`/data/projects/fgcz_data_sync_automation/workdir/status/remote_sync/fgcz.exclude.lst`
-
-**STATUS Files** (on backup machine bewi08)
-`/links/shared/covid19-pangolin/backup/automation_backups/status`
-
-### Systems / scriprs working together
-
-On the wisedbVM
-
-```Bash
-if [[ "${skipsync}" != "fgcz" ]]; then
-    ${remote_batman} sync_fgcz --ftp --recent
-    ${scriptdir}/belfry.sh pull_sync_status
-    if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then
-        echo "\e[31;1Pulling sync status files failed\e[0m"
-        echo "The automation will not be aware of any new deliveries"
-    else
-        if [ $backup_fgcz_raw -eq "1" ]; then
-            # Backup of the raw data form fgcz to the backup location
-            # remote_backup is a wrapper for executing a remote command over SSH where the function pull_fgcz_data is defined in a .sh script on the backup machine
-            ${remote_backup} pull_fgcz_data --recent
-            if [[ ( -e ${statusdir}/pull_sync_status_fail ) && ( ${statusdir}/pull_sync_status_fail -nt ${statusdir}/pull_sync_status_success ) ]]; then #check the correct files
-                echo "\e[31;1Backup of fgcz raw data failed\e[0m"
-                echo "The system will retry next loop"
-            fi
-        else
-            echo "\e[33;1mBackup of FGCZ raw data DISABLED\e[0m"
-        fi
-    fi
-fi
-```
-
-On the backup machine bewi08 where remote_backup is executed:
-```Bash
-pull_fgcz_data)
-        echo "backup of the FGCZ raw data"
-        custom_date=$(date -d "6 months ago" +%Y/%m/%d)
-        err=0
-        if [[ "${2}" = "--recent" ]]; then
-            dirs=$(rsync --timeout=${iotimeout} \
-             --password-file ~/rsync.pass.euler \
-             -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
-             --list-only \
-             belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project}/ |\
-             awk -v d="$custom_date" '$3 > d { print $5 }' | tail -n +2)
-            timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-                rsync --timeout=${iotimeout}  \
-                     --password-file ~/rsync.pass.euler \
-                     -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}" \
-                     -izrlH --fuzzy --inplace \
-                     -p --chmod=Dg+s,ug+rw,o-rwx \
-                     -g --chown=:"${storgrp}" \
-                     --files-from=<( printf "%s\n" "${dirs[@]}" ) \
-                     belfry@euler.ethz.ch::${bfabric_downloads}/${bfabric_project} \
-                     ${basedir}/${bfabric_downloads}/${bfabric_project} || (( ++err ))
-        else
-            timeout ${timeoutforeground} --signal=INT --kill-after=5 $((rsynctimeout+contimeout+5)) \
-                rsync --timeout=${iotimeout}  \
-                        --password-file ~/rsync.pass.euler      \
-                        -e "ssh -i ${HOME}/.ssh/id_ed25519_belfry -l ${cluster_user} -oConnectTimeout=${contimeout}"    \
-                        -izrlH --fuzzy --inplace       \
-                        -p --chmod=Dg+s,ug+rw,o-rwx     \
-                        -g --chown=:"${storgrp}"        \
-                        belfry@euler.ethz.ch::${bfabric_downloads}/ \
-                        ${basedir}/${bfabric_downloads}/ || (( ++err ))
-        fi
-        if (( err )); then
-            echo "FAILED" | tee ${backup_statusdir}/pull_fgcz_status_${now}
-        else
-            echo "SUCCESS" | tee ${backup_statusdir}/pull_fgcz_status_${now}
-        fi
-    ;;
-```
-
-On Euler:
-the rsync daemon is started with an explicit config path:
-`--config "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/rsyncd.conf"`
-
-This means it no longer depends on a `~/rsyncd.conf` file or the default `/etc/rsyncd.conf`.
-
-
-
-### Backup of processed data
+### Backup of processed data [TODO]
 
 do they happen in the sars_cov_2 automation?
 
