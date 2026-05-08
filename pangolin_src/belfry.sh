@@ -391,14 +391,14 @@ case "$1" in
             -irltHLK --fuzzy --fuzzy --inplace       \
             belfry@euler.ethz.ch::lollipop/variants/timeline.tsv \
             ${local_dataset}/${working}
-        rsync \
-            --password-file ${rsync_pass}	\
-            -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
-            -irltHLK --fuzzy --fuzzy --inplace       \
-            belfry@euler.ethz.ch::${working}/qa.csv \
-            ${local_dataset}/${working}
-            archive_now="${uploader_archive}/$(date +"%Y-%m-%d"-%H-%M-%S)"
-            mkdir -p $archive_now
+        #rsync \
+        #    --password-file ${rsync_pass}	\
+        #    -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user}  -oConnectTimeout=${contimeout}"   \
+        #    -irltHLK --fuzzy --fuzzy --inplace       \
+        #    belfry@euler.ethz.ch::${working}/qa.csv \
+        #    ${local_dataset}/${working}
+        archive_now="${uploader_archive}/$(date +"%Y-%m-%d"-%H-%M-%S)"
+        mkdir -p $archive_now
         ${uploader_code}/upload.sh ${archive_now}
         metadata_len=$(wc -l ${uploader_target}/meta_data.tsv | awk '{print $1}')
         if [ "${metadata_len}" == "1" ]; then
