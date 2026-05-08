@@ -30,6 +30,12 @@ TODO:
 - spsp upload add batch to upload log
 - TODO: rename batch garbage_scripts to not have covid in name!!
 
+
+
+7 Mai 2026:
+
+- sars cov 2 analysis completed - in review process with bewis
+
 6 Mai 2026
 
 - regular processing sars cov - still one sample is failing: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/cluster_logs/GROUP/GROUP-65515832.err.log
