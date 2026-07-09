@@ -62,6 +62,30 @@ def load_proto(protoyaml):
 			pmap[a] = k
 	return pmap
 
+# Validate the expected fileds are in the file
+def validate_aviti_stats_json(path):
+    with open(path, "rt", encoding="utf-8") as f:
+        stats = json.load(f)
+
+    required = {"FlowCellID", "RunID", "Lanes", "SampleStats"}
+    missing = required - set(stats.keys())
+    if missing:
+        raise ValueError(f"{path} is not a compatible Aviti Stats JSON. Missing: {missing}")
+
+    for lane in stats["Lanes"]:
+        missing = {"Lane", "Reads"} - set(lane.keys())
+        if missing:
+            raise ValueError(f"{path} has incompatible Lane structure. Missing: {missing}")
+
+        for read in lane["Reads"]:
+            missing = {"Cycles", "Read"} - set(read.keys())
+            if missing:
+                raise ValueError(f"{path} has incompatible Read structure. Missing: {missing}")
+
+    for sample in stats["SampleStats"]:
+        missing = {"SampleName", "NumPolonies"} - set(sample.keys())
+        if missing:
+            raise ValueError(f"{path} has incompatible SampleStats structure. Missing: {missing}")
 
 proto = load_proto(args.protoyaml) if args.protoyaml else None
 
@@ -231,7 +255,8 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						barcode2 = len(f"{r['barcode2']}")
 				if "aviti" in srch.lower():
 					#After 24-06-2024 FGCZ updated the filename structure of the Stats json file for Aviti sequencing
-					j = os.path.join(srch, 'DmxStats', f'Stats_*i1-{barcode1}_i2-{barcode2}.json')
+					#30-06-2026 new file name; extended * at file name end
+					j = os.path.join(srch, 'DmxStats', f'Stats_*i1-{barcode1}_i2-{barcode2}*.json')
 					j = glob.glob(j)
 					if len(j) > 1:
 						print("ERROR: found multiple Stats files for delivery" + srch)
@@ -240,6 +265,7 @@ for srch in glob.glob(os.path.join(basedir,download,projects,'*')):
 						print(j, "Cannot find the Stats file")
 						continue
 					j=j[0]
+					validate_aviti_stats_json(j)
 					barcode_postfix=j.split(os.sep)[-1].split(".json")[0].split("Stats_")[1]
 				else:
 					# build the stats filename based on the barcode lengths
