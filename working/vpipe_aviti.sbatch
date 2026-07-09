@@ -4,8 +4,8 @@
 #SBATCH --mem-per-cpu=16384
 #SBATCH --oversubscribe
 #SBATCH --time=5:00:00
-#SBATCH --output=/cluster/project/pangolin/processes/sars_cov_2/working/slurm-%x-%j.out
-#SBATCH --error=/cluster/project/pangolin/processes/sars_cov_2/working/slurm-%x-%j.err
+#SBATCH --output=/cluster/project/pangolin/processes/sars_cov_2/working/slurm_logs/slurm-%x-%j.out
+#SBATCH --error=/cluster/project/pangolin/processes/sars_cov_2/working/slurm_logs/slurm-%x-%j.err
 
 umask 0007
 

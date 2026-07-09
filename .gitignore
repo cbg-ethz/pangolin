@@ -9,6 +9,7 @@ working/references/NC_045512.2.fasta.*
 
 working/samples*
 working/slurm-*
+working/slurm_logs
 working/cluster_logs
 working/vpipe_output
 working/uploads/
