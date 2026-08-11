@@ -530,6 +530,15 @@ if [ ${donotsubmit_uploader} -eq "0" ]; then
         echo "We reached the daily submission quota imposed by SPSP for UPLOADS. Resuming tomorrow"
         touch ${uploader_statusdir}/uploader_quota_hit.${now}
     else
+        echo 'starting pullsamples_for_db to get samples from euler to wisedb'
+        # pull data from Euler:
+        ${scriptdir}/belfry.sh pullsamples_for_db --recent
+        if [[ ( ! -e ${statusdir}/pullsamples_for_db_success ) || ( ${statusdir}/pullsamples_for_db_success -nt ${statusdir}/pullsamples_for_db_fail ) ]]; then
+            echo "Pulling data for database and uploads success!"
+        else
+            echo "\e[31;1mpulling data for database and uploads failed\e[0m"
+        fi
+        # upload
         echo 'starting UPLOADER job'
         ${scriptdir}/belfry.sh upload && \
         echo $(( ${uploaded_number} + ${uploader_sample_number} )) > ${uploader_number_status}.${now}
