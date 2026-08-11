@@ -112,9 +112,9 @@ callpullrsync_fordb() {
 
         local arglist=( )
         if (( ${#@} )); then
-                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/samples/}" )
+                arglist=( "${@/#/belfry@euler.ethz.ch::${working}/}" )
         else
-                #arglist=( "belfry@euler.ethz.ch::${working}/samples/" )
+                #arglist=( "belfry@euler.ethz.ch::${working}/" )
                 echo "rsync job didn't receive list"
                 exit 1;
         fi
@@ -433,7 +433,7 @@ case "$1" in
         done
     ;;
     pullsamples_for_db)
-        shopt -s globstar
+        shopt -s nullglob
         # fetch remote sheets
         mkdir -p ${basedir}/tmp/belfrysheets/
         if [[ "${2}" = "--recent" ]]; then
@@ -441,22 +441,33 @@ case "$1" in
         elif [[ "${2}" = "--batch" ]]; then
             validateBatchName "${3}"
             sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.${3}.tsv"  )
+        elif [[ "${2}" = "--year" ]]; then
+            year="${3}"
+            if [[ ! "$year" =~ ^20[0-9]{2}$ ]]; then
+                echo "Invalid year: $year"
+                exit 1
+            fi
+            sheets=("belfry@euler.ethz.ch::${sampleset}/samples.${year}*.tsv")
         else
             sheets=( "belfry@euler.ethz.ch::${sampleset}/samples.2*.tsv" )
         fi
+        echo "sync sheets: ${sheets}"
         rsync \
             --password-file ${HOME}/.ssh/rsync.pass.euler \
             -e "ssh -i ${HOME}/.ssh/id_ed25519_wisedb -l ${cluster_user} " \
             -izrltHLK --fuzzy --fuzzy --inplace \
+            --ignore-missing-args \
             "${sheets[@]}" \
             ${basedir}/tmp/belfrysheets/
         if [[ "${2}" = "--recent" ]]; then
             sheets=( ${basedir}/tmp/belfrysheets/samples.${lastmonth}*.tsv ${basedir}/tmp/belfrysheets/samples.${thismonth}*.tsv )
-            # BUG: will generate non-globed pattern if months are missing
             echo "pulling recent: ${param[*]##/}"
         elif [[ "${2}" = "--batch" ]]; then
             validateBatchName "${3}"
             sheets=( "${basedir}/tmp/belfrysheets/samples.${3}.tsv"  )
+        elif [[ "${2}" = "--year" ]]; then
+            year="${3}"
+            sheets=(${basedir}/tmp/belfrysheets/samples.${year}*.tsv)
         elif [[ "${2}" = "--catchup" ]]; then
             sheets=( "${basedir}/tmp/belfrysheets/samples.catchup.tsv"  )
         else
