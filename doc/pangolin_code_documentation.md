@@ -961,9 +961,6 @@ Finally:
 
 Note: this patching method only works if **all samples in an order use the same libkit**. If libkits differ between samples within the same order, the metadata must be corrected by **FGCZ**.
 
-
-Here is a cleaned-up and more structured version, keeping it concise and improving clarity:
-
 ### Euler conda setup
 
 Base conda:
@@ -1939,7 +1936,7 @@ To clarify/keep in mind: the wastewater_automation container also is responsible
 
 wise_db: wastewater_automation/pangolin/uploader_legacy
 
-- depreciated
+- deprecated
 - contains the information of the pure covid uploads before the mulitviral samples
 
 wise_db:/data/projects/dataset/archive → after upload, upload information it is archived there!
@@ -1958,14 +1955,14 @@ It gets the samples.BATCH.tsv from euler. And adds the samples to batches_to_upl
 
 *upload*
 
-This function first creates a file (${uploader_tempdir}/cram_to_download.txt) to store the path of the .cram files of the new samples. This list is then used to rsync the new .creamfiles for the upload to the wise_db VM since the upload to SPSP needs to be done form the VM (technical pakage version reasons).
+This function first creates a file (${uploader_tempdir}/cram_to_download.txt) to store the path of the .cram files of the new samples. This list is then used to rsync the new .cram files for the upload to the wise_db VM since the upload to SPSP needs to be done from the VM (technical package version reasons).
 It also rsyncs the timeline.tsv and qa.csv file to have it in the package to be uploaded to SPSP. Then the upload.sh script is run to prepare the correct metadata.tsv table for the upload. If the metadata file in not empty the sendCrypt is run.
-The upload is performed by useind the commands update (updates sendCrypt to always have the lates version), version (to record the sendCrypt version used) and send (whcih performed the upload). The send command take time since it takes the whole package and compresses it into a .gz folder and uploads it to SPSP.
+The upload is performed by useind the commands update (updates sendCrypt to always have the lates version), version (to record the sendCrypt version used) and send (which performed the upload). The send command takes time since it takes the whole package and compresses it into a .gz folder and uploads it to SPSP.
 After the upload was sucessfull the information is stored in the archive folder on wise_db and the .cram files are deleted.
 
 *clean_sendcrypt_temp*
 
-The sendcrypt send command creates a compressed version of the .cram files and the matedata and stores it in sendcrypt. folder. This needs to be deleted after the upload to avoid heavy storage usage.
+The sendcrypt send command creates a compressed version of the .cram files and the matedata and stores it in sendcrypt folder. This needs to be deleted after the upload to avoid heavy storage usage.
 
 **entrypont.sh**
 The first script that is run when the container is created. It stores the GPG keys for the upload to SPSP. We need 2 keys to encrypt the data in the upload process one for us and another for SPSP (we need to have both).
@@ -1980,8 +1977,8 @@ setup.sh is called in entrypoint.sh (the script that sets up the container). Eac
 - called form belfry.sh upload) function.
 - output: {uploader_tempdir}/to_upload.txt
 
-This script prepared the list of samples to be uploaded to SPSP. First, it cleans up the to_upload.txt created fromt he previous run. Then it runs an inline Python script which created the to_upload.txt of the currently new samples.
-It checks the list of batches_to_upload.tsv created in ____ and filteres out the blacklisted smaples and the already uploaded samples (${uploader_workdir}/all_uploaded.tsv) .
+This script prepared the list of samples to be uploaded to SPSP. First, it cleans up the to_upload.txt created from the previous run. Then it runs an inline Python script which created the to_upload.txt of the currently new samples.
+It checks the list of batches_to_upload.tsv created in ____ and filteres out the blacklisted samples and the already uploaded samples (${uploader_workdir}/all_uploaded.tsv) .
 Then it takes the *sample_number* which is the max nr. of samples to be uploaded at once and provides them in the to_upload.txt file which is the basis for which samples to upload.
 
 **upload.sh**
@@ -1991,7 +1988,7 @@ Then it takes the *sample_number* which is the max nr. of samples to be uploaded
 
 This script does not run the upload with sendcrypt but prepares the metadata.tsv file in the format that sendcrypt requires.
 It first checks the to_upload.txt files created in prepare.sh (which is called in belfry.sh) and goes through each sample line by line. It created the path to the dehuman.cram file and if it exists first makes a copy of it with the name *samplename.cram* file. This is necessary becasue by design vpipe output is called dehuman.cram for every sample. So for the upload they could not be differenciated.
-Then the metadata line is created for this sample by running the create_metadata_line.py script which actually extracts the necessary information form the provided sample and wirtes it into the metadata.tsv file.
+Then the metadata line is created for this sample by running the create_metadata_line.py script which actually extracts the necessary information from the provided samples and writes it into the metadata.tsv file.
 Lastly, the sample name is written in to the file that archives the uploaded run and the whole metadata.tsv is outputted.
 
 **create_metadata_line.py**
@@ -2000,7 +1997,7 @@ tbd
 ### Amplicon Coverage Covid
 
 The Amplicon Coverage plot is created automatically by the automation and can be found for each batch at:
-`/cluster/project/pangolin/work-amplicon-coverage`
+`/cluster/project/pangolin/processes/sars_cov_2/amplicon_coverage`
 
 ___
 
