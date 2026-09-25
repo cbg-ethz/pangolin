@@ -103,7 +103,6 @@ case "$1" in
                 mkdir -p --mode=2770 "${clusterdir_old}/${clusterdir}/vpipe_output/"
                 sort -u ${clusterdir_old}/${clusterdir}/${sampleset}/samples.*.tsv > "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
                 cut -f1 "${lst}" | xargs -P 8 -i cp -vrf --link "${clusterdir_old}/${clusterdir}/${sampleset}/{}/" "${clusterdir_old}/${clusterdir}/vpipe_output/"
-                lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
                 # Add abstractions and generalized to allow for new sequencing methods
                 mv ${clusterdir_old}/${clusterdir}/${working}/samples_aviti.tsv ${clusterdir_old}/${clusterdir}/${working}/samples_aviti.tsv.old
                 touch ${clusterdir_old}/${clusterdir}/${working}/samples_aviti.tsv 
@@ -123,7 +122,7 @@ case "$1" in
 			else
                                 echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${clusterdir}/${working}/samples_pre-aviti.tsv
                         fi
-                done < ${clusterdir_old}/${clusterdir}/${working}/samples.tsv
+                done < ${lst}
         ;;
         vpipe)
                 declare -A job
