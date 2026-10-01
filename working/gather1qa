@@ -3,6 +3,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4096
 #SBATCH --time="4:00:00"
+#SBATCH --output=/cluster/project/pangolin/processes/sars_cov_2/working/slurm_logs/slurm-gather1qa-%x-%j.out
+#SBATCH --error=/cluster/project/pangolin/processes/sars_cov_2/working/slurm_logs/slurm-gather1qa-%x-%j.err
 
 batches=()
 
