@@ -81,7 +81,7 @@ case "$1" in
         ;;
         addsamples)
                 lst="${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
-		avi_batches="${clusterdir_old}/${clusterdir}/${working}/avi_batches.tsv"
+		avi_batches="${clusterdir_old}/${clusterdir}/${sourcefiles_location}/avi_batches.tsv"
                 aviti=0
                 case "$2" in
                         --recent)
@@ -122,7 +122,7 @@ case "$1" in
 			else
                                 echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> ${clusterdir_old}/${clusterdir}/${working}/samples_pre-aviti.tsv
                         fi
-                done < ${lst}
+                done < "${clusterdir_old}/${clusterdir}/${working}/samples.tsv"
         ;;
         vpipe)
                 declare -A job
