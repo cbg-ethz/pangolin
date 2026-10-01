@@ -13,5 +13,9 @@ mkdir -p cluster_logs/
 ./vpipe --configfile vpipe_aviti.yaml --dryrun --unlock
 export SNAKEMAKE_PROFILE=$(realpath ../profiles/smk-simple-slurm/ )
 exec ./vpipe --profile ${SNAKEMAKE_PROFILE}	\
-	--configfile vpipe_aviti.yaml --omit-from snv
+	all tallymut deconvolution covvfit \
+	--configfile vpipe_aviti.yaml \
+	--groups sigmut=group0 cooc=group1 \
+    --group-components group0=10 group1=5 \
+	--omit-from snv
 
