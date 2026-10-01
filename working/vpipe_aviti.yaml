@@ -7,28 +7,22 @@ general:
 
 
 input:
-    #datadir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output
     datadir: vpipe_output
     samples_file: /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv_six_months_ago.tsv
-    #reference: references/NC_045512.2.fasta
     metainfo_file: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/metainfo.yaml
     gff_directory: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/
-    #primers_file: references/primers/v41/nCoV-2019.tsv
-    #primers_bedfile: references/primers/v41/nCoV-2019.primer.bed
     protocols_file: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/primers.yaml
-    #inserts_bedfile: references/primers/v41/SARS-CoV-2.insert.bed
-    #genes_gff: references/gffs/Genes_NC_045512.2.GFF3
+    genes_gff: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/Genes_NC_045512.2.GFF3
     variants_def_directory: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/voc/
     
-    
 output:
-    datadir: vpipe_output
+    datadir: vpipe_output 
     cohortdir: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/variants/
     trim_primers: True
-    snv: False
-    local: False
+    snv: True
+    local: True
     global: False
-    visualization: False
+    visualization: True
     QA: True
     dehumanized_raw_reads: True
     upload: True
@@ -68,7 +62,7 @@ timeline:
     
 deconvolution:
     threads: 16
-    deconvolution_config: deconv_mcgill.yaml
+    deconvolution_config: deconv_bootstrap_cowwid.yaml
     variants_config: variant_config.yaml
     variants_dates: var_dates.yaml
     out_format: columns 
@@ -119,3 +113,9 @@ snv:
     time: 2400
     mem: 4096
     threads: 64
+
+covvfit:
+    deconvolution_config: deconv_config_nosmooth.yaml
+    config: covvfit_config.yaml
+    max_days: 180
+    horizon: 90
