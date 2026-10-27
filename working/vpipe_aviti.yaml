@@ -65,7 +65,7 @@ deconvolution:
     deconvolution_config: deconv_bootstrap_cowwid.yaml
     variants_config: variant_config.yaml
     variants_dates: var_dates.yaml
-    out_format: columns 
+    out_format: lines 
     
 frameshift_deletions_checks:
     mem: 8192
