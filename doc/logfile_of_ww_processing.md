@@ -19,19 +19,548 @@
 - [ ] Consider subsampling raw `.fastq` files as an alternative.
 - [ ] Consider adding a subsampling function directly into the automation.
 
+23 okt:
 
-TODO:
-- iva and rsv are structured and folder are cleanedup, however, sarscov should be once more revised to ensure it is setup correctly and uses the correct files and everything is tracked on git
-  - for covid there are still duplicated files and many relativ path in the code /.sbatch files which makes it hard to track what is acutally used in the analysis
-- covid: reenable archival run once raw_data file permissions are fixed - done
-- /cluster/project/pangolin/processes/status is the status directory for the fgcz sync --> correct
-- genspectrum upload: the api review and approve of the sequenced fails
-- repeated fail to copy/link files in the rsv or iva automation
-- spsp upload add batch to upload log
-- TODO: rename batch garbage_scripts to not have covid in name!!
+- the manual vpipe run was canceled due to timelimit: `bs-pangolin@eu-login-20:/cluster/project/pangolin/processes/sars_cov_2/working/slurm_logs$ less slurm-COVID-Aviti-vpipe-17935947.err`
+```Bash
+bs-pangolin@eu-login-20:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ sbatch vpipe_aviti.sbatch
+Submitted batch job 18065701
 
+#create sample file from 10 month ago
+bs-pangolin@eu-login-20:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ awk -v cutoff="$cutoff" 'substr($2,1,8) >= cutoff' /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv_ten_month_ago_manually_20261023.tsv
+# copied the sbatch and yaml file to research folder to change the sample.tsv to the one created above:
+/cluster/project/pangolin/research/NEXUS/20261019_missing_values_in_stitched_json/rerun_vpipe_manually_past_10_month
+
+# run with 
+bs-pangolin@eu-login-20:/cluster/project/pangolin/research/NEXUS/20261019_missing_values_in_stitched_json/rerun_vpipe_manually_past_10_month$ sbatch vpipe_aviti_10_month.sbatch
+Submitted batch job 18067385
+
+# to create a new stitching curve without the wrongly labeled samples ran:
+/cluster/project/pangolin/resources/cowwid/json_parser_for_variant_curve_stitching/scripts/run_stitching.sh
+
+# the recreate the curve with make_curves.sh
+
+```
+
+- added function that outputs WARMING if 0 are introduced by the stitching : check_filled_zeros
+
+20-22 okt:
+
+### Stitching Issue – Summary
+
+**Findings**
+- Unexpected zero values appear between the old and new variant curves.
+- Likely cause: The stitching script uses the earliest date in the new dataset as the cutoff, discarding older values and filling missing dates with zeros.
+- We identified a batch from ~6 months ago containing samples from early/mid-March as well as late April. The March samples may be incorrectly labelled, potentially causing the stitching issue.
+
+**Actions Taken**
+- Reviewed the stitching logic and identified the likely cause.
+- Prepared a script to compare OLD, NEW and STITCHED data.
+- Drafted an email requesting verification of the sample names in the affected batch.
+
+**Next Steps**
+1. Confirm whether the March sample names are correct. --> they are incorreect
+2. Compare the JSON files to verify the origin of the zeros. --> doen with `/cluster/project/pangolin/research/NEXUS/20261019_missing_values_in_stitched_json/scripts/run_check_stitching.sh`
+   1. the 0 are introduced becasue we first define the grid, then define the stitching date and missing values are filled with 0
+3. Correct sample metadata if necessary and reprocess affected data.
+```Bash
+cd /cluster/project/pangolin/processes/sars_cov_2/vpipe_input
+find . -mindepth 2 -maxdepth 2 -type d -name "20260430_2532670531"
+# create patch file with the corrected names form the mail on the 20 october
+patch.23224.39798.tsv
+# garbage the batch and rerun vpipe manually
+/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh garbage 20260430_2532670531
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2/vpipe_input$ find . -mindepth 2 -maxdepth 2 -type d -name "20260430_2532670531"
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2/vpipe_input$ cd ..
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2$ cd vpipe_output/
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output$ find . -mindepth 2 -maxdepth 2 -type d -name "20260430_2532670531"
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh sortsamples --year
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh addsamples --year
+bs-pangolin@eu-login-03:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh filter_sample_list /cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv
+bs-pangolin@eu-login-39:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ sbatch vpipe_aviti.sbatch
+Submitted batch job 17931105
+
+```
+
+4. Improve the stitching logic to prevent similar issues in the future.
+
+19 Oct 2026:
+
+SPSP upload:
+- There is an error:
+
+```Bash
+Downloading from Euler the necessary cram files
+diff: /app/raw_data/working/samples/A1_05_2024_12_03/20241220_2414654841/uploads/dehuman.cram.md5: No such file or directory
+diff: /app/raw_data/working/samples/A2_17_2024_12_08/20241220_2414654841/uploads/dehuman.cram.md5: No such file or directory
+
+```
+
+- this is due to that the function pullsamples_for_db --year was set to only 2025 (see logs from the 11 August below)
+- need to set it to 2024 as well
+  - went into the sars cov container on the wisedb
+  - in the file carillon.sh in the section "Start new UPLOADER run" changed the flag from --recent to --year 2024
+- : change flag back to --recent after all samples were synced
+  - changed flag back to --recent
+- Log file from the transfer: `/data/projects/sars_cov_2_automation/workdir/status/carillon/carillon_20261019.log`
+
+Now an new error occurs:
+
+```Bash
+starting UPLOADER job
+/app/pangolin_src vs /app/workdir
+belfry.sh upload
+uploading 30 samples from the list of samples to upload
+Preparing the list of files to upload for this batch
+Downloading from Euler the necessary cram files
+CHECK one
+CHECK two
+@ERROR: chdir failed
+rsync error: error starting client-server protocol (code 5) at main.c(1817) [Receiver=3.2.3]
+Cleaning the temporary folders generated by SendCrypt
+/app/pangolin_src vs /app/workdir
+belfry.sh clean_sendcrypt_temp
+Clearning the sendcrypt temporary directories in /app/workdir/uploader/temp
+\e[33;1mBackup of UPLOADER results on bs-bewi08 DISABLED\e[0m
+
+```
+
+- this does not make sense becasue the upload worked before and the only thing that changed are that we now have more data?
+- this make seanse becasue there was still a rsync from the timeline.tsv file from the old lollipop directory which now after the update does not exist 
+- Commented out this rsync in carillon.sh inside the covid container on the wisedb
+- restart the container
+- worked
+
+12 Oct 2026:
+- the deconvolition file is in the column format instead the expected line format
+- delete sample `H3_16_2026_09_04` again to retrigger the autoamtion to run
+
+
+2 Oct 2026:
+
+- rename lollipop folder to identify potentially missed dependencies
+`bs-pangolin@eu-login-08:/cluster/project/pangolin/processes/sars_cov_2$ mv lollipop lollipop_depricated`
+
+1 oct 2026:
+
+- continue to work on the vpipe update and lollipop integration:
+- checked results of "NEXT test: run the reseach lollipop with the aviti.6mont samples tsv and check if this one batch causes the differences"
+  - failed due to space in yaml file --> had to rerun
+  - now the research and the production covvfit produce the exact same output-> the reason was the extra batch that was included in the other samples.tsv file
+
+```Bash
+
+bs-pangolin@eu-login-13:/cluster/project/pangolin/processes/sars_cov_2/lollipop/variants/covvfit$ diff pairwise_fitnesses.csv ../../../vpipe_output/variants/covvfit/pairwise_fitnesses.csv
+bs-pangolin@eu-login-13:/cluster/project/pangolin/processes/sars_cov_2/lollipop/variants$ diff deconvoluted_nosmooth.csv ../../vpipe_output/variants/deconvoluted_nosmooth.csv
+# only the smoothed version differs, probably due to stochasticity in the smoothing
+```
+
+- merged changes `kirschen-k merged 9 commits into sarscov2_folder_restructuring from sarscov2_adding_lollipop`
+
+
+- find file with the outdated path:
+
+```Bash
+bs-pangolin@eu-login-13:/cluster/project/pangolin/resources/cowwid$ grep -RIl \
+  --exclude='*.log' \
+  --exclude='*.err' \
+  '/cluster/project/pangolin/processes/sars_cov_2/lollipop' .
+./for_communication/config/config.yaml
+./for_communication/scripts/make_curves.sh
+./covvfit/analysis/lollipop/scripts/run_covvfit_lollipop.sbatch
+./covvfit/analysis/lollipop/scripts/for_exceptions_run_covvfit_lollipop.sbatch
+./json_parser_for_variant_curve_stitching/README.md
+./json_parser_for_variant_curve_stitching/scripts/run_stitching.sh
+
+
+grep -RIl \
+  --exclude='*.log' \
+  --exclude='*.err' \
+  '/cluster/project/pangolin/processes/sars_cov_2/lollipop/' . \
+| xargs sed -i \
+  's#/cluster/project/pangolin/processes/sars_cov_2/lollipop/#/cluster/project/pangolin/processes/sars_cov_2/vpipe_output/#g'
+
+# revert changes for: because they contain documentatoin / notes on how in initially was setup and don't belong to routine
+#./covvfit/analysis/lollipop/scripts/run_covvfit_lollipop.sbatch
+#./covvfit/analysis/lollipop/scripts/for_exceptions_run_covvfit_lollipop.sbatch
+#./json_parser_for_variant_curve_stitching/README.md
+
+```
+
+- for covvfit i didn't need to change path as the covvfit in cowwid now is depricated
+- i will add a note to the folder and rename the folder
+- adjusted cookbook documentatoin
+
+29 sept 2026:
+
+- continue to work on the vpipe update and lollipop integration:
+
+- the covvfit only outputs result from the last month..
+- checked th samples.tsv file 
+  - there are endless versions that i don't understand why all of them are produced
+  - in vpipe the file is used: `/cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv_six_months_ago.tsv`
+  - this file only contains the last 3 batches! --> this is why covvfit doesn't output the whole curve
+  - lollipop used this samples file: `/cluster/project/pangolin/processes/sars_cov_2/lollipop/samples.tsv_six_months_ago.tsv`
+
+NEXT:
+- undeerstand why this file is used
+- then, fix it: use the file with 6 month data
+- reverted the change in the addsamples) function so it now again inputs the whole samples.tsv file for the samples-aviti.tsv file creation, this should fix it
+- delete sample `H3_16_2026_09_04` again to test it (`bs-pangolin@eu-login-05:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output$ rm -r H3_16_2026_09_04`)
+- this fixed the problem that there is only 1 month of data
+- there are still some value differences in the output: the values are in a similar order of magnitude but they differ
+  - the lollipop step used another samples.tsv file where there is 1 more batch included
+  - NEXT test: run the reseach lollipop with the aviti.6mont samples tsv and check if this one batch causes the differences
+
+OBSERVATION:
+- another bug that was pending is that the qa rule always failed!
+- now with the new setup the qa rule runs and produces the qa.csv
+- could it be that we now run some rule that was needed for the qa rule but for some reason did not run (or was turned off) previousely?
+
+25 Sept:
+
+- added new branch: sarscov2_adding_lollipop
+- added all files to the new branch
+- renamed the intermediate files:
+
+```Bash
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ mv -i vpipe_with_lollipop.config vpipe.config
+mv: overwrite 'vpipe.config'? y
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ mv -i vpipe_aviti_with_lollipop.yaml vpipe_aviti.yaml
+mv: overwrite 'vpipe_aviti.yaml'? y
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ mv -i vpipe_aviti_with_lollipop.sbatch vpipe_aviti.sbatch
+mv: overwrite 'vpipe_aviti.sbatch'? y
+
+```
+
+- discovered a link to vpipe:output directroy whihc i don't thing i did, so will remove **
+  - in folder /cluster/project/pangolin/processes/sars_cov_2/pangolin/working
+  - lrwxrwxrwx  1 bs-pangolin bsse-covid19-pangolin-euler   60 Sep 10  2025 vpipe_output -> /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/
+
+TEST:
+- move one sample from the last batch to garbage: `mv -vi H3_16_2026_09_04/ ../garbage/`
+
+```Bash
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output$ mv -vi H3_16_2026_09_04/ ../garbage/
+renamed 'H3_16_2026_09_04/' -> '../garbage/H3_16_2026_09_04'
+```
+- now in the next run the automation detected the missing samples (without interfereing with the status files)
+
+```Bash
++20260918:25385373036091!H3_16_2026_09_04
+Will start new job
+```
+- *todo: check if these are the expected rules to run
+```Bash
+Job stats:
+job                            count
+---------------------------  -------
+ampliconclip                       1
+basecounts                         1
+basecounts_QC                      1
+bwa_align                          1
+cons_bcf_QA                        1
+consensus_bcftools                 1
+consensus_sequences                1
+consseq_QA                         1
+coverage_intervals               288
+covvfit                            1
+deconvolution                      1
+deconvolution_nosmooth             1
+dehuman                            1
+dh_filter                          1
+dh_hostalign                       1
+dh_reuse_alignreject               1
+extract                            2
+frameshift_deletions_checks        1
+gunzip                             2
+mutlist                            1
+prepare_upload                     1
+preprocessing_skip                 2
+sam2bam                            1
+sigmut                           288
+tallymut                           1
+timeline                           1
+unfiltered_cram                    1
+total                            604
+
+```
+- there is one warning: File path /cluster/scratch/bs-pangolin/pangolin/temp//cluster/project/pangolin/processes/sars_cov_2/vpipe_output/A1_05_2026_03_09/20260402_2531558689/alignments/REF_aln_trim.sam contains double '/'. This is likely uninten
+ded. It can also lead to inconsistent results of the file-matching approach used by Snakemake.
+- i think this is due to the absolut datadir path in vpipe-aviti.yaml --> change it to relative path and test it again #todo
+  - datadir: ../../vpipe_output/
+  - it is probably the reason why vpipe_output was linked to the directory.
+  - recreated `ln -s /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/ vpipe_output`
+  - made a note next to it: `/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/vpipe_output-README.md`
+  - change datadir: vpipe_output in vpipe_aviti.yaml
+
+
+TEST:
+- tested deconvolution output with diff (bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output/variants$ diff deconvoluted_upload.json ../../lollipop/variants/deconvoluted_upload.json)
+  - as expected this does not work becausethe deconvolution has a level of stochasticity
+- /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/variants/covvfit/pairwise_fitnesses.csv
+  - also here we have different results, they differ A LOT!
+
+- compare the output of the rerun sample
+  - compared the cam files, they differ [!]
+
+- the covvfit only outputs result from the last month..
+- checked th samples.tsv file 
+  - there are endless versions that i don't understand why all of them are produced
+  - in vpipe the file is used: `/cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv_six_months_ago.tsv`
+  - this file only contains the last 3 batches! --> this is why covvfit doesn't output the whole curve
+  - lollipop used this samples file: `/cluster/project/pangolin/processes/sars_cov_2/lollipop/samples.tsv_six_months_ago.tsv`
+
+NEXT:
+- undeerstand why this file is used
+- then, fix it: use the file with 6 month data
+- reverted the change in the addsamples) function so it now again inputs the whole samples.tsv file for the samples-aviti.tsv file creation, this should fix it
+- delete sample `H3_16_2026_09_04` again to test it
+
+```Bash
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/sars_cov_2/vpipe_output/H3_16_2026_09_04/20260918_2538537303/raw_uploads$ diff dehuman.cram /cluster/project/pangolin/processes/sars_cov_2/garbage/H3_16_2026_09_04/20260918_2538537303/raw_uploads/dehuman.cram
+Binary files dehuman.cram and /cluster/project/pangolin/processes/sars_cov_2/garbage/H3_16_2026_09_04/20260918_2538537303/raw_uploads/dehuman.cram differ
+
+```
+- now i will run the manual way to compare with the updated lollipop step and then the full output from one unified vpipe run
+  - first i ONLY run the manual covvfit to compare the pariwise output 
+  - if this is still wildly different:
+    - backup the deconvolution result and covvfit result
+    - run the "normal" manual lollipop `/cluster/project/pangolin/processes/sars_cov_2/lollipop/vpipe-test.sbatch`
+      - and compare this output to the deconvolution in the updated vpipe
+
+
+Found a match!
+- the vpipe poinitng at the RESEARCH bbranhc / commit of vpipe produces the same output as the manually produced covvfit
+- what is different between the RESEARCH and the deployed setup?
+```Bash
+bs-pangolin@eu-login-37:/cluster/project/pangolin/resources/cowwid/covvfit/analysis/covvfit_analysis/scripts$ diff /cluster/project/pangolin/resources/cowwid/covvfit/analysis/covvfit_analysis/results/covvfit_results_2026-09-25/pairwise_fitnesses.csv /cluster/project/pangolin/processes/sars_cov_2/lollipop/variants/covvfit/pairwise_fitnesses.csv
+```
+
+the research version points to:
+```Bash
+bs-pangolin@eu-login-37:/cluster/project/pangolin/research/V-pipe-test$ git status
+On branch bicephal_classif_covvfit
+Your branch is ahead of 'origin/bicephal_classif_covvfit' by 1 commit.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+
+bs-pangolin@eu-login-37:/cluster/project/pangolin/research/V-pipe-test$ git describe
+v3.0.0.rc1-36-gb0d7d0d
+
+bs-pangolin@eu-login-37:/cluster/project/pangolin/research/V-pipe-test$ git log
+
+commit b0d7d0dff6ca47d2bc1c51260473bea0c370be1a (HEAD -> bicephal_classif_covvfit)
+Author: Ivan Blagoev Topolsky <ivan.topolsky@bsse.ethz.ch>
+Date:   Fri Jul 31 00:13:59 2026 +0200
+
+    [bugfix] covvfit: not simultaneous directory and file output
+
+    - linting and reorganisation accidentally left both directory
+      and files output for covvfit
+    - file outputs cause the directory to be created ahead of time
+      which in turn crashes the 'mkdir' command in covvfi
+
+```
+
+The depolyed one:
+
+```Bash
+cd /cluster/project/pangolin/processes/V-pipe
+
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/V-pipe$ git describe
+v3.0.0.rc4-16-g8000a4a
+
+bs-pangolin@eu-login-37:/cluster/project/pangolin/processes/V-pipe$ git log 
+commit 8000a4a88ff3818140c6ad64845cc7911bdd2a66 (HEAD -> rubicon, origin/rubicon)
+Author: Ivan Blagoev Topolsky <ivan.topolsky@bsse.ethz.ch>
+Date:   Sun Aug 2 17:02:28 2026 +0200
+
+    [lint] shellcheck 0.11
+
+```
+
+- looking at covvfit output: /cluster/project/pangolin/processes/sars_cov_2/vpipe_output/variants/covvfit/figure.pdf
+  - it only takes data from end Jul and sept, probably this causes the estimates to be unstable
+
+TODO: fix that is uses past 6 month
+24 september 2026:
+
+- worked on lollipop to vpipe run integration
+- added missing files from `/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/vpipe_aviti_with_lollipop.yaml`
+
+```Bash
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls ww_locations.tsv
+ls: cannot access 'ww_locations.tsv': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/ww_locations.tsv .
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls ww_locations.tsv
+ww_locations.tsv
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls regex.yaml
+ls: cannot access 'regex.yaml': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/cp -p ../../lollipop/^C
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/regex.yaml .
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls regex.yaml
+regex.yaml
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls deconv_mcgill.yaml
+ls: cannot access 'deconv_mcgill.yaml': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/deconv_mcgill.yaml .
+cp: cannot stat '../../lollipop/deconv_mcgill.yaml': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ LS variant_config.yaml
+bash: LS: command not found
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls variant_config.yaml
+ls: cannot access 'variant_config.yaml': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/variant_config.yaml .
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls variant_config.yaml
+variant_config.yaml
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls var_dates.yaml
+ls: cannot access 'var_dates.yaml': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/var_dates.yaml .
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls var_dates.yaml
+var_dates.yaml
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls deconv_config_nosmooth.yaml
+deconv_config_nosmooth.yaml
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls covvfit_config.yaml
+covvfit_config.yaml
+
+```
+
+File: `/cluster/project/pangolin/processes/sars_cov_2/pangolin/working/vpipe_with_lollipop.config`
+
+```Bash
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls /cluster/project/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/BWAIndex/genome.fa
+/cluster/project/igenomes/Homo_sapiens/NCBI/GRCh38/Sequence/BWAIndex/genome.fa
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls deconv_bootstrap_cowwid.yaml
+ls: cannot access 'deconv_bootstrap_cowwid.yaml': No such file or directory
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls ../../lollipop/deconv_bootstrap_cowwid.yaml
+../../lollipop/deconv_bootstrap_cowwid.yaml
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/deconv_bootstrap_cowwid.yaml .
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ ls ../../lollipop/filters_badmut.yaml
+../../lollipop/filters_badmut.yaml
+bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/working$ cp -p ../../lollipop/filters_badmut.yaml .
+```
+
+21 September 2026:
+- work on vipie update and lollipop addition to normal vpipe run
+- for this harminized the automationvpipe ymal file and the lollipop vpipe.conf file (as lollipop dies not have a speicifc yaml file the confif file is the fallback solution)
+- harmonized file: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/vpipe_aviti_with_lollipop.yaml
+  - from lollipop: /cluster/project/pangolin/processes/sars_cov_2/lollipop/vpipe.config
+  - autoamtion vpipe: /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/vpipe_aviti.yaml
+- copied voc 
+
+```bash
+bs-pangolin@eu-login-34:/cluster/project/pangolin/processes/sars_cov_2/lollipop/references/voc$ cp -rp /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/voc/ /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/voc/
+
+```
+  - 
+
+```Bash
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/metainfo.yaml /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/metainfo.yaml
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/gffs/Genes_NC_045512.2.GFF3 /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/Genes_NC_045512.2.GFF3
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/Sars-Cov2_Mature_products.gtf /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/gffs/Sars-Cov2_Mature_products.gtf
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/gffs/Sars-Cov2_TM_domains.gtf /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/Sars-Cov2_TM_domains.gtf
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/Sars-Cov2_Uniprot_domains.gtf /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/gffs/Sars-Cov2_Uniprot_domains.gtf
+
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/gffs/Genes_NC_045512.2.GFF3 /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/gffs/Genes_NC_045512.2.GFF3
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/primers/v3/nCoV-2019.tsv /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/primers/v3/nCoV-2019.tsv
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ diff /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/primers.yaml /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/primers.yaml
+
+bs-pangolin@eu-login-34:/cluster/project/pangolin/processes/sars_cov_2/lollipop/references/voc$ diff /cluster/project/pangolin/processes/sars_cov_2/pangolin/working/references/NC_045512.2.fasta /cluster/project/pangolin/processes/sars_cov_2/lollipop/references/NC_045512.2.fasta
+2a3,4
+>   alias:
+>     - SARS-Cov2 ARTIC V5.4.2, RSV, IAV Bioconcept Panel
+bs-pangolin@eu-login-29:/cluster/project/pangolin$ 
+
+```
+
+- in the autoamtion the primer.yaml file is updated
+- also noted that lollipop vpipe.config uses old primers v3, does lollipop use these primers?
+
+#todo continue with part [output]
+
+
+15 September 2026:
+in the sars cov docker on wisedb changed frol from --year 2025 back to --recent
+
+```Bash
+docker exec -it sars_cov_2-sars_cov_2-1 /bin/bash
+(base) bs-pangolin@f2196ae82dae:/app/pangolin_src$ vim carillon.sh
+
+# in carillon.sh: (approx line 534)
+# pull data from Euler:
+        ${scriptdir}/belfry.sh pullsamples_for_db --recent
+
+
+
+
+```
+
+7 September 2026 - :
+- notes on batch 20260904_2539478507
+- processed on the 8th sep
+- mail sent on 11th
+- upload was pending - done on the 18th september
+
+24 August 2026 - 1 September 2026:
+- notes on batch: 20260827_2546686048
+- sequencing probelms at fgcz needed to resequence the batch
+- data arrived on 30th --> access right problems
+```Bash
+#update problem with chromsize's environment:
+# cat slurm_logs/slurm-COVID-AVITI-vpipe-cons-12181318.err
+Using profile /cluster/project/pangolin/processes/sars_cov_2/pangolin/profiles/smk-simple-slurm for setting default command line arguments.
+VPIPE_BASEDIR = /cluster/project/pangolin/processes/V-pipe/workflow
+Importing legacy configuration file vpipe.config
+
+…
+
+Removing incomplete Conda environment /cluster/project/pangolin/processes/V-pipe/workflow/envs/chromsize.yaml...
+Creating conda environment /cluster/project/pangolin/processes/V-pipe/workflow/envs/chromsize.yaml...
+Traceback (most recent call last):
+
+…
+
+PermissionError: [Errno 1] Operation not permitted: '/cluster/project/pangolin/resources/snake-envs/0065cdc5b322771f05f4c7c8cdded6c5_.yaml'
+
+```
+
+- data was processed with the updated v-pipe (only lollipop and covvfit were affected from this change the rest was done with the previous v-pipe version (see below))
+- data uploaded on 1st september
+
+vpipe version:
+
+- the updated vpipe was used starting apprix. on the 2. september 2026
+
+```Bash
+# this is the updated v-pipe version that was used for all steps except lollipop and covvfit
+bs-pangolin@eu-login-24:/cluster/project/pangolin/processes/V-pipe$ git log -1 --oneline --decorate
+8000a4a (HEAD -> rubicon, origin/rubicon) [lint] shellcheck 0.11
+bs-pangolin@eu-login-24:/cluster/project/pangolin/processes/V-pipe$ git rev-parse HEAD
+8000a4a88ff3818140c6ad64845cc7911bdd2a66
+bs-pangolin@eu-login-03:/cluster/project/pangolin/processes/V-pipe$ git describe
+v3.0.0.rc4-16-g8000a4a
+
+# this is the v-pipe version that was used for lollipop and covvfit
+bs-pangolin@eu-login-24:/cluster/project/pangolin/research/V-pipe-test$ git log -1 --oneline --decorate
+b0d7d0d (HEAD -> bicephal_classif_covvfit) [bugfix] covvfit: not simultaneous directory and file output
+bs-pangolin@eu-login-03:/cluster/project/pangolin/research/V-pipe-test$ git describe
+v3.0.0.rc1-36-gb0d7d0d
+
+```
+
+30th august:
+
+- there was a non critical error in the vpipe run that did not cause vpipe to be rerun by the autoamtion as all the necessary output files were present (around 17th august)
+- vpipe crashed because the technical user was then not able to write the conda env due to permission issues
+
+17 August 2026:
+
+- conda envs were changed due to research project that used the production v-pipe installation
+- was recreated by ivan via command line
+- probably only "chromsize" env
 
 11 August 2026:
+
 - SPSP upload:
   - stoped as it did not find the respecive files:
 
@@ -460,7 +989,7 @@ RSV:
 - covid und influenza run done
 - covid postprocessing
 - git commit and push
-- deleted /cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv from `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+- deleted /cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv from `/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_scr/avi_batches.tsv`
 - create the restore scrips also for rsv
 - postprocessing of influenza
 
@@ -650,7 +1179,7 @@ rsv:
 - added orders to all fuselists in fgcz.conf file (fgcz sync , rsv, influenza, sars_cov2 autoamtion): `fuselist=o41461_Aviti_260320_AV166,o41461_Aviti_260325_AV167`
 Sars_cov2:
 - in sars_cov2 on wisedbVM changed: `carillon.sh limit=$(date --date='2 weeks ago' '+%Y%m%d') to limit=$(date --date='4 weeks ago' '+%Y%m%d')` such that the batches are merged
-- added the merged batch `20260320_o41461` to `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+- added the merged batch `20260320_o41461` to `/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/avi_batches.tsv`
 - `bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh garbage 20260325_2531482360`
 - `bs-pangolin@eu-login-40:/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src$ ./batman.sh garbage 20260320_2531490855`
 - `kkirschen@wisedb:data/projects$ docker restart sars_cov_2-sars_cov_2-1`

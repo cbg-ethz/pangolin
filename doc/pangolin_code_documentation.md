@@ -1039,7 +1039,7 @@ Steps:
    and in the relevant virus automations
    `/cluster/project/pangolin/processes/*/pangolin/pangolin_src/config/fgcz.conf`
 
-2. Add the merged `BATCH` to `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+2. Add the merged `BATCH` to `/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/avi_batches.tsv`
 
 3. On the next sync run:
 
@@ -1063,7 +1063,7 @@ Steps:
 To ensure processing:
 
 * Add the merged batch to:
-  `/cluster/project/pangolin/processes/sars_cov_2/working/avi_batches.tsv`
+  `/cluster/project/pangolin/processes/sars_cov_2/pangolin/pangolin_src/avi_batches.tsv`
 
 * Confirm that the automation processed the merged batch correctly by verifying that it is listed in:
   `/cluster/project/pangolin/processes/sars_cov_2/working/samples_aviti.tsv`
@@ -1324,13 +1324,6 @@ ln -sf ${statusdir}/vpipe.${now} ${statusdir}/vpipe_started
 - --configfile vpipe_aviti_manual.yaml
 - bonus points, change the name of the slurm job for easier tracking: ##SBATCH --job-name="COVID-Aviti-vpipe"  to ##SBATCH --job-name=“manual-Aviti-vpipe”
 - Run the sbatch file sbatch vpipe_aviti_manual.sbatch
-
-### Lollipop
-
-[#Lollipop]
-
-[WIP]
-
 
 ## WiseDB VM 
 
@@ -2004,6 +1997,8 @@ ___
 ### CovvFit
 
 [CovvFit](https://github.com/cbg-ethz/covvfit/tree/main) is a tool for Fitness estimates of SARS-CoV-2 variants from variant abundance data. It is part of the regular processing.
+
+[DEPRICATED] now covvfit is added in vpipe
 
 However, the following is only an INTERMEDIATE solution until covvfit will be art of v-pipe (at the end of 2025).
 The purpose of this folder is to run the covvfit analyisis discribed in htis tutorial: <https://github.com/cbg-ethz/covvfit/blob/main/docs/running_deconv/lollipop.md>
