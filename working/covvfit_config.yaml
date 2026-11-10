@@ -6,6 +6,7 @@ variants:
   - NB.1.8.1
   - XFG
   - BA.3.2
+  - PJ.2.1
 plot:
   dimensions:
     right: 1.2
@@ -18,5 +19,6 @@ plot:
     LP.8: '#379E33'
     NB.1.8.1: '#BDC94D'  
     XFG: '#9E7A29'
-    BA.3.2: "#2EE6D6" #imporv  
+    BA.3.2: "#2EE6D6" #imporv
+    PJ.2.1: '#2a2470' #improv  
     #undetermined: '#969696'
