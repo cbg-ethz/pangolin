@@ -427,7 +427,6 @@ case "$1" in
                 lquota -2 ${SCRATCH}
         ;;
 	sortsamples)
-		#conda activate pybis
 		cd ${clusterdir_old}/${clusterdir}/
                 sortsamples_statusdir=${status}/sortsamples
 		mkdir -p $sortsamples_statusdir
@@ -475,7 +474,22 @@ case "$1" in
 			echo "Skipping  fgcz / skipping batman.sh sortsamples as per configuration."
 		fi
 		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
-		#conda deactivate
+		
+                #Link the Samples in the variant specific input directory
+                for subtype in "${subvariants[@]}"; do
+                    echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
+                
+                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
+                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
+                
+                    # Create directory structure
+                    cd "$src" || exit 1
+                    # create directory including all missing parent directories
+                    find . -type d -exec mkdir -p "$dst/{}" \;
+                
+                    # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
+                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
+                done
 	;;
         scanmissingsamples)
                 sample_list=$2

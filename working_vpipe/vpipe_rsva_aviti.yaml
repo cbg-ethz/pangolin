@@ -7,7 +7,7 @@ general:
     snv_caller: "lofreq"
     temp_prefix: /cluster/scratch/bs-pangolin/pangolin/temp_rsva
 input:
-    datadir: "/cluster/project/pangolin/processes/rsv/vpipe_input"
+    datadir: "/cluster/project/pangolin/processes/rsv/RSVA/vpipe_input"
     samples_file: "/cluster/project/pangolin/processes/rsv/RSVA/working/samples.recent.tsv"
     read_length: 251
     protocols_file: "/cluster/project/pangolin/processes/rsv/pangolin/working_vpipe/references/primers/RSVA/primers.yaml"
