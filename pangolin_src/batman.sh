@@ -509,7 +509,22 @@ case "$1" in
 			echo "Skipping  fgcz / skipping batman.sh sortsamples as per configuration."
 		fi
 		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
-	;;
+
+                for subtype in "${subvariants[@]}"; do
+                    echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
+                
+                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
+                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
+                
+                    # Create directory structure
+                    cd "$src" || exit 1
+                    # create directory including all missing parent directories
+                    find . -type d -exec mkdir -p "$dst/{}" \;
+                
+                    # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
+                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
+                done
+        ;;
         scanmissingsamples)
                 sample_list=$2
                 # load exclusion lists from fgcz.conf if present
