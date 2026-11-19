@@ -85,8 +85,10 @@ case "$1" in
                 # ---- Core paths and defaults ----------------------------------------
                 shared_workdir="${clusterdir_old}/${clusterdir}/${working}"   # shared working directory
                 samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"    # directory containing all samples.*.tsv files
-                copy_list_name="samples.tsv"                                  # subtype list used later for copying
+                copy_list_name="samples.recent.tsv"                                  # subtype list used later for copying
                 aviti=0                                                       # legacy flag kept for compatibility
+                subtypes_list=("${subvariants[@]}")      # influenza subtype directories to prepare
+
 
                 # ---- Exclusion settings ---------------------------------------------
                 # Load global and subtype-specific sample exclusions from fgcz.conf.
@@ -96,8 +98,7 @@ case "$1" in
                         || true
                 )
 
-                influenza_subtypes_list=(IA_H1 IA_H3 IA_MP IA_N1 IA_N2)       # influenza subtype directories to prepare
-
+                
                 # ---- Helper: filter a TSV stream by sample name ----------------------
                 # Removes rows whose sample name in column 1 appears in the provided
                 # comma-separated exclusion list.
@@ -181,16 +182,16 @@ case "$1" in
                         local target_name="$1"
                         shift
 
-                        local iva_subtype
+                        local virus_subtype
                         local exclude_var
                         local subtype_exclude
 
-                        for iva_subtype in "${influenza_subtypes_list[@]}"; do
-                                exclude_var="exclude_samples_${iva_subtype,,}"          # e.g. IA_H1 -> exclude_samples_ia_h1
+                        for virus_subtype in "${subtypes_list[@]}"; do
+                                exclude_var="exclude_samples_${virus_subtype,,}"          # e.g. IA_H1 -> exclude_samples_ia_h1
                                 subtype_exclude="${!exclude_var:-}"                     # read subtype-specific exclusion list
 
                                 build_filtered_samples_file \
-                                        "${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/${target_name}" \
+                                        "${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}/${target_name}" \
                                         "${subtype_exclude}" \
                                         "$@"
                         done
@@ -220,7 +221,6 @@ case "$1" in
                 # ---- Mode-specific sample lists -------------------------------------
                 case "$2" in
                         --recent)
-                                copy_list_name="samples.recent.tsv"                    # subtype copy list for recent mode
                                 echo "syncing recent: ${lastmonth}, ${thismonth}"      # show selected months
 
                                 collect_mode_files recent                              # gather recent source files
@@ -235,7 +235,6 @@ case "$1" in
                                 write_subtype_lists "samples.recent.tsv" "${mode_files[@]}"
                         ;;
                         --year)
-                                copy_list_name="samples.recent.tsv"                    # subtype copy list for yearly mode
                                 echo "syncing year: ${year}"                           # show selected year
 
                                 collect_mode_files year                                # gather yearly source files
@@ -250,7 +249,6 @@ case "$1" in
                                 write_subtype_lists "samples.recent.tsv" "${mode_files[@]}"
                         ;;
                         --all)
-                                copy_list_name="samples.recent.tsv"                    # keep copy scope limited to startdate onward
                                 echo "syncing all from ${influenza_startdate}"         # show selected start date
 
                                 collect_mode_files all                                 # gather files from influenza_startdate onward
@@ -297,9 +295,9 @@ case "$1" in
                 write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
 
                 # ---- Prepare subtype output trees -----------------------------------
-                for iva_subtype in "${influenza_subtypes_list[@]}"; do
-                        subtype_workdir="${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}"   # subtype working directory
-                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${iva_subtype}/vpipe_output"   # subtype output root
+                for virus_subtype in "${subtypes_list[@]}"; do
+                        subtype_workdir="${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}"   # subtype working directory
+                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${virus_subtype}/vpipe_output"   # subtype output root
                         subtype_copy_list="${subtype_workdir}/${copy_list_name}"       # subtype-specific list controlling copy scope
 
                         mkdir -p --mode=2770 "${subtype_output_dir}"                   # ensure subtype output root exists
@@ -358,10 +356,10 @@ case "$1" in
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa in each subvariant no mater what happens
-                        influenza_subtypes_list=(IA_H1 IA_H3 IA_N1 IA_N2)
+                        subtypes_list=("${subvariants[@]}")
                         
-                        for iva_subtype in "${influenza_subtypes_list[@]}"; do
-                                cd "${clusterdir_old}/${clusterdir}/${iva_subtype}/${working}/"
+                        for virus_subtype in "${subtypes_list[@]}"; do
+                                cd "${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}/"
                                 job['seqqa']="$(sbatch --parsable  ${hold} --job-name="iva-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
                         done
                         
@@ -385,67 +383,6 @@ case "$1" in
         purgelogs)
                 find ${clusterdir_old}/${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
         ;;
-        #depreciated function - remove in future
-        #scratch)
-        #        temp_scratch="${SCRATCH}/pangolin/temp"
-        #        olderthan=60
-        #        purge=0
-        #        loop=0
-        #        filter=
-        #        while [[ -n $2 ]]; do
-        #                case "$2" in
-        #                        --minutes-ago)
-        #                                if [[ ! "${3}" =~ ^[[:digit:]]+$ ]]; then
-        #                                        echo "parameter of ${2} must be a number of minutes (digits only), got <${3}> instead" > /dev/stderr
-        #                                        exit 2
-        #                                fi
-        #                                shift
-        #                                olderthan=$2
-        #                        ;;
-        #                        --loop)
-        #                                loop=1
-        #                        ;&
-        #                        --purge)
-        #                                purge=1
-        #                        ;;
-        #                        *)
-        #                                echo "Unkown parameter ${2}" > /dev/stderr
-        #                                exit 2
-        #                        ;;
-        #                esac
-        #                shift
-        #        done
-#
-        #        if (( purge )); then
-        #                echo "purging in ${temp_scratch}..."
-        #        else
-        #                echo "listing in ${temp_scratch}..."
-        #        fi
-#
-        #        count_all=0
-        #        count_old=0
-        #        while read s; do
-        #                (( ++count_all ))
-        #                if [[ -r "${clusterdir_old}/${clusterdir}/${working}/samples/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/${working}/samples/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
-        #                        (( ++count_old ))
-        #                        if (( purge )); then
-        #                                rm -rvf  "${temp_scratch}/samples/${s}"
-        #                        else
-        #                                echo "${s}";
-        #                        fi
-        #                fi;
-        #        done < <((cd "${temp_scratch}/" && find samples/ -type f ${filter} ) | grep -oP '(?<=samples/)[^/]+/[^/]+(?=/)' | sort -u) | tee /dev/stderr | wc -l  2>&1
-        #        echo "Samples: ${count_old} old / ${count_all} total"
-#
-        #        if (( loop )); then
-        #                echo -e '\n\e[38;5;45;1mYou just keep on trying\e[0m\n\e[38;5;208;1mTill you run out of cake\e[0m'
-        #                if sleep "$(( 5 + olderthan))m"; then
-        #                        # loop if no breaks
-        #                        exec "${0}" scratch --minutes-ago "${olderthan}" --loop
-        #                fi
-        #                echo "I'm not even angry"
-        #        fi
-        #;;
         completion)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
                         gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir_old}/${clusterdir}/${working}/slurm-${2}.out"
