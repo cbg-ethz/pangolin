@@ -5,6 +5,8 @@
 #SBATCH --mem-per-cpu=16384
 #SBATCH --oversubscribe
 #SBATCH --time=72:00:00
+#SBATCH --output=slurm_logs/slurm-%x-%j.out
+#SBATCH --error=slurm_logs/slurm-%x-%j.err
 
 umask 0007
 
