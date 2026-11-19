@@ -84,8 +84,10 @@ case "$1" in
                 # ---- Core paths and defaults ----------------------------------------
                 shared_workdir="${clusterdir_old}/${clusterdir}/${working}"   # shared working directory
                 samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"    # directory containing all samples.*.tsv files
+                copy_list_name="samples.recent.tsv"
                 aviti=0                                                       # legacy flag kept for compatibility
-        
+                subtypes_list=("${subvariants[@]}")                             # RSV subtype directories to prepare
+
                 echo "Separating RSV A and B in their respective directories"  # log current action
         
                 # ---- Exclusion settings ---------------------------------------------
@@ -95,8 +97,7 @@ case "$1" in
                         "${clusterdir_old}/${clusterdir}/${sourcefiles_location}/config/fgcz.conf" \
                         || true
                 )
-        
-                rsv_subtypes_list=(RSVA RSVB)                                  # RSV subtype directories to prepare
+                
         
                 # ---- Helper: filter a TSV stream by sample name ----------------------
                 # Removes rows whose sample name in column 1 appears in the provided
@@ -181,21 +182,42 @@ case "$1" in
                         local target_name="$1"
                         shift
         
-                        local rsv_subtype
+                        local virus_subtype
                         local exclude_var
                         local subtype_exclude
         
-                        for rsv_subtype in "${rsv_subtypes_list[@]}"; do
-                                exclude_var="exclude_samples_${rsv_subtype,,}"         # e.g. RSVA -> exclude_samples_rsva
+                        for virus_subtype in "${subtypes_list[@]}"; do
+                                exclude_var="exclude_samples_${virus_subtype,,}"         # e.g. RSVA -> exclude_samples_rsva
                                 subtype_exclude="${!exclude_var:-}"                    # read subtype-specific exclusion list
         
                                 build_filtered_samples_file \
-                                        "${clusterdir_old}/${clusterdir}/${rsv_subtype}/${working}/${target_name}" \
+                                        "${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}/${target_name}" \
                                         "${subtype_exclude}" \
                                         "$@"
                         done
                 }
-        
+
+                # ---- Helper: split a subtype list into Aviti vs pre-Aviti ----------
+                # Uses the current batch-name length heuristic from the original code.
+                split_aviti_lists() {
+                        local subtype_list_file="$1"
+                        local subtype_workdir="$2"
+
+                        mv "${subtype_workdir}/samples_aviti.tsv" \
+                           "${subtype_workdir}/samples_aviti.tsv.old" 2>/dev/null || true
+
+                        : > "${subtype_workdir}/samples_aviti.tsv"                    # fresh Aviti list
+                        : > "${subtype_workdir}/samples_pre-aviti.tsv"                # fresh pre-Aviti list
+
+                        while IFS=$'\t' read -r col1 col2 col3 col4; do
+                                if [ "${#col2}" -eq 19 ]; then
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> "${subtype_workdir}/samples_aviti.tsv"
+                                else
+                                        echo -e "${col1}\t${col2}\t${col3}\t${col4}" >> "${subtype_workdir}/samples_pre-aviti.tsv"
+                                fi
+                        done < "${subtype_list_file}"
+                }
+
                 # ---- Mode-specific sample lists -------------------------------------
                 case "$2" in
                         --recent)
@@ -271,6 +293,24 @@ case "$1" in
         
                 # Build subtype full samples.tsv files.
                 write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
+                
+                # ---- Prepare subtype output trees -----------------------------------
+                for virus_subtype in "${subtypes_list[@]}"; do
+                        subtype_workdir="${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}"   # subtype working directory
+                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${virus_subtype}/vpipe_output"   # subtype output root
+                        subtype_copy_list="${subtype_workdir}/${copy_list_name}"       # subtype-specific list controlling copy scope
+
+                        mkdir -p --mode=2770 "${subtype_output_dir}"                   # ensure subtype output root exists
+
+                        # Copy/link only the sample directories that survived filtering
+                        # for this subtype and for the selected mode.
+                        cut -f1 "${subtype_copy_list}" \
+                                | xargs -r -P 8 -I {} cp -vrf --link "${samples_dir}/{}" "${subtype_output_dir}/"
+
+                        # Split the subtype list used for copying into Aviti vs pre-Aviti.
+                        split_aviti_lists "${subtype_copy_list}" "${subtype_workdir}"
+                done
+        
         ;;
         vpipe)
                 declare -A job
@@ -317,25 +357,14 @@ case "$1" in
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa in each subvariant no mater what happens
-                        cd ${clusterdir_old}/${clusterdir}/RSVA/${working}/
-                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
-                        cd ${clusterdir_old}/${clusterdir}/RSVB/${working}/
-                        job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
-                        cd ${clusterdir_old}/${clusterdir}/${working}/
-                        # if no fail schedule a full job with snv
-                        #depreciated - will be removes in future
-                        #if (( shorah )); then
-                        #        job['snv']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe.sbatch)"
-                        #        if [[ -n "${job['snv']}" ]]; then
-                        #                # schedule a gatherqa no matter what happens to snv
-                        #                job['snvqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afterany:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
-                        #                # schedule a hugemem job if snvjob failed
-                        #                job['hugemem']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe-hugemem.sbatch)"
-                        #                # schedule a qa afterward
-                        #                [[ -n "${job['hugemem']}" ]]    && \
-                        #                        job['hugememqa']="$(sbatch --parsable ${hold} --dependency="afterok:${job['seq']},afternotok:${job['snv']},afterany:${job['hugemem']}" --kill-on-invalid-dep=yes ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
-                        #        fi
-                        #fi      
+                        subtypes_list=("${subvariants[@]}")
+                        
+                        for virus_subtype in "${subtypes_list[@]}"; do
+                                cd "${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}/"
+                                job['seqqa']="$(sbatch --parsable  ${hold} --job-name="rsv-qa-<${tag}>" --dependency="afterany:${job['seq']}" ${clusterdir_old}/${clusterdir}/${working_vpipe}/qa-launcher)"
+                        done
+
+                        cd ${clusterdir_old}/${clusterdir}/${working}/     
                 fi >&2
                 # write job chain list
                 for v in "${list[@]}"; do
@@ -355,67 +384,7 @@ case "$1" in
         purgelogs)
                 find ${clusterdir_old}/${clusterdir}/${working}/cluster_logs/ -type f -mtime +28 -name '*.log' -print0 | xargs -0 rm --
         ;;
-        #depreciated function - remove in future
-        #scratch)
-        #        temp_scratch="${SCRATCH}/pangolin/temp"
-        #        olderthan=60
-        #        purge=0
-        #        loop=0
-        #        filter=
-        #        while [[ -n $2 ]]; do
-        #                case "$2" in
-        #                        --minutes-ago)
-        #                                if [[ ! "${3}" =~ ^[[:digit:]]+$ ]]; then
-        #                                        echo "parameter of ${2} must be a number of minutes (digits only), got <${3}> instead" > /dev/stderr
-        #                                        exit 2
-        #                                fi
-        #                                shift
-        #                                olderthan=$2
-        #                        ;;
-        #                        --loop)
-        #                                loop=1
-        #                        ;&
-        #                        --purge)
-        #                                purge=1
-        #                        ;;
-        #                        *)
-        #                                echo "Unkown parameter ${2}" > /dev/stderr
-        #                                exit 2
-        #                        ;;
-        #                esac
-        #                shift
-        #        done
-#
-        #        if (( purge )); then
-        #                echo "purging in ${temp_scratch}..."
-        #        else
-        #                echo "listing in ${temp_scratch}..."
-        #        fi
-#
-        #        count_all=0
-        #        count_old=0
-        #        while read s; do
-        #                (( ++count_all ))
-        #                if [[ -r "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/upload_prepared.touch" &&  $(find "${clusterdir_old}/${clusterdir}/vpipe_output/${s}/upload_prepared.touch" '!' -newermt "${olderthan} minutes ago") ]]; then
-        #                        (( ++count_old ))
-        #                        if (( purge )); then
-        #                                rm -rvf  "${temp_scratch}/vpipe_output/samples/${s}"
-        #                        else
-        #                                echo "${s}";
-        #                        fi
-        #                fi;
-        #        done < <((cd "${temp_scratch}/" && find samples/ -type f ${filter} ) | grep -oP '(?<=samples/)[^/]+/[^/]+(?=/)' | sort -u) | tee /dev/stderr | wc -l  2>&1
-        #        echo "Samples: ${count_old} old / ${count_all} total"
-#
-        #        if (( loop )); then
-        #                echo -e '\n\e[38;5;45;1mYou just keep on trying\e[0m\n\e[38;5;208;1mTill you run out of cake\e[0m'
-        #                if sleep "$(( 5 + olderthan))m"; then
-        #                        # loop if no breaks
-        #                        exec "${0}" scratch --minutes-ago "${olderthan}" --loop
-        #                fi
-        #                echo "I'm not even angry"
-        #        fi
-        #;;
+        
         completion)
                 if [[ $2 =~ ^([[:digit:]]+)$ ]]; then
                         gawk '$0~/^\[.*\]$/{date=$0};$0~/^[[:digit:]]+ of [[:digit:]]+ steps \([[:digit:].]+%\) done$/{print $0 "\t" date}' "${clusterdir_old}/${clusterdir}/${working}/slurm-${2}.out"
