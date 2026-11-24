@@ -295,20 +295,19 @@ case "$1" in
                 write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
                 
                 # ---- Prepare subtype output trees -----------------------------------
-                for virus_subtype in "${subtypes_list[@]}"; do
-                        subtype_workdir="${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}"   # subtype working directory
-                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${virus_subtype}/vpipe_output"   # subtype output root
-                        subtype_copy_list="${subtype_workdir}/${copy_list_name}"       # subtype-specific list controlling copy scope
-
-                        mkdir -p --mode=2770 "${subtype_output_dir}"                   # ensure subtype output root exists
-
-                        # Copy/link only the sample directories that survived filtering
-                        # for this subtype and for the selected mode.
-                        cut -f1 "${subtype_copy_list}" \
-                                | xargs -r -P 8 -I {} cp -vrf --link "${samples_dir}/{}" "${subtype_output_dir}/"
-
-                        # Split the subtype list used for copying into Aviti vs pre-Aviti.
-                        split_aviti_lists "${subtype_copy_list}" "${subtype_workdir}"
+                for subtype in "${subvariants[@]}"; do
+                    echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
+                
+                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
+                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
+                
+                    # Create directory structure
+                    cd "$src" || exit 1
+                    # create directory including all missing parent directories
+                    find . -type d -exec mkdir -p "$dst/{}" \;
+                
+                    # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
+                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
                 done
         
         ;;
