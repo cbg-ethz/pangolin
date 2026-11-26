@@ -86,7 +86,7 @@ case "$1" in
                 samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"    # directory containing all samples.*.tsv files
                 copy_list_name="samples.recent.tsv"
                 aviti=0                                                       # legacy flag kept for compatibility
-                subtypes_list=("${subvariants[@]}")                             # RSV subtype directories to prepare
+                subtypes_list=("${virus_subtypes[@]}")                             # RSV subtype directories to prepare
 
                 echo "Separating RSV A and B in their respective directories"  # log current action
         
@@ -293,22 +293,6 @@ case "$1" in
         
                 # Build subtype full samples.tsv files.
                 write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
-                
-                # ---- Prepare subtype output trees -----------------------------------
-                for subtype in "${subvariants[@]}"; do
-                    echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
-                
-                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
-                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
-                
-                    # Create directory structure
-                    cd "$src" || exit 1
-                    # create directory including all missing parent directories
-                    find . -type d -exec mkdir -p "$dst/{}" \;
-                
-                    # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
-                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
-                done
         
         ;;
         vpipe)
@@ -356,7 +340,7 @@ case "$1" in
                 fi
                 if [[ -n "${job['seq']}" ]]; then
                         # schedule a gatherqa in each subvariant no mater what happens
-                        subtypes_list=("${subvariants[@]}")
+                        subtypes_list=("${virus_subtypes[@]}")
                         
                         for virus_subtype in "${subtypes_list[@]}"; do
                                 cd "${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}/"
@@ -443,21 +427,21 @@ case "$1" in
 		fi
 		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
 		
-                #Link the Samples in the variant specific input directory
-                for subtype in "${subvariants[@]}"; do
+                for subtype in "${virus_subtypes[@]}"; do
                     echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
-                
-                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
-                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
+
+                    readonly source_directory="${clusterdir_old}/${clusterdir}/${sampleset}"
+                    readonly destination_directory="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
                 
                     # Create directory structure
-                    cd "$src" || exit 1
+                    # cd "$source_directory" - das verändert den kontext, sollte man nicht machen sonst wird das nächste in dem dir ausgführt
                     # create directory including all missing parent directories
-                    find . -type d -exec mkdir -p "$dst/{}" \;
+                    echo $(find "$source_directory" -type d -exec mkdir -p "$destination_directory/{}" \;)
                 
                     # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
-                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
-                done
+                    echo $(find "$source_directory" -type f -exec ln -sf "$source_directory/{}" "$destination_directory/{}" \;)
+                done 
+                exit 1
 	;;
         scanmissingsamples)
                 sample_list=$2
