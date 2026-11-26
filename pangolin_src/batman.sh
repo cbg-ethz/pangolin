@@ -295,23 +295,6 @@ case "$1" in
 
                 # Build subtype full samples.tsv files.
                 write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
-
-                # ---- Prepare subtype output trees -----------------------------------
-                for virus_subtype in "${subtypes_list[@]}"; do
-                        subtype_workdir="${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}"   # subtype working directory
-                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${virus_subtype}/vpipe_output"   # subtype output root
-                        subtype_copy_list="${subtype_workdir}/${copy_list_name}"       # subtype-specific list controlling copy scope
-
-                        mkdir -p --mode=2770 "${subtype_output_dir}"                   # ensure subtype output root exists
-
-                        # Copy/link only the sample directories that survived filtering
-                        # for this subtype and for the selected mode.
-                        cut -f1 "${subtype_copy_list}" \
-                                | xargs -r -P 8 -I {} cp -vrf --link "${samples_dir}/{}" "${subtype_output_dir}/"
-
-                        # Split the subtype list used for copying into Aviti vs pre-Aviti.
-                        split_aviti_lists "${subtype_copy_list}" "${subtype_workdir}"
-                done
         ;;
         vpipe)
                 declare -A job
