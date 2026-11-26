@@ -87,7 +87,7 @@ case "$1" in
                 samples_dir="${clusterdir_old}/${clusterdir}/${sampleset}"    # directory containing all samples.*.tsv files
                 copy_list_name="samples.recent.tsv"                                  # subtype list used later for copying
                 aviti=0                                                       # legacy flag kept for compatibility
-                subtypes_list=("${subvariants[@]}")      # influenza subtype directories to prepare
+                subtypes_list=("${virus_subtypes[@]}")      # influenza subtype directories to prepare
 
 
                 # ---- Exclusion settings ---------------------------------------------
@@ -124,6 +124,8 @@ case "$1" in
                         local output_file="$1"
                         local subtype_exclude="$2"
                         shift 2
+
+                        # | filter_excluded_samples "${exclude_samples:-}" \ wenn es exclude_samples im kontext gibt dann nimmt es diese sonst nicht
 
                         cat "$@" \
                                 | filter_excluded_samples "${exclude_samples:-}" \
@@ -295,19 +297,20 @@ case "$1" in
                 write_subtype_lists "samples.tsv" "${all_batch_files[@]}"
 
                 # ---- Prepare subtype output trees -----------------------------------
-                for subtype in "${subvariants[@]}"; do
-                    echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
-                
-                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
-                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
-                
-                    # Create directory structure
-                    cd "$src" || exit 1
-                    # create directory including all missing parent directories
-                    find . -type d -exec mkdir -p "$dst/{}" \;
-                
-                    # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
-                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
+                for virus_subtype in "${subtypes_list[@]}"; do
+                        subtype_workdir="${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}"   # subtype working directory
+                        subtype_output_dir="${clusterdir_old}/${clusterdir}/${virus_subtype}/vpipe_output"   # subtype output root
+                        subtype_copy_list="${subtype_workdir}/${copy_list_name}"       # subtype-specific list controlling copy scope
+
+                        mkdir -p --mode=2770 "${subtype_output_dir}"                   # ensure subtype output root exists
+
+                        # Copy/link only the sample directories that survived filtering
+                        # for this subtype and for the selected mode.
+                        cut -f1 "${subtype_copy_list}" \
+                                | xargs -r -P 8 -I {} cp -vrf --link "${samples_dir}/{}" "${subtype_output_dir}/"
+
+                        # Split the subtype list used for copying into Aviti vs pre-Aviti.
+                        split_aviti_lists "${subtype_copy_list}" "${subtype_workdir}"
                 done
         ;;
         vpipe)
@@ -354,8 +357,8 @@ case "$1" in
 			job['seq']="$(sed "s/@TAG@/<${tag}>/g" ${clusterdir_old}/${clusterdir}/${working_vpipe}/vpipe_influenza_main.sbatch | sbatch --parsable ${hold} --job-name="iva_main-vpipe-<${tag}>-cons")"
                 fi
                 if [[ -n "${job['seq']}" ]]; then
-                        # schedule a gatherqa in each subvariant no mater what happens
-                        subtypes_list=("${subvariants[@]}")
+                        # schedule a gatherqa in each subtype no mater what happens
+                        subtypes_list=("${virus_subtypes[@]}")
                         
                         for virus_subtype in "${subtypes_list[@]}"; do
                                 cd "${clusterdir_old}/${clusterdir}/${virus_subtype}/${working}/"
@@ -446,20 +449,21 @@ case "$1" in
 		fi
 		(( fail == 0 )) &&  touch ${sortsamples_statusdir}/sortsamples_success || touch ${sortsamples_statusdir}/sortsamples_fail
 
-                for subtype in "${subvariants[@]}"; do
+                for subtype in "${virus_subtypes[@]}"; do
                     echo "Sortsamples linking vpipe input files to $subtype vpipe_input directory"
-                
-                    src="${clusterdir_old}/${clusterdir}/${sampleset}"
-                    dst="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
+
+                    readonly source_directory="${clusterdir_old}/${clusterdir}/${sampleset}"
+                    readonly destination_directory="${clusterdir_old}/${clusterdir}/${subtype}/${sampleset}"
                 
                     # Create directory structure
-                    cd "$src" || exit 1
+                    # cd "$source_directory" - das verändert den kontext, sollte man nicht machen sonst wird das nächste in dem dir ausgführt
                     # create directory including all missing parent directories
-                    find . -type d -exec mkdir -p "$dst/{}" \;
+                    echo $(find "$source_directory" -type d -exec mkdir -p "$destination_directory/{}" \;)
                 
                     # Symlink all files -s: symlink -f: foce overwirites existing symlinks (without -f ln -s would fail if the link already exists)
-                    find . -type f -exec ln -sf "$src/{}" "$dst/{}" \;
-                done
+                    echo $(find "$source_directory" -type f -exec ln -sf "$source_directory/{}" "$destination_directory/{}" \;)
+                done 
+                exit 1
         ;;
         scanmissingsamples)
                 sample_list=$2
